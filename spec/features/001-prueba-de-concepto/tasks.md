@@ -87,8 +87,17 @@ tarea: es un deseo.
 
 ## Las otras dos variantes
 
-- [ ] T10. Interfaz común de las variantes — RF-3 — Hecho cuando: la referencia la cumple y un test
-      corre los casos con cualquier variante
+- [x] T10. Interfaz común de las variantes — RF-3 — Hecho cuando: la referencia la cumple y un test
+      corre los casos con cualquier variante. (Hecho: `ogr_fem2d/engine/interface.py`. Una sola
+      llamada por iteración, `update(start, du)`, que devuelve tensiones, fuerzas internas,
+      plasticidad, tangentes y la rigidez w·Bᵀ D B de cada punto en un patrón fijo (el ensamblaje
+      también queda dentro de la variante; Python solo factoriza y resuelve); `integrate` para la
+      integración constitutiva sola (identidad en punto material y criterio 5); arrays de NumPy
+      como transporte. `solve_stage(..., variant=)`; `ReferenceVariant` la cumple.
+      `tests/test_variants_v001.py`: el contrato (comprobado contra Bᵀ D B construida con la B
+      entera, con tangentes no simétricas para que se note una rigidez traspuesta), una variante
+      que cuenta llamadas ve exactamente una por iteración, y los casos corren con cualquier
+      variante.)
 - [ ] T11. Variante NumPy vectorizada — RF-3 — Hecho cuando: identidad con la referencia en punto
       material y en malla
 - [ ] T12. Variante Rust con PyO3 (`rust/`, módulo `ogr_fem2d._engine`), construida con `maturin

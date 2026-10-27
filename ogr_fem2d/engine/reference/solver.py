@@ -72,8 +72,10 @@ displacements are not in this proof of concept.
 
 The linear solve is SciPy's SuperLU (spec 001, "Fuera de alcance").
 Everything per integration point is plain Python, written to be read: this
-module is the oracle of the compiled variant (ADR-0001), and update_points()
-is the one call per global iteration the compiled variant will replace.
+module is the oracle of the other variants (ADR-0001). Through the interface
+of ogr_fem2d.engine.interface (spec 001, T10), solve_stage() drives any
+variant; ReferenceVariant is this module's, and update_points() is its one
+call per global iteration.
 
 Author: Samuel Sáez López (UPCT)
 """
@@ -86,6 +88,7 @@ import numpy as np
 from scipy.sparse import coo_matrix
 from scipy.sparse.linalg import splu
 
+from .. import interface
 from . import element_t6 as t6
 from . import mohr_coulomb as mc
 from .elastic import Elastic, plane_strain_matrix, stress_increment
@@ -216,28 +219,41 @@ def stiffness(model: Model) -> coo_matrix:
     return coo_matrix((values, (rows, cols)), shape=(n, n))
 
 
+def point_stiffness(p: IntegrationPoint, d: list[list[float]]) -> list[float]:
+    """weight B^T D B of one point (Eq. 4.80), 12 x 12 row-major in the dofs
+    (u1, v1, ..., u6, v6) of its nodes: the layout of interface.PointsUpdate.
+    Block of nodes (a, b): B_a^T D B_b, B_a = [[dN_a/dx, 0], [0, dN_a/dy],
+    [dN_a/dy, dN_a/dx]]."""
+    k = [0.0] * 144
+    for a, (ax, ay) in enumerate(zip(p.dndx, p.dndy)):
+        # B_a^T rows: u_a -> (ax, 0, ay), v_a -> (0, ay, ax)
+        for ra, (c0, c1, c2) in ((2 * a, (ax, 0.0, ay)),
+                                 (2 * a + 1, (0.0, ay, ax))):
+            for b, (bx, by) in enumerate(zip(p.dndx, p.dndy)):
+                # D B_b, the columns for u_b and v_b
+                dbu = (d[0][0] * bx + d[0][2] * by, d[1][0] * bx + d[1][2] * by,
+                       d[2][0] * bx + d[2][2] * by)
+                dbv = (d[0][1] * by + d[0][2] * bx, d[1][1] * by + d[1][2] * bx,
+                       d[2][1] * by + d[2][2] * bx)
+                k[12 * ra + 2 * b] = p.weight * (c0 * dbu[0] + c1 * dbu[1] + c2 * dbu[2])
+                k[12 * ra + 2 * b + 1] = p.weight * (c0 * dbv[0] + c1 * dbv[1] + c2 * dbv[2])
+    return k
+
+
 def tangent_stiffness(points: list[IntegrationPoint],
                       tangents: list[list[list[float]]],
                       n_dofs: int) -> coo_matrix:
     """K_T = assembly of int B^T D B dA with the consistent tangent D of
-    each point (Eq. 4.80). Block of nodes (a, b): weight B_a^T D B_b, with
-    B_a = [[dN_a/dx, 0], [0, dN_a/dy], [dN_a/dy, dN_a/dx]]."""
+    each point (Eq. 4.80), point by point."""
     rows, cols, values = [], [], []
     for p, d in zip(points, tangents):
-        for nb, bx, by in zip(p.nodes, p.dndx, p.dndy):
-            # D B_b, columns for u_b and v_b
-            dbu = (d[0][0] * bx + d[0][2] * by, d[1][0] * bx + d[1][2] * by,
-                   d[2][0] * bx + d[2][2] * by)
-            dbv = (d[0][1] * by + d[0][2] * bx, d[1][1] * by + d[1][2] * bx,
-                   d[2][1] * by + d[2][2] * bx)
-            for na, ax, ay in zip(p.nodes, p.dndx, p.dndy):
-                # B_a^T rows: u_a -> (ax, 0, ay), v_a -> (0, ay, ax)
-                for ra, (c0, c1, c2) in ((2 * na, (ax, 0.0, ay)),
-                                         (2 * na + 1, (0.0, ay, ax))):
-                    rows += [ra, ra]
-                    cols += [2 * nb, 2 * nb + 1]
-                    values += [p.weight * (c0 * dbu[0] + c1 * dbu[1] + c2 * dbu[2]),
-                               p.weight * (c0 * dbv[0] + c1 * dbv[1] + c2 * dbv[2])]
+        dofs = [2 * n + c for n in p.nodes for c in (0, 1)]
+        k = point_stiffness(p, d)
+        for i in range(12):
+            for j in range(12):
+                rows.append(dofs[i])
+                cols.append(dofs[j])
+                values.append(k[12 * i + j])
     return coo_matrix((values, (rows, cols)), shape=(n_dofs, n_dofs))
 
 
@@ -269,41 +285,127 @@ def internal_forces(points: list[IntegrationPoint], stresses: list[Stress],
     return f
 
 
-def update_points(points: list[IntegrationPoint], materials: list,
-                  start: list[Stress], du: list[float]
-                  ) -> tuple[list[Stress], list[float], list[bool], list]:
-    """THE call per global iteration (ADR-0001): given the displacement
-    increment of the step, the stress of every point from the converged
-    state of the step start (Box 4.2, vi-vii), the internal forces
-    (viii-ix) and the consistent tangent of every point (ii). Returns
-    (stresses, f_int, plastic, tangents)."""
+def integrate_points(points: list[IntegrationPoint], materials: list,
+                     start: list[Stress],
+                     strains: list[tuple[float, float, float]]
+                     ) -> tuple[list[Stress], list[bool], list]:
+    """The constitutive integration of every point (Eq. 4.60): ``materials``
+    one per point. Returns (stresses, plastic, tangents)."""
     stresses, plastic, tangents = [], [], []
-    for p, s0 in zip(points, start):
+    for p, material, s0, strain in zip(points, materials, start, strains):
         try:
-            s, is_plastic, d = update_stress(materials[p.element], s0,
-                                             p.strain(du))
+            s, is_plastic, d = update_stress(material, s0, strain)
         except mc.ReturnMappingError as err:
             raise StateUpdateError(p.element, p.index, None, None,
                                    str(err)) from None
         stresses.append(s)
         plastic.append(is_plastic)
         tangents.append(d)
+    return stresses, plastic, tangents
+
+
+def update_points(points: list[IntegrationPoint], materials: list,
+                  start: list[Stress], du: list[float]
+                  ) -> tuple[list[Stress], list[float], list[bool], list]:
+    """THE call per global iteration (ADR-0001): given the displacement
+    increment of the step, the stress of every point from the converged
+    state of the step start (Box 4.2, vi-vii), the internal forces
+    (viii-ix) and the consistent tangent of every point (ii). ``materials``
+    one per point. Returns (stresses, f_int, plastic, tangents)."""
+    stresses, plastic, tangents = integrate_points(
+        points, materials, start, [p.strain(du) for p in points])
     return (stresses, internal_forces(points, stresses, len(du)), plastic,
             tangents)
 
 
+# ------------------------------------------------ the reference as a variant
+def geometry(model: Model, points: list[IntegrationPoint]) -> interface.Geometry:
+    """The arrays the variants receive (interface.Geometry)."""
+    return interface.Geometry(
+        n_dofs=2 * len(model.nodes),
+        nodes=np.array([p.nodes for p in points], dtype=np.int64),
+        dndx=np.array([p.dndx for p in points], dtype=np.float64),
+        dndy=np.array([p.dndy for p in points], dtype=np.float64),
+        weight=np.array([p.weight for p in points], dtype=np.float64),
+        element=np.array([p.element for p in points], dtype=np.int64),
+        index=np.array([p.index for p in points], dtype=np.int64),
+        xy=np.array([p.xy for p in points], dtype=np.float64),
+        materials=np.array([interface.material_row(model.materials[p.element])
+                            for p in points], dtype=np.float64))
+
+
+def _material_of(row) -> Elastic | mc.MohrCoulomb:
+    kind, young, poisson, cohesion, phi, psi = (float(x) for x in row)
+    if kind == interface.MOHR_COULOMB:
+        return mc.MohrCoulomb(young, poisson, cohesion, phi, psi)
+    return Elastic(young, poisson)
+
+
+class _ReferencePrepared:
+    """The reference set up for a stage: the arrays turned back into the
+    plain Python objects above, and every call computed by them."""
+
+    def __init__(self, g: interface.Geometry):
+        self.n_dofs = g.n_dofs
+        self.points = [IntegrationPoint(int(e), int(i), tuple(int(n) for n in nodes),
+                                        tuple(float(x) for x in dx),
+                                        tuple(float(y) for y in dy), float(w),
+                                        (float(xy[0]), float(xy[1])))
+                       for e, i, nodes, dx, dy, w, xy
+                       in zip(g.element, g.index, g.nodes, g.dndx, g.dndy,
+                              g.weight, g.xy)]
+        self.materials = [_material_of(row) for row in g.materials]
+
+    @staticmethod
+    def _stresses(array) -> list[Stress]:
+        return [tuple(float(x) for x in row) for row in array]
+
+    def internal_forces(self, stresses):
+        return np.array(internal_forces(self.points, self._stresses(stresses),
+                                        self.n_dofs))
+
+    def integrate(self, start, strains):
+        stresses, plastic, tangents = integrate_points(
+            self.points, self.materials, self._stresses(start),
+            [tuple(float(x) for x in row) for row in strains])
+        return interface.Integration(np.array(stresses), np.array(plastic),
+                                     np.array(tangents))
+
+    def update(self, start, du):
+        stresses, f_int, plastic, tangents = update_points(
+            self.points, self.materials, self._stresses(start),
+            [float(x) for x in du])
+        k = [point_stiffness(p, d) for p, d in zip(self.points, tangents)]
+        return interface.PointsUpdate(np.array(stresses), np.array(f_int),
+                                      np.array(plastic), np.array(tangents),
+                                      np.array(k))
+
+
+class ReferenceVariant:
+    """The Python reference behind the common interface (spec 001, T10)."""
+    name = "reference"
+
+    def prepare(self, g: interface.Geometry) -> _ReferencePrepared:
+        return _ReferencePrepared(g)
+
+
+REFERENCE = ReferenceVariant()
+
+
 def _norm(v, free) -> float:
-    return math.sqrt(sum(v[i] * v[i] for i in free))
+    return float(np.sqrt(np.sum(v[free] ** 2)))
 
 
 def solve_stage(model: Model, initial_stresses: list[Stress],
                 external_load: list[float], steps: int, tolerance: float,
-                max_iterations: int, max_cuts: int = 0) -> StageResult:
+                max_iterations: int, max_cuts: int = 0,
+                variant: interface.Variant = REFERENCE) -> StageResult:
     """Solve one stage from ``initial_stresses`` (one per integration point,
     in integration_points() order; the displacements start at zero) to the
     TOTAL ``external_load`` (one value per dof; the restrained ones are
     reactions and are ignored), in ``steps`` equal increments, with at most
-    ``max_cuts`` cuts of an increment in two in the whole stage.
+    ``max_cuts`` cuts of an increment in two in the whole stage, the work
+    per integration point done by ``variant`` (interface.py).
 
     Raises NotConvergedError when an increment does not reach ``tolerance``
     in ``max_iterations`` solves, and StateUpdateError when a point cannot
@@ -318,57 +420,63 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
     if len(initial_stresses) != len(points):
         raise ValueError("one initial stress per integration point")
     n_dofs = 2 * len(model.nodes)
-    free = [i for i in range(n_dofs) if i not in model.restrained]
+    free = np.array([i for i in range(n_dofs) if i not in model.restrained],
+                    dtype=np.int64)
+    g = geometry(model, points)
+    prepared = variant.prepare(g)
+    rows, cols = interface.stiffness_pattern(g)
 
     def factorise(matrix: coo_matrix):
         return splu(matrix.tocsr()[free][:, free].tocsc())
 
     elastic = factorise(stiffness(model))
 
-    f_start = internal_forces(points, initial_stresses, n_dofs)
-    load = [external_load[i] - f_start[i] for i in range(n_dofs)]
+    start0 = np.array(initial_stresses, dtype=np.float64)
+    f_start = prepared.internal_forces(start0)
+    load = np.asarray(external_load, dtype=np.float64) - f_start
     scale = _norm(load, free)
     if scale == 0.0:
         raise ValueError("the stage has no load: nothing to solve")
 
     history: list[tuple[int, int, float]] = []
 
-    def increment(number: int, start: list[Stress], factor: float):
+    def increment(number: int, start: np.ndarray, factor: float):
         """One increment from the converged ``start`` to the load factor
         ``factor`` (Box 4.2). Returns (du, stresses, plastic)."""
-        target = [f_start[i] + factor * load[i] for i in range(n_dofs)]
-        du = [0.0] * n_dofs
+        target = f_start + factor * load
+        du = np.zeros(n_dofs)
         # Iteration 0 is the increment's start: its residual is the load added.
-        f_int = internal_forces(points, start, n_dofs)
-        stresses, plastic = start, [False] * len(points)
+        f_int = prepared.internal_forces(start)
+        stresses, plastic = start, np.zeros(len(points), dtype=bool)
         solver = elastic            # the tangent with no strain increment
         for iteration in range(0, max_iterations + 1):
             # r = f_ext - f_int with the sign of the right-hand side of (4.71)
-            r = [target[i] - f_int[i] for i in range(n_dofs)]
+            r = target - f_int
             relative = _norm(r, free) / scale
             history.append((number, iteration, relative))
             if iteration > 0 and relative <= tolerance:
                 return du, stresses, plastic
             if iteration == max_iterations:
                 raise NotConvergedError(number, history)
-            correction = solver.solve(np.array([r[i] for i in free]))
-            for j, i in enumerate(free):
-                du[i] += float(correction[j])
+            du[free] += solver.solve(r[free])
             try:
-                stresses, f_int, plastic, tangents = update_points(
-                    points, model.materials, start, du)
+                result = prepared.update(start, du)
             except StateUpdateError as err:
                 raise StateUpdateError(err.element, err.point, number,
                                        iteration + 1, err.reason) from None
-            if any(plastic):
-                solver = factorise(tangent_stiffness(points, tangents, n_dofs))
+            stresses, f_int, plastic = (result.stresses,
+                                        result.internal_forces, result.plastic)
+            if plastic.any():
+                solver = factorise(coo_matrix(
+                    (result.stiffness.ravel(), (rows, cols)),
+                    shape=(n_dofs, n_dofs)))
             else:
                 solver = elastic
         raise AssertionError("unreachable")
 
-    displacement = [0.0] * n_dofs
-    converged = list(initial_stresses)
-    plastic = [False] * len(points)
+    displacement = np.zeros(n_dofs)
+    converged = start0
+    plastic = np.zeros(len(points), dtype=bool)
     increments: list[tuple[float, float, str]] = []
     # Load factors still to reach, in order (Box 4.1); a cut inserts the
     # midpoint of the failed increment in front (§5.4.3).
@@ -389,7 +497,9 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
         increments.append((factor, pending[0], "converged"))
         factor = pending.pop(0)
         converged, plastic = stresses, step_plastic
-        displacement = [u + d for u, d in zip(displacement, du)]
+        displacement = displacement + du
 
-    return StageResult(displacement, converged, plastic, points, history,
+    return StageResult([float(u) for u in displacement],
+                       [tuple(float(x) for x in s) for s in converged],
+                       [bool(x) for x in plastic], points, history,
                        increments, steps, tolerance, cuts)

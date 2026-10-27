@@ -40,6 +40,7 @@ import math
 
 import _hole
 from ogr_fem2d.engine.reference import mohr_coulomb as mc
+from ogr_fem2d.engine.reference import solver
 from ogr_fem2d.engine.reference.elastic import Elastic
 
 CASES = Path(__file__).resolve().parents[1] / "validacion" / "casos"
@@ -81,7 +82,7 @@ def _check_geometry_and_field(model):
     assert model["tension_inicial"]["p0"] == _hole.P0
 
 
-def _run(case, variant=None):
+def _run(case, variant=None, engine=solver.REFERENCE):
     model = case["modelo"]
     _check_geometry_and_field(model)
     mesh_spec = variant["malla"] if variant else model["malla"]
@@ -90,7 +91,7 @@ def _run(case, variant=None):
                           mesh_spec["n_theta"], mesh_spec["crecimiento"],
                           _material(model, variant), stage["escalones"],
                           stage["tolerancia"], stage["iteraciones_max"],
-                          stage.get("particiones_max", 0))
+                          stage.get("particiones_max", 0), engine)
 
 
 def _element_size_at(mesh, r):
@@ -125,41 +126,51 @@ class TestValidationCases:
             assert pending == (name in PENDING), name
 
     def test_001_kirsch(self):
-        case = _cases()["001-kirsch-hueco-elastico"]
-        mesh, result = _run(case)
-        tolerance = case["tolerancia_relativa"]
-        for comparison in case["comparaciones"]:
-            worst = _worst(mesh, result, comparison)
-            assert abs(worst) <= tolerance, (comparison["magnitud"], worst)
+        check_001(solver.REFERENCE)
 
     def test_002_salencon_with_the_edge_zone(self):
-        case = _cases()["002-salencon-hueco-mohr-coulomb"]
-        tolerance = case["tolerancia_relativa"]
-        r_e = case["comprobaciones"][0]["r_e"]
-        for variant in case["variantes"]:
-            mesh, result = _run(case, variant)
-            for comparison in variant["comparaciones"]:
-                if comparison["magnitud"] == "R0":
-                    farthest = max(math.hypot(*p.xy) for p, plastic in
-                                   zip(result.points, result.plastic) if plastic)
-                    size = _element_size_at(mesh, comparison["valor"])
-                    assert abs(farthest - comparison["valor"]) <= size, (
-                        variant["psi"], farthest, size)
-                    continue
-                worst = _worst(mesh, result, comparison)
-                assert abs(worst) <= tolerance, (variant["psi"], worst)
-            size = _element_size_at(mesh, r_e)
-            on_edge = on_plane = 0
-            for point, stress, plastic in zip(result.points, result.stresses,
-                                              result.plastic):
-                if not plastic:
-                    continue
-                r = math.hypot(*point.xy)
-                hi, lo, _ = mc.principal_in_plane(stress[0], stress[1], stress[3])
-                if r < r_e - size:
-                    assert min(abs(stress[2] - hi), abs(stress[2] - lo)) < 1e-8 * _hole.P0
-                    on_edge += 1
-                elif r > r_e + size:
-                    assert lo + 1e-6 < stress[2] < hi - 1e-6, (variant["psi"], r)
-                    on_plane += 1
-            assert on_edge > 0 and on_plane > 0, (variant["psi"], on_edge, on_plane)
+        check_002(solver.REFERENCE)
+
+
+def check_001(engine):
+    """Case 001 with the engine variant ``engine`` (interface.py)."""
+    case = _cases()["001-kirsch-hueco-elastico"]
+    mesh, result = _run(case, engine=engine)
+    tolerance = case["tolerancia_relativa"]
+    for comparison in case["comparaciones"]:
+        worst = _worst(mesh, result, comparison)
+        assert abs(worst) <= tolerance, (comparison["magnitud"], worst)
+
+
+def check_002(engine):
+    """Case 002, both dilatancies, with the engine variant ``engine``."""
+    case = _cases()["002-salencon-hueco-mohr-coulomb"]
+    tolerance = case["tolerancia_relativa"]
+    r_e = case["comprobaciones"][0]["r_e"]
+    for variant in case["variantes"]:
+        mesh, result = _run(case, variant, engine)
+        for comparison in variant["comparaciones"]:
+            if comparison["magnitud"] == "R0":
+                farthest = max(math.hypot(*p.xy) for p, plastic in
+                               zip(result.points, result.plastic) if plastic)
+                size = _element_size_at(mesh, comparison["valor"])
+                assert abs(farthest - comparison["valor"]) <= size, (
+                    variant["psi"], farthest, size)
+                continue
+            worst = _worst(mesh, result, comparison)
+            assert abs(worst) <= tolerance, (variant["psi"], worst)
+        size = _element_size_at(mesh, r_e)
+        on_edge = on_plane = 0
+        for point, stress, plastic in zip(result.points, result.stresses,
+                                          result.plastic):
+            if not plastic:
+                continue
+            r = math.hypot(*point.xy)
+            hi, lo, _ = mc.principal_in_plane(stress[0], stress[1], stress[3])
+            if r < r_e - size:
+                assert min(abs(stress[2] - hi), abs(stress[2] - lo)) < 1e-8 * _hole.P0
+                on_edge += 1
+            elif r > r_e + size:
+                assert lo + 1e-6 < stress[2] < hi - 1e-6, (variant["psi"], r)
+                on_plane += 1
+        assert on_edge > 0 and on_plane > 0, (variant["psi"], on_edge, on_plane)

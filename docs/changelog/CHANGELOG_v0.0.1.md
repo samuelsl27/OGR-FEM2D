@@ -129,3 +129,10 @@ versión, registrando **qué se encontró**.
   y 20; ψ = 0°, 8 × 32: 1.10 % y 1.20 % con 5 y 10, y con 20 no converge); se fijan 5. R0 sale
   dentro de un elemento (1.7284 m frente a 1.7350 m), y las regiones del retorno son las de la
   solución: arista dentro de r_e y plano fuera.
+- **Tarea T10, la interfaz común**: la frontera del ADR-0001 queda en una llamada por iteración que
+  devuelve también la rigidez tangente de cada punto (12 × 12 en un patrón fijo), para que el
+  ensamblaje no se quede en Python. Dos pegas de los propios tests: la primera comprobación de la
+  rigidez comparaba la referencia consigo misma (una rigidez traspuesta pasaba) y ahora se compara
+  con Bᵀ D B construida aparte, con tangentes no simétricas; y el modelo mixto del test apenas
+  plastificaba (el único punto plástico de la malla gruesa caía en un elemento elástico).
+
