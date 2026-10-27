@@ -23,8 +23,8 @@ iteración por escalón; el bucle es el mismo que con Mohr-Coulomb.
 |---|---|---|
 | `ogr_fem2d/engine/model.py` (nuevo) | la entrada discreta: `EngineModel`, `Stage`, `Load`…, y `validate()` con sus errores | RF-1, RF-2 |
 | `docs/motor/entrada.md` (nuevo) | el esquema documentado: cada campo, unidades coherentes, convenio de signos, reglas de validación | RF-1 |
-| `ogr_fem2d/engine/reference/t3.py` (nuevo) | triángulo de 3 nudos | RF-3 |
-| `ogr_fem2d/engine/reference/t6.py` | gana la axisimetría y la regla de 7 puntos; en deformación plana, idéntico | RF-3, RF-4 |
+| `ogr_fem2d/engine/reference/element_t3.py` (nuevo) | triángulo de 3 nudos | RF-3 |
+| `ogr_fem2d/engine/reference/element_t6.py` | gana la axisimetría y la regla de 7 puntos; en deformación plana, idéntico | RF-3, RF-4 |
 | `ogr_fem2d/engine/reference/quadrature.py` (nuevo) | las reglas de la tabla 9.2 que se usan (lineal, cuadrática, quíntica), en un solo sitio | RF-3 |
 | `ogr_fem2d/engine/reference/elastic.py` | matriz D de axisimetría (Z&T ec. 5.12) | RF-3 |
 | `ogr_fem2d/engine/reference/loads.py` (nuevo) | fuerzas nodales consistentes: nodales, puntuales, repartidas, peso propio | RF-6 |
@@ -54,7 +54,7 @@ la esfera finita tiende a la infinita como 1/b³).
 | Cuadratura en triángulos | Zienkiewicz y Taylor (2000) | §9.10, tabla 9.2, pág. 222 | **Leída**: lineal (centroide), cuadrática (lados, 1/3), cúbica (4 puntos, −27/48), quíntica (7 puntos: centroide 0.225; α₁ = 0.0597158717, β₁ = 0.4701420641, peso 0.1323941527; α₂ = 0.7974269853, β₂ = 0.1012865073, peso 0.1259391805) |
 | Cargas consistentes, peso propio, tensión inicial | Zienkiewicz y Taylor (2000) | cap. 2, ec. (2.13) y su comentario (pág. 25) | **Leído.** §2.2.4, ecs. (2.10)–(2.13b), págs. 23–25: fᵉ = −∫Nᵀb dV − ∫BᵀDε₀ dV + ∫Bᵀσ₀ dV (el signo, porque Z&T escriben q = K a + f: f es lo que se resta a las cargas); ec. (2.14), fuerzas concentradas en los nudos; ec. (2.15), pág. 25: tracciones, −∫Nᵀt dA sobre el lado. Axisimetría, §5.2.6–5.2.8, ecs. (5.15)–(5.19), págs. 118–119: los mismos términos con 2π r, y la fuerza nodal es la de **toda la circunferencia** (2π r R): confirma D2. **Carga puntual dentro de un elemento: no está impresa.** Se deriva del mismo trabajo virtual de la (2.10): una fuerza P en x_p hace el trabajo uᵀ(x_p)P = aᵀNᵀ(x_p)P, luego fᵢ = Nᵢ(x_p)P (derivación propia, con test: resultante y momento). En axisimetría P es la fuerza total del anillo de radio r_p, coherente con D2 |
 | Tensión gravitatoria | Jaeger, Cook y Zimmerman (2007), 4.ª ed. | §13.2, ec. (13.1) (σv = ∫ρg dz), ec. (13.5) (σh = k σv), págs. 400–401 | **Leído.** La (13.5) da un solo k para las dos horizontales; separar K y Kz (D3) es lo que pide S01 (tensiones fuera del plano) y es un caso de la (13.5) con dos coeficientes. Las correlaciones de K0 en suelos (Jâky…, T06) quedan para el material, no para el motor |
-| Equilibrio en axisimetría | Timoshenko y Goodier (1951) | §116, ec. (177), pág. 343 | **Leído.** El equilibrio radial lleva (σr − σθ)/r: un campo uniforme en r solo está en equilibrio con σr = σθ, y τrz se anula en el eje. **Anomalía en D3**: con K ≠ Kz el campo gravitatorio no está en equilibrio en axisimetría. Pendiente del propietario |
+| Equilibrio en axisimetría | Timoshenko y Goodier (1951) | §116, ec. (177), pág. 343 | **Leído.** El equilibrio radial lleva (σr − σθ)/r: un campo uniforme en r solo está en equilibrio con σr = σθ, y τrz se anula en el eje. **Anomalía en D3**: con K ≠ Kz el campo gravitatorio no está en equilibrio en axisimetría. Resuelta con la enmienda de D3: en axisimetría, K = Kz; en el campo constante, σr = σθ y τrz = 0 |
 
 **Convenio:** el vector de tensiones sigue siendo (σxx, σyy, σzz, τxy) con tracción positiva; en
 axisimetría x es r, y es z (el eje), y σzz es la circunferencial σθθ. Así el Mohr-Coulomb, el

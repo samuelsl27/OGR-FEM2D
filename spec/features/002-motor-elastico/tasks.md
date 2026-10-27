@@ -20,12 +20,23 @@ changelog al día, la suite entera en verde, commit y push.
       plana: con T3 axisimétrico se espera un desplazamiento que baje con h², no nulo (se
       comprobará en la T8). **Anomalía en D3, pendiente del propietario**: en axisimetría el
       equilibrio radial lleva (σr − σθ)/r (T&G §116, ec. 177), y un campo gravitatorio con
-      K ≠ Kz, o uno constante con σr ≠ σθ o τrz ≠ 0, no está en equilibrio.)
+      K ≠ Kz, o uno constante con σr ≠ σθ o τrz ≠ 0, no está en equilibrio. Resuelta con la
+      enmienda de D3: en axisimetría se exige K = Kz, y σr = σθ con τrz = 0.)
 
 ## Entrada y elementos (referencia)
 
-- [ ] T2. `model.py` y `docs/motor/entrada.md`: esquema y `validate()` — RF-1, RF-2 — Hecho cuando:
-      cada regla tiene su test con una entrada que la incumple.
+- [x] T2. `model.py` y `docs/motor/entrada.md`: esquema y `validate()` — RF-1, RF-2 — Hecho cuando:
+      cada regla tiene su test con una entrada que la incumple. (Hecho el 2026-10-27:
+      `ogr_fem2d/engine/model.py` con 27 reglas, cada problema con su regla y su sitio, y todos a la
+      vez en un `InputError`; el esquema, campo a campo y regla a regla con su porqué, en
+      `docs/motor/entrada.md`. 9 tests en `test_engine_input_v002.py`; la tabla de casos cubre
+      exactamente las reglas. Dientes: desactivar cada una de las 27 reglas y otras siete
+      mutaciones (signo del umbral de área, eje fuera de la axisimetría, restricción en nudo
+      excavado, Mohr-Coulomb en todas partes, 3 puntos en vez de 7, x < 0 en deformación plana,
+      ψ > φ) hace fallar un test; tres sobrevivían al principio y llevaron a un test más. Decisiones
+      de diseño: una restricción en un nudo sin elementos activos se acepta (no sujeta nada) y una
+      carga o un desplazamiento impuesto allí no (se perderían); la carga puntual fuera de su
+      elemento la detecta la T7, que invierte la transformación del elemento.)
 - [ ] T3. `quadrature.py` con las reglas lineal, cuadrática y quíntica — Hecho cuando: cada una
       integra exactos los monomios hasta su grado y falla en el siguiente.
 - [ ] T4. T6 generalizado y T3 en deformación plana — RF-3 — Hecho cuando: parcela, sólido rígido y

@@ -22,8 +22,14 @@
     (σr − σθ)/r (Timoshenko y Goodier 1951, §116, ec. 177, pág. 343). Un campo gravitatorio con
     K ≠ Kz, o uno constante con σr ≠ σθ o con τrz ≠ 0, **no está en equilibrio**, y el motor lo
     convertiría en una carga que nadie ha puesto. D3 proponía K y Kz por separado sin decir esto.
-    Pendiente de la decisión del propietario.
+    **Enmienda de D3** (decidida por el propietario el 2026-10-27): en axisimetría el preproceso
+    exige K = Kz en el campo gravitatorio y, en el constante, σr = σθ y τrz = 0; si no, un error
+    que lo explica. En deformación plana, K y Kz siguen separados.
   - con T3 en axisimetría, la regla del centroide no integra exactos los términos de grado 2 de la
     tensión inicial y del peso propio: la identidad gravitatoria será exacta en deformación plana y
     en axisimetría con T6, y con T3 axisimétrico se espera un error que baja con h² (se comprobará
     en la T8).
+- **Tarea T2, la entrada del motor** (`ogr_fem2d/engine/model.py`, `docs/motor/entrada.md`): el
+  esquema discreto y 27 reglas de validación, que informan todas a la vez con su sitio. Al probar
+  los dientes, tres mutaciones sobrevivían (un elemento de área nula, que la tabla solo probaba
+  invertido; un nudo con x < 0 en deformación plana; ψ > φ): se añadió el test que las caza.
