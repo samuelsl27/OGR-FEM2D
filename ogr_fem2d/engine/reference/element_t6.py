@@ -32,6 +32,9 @@ Author: Samuel Sáez López (UPCT)
 """
 from __future__ import annotations
 
+import sys
+
+from . import triangle
 from .quadrature import QUADRATIC
 
 #: Area coordinates of the six nodes, in the order of Fig. 8.15(b).
@@ -69,66 +72,36 @@ def shape_derivatives_local(l1: float, l2: float, l3: float
     return [(d[1] - d[0], d[2] - d[0]) for d in dn_dl]
 
 
+# The rest is the isoparametric triangle of triangle.py with these shape
+# functions and the quadratic rule (spec 002, T4: the same operations, in the
+# same order, as in spec 001).
+_SHAPE = sys.modules[__name__]
+
+
 def jacobian(xy: list[tuple[float, float]], l1: float, l2: float, l3: float
              ) -> tuple[list[list[float]], float]:
     """J = [[dx/dxi, dy/dxi], [dx/deta, dy/deta]] and det J."""
-    dn = shape_derivatives_local(l1, l2, l3)
-    j11 = sum(dn[a][0] * xy[a][0] for a in range(6))
-    j12 = sum(dn[a][0] * xy[a][1] for a in range(6))
-    j21 = sum(dn[a][1] * xy[a][0] for a in range(6))
-    j22 = sum(dn[a][1] * xy[a][1] for a in range(6))
-    return [[j11, j12], [j21, j22]], j11 * j22 - j12 * j21
+    return triangle.jacobian(_SHAPE, xy, l1, l2, l3)
 
 
 def b_matrix(xy: list[tuple[float, float]], l1: float, l2: float, l3: float
              ) -> tuple[list[list[float]], float]:
     """The 3x12 strain-displacement matrix on (eps_x, eps_y, gamma_xy), with
-    the degrees of freedom ordered (u1, v1, u2, v2, ..., u6, v6), and det J.
-
-    Raises ValueError for a non-positive det J: an inverted or degenerate
-    element gives no result, not a wrong one (spec 001, edge cases).
-    """
-    (j11, j12), (j21, j22) = jacobian(xy, l1, l2, l3)[0]
-    det = j11 * j22 - j12 * j21
-    if det <= 0.0:
-        raise ValueError(f"det J = {det:.6g} <= 0 at L = ({l1}, {l2}, {l3})")
-    dn = shape_derivatives_local(l1, l2, l3)
-    b = [[0.0] * 12 for _ in range(3)]
-    for a in range(6):
-        # [dN/dx, dN/dy] = J^-1 [dN/dxi, dN/deta]
-        dndx = (j22 * dn[a][0] - j12 * dn[a][1]) / det
-        dndy = (-j21 * dn[a][0] + j11 * dn[a][1]) / det
-        b[0][2 * a] = dndx
-        b[1][2 * a + 1] = dndy
-        b[2][2 * a] = dndy
-        b[2][2 * a + 1] = dndx
-    return b, det
+    the degrees of freedom ordered (u1, v1, u2, v2, ..., u6, v6), and det J;
+    ValueError for det J <= 0."""
+    return triangle.b_matrix(_SHAPE, xy, l1, l2, l3)
 
 
 def gauss_point_coordinates(xy: list[tuple[float, float]]
                             ) -> list[tuple[float, float]]:
     """(x, y) of the three integration points: sum_a N_a x_a."""
-    out = []
-    for (l1, l2, l3), _ in GAUSS_POINTS:
-        n = shape_functions(l1, l2, l3)
-        out.append((sum(n[a] * xy[a][0] for a in range(6)),
-                    sum(n[a] * xy[a][1] for a in range(6))))
-    return out
+    return triangle.point_coordinates(_SHAPE, xy, QUADRATIC)
 
 
 def stiffness(xy: list[tuple[float, float]], d: list[list[float]]
               ) -> list[list[float]]:
     """K = int B^T D B dA, Eq. (2.13b), by the quadrature of Table 9.2."""
-    k = [[0.0] * 12 for _ in range(12)]
-    for (l1, l2, l3), w in GAUSS_POINTS:
-        b, det = b_matrix(xy, l1, l2, l3)
-        factor = w * det / 2.0
-        db = [[sum(d[i][m] * b[m][c] for m in range(3)) for c in range(12)]
-              for i in range(3)]
-        for r in range(12):
-            for c in range(12):
-                k[r][c] += factor * sum(b[i][r] * db[i][c] for i in range(3))
-    return k
+    return triangle.stiffness(_SHAPE, xy, d, QUADRATIC)
 
 
 def internal_forces(xy: list[tuple[float, float]],
@@ -137,27 +110,15 @@ def internal_forces(xy: list[tuple[float, float]],
     """f = int B^T sigma dA over the element, Eq. (2.13b), with one stress
     (sigma_xx, sigma_yy, sigma_zz, tau_xy) per integration point, in the
     order of GAUSS_POINTS. sigma_zz does no work in plane strain."""
-    f = [0.0] * 12
-    for ((l1, l2, l3), w), s in zip(GAUSS_POINTS, stresses):
-        b, det = b_matrix(xy, l1, l2, l3)
-        factor = w * det / 2.0
-        vec = (s[0], s[1], s[3])
-        for r in range(12):
-            f[r] += factor * sum(b[i][r] * vec[i] for i in range(3))
-    return f
+    return triangle.internal_forces(_SHAPE, xy, stresses, QUADRATIC)
 
 
 def strains(xy: list[tuple[float, float]], u: list[float]
             ) -> list[tuple[float, float, float]]:
     """(eps_x, eps_y, gamma_xy) = B u at the three integration points."""
-    out = []
-    for (l1, l2, l3), _ in GAUSS_POINTS:
-        b, _det = b_matrix(xy, l1, l2, l3)
-        out.append(tuple(sum(b[i][c] * u[c] for c in range(12))
-                         for i in range(3)))
-    return out
+    return triangle.strains(_SHAPE, xy, u, QUADRATIC)
 
 
 def area(xy: list[tuple[float, float]]) -> float:
     """int dA by the same quadrature (exact for a straight-sided element)."""
-    return sum(w * jacobian(xy, *l)[1] / 2.0 for l, w in GAUSS_POINTS)
+    return triangle.area(_SHAPE, xy, QUADRATIC)

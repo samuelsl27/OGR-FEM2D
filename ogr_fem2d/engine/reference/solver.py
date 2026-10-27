@@ -89,9 +89,12 @@ from scipy.sparse import coo_matrix
 from scipy.sparse.linalg import splu
 
 from .. import interface
+from . import element_t3 as t3
 from . import element_t6 as t6
 from . import mohr_coulomb as mc
+from . import triangle
 from .elastic import Elastic, plane_strain_matrix, stress_increment
+from .quadrature import PLANE_STRAIN, rule_for
 
 Stress = tuple[float, float, float, float]      # sigma_xx, yy, zz, tau_xy
 
@@ -120,13 +123,18 @@ class NotConvergedError(RuntimeError):
                          "iterations")
 
 
+#: The shape of each element, by its number of nodes (spec 002, T4).
+SHAPES = {3: t3, 6: t6}
+
+
 @dataclass(frozen=True)
 class Model:
-    """What the engine receives (rule 11 of AGENTS.md): nodes, six-node
-    elements, one material per element and the restrained degrees of
-    freedom (2 n for x, 2 n + 1 for y of node n), all held at zero."""
+    """What the engine receives (rule 11 of AGENTS.md): nodes, triangles of
+    three or of six nodes (one kind per model), one material per element and
+    the restrained degrees of freedom (2 n for x, 2 n + 1 for y of node n),
+    all held at zero. Plane strain."""
     nodes: list[tuple[float, float]]
-    elements: list[tuple[int, int, int, int, int, int]]
+    elements: list[tuple[int, ...]]
     materials: list[Elastic | mc.MohrCoulomb]
     restrained: frozenset[int]
 
@@ -136,15 +144,15 @@ class IntegrationPoint:
     """What the iterations need of a point, computed once: the geometry does
     not change (small strain).
 
-    The B matrix of t6.b_matrix is made of the derivatives of the six shape
-    functions (Zienkiewicz and Taylor 2000, Eqs. 2.2-2.4): row eps_x has
+    The B matrix of triangle.b_matrix is made of the derivatives of the
+    shape functions (Zienkiewicz and Taylor 2000, Eqs. 2.2-2.4): row eps_x has
     dN_a/dx under u_a, row eps_y has dN_a/dy under v_a, row gamma_xy has
     both. The point keeps those two lists, and strain() and the internal
     forces write B u and B^T sigma with them."""
     element: int
-    index: int                         # 0, 1, 2 in t6.GAUSS_POINTS
-    nodes: tuple[int, ...]             # the six nodes of its element
-    dndx: tuple[float, ...]            # dN_a/dx, a = 1..6
+    index: int                         # its place in the element's rule
+    nodes: tuple[int, ...]             # the nodes of its element
+    dndx: tuple[float, ...]            # dN_a/dx, a = 1..n
     dndy: tuple[float, ...]            # dN_a/dy
     weight: float                      # w det J / 2, so int f dA = sum weight f
     xy: tuple[float, float]
@@ -180,38 +188,51 @@ class StageResult:
     cuts: int = 0
 
 
+def element_kind(model: Model):
+    """(shape, rule) of the elements of ``model``: one kind per model, the
+    rule of spec 002, D1."""
+    kinds = {len(e) for e in model.elements}
+    if len(kinds) != 1 or not kinds <= set(SHAPES):
+        raise ValueError(f"elements with {sorted(kinds)} nodes: all must have "
+                         "three or all six")
+    n = kinds.pop()
+    return SHAPES[n], rule_for(n, PLANE_STRAIN)
+
+
 def integration_points(model: Model) -> list[IntegrationPoint]:
-    """Every point of every element, in element order, then GAUSS_POINTS
-    order."""
+    """Every point of every element, in element order, then in the order of
+    the element's rule."""
+    shape, rule = element_kind(model)
     points = []
     for e, element in enumerate(model.elements):
         xy = [model.nodes[n] for n in element]
-        where = t6.gauss_point_coordinates(xy)
-        for g, ((l1, l2, l3), w) in enumerate(t6.GAUSS_POINTS):
+        where = triangle.point_coordinates(shape, xy, rule)
+        for g, ((l1, l2, l3), w) in enumerate(rule.points):
             try:
-                b, det = t6.b_matrix(xy, l1, l2, l3)
+                b, det = triangle.b_matrix(shape, xy, l1, l2, l3)
             except ValueError as err:
                 raise ValueError(f"element {e}: {err}") from None
             points.append(IntegrationPoint(
                 e, g, tuple(element),
-                tuple(b[0][2 * a] for a in range(6)),       # dN_a/dx
-                tuple(b[1][2 * a + 1] for a in range(6)),   # dN_a/dy
+                tuple(b[0][2 * a] for a in range(len(element))),       # dN_a/dx
+                tuple(b[1][2 * a + 1] for a in range(len(element))),   # dN_a/dy
                 w * det / 2.0, where[g]))
     return points
 
 
 def stiffness(model: Model) -> coo_matrix:
     """K = assembly of int B^T D B dA, with the ELASTIC D of each element,
-    element by element with t6.stiffness: the tangent of the first
+    element by element with triangle.stiffness: the tangent of the first
     correction of every step."""
+    shape, rule = element_kind(model)
     rows, cols, values = [], [], []
     for element, material in zip(model.elements, model.materials):
         xy = [model.nodes[n] for n in element]
-        k = t6.stiffness(xy, plane_strain_matrix(material.young,
-                                                 material.poisson))
+        k = triangle.stiffness(shape, xy, plane_strain_matrix(material.young,
+                                                              material.poisson), rule)
         dofs = [2 * n + c for n in element for c in (0, 1)]
-        for r in range(12):
-            for c in range(12):
+        for r in range(len(dofs)):
+            for c in range(len(dofs)):
                 rows.append(dofs[r])
                 cols.append(dofs[c])
                 values.append(k[r][c])
@@ -220,11 +241,12 @@ def stiffness(model: Model) -> coo_matrix:
 
 
 def point_stiffness(p: IntegrationPoint, d: list[list[float]]) -> list[float]:
-    """weight B^T D B of one point (Eq. 4.80), 12 x 12 row-major in the dofs
-    (u1, v1, ..., u6, v6) of its nodes: the layout of interface.PointsUpdate.
-    Block of nodes (a, b): B_a^T D B_b, B_a = [[dN_a/dx, 0], [0, dN_a/dy],
-    [dN_a/dy, dN_a/dx]]."""
-    k = [0.0] * 144
+    """weight B^T D B of one point (Eq. 4.80), 2n x 2n row-major in the
+    dofs (u1, v1, ..., un, vn) of its n nodes: the layout of
+    interface.PointsUpdate. Block of nodes (a, b): B_a^T D B_b,
+    B_a = [[dN_a/dx, 0], [0, dN_a/dy], [dN_a/dy, dN_a/dx]]."""
+    m = 2 * len(p.nodes)
+    k = [0.0] * (m * m)
     for a, (ax, ay) in enumerate(zip(p.dndx, p.dndy)):
         # B_a^T rows: u_a -> (ax, 0, ay), v_a -> (0, ay, ax)
         for ra, (c0, c1, c2) in ((2 * a, (ax, 0.0, ay)),
@@ -235,8 +257,8 @@ def point_stiffness(p: IntegrationPoint, d: list[list[float]]) -> list[float]:
                        d[2][0] * bx + d[2][2] * by)
                 dbv = (d[0][1] * by + d[0][2] * bx, d[1][1] * by + d[1][2] * bx,
                        d[2][1] * by + d[2][2] * bx)
-                k[12 * ra + 2 * b] = p.weight * (c0 * dbu[0] + c1 * dbu[1] + c2 * dbu[2])
-                k[12 * ra + 2 * b + 1] = p.weight * (c0 * dbv[0] + c1 * dbv[1] + c2 * dbv[2])
+                k[m * ra + 2 * b] = p.weight * (c0 * dbu[0] + c1 * dbu[1] + c2 * dbu[2])
+                k[m * ra + 2 * b + 1] = p.weight * (c0 * dbv[0] + c1 * dbv[1] + c2 * dbv[2])
     return k
 
 
@@ -249,11 +271,12 @@ def tangent_stiffness(points: list[IntegrationPoint],
     for p, d in zip(points, tangents):
         dofs = [2 * n + c for n in p.nodes for c in (0, 1)]
         k = point_stiffness(p, d)
-        for i in range(12):
-            for j in range(12):
+        m = len(dofs)
+        for i in range(m):
+            for j in range(m):
                 rows.append(dofs[i])
                 cols.append(dofs[j])
-                values.append(k[12 * i + j])
+                values.append(k[m * i + j])
     return coo_matrix((values, (rows, cols)), shape=(n_dofs, n_dofs))
 
 
@@ -274,7 +297,7 @@ def update_stress(material: Elastic | mc.MohrCoulomb, stress: Stress,
 
 def internal_forces(points: list[IntegrationPoint], stresses: list[Stress],
                     n_dofs: int) -> list[float]:
-    """f_int = assembly of int B^T sigma dA (Eq. 4.65; t6.internal_forces
+    """f_int = assembly of int B^T sigma dA (Eq. 4.65; triangle.internal_forces
     with the B of each point kept). sigma_zz does no work in plane strain."""
     f = [0.0] * n_dofs
     for p, (s_xx, s_yy, _s_zz, t_xy) in zip(points, stresses):

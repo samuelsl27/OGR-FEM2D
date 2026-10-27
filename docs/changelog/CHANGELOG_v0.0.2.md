@@ -39,3 +39,8 @@
   escribe en forma cerrada, que la fuente no imprime, y se comprueba contra cada dígito de la tabla
   y contra la integral exacta de los monomios hasta grado 5 (ec. 8.38) a 1e-15. La regla cuadrática
   del T6 sale ahora de este módulo, con los mismos puntos y en el mismo orden que en la spec 001.
+- **Tarea T4, el T3 y el T6 generalizado** (`reference/triangle.py`, `element_t3.py`): el triángulo
+  isoparamétrico es uno solo, con las funciones de forma y la regla como parámetros. Los casos 001
+  y 002 dan los mismos números **bit a bit** que antes, en la referencia y en Rust. Al probar los
+  dientes, la rigidez por punto con el ancho fijo del T6 no la cazaba ningún test, porque en
+  elasticidad no se ensambla: se añadió la comprobación de que las dos rutas dan la misma matriz.

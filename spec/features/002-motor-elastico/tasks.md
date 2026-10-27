@@ -46,8 +46,19 @@ changelog al día, la suite entera en verde, commit y push.
       de D1) cazadas. Hallazgo: la tabla 9.2 **trunca** a diez decimales, no redondea; la quíntica se
       escribe en forma cerrada, que no está impresa en la fuente: se comprueba contra cada dígito
       impreso y contra los monomios hasta grado 5 a 1e-15.)
-- [ ] T4. T6 generalizado y T3 en deformación plana — RF-3 — Hecho cuando: parcela, sólido rígido y
+- [x] T4. T6 generalizado y T3 en deformación plana — RF-3 — Hecho cuando: parcela, sólido rígido y
       tensión inicial uniforme pasan con los dos, y los casos 001 y 002 dan los mismos números.
+      (Hecho el 2026-10-27: `reference/triangle.py`, el triángulo isoparamétrico de n nudos con la
+      regla como parámetro; `element_t3.py` (Z&T §4.2, ecs. 4.5–4.10) y `element_t6.py` dan sus
+      funciones de forma y delegan en él. El solver, la interfaz (`Geometry` de k nudos y bloques de
+      2k × 2k) y el patrón de la rigidez valen para k = 3 y 6, un tipo por modelo; la variante Rust
+      dice que solo tiene el T6 hasta la T13. **Los casos 001 y 002 dan exactamente los mismos
+      números, bit a bit**, en la referencia y en Rust, comprobado contra lo calculado con el
+      código anterior (y el caso 001 recalculado aparte con el código de `HEAD`). 11 tests en
+      `test_t3_element_v002.py`: B contra la (4.10b), parcela con el ensamblaje del propio solver,
+      bloque traccionado a través de `solve_stage` con T3 y T6 contra la tensión uniforme exacta.
+      Diez mutaciones cazadas; una sobrevivía (la rigidez por punto con el ancho del T6, que solo se
+      ensambla con plasticidad) y llevó al test de las dos rutas a la misma matriz.)
 - [ ] T5. Axisimetría de T3 y T6 — RF-3, RF-4 — Hecho cuando: parcela axisimétrica (u = a·r,
       v = b·z), sólido rígido (solo traslación en z), u_r constante con tensión, ningún punto sobre
       el eje.
