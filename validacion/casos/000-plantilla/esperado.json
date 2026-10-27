@@ -1,0 +1,11 @@
+{
+  "id": "000-plantilla",
+  "ficha": "VER-XXX-NN",
+  "fuente": "Autor (año), título, página o ecuación",
+  "tipo_referencia": "analitica",
+  "tolerancia_relativa": 0.01,
+  "comparaciones": [
+    {"magnitud": "nombre", "donde": {"tipo": "punto", "x": 0.0, "y": 0.0}, "valor": 0.0, "unidad": "MPa"}
+  ],
+  "notas": "Condiciones que el caso exija: malla, orden de elemento, fases, etc."
+}

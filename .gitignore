@@ -1,0 +1,66 @@
+# Byte-compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+
+# Rust (núcleo compilado, si se aprueba)
+target/
+Cargo.lock.bak
+
+# Distribution / packaging
+build/
+dist/
+wheels/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# IDE / editor
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+.idea/
+*.swp
+*.swo
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project outputs / user files
+*.ogr
+*.h5
+!examples/*.ogr
+# Los modelos de los casos de validación SÍ se versionan (lección de Slip2D
+# v0.1.78: sin esta excepción un caso sin modelo se salta en vez de fallar).
+!validacion/casos/**/*.ogr
+
+# Logs
+*.log
+.claude/settings.local.json
+
+# Material de terceros: no se redistribuye (manuales, archivos de programas
+# comerciales, capturas). Vive fuera del repositorio, en ../Referencias.
+docs/reference/*
+!docs/reference/README.md
+*.fez
+*.fea
