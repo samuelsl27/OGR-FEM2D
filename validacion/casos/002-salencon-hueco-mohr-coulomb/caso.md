@@ -42,6 +42,25 @@ radial del elemento que contiene R0).
 
 ## Malla y elemento con que se fija la tolerancia
 
-**Pendiente del estudio de convergencia** (malla y escalones). Las tolerancias están escritas antes
-del estudio (commit 962f504) y no cambian; los valores de ur(a) se cambiaron por D8, también
-antes del estudio.
+T6 isoparamétrico (`ogr_fem2d.engine.mesh_radial.quarter_annulus`), **cada variante con su
+malla**, la primera de la familia anidada que cumple el 2 % (crecimiento 1.69^(1/2^k)); fase en
+**5 escalones**, tolerancia del equilibrio 1e-10, Newton con la tangente consistente (D7), sin
+particiones. Error máximo en ur(a) en los nudos del hueco frente a la solución exacta del modelo:
+
+| Malla | ψ = 0° | ψ = 30° |
+|---|---|---|
+| 2 × 8 | 58.4 % | 141 % |
+| 4 × 16 | 9.36 % | 39.9 % |
+| 8 × 32 | **1.10 %** | 6.93 % |
+| 16 × 64 | no converge | **1.47 %** |
+
+- **ψ = 0°: 32 divisiones radiales, 8 angulares, crecimiento 1.69^¼**. La siguiente malla no
+  converge: en el último escalón Newton lleva un punto de la pared a una tracción media mayor que
+  la del vértice, que con ψ = 0° no tiene estado admisible (changelog v0.0.1). Con 10 escalones,
+  1.20 %; con 20, tampoco converge.
+- **ψ = 30°: 64 divisiones radiales, 16 angulares, crecimiento 1.69^(1/8)**. Con 10 y 20
+  escalones, 1.44 % y 1.38 %.
+
+R0 sale dentro de un elemento en todas las mallas desde la de 4 × 16 (1.7284 m con las elegidas,
+frente a 1.7350 m). Las tolerancias están escritas antes del estudio (commit 962f504) y no
+cambian; los valores de ur(a) se cambiaron por D8, también antes del estudio (commit d9adb26).

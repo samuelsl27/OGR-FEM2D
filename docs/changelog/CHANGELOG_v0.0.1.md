@@ -80,8 +80,9 @@ versión, registrando **qué se encontró**.
   arista, ecs. 8.58–8.59 de de Souza Neto et al., con εz = 0, da k εp_r + εp_θ = e_z) da ur(a)
   un **+0.99 % (ψ = 0°) y un +1.90 % (ψ = 30°)** por encima de Salençon en medio infinito, y en el
   anillo de 21 m un +1.93 % con ψ = 30°, que es lo que da el modelo con la malla de 32 × 96 (media
-  +1.90 %). Con la tolerancia del 2 % de D3 frente a Salençon, ψ = 30° habría pasado por 0.1 %:
-  una coincidencia sin razón. La primera comprobación de «σz intermedia» de esta sesión estaba
+  +1.90 %). Con la tolerancia del 2 % de D3 frente a Salençon, ψ = 30° habría quedado al borde
+  (la media pasaba por 0.1 %; el peor nudo, ya con la malla del caso, se va al 2.35 %): fuera como
+  fuera, una coincidencia o un fallo sin entender. La primera comprobación de «σz intermedia» de esta sesión estaba
   mal planteada (contaba como intermedia una σz igual a otra principal, que es lo que pasa en la
   arista); se rehízo por regiones de retorno.
 - **Newton sin control diverge con ψ = 0° y mallas finas**: en el anillo de 21 m con 16 × 48
@@ -119,3 +120,12 @@ versión, registrando **qué se encontró**.
   residuo oscila entre 1e-3 y 2e-2 (puntos que cambian de región en cada iteración). Usar la
   tangente del escalón anterior en la primera corrección no lo arregla. Es un límite de robustez
   de Newton sin búsqueda lineal, que las fuentes no traen.
+- **Tarea T9, caso 002 (Salençon con la zona de arista, 100 m)**: frente a la solución exacta del
+  modelo, el error máximo en ur(a) baja 58.4 % → 9.36 % → 1.10 % (ψ = 0°) y 141 % → 39.9 % → 6.93 %
+  → 1.47 % (ψ = 30°) con la familia anidada de mallas. Cada variante fija la primera que cumple el
+  2 % de D3: ψ = 0° con 8 × 32 y ψ = 30° con 16 × 64. Con ψ = 0° la de 16 × 64 no converge (el
+  límite de robustez de Newton de la T8), así que no hay una malla común a las dos variantes.
+  El número de escalones mueve el error poco (ψ = 30°, 16 × 64: 1.47 %, 1.44 % y 1.38 % con 5, 10
+  y 20; ψ = 0°, 8 × 32: 1.10 % y 1.20 % con 5 y 10, y con 20 no converge); se fijan 5. R0 sale
+  dentro de un elemento (1.7284 m frente a 1.7350 m), y las regiones del retorno son las de la
+  solución: arista dentro de r_e y plano fuera.

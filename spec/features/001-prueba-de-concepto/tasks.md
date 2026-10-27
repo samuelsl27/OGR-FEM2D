@@ -70,16 +70,20 @@ tarea: es un deseo.
       11.0 % → 1.13 % (ψ = 0°) y 143.8 % → 52.8 % → 9.45 % (ψ = 30°; con las dos mallas siguientes
       de la familia, 1.84 % y 0.34 %), orden ≈ 2.4 con las finas; R0 dentro de un elemento; y las
       regiones del retorno, arista dentro de r_e y plano fuera, salvo en un elemento a cada lado.)
-- [ ] T9. Casos `001-kirsch-hueco-elastico` y `002-salencon-hueco-mohr-coulomb` (ψ = 0° y 30°),
+- [x] T9. Casos `001-kirsch-hueco-elastico` y `002-salencon-hueco-mohr-coulomb` (ψ = 0° y 30°),
       con el contorno a 100 m: las tolerancias de D3 (0.5 % y 2 %) escritas en `esperado.json`
       **antes** del estudio de convergencia, que elige la malla que las cumple; y la comprobación
       de que σz es la principal intermedia en los puntos plastificados — Hecho cuando: los tres
       pasan con esa malla, o el incumplimiento queda reportado como hallazgo. (Caso 001 hecho:
       tolerancias en `esperado.json` antes del estudio (commit 962f504), malla 8 × 32 con
       crecimiento 1.69^¼, peor error 0.19 % en ur(a) y en σθ(a); `tests/test_validation_cases_v001.py`
-      recorre los casos y declara los pendientes. Caso 002 escrito con sus tolerancias;
-      **pendiente de decisión del propietario por un hallazgo**: la hipótesis de Salençon (σz
-      intermedia) no se cumple cerca de la pared, ver el changelog.)
+      recorre los casos y declara los pendientes. Caso 002 hecho: la hipótesis de Salençon (σz
+      intermedia) no se cumple para r < 1.2814 m, y por D8 ur(a) se compara con la solución
+      exacta del modelo (Salençon más la zona de arista), con los valores cambiados antes del
+      estudio (commit d9adb26); cada variante con la primera malla de la familia que cumple el
+      2 %: ψ = 0°, 8 × 32 (1.10 %; la de 16 × 64 no converge con Newton); ψ = 30°, 16 × 64
+      (1.47 %); cinco escalones; R0 dentro de un elemento. La comprobación de σz intermedia se
+      sustituyó por la de regiones (arista dentro de r_e, plano fuera), que el modelo cumple.)
 
 ## Las otras dos variantes
 
