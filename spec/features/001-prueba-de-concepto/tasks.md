@@ -59,13 +59,17 @@ tarea: es un deseo.
       derivada numérica en las cinco regiones y contra la subrutina CTMC (plano y aristas, a
       1e-15); 6–8 iteraciones por escalón con convergencia cuadrática, y la misma solución
       discreta que la rigidez inicial.)
-- [ ] T8. Identidad del anillo de 21 m (D3 bis): elástico contra `lame_fixed_outer` y Mohr-Coulomb
+- [x] T8. Identidad del anillo de 21 m (D3 bis): elástico contra `lame_fixed_outer` y Mohr-Coulomb
       (ψ = 0° y 30°) contra `salencon_finite`, con tres mallas — Hecho cuando: el error baja con
-      cada refinamiento y la tasa queda anotada. (Parte elástica hecha:
+      cada refinamiento y la tasa queda anotada. (Parte elástica:
       `tests/test_ring_identity_v001.py`, tres mallas anidadas que dividen h por dos; el error
       máximo en ur(a) baja 11.0 % → 1.53 % → 0.201 % (→ 0.026 % con una cuarta), orden ≈ 2.9; en
-      σθ(a), orden 1.5–1.9; en el campo de ur, igual que en ur(a). La parte de Mohr-Coulomb espera
-      la decisión del propietario sobre las iteraciones, hallazgo de la T7.)
+      σθ(a), orden 1.5–1.9; en el campo de ur, igual que en ur(a). Parte de Mohr-Coulomb, contra
+      `salencon_edge_finite` y no `salencon_finite` (D8: la hipótesis de Salençon no se cumple
+      cerca de la pared), con Newton (D7), cinco escalones: el error máximo en ur(a) baja 70.7 % →
+      11.0 % → 1.13 % (ψ = 0°) y 143.8 % → 52.8 % → 9.45 % (ψ = 30°; con las dos mallas siguientes
+      de la familia, 1.84 % y 0.34 %), orden ≈ 2.4 con las finas; R0 dentro de un elemento; y las
+      regiones del retorno, arista dentro de r_e y plano fuera, salvo en un elemento a cada lado.)
 - [ ] T9. Casos `001-kirsch-hueco-elastico` y `002-salencon-hueco-mohr-coulomb` (ψ = 0° y 30°),
       con el contorno a 100 m: las tolerancias de D3 (0.5 % y 2 %) escritas en `esperado.json`
       **antes** del estudio de convergencia, que elige la malla que las cumple; y la comprobación

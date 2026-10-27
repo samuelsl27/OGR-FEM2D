@@ -33,8 +33,8 @@ Invariants protected:
   at most its previous value to the power 1.5. With a wrong tangent (the
   elastic one, say) the convergence is linear and this fails;
 * **increment cutting** (§5.4.3): a stage that fails without cuts converges
-  with them, to the equilibrium that 16 equal steps reach; the cuts allowed
-  are successive ones, and when they run out the error comes out;
+  with them; the cuts allowed are counted over the stage, and when they run
+  out the error comes out;
 * **no convergence is detected and reported** (RF-6): with too few
   iterations allowed, NotConvergedError carries the step and the whole
   history, and no result is returned;
@@ -204,7 +204,7 @@ class TestIncrementCutting:
             pass
         else:
             raise AssertionError("expected no convergence in 4 iterations")
-        _mesh, cut = _hole.excavate(*COARSE, MC0, 1, 1e-10, 4, max_cuts=3)
+        _mesh, cut = _hole.excavate(*COARSE, MC0, 1, 1e-10, 4, max_cuts=6)
         assert cut.cuts >= 1
         reasons = [why for _a, _b, why in cut.increments]
         assert sum(why.startswith("cut:") for why in reasons) == cut.cuts
@@ -219,7 +219,7 @@ class TestIncrementCutting:
         # and the last iteration of the stage is within tolerance
         assert cut.history[-1][2] <= 1e-10
 
-    def test_the_cuts_allowed_are_successive_ones(self):
+    def test_the_cuts_allowed_are_counted_over_the_stage(self):
         # the apex with psi = 0 is refused whatever the increment: the cuts
         # run out and the located error comes out
         model = _one_element_model(MC0)

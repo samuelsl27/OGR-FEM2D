@@ -46,8 +46,11 @@ increment does not converge in the iterations allowed, or a point cannot be
 updated (an iterate far from equilibrium can send a point to the apex, which
 psi = 0 refuses), the increment is split into two equal halves and restarted
 from the last converged state. It stops, and the error is raised, after
-``max_cuts`` successive cuts. A cut changes the path, not the equilibrium
-sought; the result says how many there were (rule 12).
+``max_cuts`` cuts in the stage. (Counting successive cuts only, as the text
+of §5.4.3 does, never ends when the failure is tied to a load level and not
+to the size of the increment: each converged half resets the count and the
+last piece is halved again and again.) A cut changes the path, not the
+equilibrium sought; the result says how many there were (rule 12).
 
 Loads in totals (spec 001, D2): the stage receives the TOTAL external force at
 its end. The engine takes the internal force of the starting stresses as the
@@ -299,8 +302,8 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
     """Solve one stage from ``initial_stresses`` (one per integration point,
     in integration_points() order; the displacements start at zero) to the
     TOTAL ``external_load`` (one value per dof; the restrained ones are
-    reactions and are ignored), in ``steps`` equal increments, each split
-    in two at most ``max_cuts`` successive times.
+    reactions and are ignored), in ``steps`` equal increments, with at most
+    ``max_cuts`` cuts of an increment in two in the whole stage.
 
     Raises NotConvergedError when an increment does not reach ``tolerance``
     in ``max_iterations`` solves, and StateUpdateError when a point cannot
@@ -370,23 +373,21 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
     # Load factors still to reach, in order (Box 4.1); a cut inserts the
     # midpoint of the failed increment in front (§5.4.3).
     pending = [i / steps for i in range(1, steps + 1)]
-    factor, number, cuts, successive = 0.0, 0, 0, 0
+    factor, number, cuts = 0.0, 0, 0
     while pending:
         number += 1
         try:
             du, stresses, step_plastic = increment(number, converged,
                                                    pending[0])
         except (NotConvergedError, StateUpdateError) as err:
-            if successive == max_cuts:
+            if cuts == max_cuts:
                 raise
             increments.append((factor, pending[0], f"cut: {err}"))
             pending.insert(0, 0.5 * (factor + pending[0]))
             cuts += 1
-            successive += 1
             continue
         increments.append((factor, pending[0], "converged"))
         factor = pending.pop(0)
-        successive = 0
         converged, plastic = stresses, step_plastic
         displacement = [u + d for u, d in zip(displacement, du)]
 

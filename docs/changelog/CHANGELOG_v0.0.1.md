@@ -88,8 +88,11 @@ versión, registrando **qué se encontró**.
   divisiones, en el último escalón (cuando la zona plástica crece de 272 a 555 puntos) el residuo
   sube a 2.6 y un iterado intermedio lleva un punto al vértice, que con ψ = 0° no tiene solución.
   Se añadió la partición automática del incremento de de Souza Neto et al. (2008), §5.4.3: el
-  incremento que falla se parte en dos y se reintenta desde el último estado convergido, hasta
-  `max_cuts` particiones sucesivas; el resultado dice cuántas hubo.
+  incremento que falla se parte en dos y se reintenta desde el último estado convergido; el
+  resultado dice cuántas particiones hubo. La primera versión contaba solo las particiones
+  sucesivas, como el texto de §5.4.3, y no terminaba nunca cuando el fallo va ligado a un nivel de
+  carga (cada mitad convergida reinicia la cuenta y el último trozo se parte una y otra vez): una
+  ejecución pasó de una hora. Ahora `max_cuts` cuenta las de toda la fase.
 - **El resultado del Mohr-Coulomb depende del número de escalones**: en la malla gruesa del anillo
   con ψ = 0°, 1, 2 y 4 escalones dan lo mismo a 1e-15, pero 8 y 32 se apartan un 0.31 % y un
   0.17 % en ur(a). Un punto que ya está en el plano y acaba el incremento en la arista recibe una
@@ -97,3 +100,22 @@ versión, registrando **qué se encontró**.
   se fija, como la malla, con un estudio. Lo descubrió un test que comparaba la partición con 16
   escalones iguales y pasaba por coincidencia (los dos terminan con el mismo incremento); se
   rehízo para comprobar lo que es de principio.
+- **D8, la referencia de STR-02**: el propietario decide comparar ur(a) con la solución exacta del
+  modelo (Salençon más la zona de arista), con Salençon como dato informativo y las tolerancias de
+  D3 sin cambiar. Escrita en `comprobaciones/soluciones_cerradas.py` (`salencon_edge_infinite`,
+  `salencon_edge_finite`), con la consistencia comprobada: los dos multiplicadores plásticos salen
+  ≥ 0 en toda la zona plástica, y tienden a cero justo en R0 y en r_e. Los valores del caso 002 se
+  cambiaron antes del estudio de convergencia (commit d9adb26).
+- **Tarea T8, Mohr-Coulomb**: contra la solución con arista el error baja con cada malla (ψ = 0°:
+  70.7 % → 11.0 % → 1.13 %; ψ = 30°: 143.8 % → 52.8 % → 9.45 % → 1.84 % → 0.34 %). Dos pegas del
+  propio test, corregidas: σz se comparaba con la componente polar σθ y no con la principal (con
+  discretización τrθ no es exactamente cero), y la frontera entre arista y plano, como R0, la
+  resuelve la malla dentro de un elemento.
+- **Newton no converge con ψ = 0° en la malla de 16 × 48 del anillo**, y solo en el último
+  escalón: al final de la carga el hueco queda libre, un iterado que se pase pone la pared en
+  tracción, y con ψ = 0° el retorno a la arista conserva la presión media, que puede quedar por
+  encima de la del vértice (c·cot φ): no hay estado admisible. Los escalones anteriores conservan
+  presión en el hueco y convergen. Con particiones, los últimos trozos ya no divergen, pero el
+  residuo oscila entre 1e-3 y 2e-2 (puntos que cambian de región en cada iteración). Usar la
+  tangente del escalón anterior en la primera corrección no lo arregla. Es un límite de robustez
+  de Newton sin búsqueda lineal, que las fuentes no traen.
