@@ -14,7 +14,13 @@ Invariants protected:
   timed ``repeats`` times; the variants are timed one after the other in a
   first round, and the whole round is repeated as the control, in the same
   order (not each variant twice in a row, which would hide a drift of the
-  machine between variants).
+  machine between variants);
+* **the state of the machine decides** (owner, 2026-10-27): the load of the
+  other programs is read from the operating system, every timing carries the
+  CPU share of the process, and a measure is not valid when the others used
+  more than allowed at any sample or a CPU share falls outside [0.95, 1.05];
+  a single-threaded busy loop on this process shows a CPU share near 1, and
+  a sleeping one near 0, which is what the share is meant to see.
 """
 from __future__ import annotations
 
@@ -51,7 +57,8 @@ class TestProtocol:
         calls = {"a": lambda: log.append("a"), "b": lambda: log.append("b")}
         result = benchmark.rounds(calls, {"a": 2, "b": 3})
         assert set(result) == {"a", "b"}
-        assert all(len(v) == 2 and min(v) >= 0.0 for v in result.values())
+        assert all(len(v) == 2 and min(t.seconds for t in v) >= 0.0
+                   for v in result.values())
         round_ = ["a"] * 3 + ["b"] * 4          # warm-up + repeats each
         assert log == round_ + round_
 
@@ -59,4 +66,34 @@ class TestProtocol:
         calls = []
         benchmark.timed(lambda: calls.append(1), 5)
         assert len(calls) == 6                    # one warm-up
-        assert math.isfinite(benchmark.timed(lambda: None, 3))
+        assert math.isfinite(benchmark.timed(lambda: None, 3).seconds)
+
+
+class TestMachineState:
+    def test_the_load_and_the_memory_are_read(self):
+        state = benchmark.machine_state(0.5)
+        assert 0.0 <= state["other_load_percent"] <= 100.0
+        assert state["logical_cores"] >= 1 and state["free_memory_gb"] > 0.0
+
+    def test_the_cpu_share_sees_a_core_taken_away(self):
+        import time
+        busy = benchmark.timed(lambda: sum(i * i for i in range(100_000)), 3)
+        asleep = benchmark.timed(lambda: time.sleep(0.02), 3)
+        assert busy.cpu_share > 0.5            # it had the core most of the time
+        assert asleep.cpu_share < 0.2          # it did not
+
+    def test_the_verdict(self):
+        idle = {"other_load_percent": 2.0, "logical_cores": 8, "free_memory_gb": 8.0}
+        loaded = dict(idle, other_load_percent=48.0)
+        good = {"first": 1.0, "control": 1.0, "cpu_share": [0.99, 1.0]}
+        integration = {"seconds": {"rust": good}, "machine_after": idle}
+        mesh = {"update_seconds": {"rust": good}, "linear_seconds": {"solve": good},
+                "machine_after": idle}
+        assert benchmark.verdict(idle, integration, mesh, 10.0) == []
+        assert benchmark.verdict(loaded, integration, mesh, 10.0)
+        robbed = dict(good, cpu_share=[0.80, 1.0])
+        assert benchmark.verdict(idle, dict(integration, seconds={"rust": robbed}),
+                                 mesh, 10.0)
+        threaded = dict(good, cpu_share=[1.0, 1.9])
+        assert benchmark.verdict(idle, integration,
+                                 dict(mesh, linear_seconds={"solve": threaded}), 10.0)

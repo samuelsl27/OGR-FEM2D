@@ -164,3 +164,12 @@ versión, registrando **qué se encontró**.
   equivalente de NumPy. En la llamada por iteración sobre la malla del caso 002, Rust es unas 200
   veces más rápido que la referencia y unas 10 que NumPy; la factorización (75–94 ms) ya pesa
   más que la llamada de Rust (8 ms).
+- **La primera medida de la T13 no es válida: el equipo estaba cargado** (lo advirtió el
+  propietario). Al comprobarlo, Chrome usaba unos tres núcleos, otros programas uno más, la CPU
+  total iba del 65 % al 99 % y quedaban 2 GB libres de 16; un bucle de prueba solo tenía su núcleo
+  el 93 % del tiempo. Eso explica el 9.5 de una ejecución y el 10.4–12.3 de otra con el mismo
+  código, y las rondas de NumPy que diferían un 12.6 %. Desde ahora `poc/benchmark.py` registra la
+  carga de los demás programas (antes y después de cada bloque, del sistema operativo) y la
+  proporción CPU/reloj de cada medida (por debajo de 1, el sistema le quitó el núcleo; por encima,
+  la librería usó más hilos), dice si la medida es válida y, sin `--force`, no mide con el equipo
+  cargado. El resultado anterior queda en `poc/resultados/` marcado como no válido.

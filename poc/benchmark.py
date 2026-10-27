@@ -17,6 +17,25 @@ variant differ as much as the effect being measured, the measure does not
 decide. Each timing is the median of ``repeats`` calls, after one warm-up
 call.
 
+The state of the machine is part of the measure (the owner's rule, 2026-10-27:
+other programs may be running, or the computer more loaded during one of the
+runs). It is recorded with every result and decides whether the result is
+valid:
+
+* the load of the whole system (busy share of all the logical cores, from
+  the operating system: GetSystemTimes on Windows, /proc/stat on Linux) and
+  the free memory, sampled for a moment before the measure and after each
+  block of it, while the benchmark itself is idle;
+* the CPU share of every timing: the process's CPU time over the wall time of
+  the timed calls. Close to 1 means the process had its core all the time;
+  below 1 the system gave the core to someone else in the middle of the
+  measure; above 1 some library used more than one thread.
+
+A measure is VALID when the other programs used at most ``--max-load`` per
+cent of the machine at every sample, and every CPU share is within
+[0.95, 1.05]. By default the benchmark refuses to start on a loaded machine
+(``--force`` measures anyway, and the result says it is not valid).
+
 One thread for everyone: the Rust variant runs in one thread (spec 001,
 "Fuera de alcance"), so the thread pools of NumPy's libraries are limited to
 one before NumPy is imported.
@@ -45,6 +64,7 @@ for _name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(_name, "1")
 
 import argparse  # noqa: E402
+import ctypes  # noqa: E402
 import datetime  # noqa: E402
 import json  # noqa: E402
 import math  # noqa: E402
@@ -52,6 +72,7 @@ import platform  # noqa: E402
 import statistics  # noqa: E402
 import sys  # noqa: E402
 import time  # noqa: E402
+from dataclasses import dataclass  # noqa: E402
 from pathlib import Path  # noqa: E402
 
 import numpy as np  # noqa: E402
@@ -130,23 +151,93 @@ def point_geometry(materials) -> interface.Geometry:
                               np.zeros(n, np.int64), np.zeros((n, 2)), materials)
 
 
-def timed(call, repeats: int) -> float:
-    """Median seconds of ``repeats`` calls, after one warm-up call."""
+# ------------------------------------------------- the state of the machine
+def _system_times():
+    """(idle, total) CPU times of the whole machine, all cores, or None
+    where the platform has no way known here."""
+    if sys.platform == "win32":
+        idle, kernel, user = (ctypes.c_ulonglong(), ctypes.c_ulonglong(),
+                              ctypes.c_ulonglong())
+        # kernel time includes the idle time (GetSystemTimes, Win32 API)
+        if ctypes.windll.kernel32.GetSystemTimes(ctypes.byref(idle), ctypes.byref(kernel),
+                                                 ctypes.byref(user)):
+            return float(idle.value), float(kernel.value + user.value)
+        return None
+    stat = Path("/proc/stat")
+    if stat.exists():
+        fields = [float(x) for x in stat.read_text().split("\n")[0].split()[1:]]
+        return fields[3] + fields[4], sum(fields)         # idle + iowait, total
+    return None
+
+
+def _free_memory_gb():
+    if sys.platform == "win32":
+        class Status(ctypes.Structure):
+            _fields_ = [("length", ctypes.c_ulong), ("load", ctypes.c_ulong),
+                        ("total", ctypes.c_ulonglong), ("available", ctypes.c_ulonglong),
+                        ("page_total", ctypes.c_ulonglong), ("page_free", ctypes.c_ulonglong),
+                        ("virtual_total", ctypes.c_ulonglong),
+                        ("virtual_free", ctypes.c_ulonglong), ("extended", ctypes.c_ulonglong)]
+        status = Status()
+        status.length = ctypes.sizeof(Status)
+        if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+            return status.available / 2 ** 30
+        return None
+    try:
+        for line in Path("/proc/meminfo").read_text().splitlines():
+            if line.startswith("MemAvailable:"):
+                return float(line.split()[1]) / 2 ** 20
+    except OSError:
+        pass
+    return None
+
+
+def machine_state(seconds: float = 2.0) -> dict:
+    """Busy share of the whole machine over ``seconds`` while this process
+    waits (so it is the load of the OTHER programs), and the free memory."""
+    before = _system_times()
+    time.sleep(seconds)
+    after = _system_times()
+    busy = None
+    if before and after and after[1] > before[1]:
+        busy = 100.0 * (1.0 - (after[0] - before[0]) / (after[1] - before[1]))
+    return {"other_load_percent": busy, "logical_cores": os.cpu_count(),
+            "free_memory_gb": _free_memory_gb()}
+
+
+@dataclass(frozen=True)
+class Timing:
+    """Median wall time of the calls, and the CPU share of the process over
+    all of them (CPU time / wall time)."""
+    seconds: float
+    cpu_share: float
+
+
+def timed(call, repeats: int) -> Timing:
+    """``repeats`` calls after one warm-up call."""
     call()
     times = []
+    cpu_0, wall_0 = time.process_time(), time.perf_counter()
     for _ in range(repeats):
         t = time.perf_counter()
         call()
         times.append(time.perf_counter() - t)
-    return statistics.median(times)
+    cpu, wall = time.process_time() - cpu_0, time.perf_counter() - wall_0
+    return Timing(statistics.median(times), cpu / wall if wall > 0 else float("nan"))
 
 
 def rounds(calls: dict, repeats: dict) -> dict:
     """The A/B of the suite: every call timed one after the other, then the
-    whole round again as the control. name -> (first, control) seconds."""
+    whole round again as the control. name -> (first, control) Timing."""
     first = {name: timed(call, repeats[name]) for name, call in calls.items()}
     control = {name: timed(call, repeats[name]) for name, call in calls.items()}
     return {name: (first[name], control[name]) for name in calls}
+
+
+def _entry(pair) -> dict:
+    a, b = pair
+    return {"first": a.seconds, "control": b.seconds,
+            "cpu_share": [a.cpu_share, b.cpu_share]}
 
 
 def _variants():
@@ -164,7 +255,8 @@ def measure_integration(n: int, repeats: int) -> dict:
     result = rounds(calls, reps)
     counts = {r: regions.count(r) for r in PROPORTIONS}
     return {"points": n, "regions": counts, "repeats": reps,
-            "seconds": {k: {"first": a, "control": b} for k, (a, b) in result.items()}}
+            "seconds": {k: _entry(v) for k, v in result.items()},
+            "machine_after": machine_state()}
 
 
 def _case_002_state():
@@ -218,8 +310,9 @@ def measure_mesh(repeats: int) -> dict:
     plastic = int(np.count_nonzero(up.plastic))
     return {"elements": len(model.elements), "points": len(points), "dofs": len(free),
             "plastic_points": plastic, "repeats": reps,
-            "update_seconds": {k_: {"first": a, "control": b} for k_, (a, b) in update.items()},
-            "linear_seconds": {k_: {"first": a, "control": b} for k_, (a, b) in linear.items()}}
+            "update_seconds": {k_: _entry(v) for k_, v in update.items()},
+            "linear_seconds": {k_: _entry(v) for k_, v in linear.items()},
+            "machine_after": machine_state()}
 
 
 def _spread(entry) -> float:
@@ -227,24 +320,65 @@ def _spread(entry) -> float:
     return abs(a - b) / min(a, b)
 
 
-def report(integration: dict, mesh: dict) -> str:
+CPU_SHARE = (0.95, 1.05)
+
+
+def verdict(before: dict, integration: dict, mesh: dict, max_load: float) -> list[str]:
+    """Why the measure is not valid; empty when it is."""
+    reasons = []
+    for where, state in (("before", before), ("after the integration", integration["machine_after"]),
+                         ("after the mesh", mesh["machine_after"])):
+        load = state["other_load_percent"]
+        if load is None:
+            reasons.append(f"the load of the machine {where} could not be read")
+        elif load > max_load:
+            reasons.append(f"other programs used {load:.0f} % of the machine {where} "
+                           f"(at most {max_load:.0f} %)")
+    for block, entries in (("integration", integration["seconds"]),
+                           ("update", mesh["update_seconds"]), ("linear", mesh["linear_seconds"])):
+        for name, e in entries.items():
+            for share in e["cpu_share"]:
+                if not CPU_SHARE[0] <= share <= CPU_SHARE[1]:
+                    reasons.append(f"{block} {name}: CPU share {share:.2f} outside {CPU_SHARE}")
+    return reasons
+
+
+def _state_line(label: str, state: dict) -> str:
+    load = state["other_load_percent"]
+    memory = state["free_memory_gb"]
+    return (f"Machine {label}: other programs {'?' if load is None else f'{load:.0f}'} % of "
+            f"{state['logical_cores']} logical cores, "
+            f"{'?' if memory is None else f'{memory:.1f}'} GB free")
+
+
+def report(integration: dict, mesh: dict, before: dict | None = None,
+           reasons: list[str] | None = None) -> str:
     lines = []
+    if before is not None:
+        lines.append(_state_line("before", before))
     sec = integration["seconds"]
     n = integration["points"]
     lines.append(f"Constitutive integration, {n} points {integration['regions']}")
     for name in ("reference", "numpy", "rust"):
         a, b = sec[name]["first"], sec[name]["control"]
+        share = "/".join(f"{x:.2f}" for x in sec[name]["cpu_share"])
         lines.append(f"  {name:9s} {a * 1e3:10.2f} ms  control {b * 1e3:10.2f} ms  "
-                     f"({a / n * 1e9:8.1f} ns/point, rounds differ {_spread(sec[name]) * 100:.1f} %)")
+                     f"({a / n * 1e9:8.1f} ns/point, rounds differ {_spread(sec[name]) * 100:.1f} %, "
+                     f"CPU share {share})")
     ratio = [sec["numpy"][k] / sec["rust"][k] for k in ("first", "control")]
     lines.append(f"  NumPy / Rust = {ratio[0]:.1f} (control {ratio[1]:.1f}); "
                  f"criterion 5 asks >= 10")
+    lines.append(_state_line("after the integration", integration["machine_after"]))
     lines.append(f"Mesh of case 002 (psi = 30), {mesh['elements']} elements, "
                  f"{mesh['points']} points ({mesh['plastic_points']} plastic), {mesh['dofs']} dofs")
     for name, e in mesh["update_seconds"].items():
         lines.append(f"  update {name:9s} {e['first'] * 1e3:10.2f} ms  control {e['control'] * 1e3:10.2f} ms")
     for name, e in mesh["linear_seconds"].items():
         lines.append(f"  {name:16s} {e['first'] * 1e3:10.2f} ms  control {e['control'] * 1e3:10.2f} ms")
+    lines.append(_state_line("after the mesh", mesh["machine_after"]))
+    if reasons is not None:
+        lines.append("VALID MEASURE" if not reasons else
+                     "NOT A VALID MEASURE: " + "; ".join(reasons))
     return "\n".join(lines)
 
 
@@ -253,10 +387,22 @@ def main(argv=None) -> int:
     parser.add_argument("--points", type=int, default=100_000)
     parser.add_argument("--repeats", type=int, default=9)
     parser.add_argument("--out", type=Path, default=ROOT / "poc" / "resultados")
+    parser.add_argument("--max-load", type=float, default=10.0,
+                        help="per cent of the machine the other programs may use")
+    parser.add_argument("--force", action="store_true",
+                        help="measure on a loaded machine (the result says it is not valid)")
     args = parser.parse_args(argv)
+    before = machine_state(3.0)
+    print(_state_line("before", before))
+    load = before["other_load_percent"]
+    if (load is None or load > args.max_load) and not args.force:
+        print(f"The machine is not idle (at most {args.max_load:.0f} % allowed): close what "
+              "is running, or measure with --force and get a result marked not valid.")
+        return 3
     integration = measure_integration(args.points, args.repeats)
     mesh = measure_mesh(args.repeats)
-    text = report(integration, mesh)
+    reasons = verdict(before, integration, mesh, args.max_load)
+    text = report(integration, mesh, before, reasons)
     print(text)
     record = {"date": datetime.datetime.now().isoformat(timespec="seconds"),
               "machine": {"platform": platform.platform(), "processor": platform.processor(),
@@ -265,6 +411,8 @@ def main(argv=None) -> int:
                           "threads": {k: os.environ.get(k) for k in
                                       ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")}},
               "seed": SEED, "proportions": PROPORTIONS,
+              "machine_before": before, "max_load_percent": args.max_load,
+              "valid": not reasons, "not_valid_because": reasons,
               "integration": integration, "mesh": mesh}
     args.out.mkdir(parents=True, exist_ok=True)
     stamp = datetime.date.today().isoformat()
