@@ -121,9 +121,18 @@ tarea: es un deseo.
 
 ## Medidas y distribución
 
-- [ ] T13. Conjunto de medida con semilla (regiones elástica, plano, arista, vértice) y
+- [x] T13. Conjunto de medida con semilla (regiones elástica, plano, arista, vértice) y
       `poc/benchmark.py` con A/B en el mismo proceso — RF-8 — Hecho cuando: las tres variantes
-      medidas con sus controles; la razón Rust/NumPy anotada (criterio 5)
+      medidas con sus controles; la razón Rust/NumPy anotada (criterio 5). (Hecho: conjunto de
+      100 000 puntos de Mohr-Coulomb, ψ = 0°, 15° y 30°, con 40 % elástico, 30 % plano, 10 % cada
+      arista y 10 % vértice, la región decidida por la referencia; A/B en el mismo proceso, una
+      ronda y la ronda de control; un hilo para todos. Resultado en
+      `poc/resultados/benchmark_2026-10-27.*`. Integración constitutiva: referencia 166 µs/punto,
+      NumPy 4.9 µs/punto, Rust 0.52 µs/punto; **NumPy / Rust = 9.5 (control 8.6)**. Llamada por
+      iteración en la malla del caso 002: 1.6 s, 85 ms y 7.6–9.2 ms; ensamblaje 40 ms,
+      factorización 75–94 ms, solución 3 ms. **Criterio 5 al borde y sin decidir**: en otra
+      ejecución el mismo código dio 10.4–12.3, y las rondas de NumPy difieren hasta un 12.6 %;
+      ver el changelog.)
 - [ ] T14. CI de ruedas con `maturin-action` en Windows, macOS ARM y Linux, con los casos — RF-9 —
       Hecho cuando: verde en las tres (criterio 3, primera parte)
 - [ ] T15. Congelado con PyInstaller y comprobación del ejecutable — RF-10 — Hecho cuando: el

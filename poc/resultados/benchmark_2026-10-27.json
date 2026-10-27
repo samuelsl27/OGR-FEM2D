@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-27T19:04:40",
+  "machine": {
+    "platform": "Windows-11-10.0.26300-SP0",
+    "processor": "Intel64 Family 6 Model 142 Stepping 10, GenuineIntel",
+    "python": "3.14.7",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1"
+    }
+  },
+  "seed": 2026,
+  "proportions": {
+    "elastic": 0.4,
+    "plane": 0.3,
+    "right edge": 0.1,
+    "left edge": 0.1,
+    "apex": 0.1
+  },
+  "integration": {
+    "points": 100000,
+    "regions": {
+      "elastic": 40000,
+      "plane": 30000,
+      "right edge": 10000,
+      "left edge": 10000,
+      "apex": 10000
+    },
+    "repeats": {
+      "reference": 3,
+      "numpy": 9,
+      "rust": 9
+    },
+    "seconds": {
+      "reference": {
+        "first": 16.59844410000369,
+        "control": 15.816403200151399
+      },
+      "numpy": {
+        "first": 0.49368089996278286,
+        "control": 0.4383646999485791
+      },
+      "rust": {
+        "first": 0.052055199863389134,
+        "control": 0.05093669984489679
+      }
+    }
+  },
+  "mesh": {
+    "elements": 2048,
+    "points": 6144,
+    "dofs": 8192,
+    "plastic_points": 592,
+    "repeats": {
+      "reference": 3,
+      "numpy": 9,
+      "rust": 9
+    },
+    "update_seconds": {
+      "reference": {
+        "first": 1.617928600171581,
+        "control": 1.5994381001219153
+      },
+      "numpy": {
+        "first": 0.08552390011027455,
+        "control": 0.08482580003328621
+      },
+      "rust": {
+        "first": 0.007563299965113401,
+        "control": 0.009200100088492036
+      }
+    },
+    "linear_seconds": {
+      "assembly": {
+        "first": 0.04200170002877712,
+        "control": 0.0398955000564456
+      },
+      "factorisation": {
+        "first": 0.07548659993335605,
+        "control": 0.09407049999572337
+      },
+      "solve": {
+        "first": 0.0030466997995972633,
+        "control": 0.003648000070825219
+      }
+    }
+  }
+}

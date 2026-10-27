@@ -149,3 +149,18 @@ versión, registrando **qué se encontró**.
   módulo compilado viejo se compararía en lugar del código actual, un test exige que no sea más
   viejo que `rust/src`. La crate `ndarray` aprobada en D6 no hizo falta declararla: llega con
   `numpy`, en la versión que este exige.
+- **Tarea T13, la medida (criterio 5 del ADR-0001)**: con 100 000 puntos y la proporción de
+  regiones fijada, NumPy / Rust = **9.5 (control 8.6)** en la integración constitutiva, por debajo
+  del ×10. Pero la medida no decide: en otra ejecución, en el mismo proceso, el mismo código dio
+  10.4–12.3, y las rondas de NumPy difieren entre sí hasta un 12.6 %; la máquina deriva entre
+  ejecuciones, como avisa el método de la suite, y el resultado está justo en el umbral.
+  **Omisión mía**: el plan pedía revisar las variantes antes de medir, y no revisé la de Rust.
+  Su envoltura reserva memoria por punto en el bucle caliente (`materials.row(p).to_vec()`, y tres
+  vectores más por punto en `update`), y por eso pasa de 0.29 µs/punto con 2000 puntos a
+  0.52 µs/punto con 100 000. Quitar solo la de `integrate`, en una copia fuera del repositorio,
+  da los mismos resultados bit a bit y 31–32 ms frente a 37–41 ms del código subido (razón
+  13.4–14.6 en ese proceso). No se ha aplicado: optimizar una variante después de ver que no
+  llega al umbral sesgaría la medida; queda para decisión del propietario, junto con la revisión
+  equivalente de NumPy. En la llamada por iteración sobre la malla del caso 002, Rust es unas 200
+  veces más rápido que la referencia y unas 10 que NumPy; la factorización (75–94 ms) ya pesa
+  más que la llamada de Rust (8 ms).

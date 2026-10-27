@@ -1,0 +1,12 @@
+Constitutive integration, 100000 points {'elastic': 40000, 'plane': 30000, 'right edge': 10000, 'left edge': 10000, 'apex': 10000}
+  reference   16598.44 ms  control   15816.40 ms  (165984.4 ns/point, rounds differ 4.9 %)
+  numpy         493.68 ms  control     438.36 ms  (  4936.8 ns/point, rounds differ 12.6 %)
+  rust           52.06 ms  control      50.94 ms  (   520.6 ns/point, rounds differ 2.2 %)
+  NumPy / Rust = 9.5 (control 8.6); criterion 5 asks >= 10
+Mesh of case 002 (psi = 30), 2048 elements, 6144 points (592 plastic), 8192 dofs
+  update reference    1617.93 ms  control    1599.44 ms
+  update numpy          85.52 ms  control      84.83 ms
+  update rust            7.56 ms  control       9.20 ms
+  assembly              42.00 ms  control      39.90 ms
+  factorisation         75.49 ms  control      94.07 ms
+  solve                  3.05 ms  control       3.65 ms
