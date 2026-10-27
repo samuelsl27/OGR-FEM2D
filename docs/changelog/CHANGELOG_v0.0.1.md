@@ -51,4 +51,16 @@ versión, registrando **qué se encontró**.
     (±10 % con ψ = 0° y −35/+56 % con ψ = 30° en la de 4 × 12, donde la zona plástica ocupa uno o
     dos elementos); con la de 8 × 24 y ψ = 0° baja a +0.4/+2.2 %. Es error de discretización que
     baja con la malla, no un defecto visto hasta ahora, pero obliga a mallas finas cerca del hueco.
+  - con diagonales alternas (prueba aparte, no en el código) la dispersión del Mohr-Coulomb se
+    ordena: los nudos intermedios del hueco salen bien (−1.9 % y +0.3 % en la malla de 4 × 12) y
+    son las esquinas las que oscilan (hasta −22/+30 % con ψ = 30°). En todos los puntos plásticos
+    σz es la intermedia y f = 0 a 1e-12: el material hace lo que debe. La firma es la de un
+    bloqueo del T6 por la restricción del flujo plástico; está por respaldar con una fuente.
+- **Tarea T8, parte elástica**: el anillo de 21 m contra `lame_fixed_outer` converge limpio, con
+  orden ≈ 2.9 en ur y 1.5–1.9 en σθ en los puntos de integración del hueco (Zienkiewicz y Taylor
+  2000, §14.1, dan O(h²) para las tensiones del elemento cuadrático). Con gradación √g y el doble
+  de divisiones, las mallas quedan anidadas.
+- **Tarea T9, caso 001 (Kirsch, 100 m)**: tolerancias escritas antes del estudio (commit
+  962f504); la malla de 8 × 32 divisiones es la primera que cumple el 0.5 % de D3 en el peor
+  punto (0.19 % en ur(a) y en σθ(a)); la de 4 × 16 se queda en 1.34 % y 0.59 %.
 

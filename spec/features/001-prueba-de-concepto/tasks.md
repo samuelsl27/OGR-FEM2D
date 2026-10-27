@@ -57,12 +57,20 @@ tarea: es un deseo.
       rigidez inicial converge muy despacio en Mohr-Coulomb y empeora al refinar; ver el changelog.)
 - [ ] T8. Identidad del anillo de 21 m (D3 bis): elástico contra `lame_fixed_outer` y Mohr-Coulomb
       (ψ = 0° y 30°) contra `salencon_finite`, con tres mallas — Hecho cuando: el error baja con
-      cada refinamiento y la tasa queda anotada
+      cada refinamiento y la tasa queda anotada. (Parte elástica hecha:
+      `tests/test_ring_identity_v001.py`, tres mallas anidadas que dividen h por dos; el error
+      máximo en ur(a) baja 11.0 % → 1.53 % → 0.201 % (→ 0.026 % con una cuarta), orden ≈ 2.9; en
+      σθ(a), orden 1.5–1.9; en el campo de ur, igual que en ur(a). La parte de Mohr-Coulomb espera
+      la decisión del propietario sobre las iteraciones, hallazgo de la T7.)
 - [ ] T9. Casos `001-kirsch-hueco-elastico` y `002-salencon-hueco-mohr-coulomb` (ψ = 0° y 30°),
       con el contorno a 100 m: las tolerancias de D3 (0.5 % y 2 %) escritas en `esperado.json`
       **antes** del estudio de convergencia, que elige la malla que las cumple; y la comprobación
       de que σz es la principal intermedia en los puntos plastificados — Hecho cuando: los tres
-      pasan con esa malla, o el incumplimiento queda reportado como hallazgo
+      pasan con esa malla, o el incumplimiento queda reportado como hallazgo. (Caso 001 hecho:
+      tolerancias en `esperado.json` antes del estudio (commit 962f504), malla 8 × 32 con
+      crecimiento 1.69^¼, peor error 0.19 % en ur(a) y en σθ(a); `tests/test_validation_cases_v001.py`
+      recorre los casos y declara los pendientes. Caso 002 escrito con sus tolerancias, pendiente
+      de la decisión sobre las iteraciones.)
 
 ## Las otras dos variantes
 

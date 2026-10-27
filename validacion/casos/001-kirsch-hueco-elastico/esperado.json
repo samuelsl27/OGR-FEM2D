@@ -17,7 +17,9 @@
     "material": {"ley": "elastica", "E": 10000.0, "nu": 0.2, "unidad": "MPa"},
     "tension_inicial": {"p0": 30.0, "unidad": "MPa", "convenio": "compresion positiva, hidrostatica en las tres direcciones"},
     "fase": {"escalones": 1, "tolerancia": 1e-10, "iteraciones_max": 5},
-    "malla": null
+    "malla": {"generador": "ogr_fem2d.engine.mesh_radial.quarter_annulus", "elemento": "T6",
+              "n_radial": 32, "n_theta": 8, "crecimiento": 1.140175425099138,
+              "estudio": "1.69^(1/4); familia anidada 2x8, 4x16, 8x32, 16x64 con crecimiento 1.69^(1/2^k): error max. en u_r(a) 10.3 %, 1.34 %, 0.189 %, 0.047 %; en sigma_theta(a) 2.71 %, 0.587 %, 0.194 %, 0.048 %. La de 8x32 es la primera que cumple las dos tolerancias"}
   },
-  "notas": "Tolerancias de la spec 001, D3, escritas antes del estudio de convergencia. La malla (cuarto de corona de T6, ogr_fem2d.engine.mesh_radial) la fija ese estudio: hasta entonces, null."
+  "notas": "Tolerancias de la spec 001, D3, escritas antes del estudio de convergencia (commit en el que aparece este archivo con la malla a null). La malla la fijó después ese estudio (regla 9: cambiar la malla es cambiar el caso)."
 }
