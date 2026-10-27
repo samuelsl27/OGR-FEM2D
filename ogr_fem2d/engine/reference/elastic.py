@@ -22,6 +22,15 @@ Author: Samuel Sáez López (UPCT)
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Elastic:
+    """Material: Young's modulus E and Poisson's ratio nu."""
+    young: float
+    poisson: float
+
 
 def plane_strain_matrix(young: float, poisson: float) -> list[list[float]]:
     """The 3x3 matrix D of Eq. (4.16), on (eps_x, eps_y, gamma_xy)."""

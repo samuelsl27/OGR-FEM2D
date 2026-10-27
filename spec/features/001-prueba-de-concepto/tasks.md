@@ -44,8 +44,17 @@ tarea: es un deseo.
       cuadratura coincide a 1e-16 con la cuadratura de la parábola de Arquímedes, y la diferencia
       con π(b² − a²)/4 baja como Δθ⁴; det J > 0 en nudos y puntos de integración; 8 tests, que
       cazan seis errores introducidos a propósito.)
-- [ ] T7. Escalones, iteraciones con rigidez inicial e historia de convergencia — RF-5, RF-6 —
-      Hecho cuando: la no convergencia se detecta y se informa en un test
+- [x] T7. Escalones, iteraciones con rigidez inicial e historia de convergencia — RF-5, RF-6 —
+      Hecho cuando: la no convergencia se detecta y se informa en un test. (Hecho:
+      `ogr_fem2d/engine/reference/solver.py`, de Souza Neto et al. (2008), §4.2, Box 4.1 y 4.2,
+      ecs. (4.60)–(4.77), Newton modificado con la rigidez inicial (§4.2.6); la carga de la
+      excavación es el término de tensión inicial de la ec. (2.13b) de Zienkiewicz y Taylor (2000).
+      Cargas en totales (D2). El residuo se divide por la norma de la carga de la fase, no por
+      ‖f_ext‖ como en la (4.77), que al final de una excavación es cero. `update_points` es la
+      llamada por iteración global que sustituirá Rust. 9 tests, que cazan cinco errores
+      introducidos a propósito; una sexta mutación sobrevivió (acumular «plastificó alguna vez») y
+      ese código se quitó (regla 7). **Hallazgo, pendiente de decisión del propietario**: la
+      rigidez inicial converge muy despacio en Mohr-Coulomb y empeora al refinar; ver el changelog.)
 - [ ] T8. Identidad del anillo de 21 m (D3 bis): elástico contra `lame_fixed_outer` y Mohr-Coulomb
       (ψ = 0° y 30°) contra `salencon_finite`, con tres mallas — Hecho cuando: el error baja con
       cada refinamiento y la tasa queda anotada

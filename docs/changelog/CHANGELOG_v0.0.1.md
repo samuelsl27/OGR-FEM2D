@@ -32,3 +32,23 @@ versión, registrando **qué se encontró**.
   nada), y se añadió el invariante que define la construcción: en polares, cada nudo intermedio es
   la media de sus esquinas. Con la diagonal recta, la malla de una sola división angular sale con
   un elemento degenerado; la construcción polar lo evita.
+- **Tarea T7, los escalones y las iteraciones**:
+  - la (4.77) de de Souza Neto et al. (2008) divide el residuo por ‖f_ext‖, que al final de una
+    excavación es cero (el hueco queda libre): se divide por la norma de la carga de la fase, el
+    término de tensión inicial de la (2.13b) de Zienkiewicz y Taylor (2000);
+  - la identidad de la carga de la excavación (resultante P0·a sobre el arco del hueco) falló la
+    primera vez por una cuenta incompleta del test, no del código: los nudos extremos del hueco
+    reciben además la parte del lado radial del eje en el que están, P0·(r1 − a)/6;
+  - **la rigidez inicial converge muy despacio en Mohr-Coulomb, y empeora al refinar la malla**
+    (anillo de 21 m, cinco escalones, tolerancia 1e-8; factor de reducción del residuo por
+    iteración en el último escalón): con ψ = 0°, 0.965 en la malla de 4 × 12 divisiones (521
+    iteraciones) y 0.9966 en la de 8 × 24 (4873 iteraciones, 141 s en Python); con ψ = 30°, 0.996
+    ya en la de 4 × 12 (4170 iteraciones). Con un factor tan cerca de 1, además, un residuo pequeño
+    no asegura un desplazamiento preciso (el error en u va como r/(1 − ρ)). Con mallas de la
+    finura que piden las tolerancias de D3, el oráculo en Python tardaría decenas de minutos por
+    caso. **Pendiente de decisión del propietario** (cambia el plan, «Iteraciones»);
+  - con mallas gruesas el Mohr-Coulomb da mucha dispersión en ur(a) entre nudos vecinos del hueco
+    (±10 % con ψ = 0° y −35/+56 % con ψ = 30° en la de 4 × 12, donde la zona plástica ocupa uno o
+    dos elementos); con la de 8 × 24 y ψ = 0° baja a +0.4/+2.2 %. Es error de discretización que
+    baja con la malla, no un defecto visto hasta ahora, pero obliga a mallas finas cerca del hueco.
+
