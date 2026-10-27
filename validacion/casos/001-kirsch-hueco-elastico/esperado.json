@@ -1,0 +1,23 @@
+{
+  "id": "001-kirsch-hueco-elastico",
+  "ficha": "VER-STR-01",
+  "fuente": "Kirsch (1898), en Jaeger, Cook y Zimmerman (2007), Fundamentals of Rock Mechanics, 4.ª ed., §8.4, ecs. (8.90)-(8.92), págs. 216-218",
+  "tipo_referencia": "analitica",
+  "tolerancia_relativa": 0.005,
+  "comparaciones": [
+    {"magnitud": "sigma_theta", "donde": {"tipo": "puntos_de_integracion", "r": 1.0},
+     "valor": 60.0, "unidad": "MPa", "convenio": "compresion positiva",
+     "como": "el mayor error de todos los puntos de integración sobre r = a"},
+    {"magnitud": "u_r", "donde": {"tipo": "nudos", "r": 1.0},
+     "valor": 0.0036, "unidad": "m", "convenio": "hacia el centro positivo",
+     "como": "el mayor error de todos los nudos sobre r = a"}
+  ],
+  "modelo": {
+    "geometria": {"a": 1.0, "b": 100.0, "unidad": "m"},
+    "material": {"ley": "elastica", "E": 10000.0, "nu": 0.2, "unidad": "MPa"},
+    "tension_inicial": {"p0": 30.0, "unidad": "MPa", "convenio": "compresion positiva, hidrostatica en las tres direcciones"},
+    "fase": {"escalones": 1, "tolerancia": 1e-10, "iteraciones_max": 5},
+    "malla": null
+  },
+  "notas": "Tolerancias de la spec 001, D3, escritas antes del estudio de convergencia. La malla (cuarto de corona de T6, ogr_fem2d.engine.mesh_radial) la fija ese estudio: hasta entonces, null."
+}
