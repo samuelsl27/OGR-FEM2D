@@ -33,7 +33,7 @@ iteración por escalón; el bucle es el mismo que con Mohr-Coulomb.
 | `ogr_fem2d/engine/analysis.py` (nuevo, T6) | resuelve un `EngineModel` fase a fase: totales a incrementos, eje (D1 bis), restricciones insuficientes, reacciones por nudo | RF-5, RF-9 |
 | `ogr_fem2d/engine/interface.py`, `compiled.py` | la interfaz admite T3/T6 y los dos tipos de análisis | RF-10 |
 | `ogr_fem2d/engine/mesh_structured.py` (nuevo) | rectángulo graduado de T3 o T6 para los tests y STR-04 (no es el generador de la spec 003) | — |
-| `ogr_fem2d/engine/mesh_radial.py` | opción T3 | — |
+| `ogr_fem2d/engine/mesh_radial.py` | opción T3 (cada T6 partido en cuatro T3 sobre los mismos nudos) | — |
 | `rust/src/{t3.rs, t6.rs, elastic.rs, lib.rs}` | gemelos de la referencia | RF-10 |
 | `validacion/casos/003-cavidad-esferica-elastica/`, `004-carga-en-faja-elastica/` | `caso.md`, `esperado.json` | — |
 | `tests/test_*_v002.py` | ver «Estrategia de pruebas» | todos |

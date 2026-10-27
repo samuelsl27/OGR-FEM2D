@@ -85,3 +85,6 @@
   excavación sale sola del desequilibrio de las tensiones que quedan (Z&T ec. 2.13b). **Decisión
   de diseño**: un elemento que vuelve a activarse (construcción, relleno) se rechaza hasta que
   una spec defina su estado al volver; no se adivina.
+- **Tarea T10, las mallas de prueba** (`mesh_structured.py`; T3 en `mesh_radial.py`): un nudo
+  intermedio fuera del centro de su lado recto no lo cazaba ningún test, porque el área y un
+  campo lineal siguen saliendo exactos; se añadió la comprobación del punto medio.

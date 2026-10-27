@@ -44,19 +44,9 @@ E, NU, P0 = 10000.0, 0.2, 30.0
 ROCK = m.Material(Elastic(E, NU))
 
 
-def to_t3(mesh_elements):
-    """Each six-node triangle as four three-node ones (corners and mid-side
-    nodes), anticlockwise: same nodes, a three-node mesh."""
-    out = []
-    for a, b, c, ab, bc, ca in mesh_elements:
-        out += [(a, ab, ca), (ab, b, bc), (ca, bc, c), (ab, bc, ca)]
-    return out
-
-
 def annulus(a, n_radial, six, b=5.5, n_theta=4):
-    mesh = quarter_annulus(a, b, n_radial, n_theta, 1.0)
-    elements = [tuple(e) for e in mesh.elements] if six else to_t3(mesh.elements)
-    return mesh, elements
+    mesh = quarter_annulus(a, b, n_radial, n_theta, 1.0, 6 if six else 3)
+    return mesh, [tuple(e) for e in mesh.elements]
 
 
 def restraints(mesh):

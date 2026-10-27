@@ -24,6 +24,12 @@ mid-side, is then placed at the EXACT image (r cos theta, r sin theta) of its
 The nodes are, in this way, the points of the grid with half the spacing,
 (2 n_radial + 1) x (2 n_theta + 1) of them, and every one of them is used.
 
+Three-node triangles (spec 002, T10): each six-node triangle is cut into
+four by its mid-side nodes, (1, 4, 6), (4, 2, 5), (6, 5, 3) and (4, 5, 6) in
+the node order of element_t6, all anticlockwise. The nodes are the same, so a
+three-node and a six-node mesh of the same parameters can be compared node
+by node; the sides on the circles are then chords between nodes on them.
+
 Radial grading: the size of consecutive radial divisions grows by the factor
 ``growth``, dr_(i+1) = growth dr_i (a geometric progression; growth = 1 is a
 uniform mesh). Small elements at the hole, where the stress gradient is.
@@ -47,8 +53,9 @@ class RadialMesh:
     #: (x, y) of each node.
     nodes: list[tuple[float, float]]
     #: Six node numbers per element, in the order of element_t6: corners
-    #: 1, 2, 3 counter-clockwise, then mid-sides 4 (1-2), 5 (2-3), 6 (3-1).
-    elements: list[tuple[int, int, int, int, int, int]]
+    #: 1, 2, 3 counter-clockwise, then mid-sides 4 (1-2), 5 (2-3), 6 (3-1);
+    #: or three, counter-clockwise, with nodes_per_element = 3.
+    elements: list[tuple[int, ...]]
     #: Node numbers on r = a, on r = b, on theta = 0 (the x axis) and on
     #: theta = 90 degrees (the y axis), each in increasing theta or r.
     hole: list[int]
@@ -89,11 +96,21 @@ def _point(r: float, k: int, n_half: int) -> tuple[float, float]:
     return (r * math.cos(theta), r * math.sin(theta))
 
 
+def split_into_three_node(elements: list[tuple[int, ...]]) -> list[tuple[int, int, int]]:
+    """Each six-node triangle as four three-node ones on the same nodes."""
+    out = []
+    for n1, n2, n3, n4, n5, n6 in elements:
+        out += [(n1, n4, n6), (n4, n2, n5), (n6, n5, n3), (n4, n5, n6)]
+    return out
+
+
 def quarter_annulus(a: float, b: float, n_radial: int, n_theta: int,
-                    growth: float = 1.0) -> RadialMesh:
+                    growth: float = 1.0, nodes_per_element: int = 6) -> RadialMesh:
     """The mesh described in the module docstring."""
     if n_theta < 1:
         raise ValueError("need n_theta >= 1")
+    if nodes_per_element not in (3, 6):
+        raise ValueError("three or six nodes per element")
     radii = graded_radii(a, b, n_radial, growth)
     # Radii of the half-spacing grid: corners at even i, mid-points at odd i.
     half_r = []
@@ -122,6 +139,8 @@ def quarter_annulus(a: float, b: float, n_radial: int, n_theta: int,
                         for p, q in ((p1, p2), (p2, p3), (p3, p1))]
                 elements.append(tuple(number(*p) for p in (p1, p2, p3, *mids)))
 
+    if nodes_per_element == 3:
+        elements = split_into_three_node(elements)
     last = 2 * n_radial
     return RadialMesh(
         nodes=nodes, elements=elements,

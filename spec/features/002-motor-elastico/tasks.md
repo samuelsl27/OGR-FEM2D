@@ -134,8 +134,17 @@ changelog al día, la suite entera en verde, commit y push.
 
 ## Casos
 
-- [ ] T10. Mallas estructuradas de prueba (rectángulo graduado T3/T6; cuarto de corona T3) —
-      Hecho cuando: área exacta y ningún elemento degenerado.
+- [x] T10. Mallas estructuradas de prueba (rectángulo graduado T3/T6; cuarto de corona T3) —
+      Hecho cuando: área exacta y ningún elemento degenerado. (Hecho el 2026-10-27:
+      `ogr_fem2d/engine/mesh_structured.py`, rectángulo sobre líneas de rejilla dadas, con
+      `graded` para progresiones geométricas, diagonales «up», «down» o alternas, y las listas de
+      nudos y de lados de cada contorno para las condiciones y las cargas; `mesh_radial.quarter_annulus`
+      gana `nodes_per_element=3`, que parte cada T6 en cuatro T3 sobre los mismos nudos. 9 tests en
+      `test_mesh_structured_v002.py`: área exacta, det J > 0 en nudos y puntos, malla conforme,
+      nudos intermedios en el punto medio, contornos ordenados que suman su longitud, diagonales, un
+      bloque graduado traccionado por sus lados de contorno con la tensión exacta, y el cuarto de
+      corona de T3 con los nudos del de T6, el área de los polígonos y la diferencia con la corona
+      bajando como Δθ². Once mutaciones cazadas, una tras añadir la comprobación del punto medio.)
 - [ ] T11. Caso 003, STR-09 en axisimetría, con su estudio de convergencia y la identidad de la
       esfera finita — Hecho cuando: dentro de la tolerancia de D4 con la malla que la fija.
 - [ ] T12. Caso 004, STR-04, con los estudios de convergencia y de dominio y la identidad del
