@@ -16,7 +16,7 @@ from ogr_fem2d.engine.reference import solver
 
 #: Variants the repository provides now (tasks.md: T10 reference, T11 NumPy,
 #: T12 Rust).
-EXPECTED = ("reference",)
+EXPECTED = ("reference", "numpy")
 
 
 def available() -> dict:

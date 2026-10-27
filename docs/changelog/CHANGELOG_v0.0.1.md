@@ -135,4 +135,10 @@ versión, registrando **qué se encontró**.
   rigidez comparaba la referencia consigo misma (una rigidez traspuesta pasaba) y ahora se compara
   con Bᵀ D B construida aparte, con tangentes no simétricas; y el modelo mixto del test apenas
   plastificaba (el único punto plástico de la malla gruesa caía en un elemento elástico).
+- **Tarea T11, la variante NumPy**: coincide con la referencia a 1e-15 en punto material y a 1e-13
+  en malla. Para empatar las regiones hay que reproducir también la ordenación estable de los
+  valores principales (los empates conservan el orden hi, lo, zz) y devolver la tensión de prueba
+  tal cual en los puntos elásticos. Una mutación sobrevivió a la primera versión del test (la
+  tolerancia del retorno a 1e-6): la nube aleatoria no tenía estados cerca de la superficie, y se
+  añadieron.
 

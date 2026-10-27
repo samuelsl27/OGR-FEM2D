@@ -98,8 +98,14 @@ tarea: es un deseo.
       entera, con tangentes no simétricas para que se note una rigidez traspuesta), una variante
       que cuenta llamadas ve exactamente una por iteración, y los casos corren con cualquier
       variante.)
-- [ ] T11. Variante NumPy vectorizada — RF-3 — Hecho cuando: identidad con la referencia en punto
-      material y en malla
+- [x] T11. Variante NumPy vectorizada — RF-3 — Hecho cuando: identidad con la referencia en punto
+      material y en malla. (Hecho: `poc/vectorized.py`, sin bucles por punto en Python: cada
+      región del retorno se calcula para todos los puntos y se elige con máscaras, en el orden y
+      con la tolerancia de la referencia. Identidad a 6e-16 en tensiones y 2e-15 en tangentes en
+      punto material (todas las regiones, también estados sobre la superficie donde solo decide la
+      tolerancia) y a 1e-13 en malla, con las mismas iteraciones; los dos casos pasan con ella en
+      7 s frente a 47 s de la referencia. 4 tests, que cazan cuatro errores introducidos a
+      propósito.)
 - [ ] T12. Variante Rust con PyO3 (`rust/`, módulo `ogr_fem2d._engine`), construida con `maturin
       develop` en el `.venv` — RF-3 — Hecho cuando: identidad con la referencia a ~1e-10 en punto
       material y en malla (criterio 1)
