@@ -38,6 +38,20 @@ Plane strain: the trial stress is three-dimensional with eps_zz = 0, so
 sigma_zz is a principal stress and the plastic strain may have a zz
 component (the elastic one then cancels it).
 
+The consistent tangent (§8.2.4, pp. 316-319, and subroutine CTMC, pp.
+319-323), for the Newton iterations of the stage (spec 001, D7). It is the
+derivative of the update with respect to the strain, built as the source
+builds it: the derivatives of the updated principal stresses with respect to
+the trial ones (Eqs. 8.93-8.94 for the main plane, the linearised
+consistency of the edges, and zero at the apex without hardening, Remark
+8.3), then assembled as the derivative of an isotropic tensor function of
+the in-plane pair (Appendix A, §A.3; subroutine DGISO2). With perfect
+plasticity every return above is an AFFINE map of the trial principal
+stresses, sigma = P sigma_trial + const, so the derivatives are the constant
+matrix P of each region, written from the same linear equations the return
+solves. The tests check the tangent against the numerical derivative of
+update() and against the main-plane expressions of CTMC (lines 194-214).
+
 Author: Samuel Sáez López (UPCT)
 """
 from __future__ import annotations
@@ -85,6 +99,9 @@ class Update:
     #: (dgamma_a, dgamma_b) on the plane and the edges; at the apex,
     #: (volumetric plastic strain increment, 0), Eq. (8.82).
     dgamma: tuple[float, float]
+    #: d sigma / d eps on (eps_xx, eps_yy, gamma_xy) -> (sigma_xx, sigma_yy,
+    #: tau_xy), consistent with this update; only when asked for.
+    tangent: list[list[float]] | None = None
 
 
 def principal_in_plane(s_xx: float, s_yy: float, t_xy: float
@@ -187,13 +204,105 @@ def return_principal(m: MohrCoulomb, trial: tuple[float, float, float]
     return (p, p, p), "apex", (dev_volumetric, 0.0)
 
 
+def principal_derivatives(m: MohrCoulomb, region: str) -> list[list[float]]:
+    """P[i][j] = d sigma_i / d sigma_trial_j for the return of ``region``,
+    in the order s1 >= s2 >= s3 of return_principal.
+
+    Main plane: sigma = trial - (Phi(trial)/a) d1, with Phi linear in the
+    trial stresses (gradient g), so P = I - d1 g^T / a (Eqs. 8.93-8.94 with
+    H = 0). Edges: sigma = trial - d1 dgamma_a - db dgamma_b with
+    R (dgamma_a, dgamma_b) = (Phi_a, Phi_b), so P = I - [d1 db] R^-1 [ga; gb].
+    Apex: sigma is fixed at c cot(phi), P = 0 (Remark 8.3)."""
+    identity = [[1.0 if i == j else 0.0 for j in range(3)] for i in range(3)]
+    if region == "elastic":
+        return identity
+    if region == "apex":
+        return [[0.0] * 3 for _ in range(3)]
+    sf = math.sin(m.phi)
+    flows = _flows(m)
+    d1 = _stress_change(m, flows["N1"])
+    ga = (1.0 + sf, 0.0, -(1.0 - sf))           # gradient of the main plane
+
+    def dot(u, v):
+        return sum(x * y for x, y in zip(u, v))
+
+    if region == "plane":
+        a = dot(ga, d1)                          # = Eq. (8.72)
+        return [[identity[i][j] - d1[i] * ga[j] / a for j in range(3)]
+                for i in range(3)]
+    if region == "right edge":
+        db = _stress_change(m, flows["N6"])
+        gb = (1.0 + sf, -(1.0 - sf), 0.0)        # sigma_1 - sigma_2 plane
+    elif region == "left edge":
+        db = _stress_change(m, flows["N2"])
+        gb = (0.0, 1.0 + sf, -(1.0 - sf))        # sigma_2 - sigma_3 plane
+    else:
+        raise ValueError(f"unknown region {region!r}")
+    r = ((dot(ga, d1), dot(ga, db)), (dot(gb, d1), dot(gb, db)))
+    det = r[0][0] * r[1][1] - r[0][1] * r[1][0]
+    inv = ((r[1][1] / det, -r[0][1] / det), (-r[1][0] / det, r[0][0] / det))
+    # d dgamma_a / d trial_j and d dgamma_b / d trial_j
+    dga = [inv[0][0] * ga[j] + inv[0][1] * gb[j] for j in range(3)]
+    dgb = [inv[1][0] * ga[j] + inv[1][1] * gb[j] for j in range(3)]
+    return [[identity[i][j] - d1[i] * dga[j] - db[i] * dgb[j]
+             for j in range(3)] for i in range(3)]
+
+
+def _tangent(m: MohrCoulomb, names: list[str], trial: tuple[float, float, float],
+             returned: tuple[float, float, float], region: str,
+             theta: float) -> list[list[float]]:
+    """Assemble d sigma / d eps on (xx, yy, xy) from the principal
+    derivatives: Appendix A, §A.3, Box A.3 and Eqs. (A.28)-(A.33), pp.
+    736-738 (subroutine DGISO2), for the in-plane pair; the out-of-plane
+    direction is fixed and, with eps_zz = 0, only its column is dropped.
+
+    In the principal axes of the in-plane pair, (hi, lo): the normal part is
+    the sum of (A.28), C = P De restricted to the in-plane rows and columns
+    (De in principal axes: lambda + 2G on the diagonal, lambda off it). The
+    shear part is the first term of (A.28), (y1 - y2)/(x1 - x2) on IS, with
+    x the principal trial strains, x1 - x2 = (t_hi - t_lo)/(2G): per unit of
+    ENGINEERING shear it is G (s_hi - s_lo)/(t_hi - t_lo). For equal trial
+    values, Eq. (A.30): (dy1/dx1 - dy1/dx2) on IS, that is G (P_hh - P_hl).
+    Then the rotation to (x, y): D = A C A^T, with A the stress
+    transformation from the principal axes and A^T the strain one."""
+    g, k = m.shear_modulus, m.bulk_modulus
+    lam = k - 2.0 * g / 3.0
+    p = principal_derivatives(m, region)
+    where = {name: i for i, name in enumerate(names)}   # name -> sorted index
+    h, l_ = where["hi"], where["lo"]
+
+    def de(i, j):                       # elastic matrix in principal axes
+        return lam + (2.0 * g if i == j else 0.0)
+
+    def c(i, j):                        # (P De)[i][j], j in-plane
+        return sum(p[i][q] * de(q, j) for q in range(3))
+
+    c_hh, c_hl, c_lh, c_ll = c(h, h), c(h, l_), c(l_, h), c(l_, l_)
+    gap = trial[h] - trial[l_]
+    if abs(gap) > TOLERANCE * max(1.0, abs(trial[h]), abs(trial[l_])):
+        shear = g * (returned[h] - returned[l_]) / gap
+    else:
+        shear = g * (p[h][h] - p[h][l_])
+    cs, sn = math.cos(theta), math.sin(theta)
+    a = [[cs * cs, sn * sn, -2.0 * sn * cs],
+         [sn * sn, cs * cs, 2.0 * sn * cs],
+         [sn * cs, -sn * cs, cs * cs - sn * sn]]
+    cp = [[c_hh, c_hl, 0.0], [c_lh, c_ll, 0.0], [0.0, 0.0, shear]]
+    ac = [[sum(a[i][q] * cp[q][j] for q in range(3)) for j in range(3)]
+          for i in range(3)]
+    return [[sum(ac[i][q] * a[j][q] for q in range(3)) for j in range(3)]
+            for i in range(3)]
+
+
 def update(m: MohrCoulomb, stress: tuple[float, float, float, float],
-           strain_increment: tuple[float, float, float]) -> Update:
+           strain_increment: tuple[float, float, float],
+           tangent: bool = False) -> Update:
     """Box 8.4: elastic predictor, spectral decomposition, return, assembly.
 
     ``stress`` is (sigma_xx, sigma_yy, sigma_zz, tau_xy) at the start of the
     increment and ``strain_increment`` (d_eps_xx, d_eps_yy, d_gamma_xy) with
-    d_eps_zz = 0 (plane strain)."""
+    d_eps_zz = 0 (plane strain). With ``tangent``, the consistent tangent of
+    this update too (§8.2.4)."""
     d = stress_increment(m.young, m.poisson, strain_increment)
     t_xx, t_yy, t_zz, t_xy = (stress[0] + d[0], stress[1] + d[1],
                               stress[2] + d[2], stress[3] + d[3])
@@ -203,8 +312,11 @@ def update(m: MohrCoulomb, stress: tuple[float, float, float, float],
     values.sort(key=lambda kv: kv[1], reverse=True)
     trial = tuple(v for _, v in values)
     returned, region, dgamma = return_principal(m, trial)
+    names = [name for name, _ in values]
+    d_tangent = (_tangent(m, names, trial, returned, region, theta)
+                 if tangent else None)
     if region == "elastic":
-        return Update((t_xx, t_yy, t_zz, t_xy), region, dgamma)
+        return Update((t_xx, t_yy, t_zz, t_xy), region, dgamma, d_tangent)
     # (v) assembly: sigma = sum sigma_i e_i x e_i, same directions
     new = {name: s for (name, _), s in zip(values, returned)}
     c, s = math.cos(theta), math.sin(theta)
@@ -212,4 +324,4 @@ def update(m: MohrCoulomb, stress: tuple[float, float, float, float],
     s_xx = hi * c * c + lo * s * s
     s_yy = hi * s * s + lo * c * c
     t_xy_new = (hi - lo) * s * c
-    return Update((s_xx, s_yy, new["zz"], t_xy_new), region, dgamma)
+    return Update((s_xx, s_yy, new["zz"], t_xy_new), region, dgamma, d_tangent)

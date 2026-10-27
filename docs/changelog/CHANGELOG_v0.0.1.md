@@ -63,4 +63,28 @@ versión, registrando **qué se encontró**.
 - **Tarea T9, caso 001 (Kirsch, 100 m)**: tolerancias escritas antes del estudio (commit
   962f504); la malla de 8 × 32 divisiones es la primera que cumple el 0.5 % de D3 en el peor
   punto (0.19 % en ur(a) y en σθ(a)); la de 4 × 16 se queda en 1.34 % y 0.59 %.
-
+- **D7, Newton completo con la tangente consistente** (decidido tras la T7): la tangente del
+  Mohr-Coulomb se construye desde las mismas ecuaciones lineales del retorno (con plasticidad
+  perfecta cada retorno es afín en las tensiones de prueba) y coincide a 1e-15 con las expresiones
+  de la subrutina CTMC de de Souza Neto et al. (2008) en el plano y en las dos aristas, y a 1e-10
+  con la derivada numérica de la actualización en las cinco regiones, también con valores
+  principales repetidos (ec. A.30). Newton da la misma solución discreta que la rigidez inicial
+  en 6–8 iteraciones por escalón, con convergencia cuadrática.
+- **La hipótesis de Salençon no se cumple en el caso STR-02** (pendiente de decisión del
+  propietario). Con los datos de la ficha, si no hubiera deformación plástica en z, σz =
+  p0 − ν(Δσr + Δσθ) llegaría a 20.39 MPa en la pared, por encima de σθ = 11.95 MPa: para
+  r < 1.281 m, σz sería la principal mayor (en compresión), no la intermedia. El modelo lo resuelve
+  como debe, con retorno a la arista (σz = σθ) en los puntos con r de 1.000 a 1.241 m y al plano
+  de 1.306 a 1.721 m. Las tensiones σr y σθ y el radio plástico no cambian (el equilibrio no ve
+  σz), pero el desplazamiento sí: la solución cerrada extendida con esa zona (el flujo de la
+  arista, ecs. 8.58–8.59 de de Souza Neto et al., con εz = 0, da k εp_r + εp_θ = e_z) da ur(a)
+  un **+0.99 % (ψ = 0°) y un +1.90 % (ψ = 30°)** por encima de Salençon en medio infinito, y en el
+  anillo de 21 m un +1.93 % con ψ = 30°, que es lo que da el modelo con la malla de 32 × 96 (media
+  +1.90 %). Con la tolerancia del 2 % de D3 frente a Salençon, ψ = 30° habría pasado por 0.1 %:
+  una coincidencia sin razón. La primera comprobación de «σz intermedia» de esta sesión estaba
+  mal planteada (contaba como intermedia una σz igual a otra principal, que es lo que pasa en la
+  arista); se rehízo por regiones de retorno.
+- **Newton sin control diverge con ψ = 0° y mallas finas**: en el anillo de 21 m con 16 × 48
+  divisiones, en el último escalón (cuando la zona plástica crece de 272 a 555 puntos) el residuo
+  sube a 2.6 y un iterado intermedio lleva un punto al vértice, que con ψ = 0° no tiene solución.
+  Pendiente: la partición automática del incremento de de Souza Neto et al. (2008), §5.4.3.

@@ -53,8 +53,12 @@ tarea: es un deseo.
       ‖f_ext‖ como en la (4.77), que al final de una excavación es cero. `update_points` es la
       llamada por iteración global que sustituirá Rust. 9 tests, que cazan cinco errores
       introducidos a propósito; una sexta mutación sobrevivió (acumular «plastificó alguna vez») y
-      ese código se quitó (regla 7). **Hallazgo, pendiente de decisión del propietario**: la
-      rigidez inicial converge muy despacio en Mohr-Coulomb y empeora al refinar; ver el changelog.)
+      ese código se quitó (regla 7). Hallazgo: la rigidez inicial converge muy despacio en
+      Mohr-Coulomb y empeora al refinar; ver el changelog. **Resuelto con D7**: Newton completo
+      con la tangente consistente de de Souza Neto et al. (2008), §8.2.4, comprobada contra su
+      derivada numérica en las cinco regiones y contra la subrutina CTMC (plano y aristas, a
+      1e-15); 6–8 iteraciones por escalón con convergencia cuadrática, y la misma solución
+      discreta que la rigidez inicial.)
 - [ ] T8. Identidad del anillo de 21 m (D3 bis): elástico contra `lame_fixed_outer` y Mohr-Coulomb
       (ψ = 0° y 30°) contra `salencon_finite`, con tres mallas — Hecho cuando: el error baja con
       cada refinamiento y la tasa queda anotada. (Parte elástica hecha:
@@ -69,8 +73,9 @@ tarea: es un deseo.
       pasan con esa malla, o el incumplimiento queda reportado como hallazgo. (Caso 001 hecho:
       tolerancias en `esperado.json` antes del estudio (commit 962f504), malla 8 × 32 con
       crecimiento 1.69^¼, peor error 0.19 % en ur(a) y en σθ(a); `tests/test_validation_cases_v001.py`
-      recorre los casos y declara los pendientes. Caso 002 escrito con sus tolerancias, pendiente
-      de la decisión sobre las iteraciones.)
+      recorre los casos y declara los pendientes. Caso 002 escrito con sus tolerancias;
+      **pendiente de decisión del propietario por un hallazgo**: la hipótesis de Salençon (σz
+      intermedia) no se cumple cerca de la pared, ver el changelog.)
 
 ## Las otras dos variantes
 

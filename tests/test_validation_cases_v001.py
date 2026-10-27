@@ -34,8 +34,9 @@ CASES = Path(__file__).resolve().parents[1] / "validacion" / "casos"
 #: Cases written but not runnable yet, with the reason (tasks.md, T9).
 PENDING = {
     "002-salencon-hueco-mohr-coulomb":
-        "the equilibrium iterations of the Mohr-Coulomb cases wait for the "
-        "owner's decision (changelog v0.0.1, T7)",
+        "Salençon's hypothesis (sigma_z intermediate) fails near the wall "
+        "with the data of the case; the reference of u_r(a) waits for the "
+        "owner's decision (changelog v0.0.1)",
 }
 
 

@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 Samuel Sáez López — Universidad Politécnica de Cartagena
 """
-v0.0.1 (spec 001, T7) — the stage of the reference engine: load steps,
-iterations with the initial stiffness, and a convergence history that tells
-the truth, including when it does not converge.
+v0.0.1 (spec 001, T7 and D7) — the stage of the reference engine: load
+steps, full Newton iterations with the consistent tangent, and a convergence
+history that tells the truth, including when it does not converge.
 
 Invariants protected:
 
@@ -23,8 +23,15 @@ Invariants protected:
   step measures the load just added, 1/n of the stage, to within the
   tolerance the previous step left (no drift between steps); the last entry
   of each step is within tolerance;
-* **elastic**: one correction solves a step (the initial stiffness IS the
+* **elastic**: one correction solves a step (the elastic stiffness IS the
   tangent), and n steps give the same answer as one;
+* **the tangent stiffness is assembled right**: with elastic tangents, the
+  point-by-point assembly of K_T equals the element-by-element stiffness of
+  t6.stiffness, two routes to one matrix;
+* **Newton converges quadratically** (de Souza Neto et al. 2008, §4.2.4):
+  in every plastic step the last correction cuts the relative residual to
+  at most its previous value to the power 1.5. With a wrong tangent (the
+  elastic one, say) the convergence is linear and this fails;
 * **no convergence is detected and reported** (RF-6): with too few
   iterations allowed, NotConvergedError carries the step and the whole
   history, and no result is returned;
@@ -140,6 +147,41 @@ class TestHistory:
         scale = max(abs(u) for u in one.displacement)
         assert max(abs(a - b) for a, b in
                    zip(one.displacement, five.displacement)) < 1e-12 * scale
+
+
+class TestNewton:
+    def test_point_assembly_equals_element_assembly(self):
+        mesh, model = _hole.model(*COARSE, ELASTIC)
+        points = solver.integration_points(model)
+        d = solver.plane_strain_matrix(ELASTIC.young, ELASTIC.poisson)
+        n_dofs = 2 * len(mesh.nodes)
+        by_points = solver.tangent_stiffness(points, [d] * len(points),
+                                             n_dofs).toarray()
+        by_elements = solver.stiffness(model).toarray()
+        scale = abs(by_elements).max()
+        assert abs(by_points - by_elements).max() < 1e-12 * scale
+
+    def test_quadratic_convergence_in_the_plastic_steps(self):
+        for psi in (0.0, 30.0):
+            m = mc.MohrCoulomb(10000.0, 0.2, 3.45, math.radians(30.0),
+                               math.radians(psi))
+            _mesh, result = _hole.excavate(*COARSE, m, 4, 1e-10, 30)
+            steps = {}
+            for step, iteration, relative in result.history:
+                steps.setdefault(step, []).append(relative)
+            checked = 0
+            for step, residuals in steps.items():
+                if len(residuals) < 4:          # elastic: one correction
+                    continue
+                # the last pair still above the rounding floor of the
+                # residual (about 1e-14 of the load), in the Newton range
+                pairs = [(a, b) for a, b in zip(residuals[1:], residuals[2:])
+                         if b > 1e-13 and a < 1e-2]
+                assert pairs, (psi, step, residuals)
+                before, last = pairs[-1]
+                assert last <= before ** 1.5, (psi, step, residuals)
+                checked += 1
+            assert checked >= 1, (psi, steps)
 
 
 class TestNoConvergence:

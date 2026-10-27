@@ -36,6 +36,9 @@ radial del elemento que contiene R0).
 
 ## Malla y elemento con que se fija la tolerancia
 
-**Pendiente.** Las tolerancias están escritas antes del estudio (commit 962f504). El estudio está
-parado por un hallazgo de la tarea T7: la iteración con rigidez inicial converge muy despacio en
-Mohr-Coulomb y empeora al refinar (changelog v0.0.1), y espera la decisión del propietario.
+**Pendiente.** Las tolerancias están escritas antes del estudio (commit 962f504). La iteración ya
+no es obstáculo (D7), pero el estudio destapó que **la hipótesis de Salençon no se cumple** con
+estos datos: cerca de la pared (r < 1.281 m) σz sería la principal mayor, y el material está en la
+arista σz = σθ. Las tensiones σr, σθ y R0 de Salençon siguen siendo las del modelo, pero ur(a) del
+modelo es un 0.99 % (ψ = 0°) y un 1.90 % (ψ = 30°) mayor (changelog v0.0.1). El valor de
+referencia de ur(a) espera la decisión del propietario.

@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 Samuel Sáez López — Universidad Politécnica de Cartagena
 """
-One stage of a static analysis: load steps, equilibrium iterations with the
-initial (elastic) stiffness, and the convergence history (spec 001, RF-5 and
-RF-6).
+One stage of a static analysis: load steps, full Newton-Raphson equilibrium
+iterations with the consistent tangent, and the convergence history (spec
+001, RF-5 and RF-6; D7).
 
 Sources:
 
@@ -22,10 +22,24 @@ Sources:
   integrates the stress again from the converged state of the step start
   with the whole step's strain increment (Box 4.2, steps vi-vii; Eqs.
   4.75-4.76); the residual r = f_int - f_ext (Eqs. 4.64, 4.72); the correction
-  K du = -r (Eq. 4.71) with, instead of the tangent, the initial stiffness
-  throughout ("modified Newton", §4.2.6, method (i), p. 99); load steps as in
-  Box 4.1 (p. 97); and the convergence check of Eq. (4.77), ||r|| / ||f_ext||
-  <= tol (p. 98).
+  K_T du = -r (Eq. 4.71) with the tangent stiffness K_T assembled from the
+  consistent tangent of every point (Eqs. 4.73, 4.80-4.81; Box 4.2, ii-iv);
+  load steps as in Box 4.1 (p. 97); and the convergence check of Eq. (4.77),
+  ||r|| / ||f_ext|| <= tol (p. 98). The tangent of the Mohr-Coulomb points is
+  that of §8.2.4 (mohr_coulomb.py).
+
+Why the full Newton and not the initial stiffness (spec 001, D7): with the
+initial stiffness the Mohr-Coulomb cases needed thousands of iterations per
+step, with a convergence factor that tended to 1 as the mesh was refined,
+and a residual that then no longer bounds the error of the displacement
+(changelog v0.0.1, task T7).
+
+The first correction of each step starts from the converged state with no
+strain increment: its consistent tangent is the elastic one (every point is
+inside or on the surface, and the update with a zero increment is elastic),
+so the elastic stiffness is factorised once and reused there. Every later
+correction assembles and factorises K_T anew; with non-associated flow it is
+not symmetric, and SuperLU solves it as it is.
 
 Loads in totals (spec 001, D2): the stage receives the TOTAL external force at
 its end. The engine takes the internal force of the starting stresses as the
@@ -45,11 +59,10 @@ Restraints: zero displacement on the listed degrees of freedom (the rollers
 and the fixed outer boundary of the spec 001 cases). Imposed non-zero
 displacements are not in this proof of concept.
 
-The linear solve is SciPy's SuperLU on the elastic stiffness, factorised
-once (spec 001, "Fuera de alcance"). Everything per integration point is
-plain Python, written to be read: this module is the oracle of the compiled
-variant (ADR-0001), and update_points() is the one call per global iteration
-the compiled variant will replace.
+The linear solve is SciPy's SuperLU (spec 001, "Fuera de alcance").
+Everything per integration point is plain Python, written to be read: this
+module is the oracle of the compiled variant (ADR-0001), and update_points()
+is the one call per global iteration the compiled variant will replace.
 
 Author: Samuel Sáez López (UPCT)
 """
@@ -169,8 +182,9 @@ def integration_points(model: Model) -> list[IntegrationPoint]:
 
 
 def stiffness(model: Model) -> coo_matrix:
-    """K = assembly of int B^T D B dA, with the ELASTIC D of each element:
-    the initial stiffness of §4.2.6, method (i)."""
+    """K = assembly of int B^T D B dA, with the ELASTIC D of each element,
+    element by element with t6.stiffness: the tangent of the first
+    correction of every step."""
     rows, cols, values = [], [], []
     for element, material in zip(model.elements, model.materials):
         xy = [model.nodes[n] for n in element]
@@ -186,17 +200,44 @@ def stiffness(model: Model) -> coo_matrix:
     return coo_matrix((values, (rows, cols)), shape=(n, n))
 
 
+def tangent_stiffness(points: list[IntegrationPoint],
+                      tangents: list[list[list[float]]],
+                      n_dofs: int) -> coo_matrix:
+    """K_T = assembly of int B^T D B dA with the consistent tangent D of
+    each point (Eq. 4.80). Block of nodes (a, b): weight B_a^T D B_b, with
+    B_a = [[dN_a/dx, 0], [0, dN_a/dy], [dN_a/dy, dN_a/dx]]."""
+    rows, cols, values = [], [], []
+    for p, d in zip(points, tangents):
+        for nb, bx, by in zip(p.nodes, p.dndx, p.dndy):
+            # D B_b, columns for u_b and v_b
+            dbu = (d[0][0] * bx + d[0][2] * by, d[1][0] * bx + d[1][2] * by,
+                   d[2][0] * bx + d[2][2] * by)
+            dbv = (d[0][1] * by + d[0][2] * bx, d[1][1] * by + d[1][2] * bx,
+                   d[2][1] * by + d[2][2] * bx)
+            for na, ax, ay in zip(p.nodes, p.dndx, p.dndy):
+                # B_a^T rows: u_a -> (ax, 0, ay), v_a -> (0, ay, ax)
+                for ra, (c0, c1, c2) in ((2 * na, (ax, 0.0, ay)),
+                                         (2 * na + 1, (0.0, ay, ax))):
+                    rows += [ra, ra]
+                    cols += [2 * nb, 2 * nb + 1]
+                    values += [p.weight * (c0 * dbu[0] + c1 * dbu[1] + c2 * dbu[2]),
+                               p.weight * (c0 * dbv[0] + c1 * dbv[1] + c2 * dbv[2])]
+    return coo_matrix((values, (rows, cols)), shape=(n_dofs, n_dofs))
+
+
 def update_stress(material: Elastic | mc.MohrCoulomb, stress: Stress,
                   strain_increment: tuple[float, float, float]
-                  ) -> tuple[Stress, bool]:
+                  ) -> tuple[Stress, bool, list[list[float]]]:
     """The incremental constitutive function (Eq. 4.60) of one point: the
-    stress at the end of the increment and whether it is plastic."""
+    stress at the end of the increment, whether it is plastic, and the
+    consistent tangent of that update (Eq. 4.81)."""
     if isinstance(material, mc.MohrCoulomb):
-        result = mc.update(material, stress, strain_increment)
-        return result.stress, result.region != "elastic"
+        result = mc.update(material, stress, strain_increment, tangent=True)
+        return result.stress, result.region != "elastic", result.tangent
     d = stress_increment(material.young, material.poisson, strain_increment)
-    return (stress[0] + d[0], stress[1] + d[1], stress[2] + d[2],
-            stress[3] + d[3]), False
+    return ((stress[0] + d[0], stress[1] + d[1], stress[2] + d[2],
+             stress[3] + d[3]), False,
+            plane_strain_matrix(material.young, material.poisson))
 
 
 def internal_forces(points: list[IntegrationPoint], stresses: list[Stress],
@@ -214,22 +255,25 @@ def internal_forces(points: list[IntegrationPoint], stresses: list[Stress],
 
 def update_points(points: list[IntegrationPoint], materials: list,
                   start: list[Stress], du: list[float]
-                  ) -> tuple[list[Stress], list[float], list[bool]]:
+                  ) -> tuple[list[Stress], list[float], list[bool], list]:
     """THE call per global iteration (ADR-0001): given the displacement
     increment of the step, the stress of every point from the converged
-    state of the step start (Box 4.2, vi-vii) and the internal forces
-    (viii-ix). Returns (stresses, f_int, plastic)."""
-    stresses, plastic = [], []
+    state of the step start (Box 4.2, vi-vii), the internal forces
+    (viii-ix) and the consistent tangent of every point (ii). Returns
+    (stresses, f_int, plastic, tangents)."""
+    stresses, plastic, tangents = [], [], []
     for p, s0 in zip(points, start):
         try:
-            s, is_plastic = update_stress(materials[p.element], s0,
-                                          p.strain(du))
+            s, is_plastic, d = update_stress(materials[p.element], s0,
+                                             p.strain(du))
         except mc.ReturnMappingError as err:
             raise StateUpdateError(p.element, p.index, None, None,
                                    str(err)) from None
         stresses.append(s)
         plastic.append(is_plastic)
-    return stresses, internal_forces(points, stresses, len(du)), plastic
+        tangents.append(d)
+    return (stresses, internal_forces(points, stresses, len(du)), plastic,
+            tangents)
 
 
 def _norm(v, free) -> float:
@@ -256,8 +300,10 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
     n_dofs = 2 * len(model.nodes)
     free = [i for i in range(n_dofs) if i not in model.restrained]
 
-    k = stiffness(model).tocsr()[free][:, free].tocsc()
-    solver = splu(k)
+    def factorise(matrix: coo_matrix):
+        return splu(matrix.tocsr()[free][:, free].tocsc())
+
+    elastic = factorise(stiffness(model))
 
     f_start = internal_forces(points, initial_stresses, n_dofs)
     load = [external_load[i] - f_start[i] for i in range(n_dofs)]
@@ -275,6 +321,7 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
         # Iteration 0 is the step's start: its residual is the load added.
         f_int = internal_forces(points, converged, n_dofs)
         stresses, step_plastic = converged, [False] * len(points)
+        solver = elastic            # the tangent with no strain increment
         for iteration in range(0, max_iterations + 1):
             # r = f_ext - f_int with the sign of the right-hand side of (4.71)
             r = [target[i] - f_int[i] for i in range(n_dofs)]
@@ -288,11 +335,15 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
             for j, i in enumerate(free):
                 du[i] += float(correction[j])
             try:
-                stresses, f_int, step_plastic = update_points(
+                stresses, f_int, step_plastic, tangents = update_points(
                     points, model.materials, converged, du)
             except StateUpdateError as err:
                 raise StateUpdateError(err.element, err.point, step,
                                        iteration + 1, err.reason) from None
+            if any(step_plastic):
+                solver = factorise(tangent_stiffness(points, tangents, n_dofs))
+            else:
+                solver = elastic
         converged, plastic = stresses, step_plastic
         displacement = [u + d for u, d in zip(displacement, du)]
 

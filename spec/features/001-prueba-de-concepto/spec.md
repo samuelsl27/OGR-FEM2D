@@ -110,7 +110,7 @@ exige el estudio de convergencia.
 - Elemento degenerado (área nula o negativa): error con el número de elemento, no un resultado.
 - Iteración que no converge (RF-6).
 - ψ = φ (asociado) frente a ψ = 0 (no asociado): el segundo no es simétrico en la matriz tangente
-  consistente; esta prueba no la usa (ver plan).
+  consistente; el solver lineal (SuperLU) lo resuelve igual (D7).
 
 ## Fuera de alcance
 
@@ -138,4 +138,5 @@ exige el estudio de convergencia.
 | D3 bis | **Dos geometrías** (decidido el mismo día, tras la tarea T1): los casos de validación, con el contorno a **100 m**, contra Kirsch y Salençon; y el modelo de las fichas, a **21 m**, contra la solución exacta del anillo finito, como identidad. Las tolerancias de D3 no cambian | Al calcularlo (T1) resultó que con el contorno a 21 m la solución exacta del modelo ya se aparta de las fórmulas de medio infinito en ur(a) un **0.60 %** (STR-01), un **1.42 %** (STR-02, ψ = 0°) y un **1.83 %** (ψ = 30°): ninguna malla cumpliría D3 frente a ellas. La versión anterior de esta spec decía «en torno a un 0.2 %»: era una estimación sin calcular, y estaba mal. A 100 m el efecto es del 0.03–0.08 % |
 | D4 | **La referencia en Python en su sitio final** (`ogr_fem2d/engine/reference/`); la variante NumPy en `poc/`; el crate de Rust en `rust/`, compilado como `ogr_fem2d._engine` | La referencia se queda pase lo que pase (es el oráculo); NumPy solo sirve para medir |
 | D5 | **Fuentes conseguidas** por el propietario (2026-10-27) y comprobadas en la tarea T1: Salençon (1969); Jaeger, Cook y Zimmerman (2007, 4.ª ed.); de Souza Neto, Perić y Owen (2008); Zienkiewicz y Taylor (2000, 5.ª ed., vol. 1); de contraste, Timoshenko y Goodier y la tesis de Clausen (2007) | Tabla de fuentes y hallazgos en `plan.md`, «Formulación» |
+| D7 | **Iteraciones de Newton completo con la tangente consistente**, no con la rigidez inicial (decidido el 2026-10-27, tras la T7; el propietario lo deja a criterio de la validez de los resultados) | En la T7 la rigidez inicial necesitó miles de iteraciones por escalón en Mohr-Coulomb, con un factor de reducción del residuo de 0.965 a 0.9966 que empeora al refinar la malla; con un factor tan cerca de 1 un residuo pequeño no asegura un desplazamiento preciso (el error en u va como r/(1 − ρ)), y las mallas que pide D3 tardarían horas. Con Newton la convergencia es cuadrática y el residuo sí mide el error. La tangente sale de de Souza Neto et al. (2008), §8.2.4, y se comprueba contra su derivada numérica y contra la subrutina CTMC. La variante Rust tendrá que dar también la tangente |
 | D6 | **OK a `pyo3` 0.30 (MIT o Apache-2.0), `numpy` 0.30 (BSD-2-Clause), `ndarray` 0.17 (MIT o Apache-2.0) y PyInstaller 6.22** (GPL-2.0-or-later con excepción para distribuir programas de cualquier licencia); PyInstaller solo en el `.venv`, como herramienta | Licencias comprobadas el 2026-10-27, compatibles con AGPL-3.0 |

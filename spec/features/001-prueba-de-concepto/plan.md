@@ -17,10 +17,10 @@
 4. **Al final, el informe** con los cinco criterios y la decisión del propietario.
 
 La frontera Python ↔ Rust es la del ADR-0001: **una llamada por iteración global**. Python monta el
-problema, ensambla la rigidez elástica una vez, resuelve con SuperLU y controla escalones e
-iteraciones; en cada iteración llama una vez a la variante para «dado el incremento de
-desplazamiento, actualiza las tensiones de todos los puntos de integración y devuelve el vector de
-fuerzas internas».
+problema, ensambla la rigidez, resuelve con SuperLU y controla escalones e iteraciones; en cada
+iteración llama una vez a la variante para «dado el incremento de desplazamiento, actualiza las
+tensiones de todos los puntos de integración y devuelve el vector de fuerzas internas y la matriz
+tangente consistente de cada punto» (D7: Newton completo).
 
 ## Archivos que se tocan
 
@@ -71,11 +71,14 @@ deja en el borde libre del hueco: el vector de carga de la fase es el término d
 la ecuación de equilibrio (Zienkiewicz y Taylor 2000, ec. 2.13b, que pone precisamente este
 ejemplo), con el contorno exterior fijo. Se aplica en escalones.
 
-**Iteraciones:** Newton-Raphson modificado con la **rigidez elástica** (rigidez inicial), que
-evita la matriz tangente no simétrica del flujo no asociado y permite factorizar una sola vez.
-Tolerancia de la prueba: estricta (norma del desequilibrio frente a la norma de la carga de la
-fase, del orden de 1e-8; se fija en T5). **No es la tolerancia por defecto del programa**: esa se
-decide en la fase 2 con STR-05 (enmienda 3).
+**Iteraciones (D7):** Newton-Raphson completo con la **tangente consistente** (de Souza Neto et al.
+2008, Box 4.2 y §8.2.4), ensamblada y factorizada en cada iteración; con flujo no asociado no es
+simétrica y SuperLU la resuelve igual. La versión anterior de este plan decía Newton modificado con
+la rigidez inicial; en la T7 resultó inservible para el Mohr-Coulomb (miles de iteraciones por
+escalón y un factor de convergencia que tiende a 1 al refinar; changelog v0.0.1). Tolerancia de la
+prueba: estricta (norma del desequilibrio frente a la norma de la carga de la fase, del orden de
+1e-8). **No es la tolerancia por defecto del programa**: esa se decide en la fase 2 con STR-05
+(enmienda 3).
 
 **Simetría:** cuarto de corona (0 a 90°) con rodillos en los dos ejes. La geometría y la carga
 hidrostática son simétricas respecto a los dos ejes, así que el cuarto da la misma solución que el
@@ -98,8 +101,10 @@ identidad contra la solución exacta del anillo finito.
   1.83 % (STR-02) en ur(a), así que ninguna malla cumpliría las tolerancias. Los casos de
   validación van a 100 m (efecto del 0.03–0.08 %), y el modelo de 21 m se compara con la solución
   exacta del anillo finito, que mide solo la discretización y comprueba además el contorno fijo.
-- **Rigidez inicial y no tangente.** Más iteraciones, pero las mismas en las tres variantes y sin
-  matriz no simétrica: la prueba mide la integración constitutiva, no la convergencia de Newton.
+- **Tangente consistente y no rigidez inicial (D7).** La versión anterior elegía la rigidez inicial
+  para no tener matriz no simétrica y medir solo la integración constitutiva; con ella el oráculo no
+  convergía en un tiempo razonable y su residuo no medía el error. Ahora la variante calcula también
+  la tangente de cada punto, y la medida del criterio 5 incluye ese cálculo.
 - **Medir como manda el `AGENTS.md` de la suite**: A/B en el mismo proceso, espalda con espalda, con
   un control repetido; si los controles difieren tanto como el efecto, la medida no decide.
 - **Mismos puntos e incrementos para las tres variantes en la medida**: un conjunto fijado con
