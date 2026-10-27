@@ -210,51 +210,74 @@ class _Prepared:
                  r11, r12, r21, r22, det, ga, right, gb_right, gb_left,
                  elastic, is_plane, is_edge, is_apex):
         """mohr_coulomb.principal_derivatives and mohr_coulomb._tangent, for
-        all the points."""
+        all the points, with only the entries the tangent needs.
+
+        P is the identity less one or two outer products (P = I - d1 x g_a / a
+        on the plane, I - d1 x dga - db x dgb on an edge, 0 at the apex), so
+        each entry is computed directly; De is isotropic, so
+        (P De)_ij = lambda sum_q P_iq + 2G P_ij; and Cp is block diagonal,
+        so A Cp A^T is written component by component. The same arithmetic
+        as the reference, without building 3 x 3 matrices per point and
+        multiplying them (the review of the variant before the measure,
+        spec 001, T13).
+        """
         n = len(trial)
-        eye = np.broadcast_to(np.eye(3), (n, 3, 3))
-        # gradients of the planes, as vectors over the sorted principal values
-        g_a = np.stack([1.0 + sf, np.zeros(n), -(1.0 - sf)], axis=1)
+        zero = np.zeros(n)
+        g_a = np.stack([1.0 + sf, zero, -(1.0 - sf)], axis=1)
         g_b = np.where(right[:, None],
-                       np.stack([1.0 + sf, -(1.0 - sf), np.zeros(n)], axis=1),
-                       np.stack([np.zeros(n), 1.0 + sf, -(1.0 - sf)], axis=1))
-        a = ga(d1)
+                       np.stack([1.0 + sf, -(1.0 - sf), zero], axis=1),
+                       np.stack([zero, 1.0 + sf, -(1.0 - sf)], axis=1))
         with np.errstate(divide="ignore", invalid="ignore"):
-            p_plane = eye - d1[:, :, None] * g_a[:, None, :] / a[:, None, None]
-            inv = np.stack([np.stack([r22 / det, -r12 / det], axis=1),
-                            np.stack([-r21 / det, r11 / det], axis=1)], axis=1)
-        dga = inv[:, 0, 0, None] * g_a + inv[:, 0, 1, None] * g_b
-        dgb = inv[:, 1, 0, None] * g_a + inv[:, 1, 1, None] * g_b
-        p_edge = eye - d1[:, :, None] * dga[:, None, :] - db[:, :, None] * dgb[:, None, :]
-        p = np.where(is_plane[:, None, None], p_plane,
-                     np.where(is_edge[:, None, None], p_edge,
-                              np.where(is_apex[:, None, None], 0.0, eye)))
+            a = ga(d1)
+            i00, i01, i10, i11 = r22 / det, -r12 / det, -r21 / det, r11 / det
+        dga = i00[:, None] * g_a + i01[:, None] * g_b
+        dgb = i10[:, None] * g_a + i11[:, None] * g_b
+        # P = I - u1 x v1 - u2 x v2 (elastic: no product; apex: handled below)
+        plastic = is_plane | is_edge
+        u1 = np.where(plastic[:, None], d1, 0.0)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            v1 = np.where(is_plane[:, None], g_a / a[:, None],
+                          np.where(is_edge[:, None], dga, 0.0))
+        u2 = np.where(is_edge[:, None], db, 0.0)
+        v2 = np.where(is_edge[:, None], dgb, 0.0)
+        rows = np.arange(n)
+        h = np.argmax(order == 0, axis=1)        # where hi and lo were sorted
+        l_ = np.argmax(order == 1, axis=1)
+        keep = np.where(is_apex, 0.0, 1.0)
+
+        def entry(i, j, delta):
+            return keep * (delta - u1[rows, i] * v1[rows, j] - u2[rows, i] * v2[rows, j])
+
+        def row_sum(i):
+            return keep * (1.0 - u1[rows, i] * v1.sum(axis=1) - u2[rows, i] * v2.sum(axis=1))
+
+        p_hh, p_hl = entry(h, h, 1.0), entry(h, l_, 0.0)
+        p_lh, p_ll = entry(l_, h, 0.0), entry(l_, l_, 1.0)
         g, k = self.g_mod, self.k_mod
         lam = k - 2.0 * g / 3.0
-        de = lam[:, None, None] * np.ones((n, 3, 3)) + 2.0 * g[:, None, None] * eye
-        cmat = p @ de
-        # positions of hi and lo in the sorted order
-        h = np.argmax(order == 0, axis=1)
-        l_ = np.argmax(order == 1, axis=1)
-        rows = np.arange(n)
-        c_hh, c_hl = cmat[rows, h, h], cmat[rows, h, l_]
-        c_lh, c_ll = cmat[rows, l_, h], cmat[rows, l_, l_]
+        sum_h, sum_l = row_sum(h), row_sum(l_)
+        c_hh, c_hl = lam * sum_h + 2.0 * g * p_hh, lam * sum_h + 2.0 * g * p_hl
+        c_lh, c_ll = lam * sum_l + 2.0 * g * p_lh, lam * sum_l + 2.0 * g * p_ll
         gap = trial[rows, h] - trial[rows, l_]
         distinct = np.abs(gap) > TOLERANCE * np.maximum(
             1.0, np.maximum(np.abs(trial[rows, h]), np.abs(trial[rows, l_])))
         with np.errstate(divide="ignore", invalid="ignore"):
             shear = np.where(distinct,
                              g * (returned[rows, h] - returned[rows, l_]) / gap,
-                             g * (p[rows, h, h] - p[rows, h, l_]))
+                             g * (p_hh - p_hl))
         cs, sn = np.cos(theta), np.sin(theta)
-        amat = np.stack([np.stack([cs * cs, sn * sn, -2.0 * sn * cs], axis=1),
-                         np.stack([sn * sn, cs * cs, 2.0 * sn * cs], axis=1),
-                         np.stack([sn * cs, -sn * cs, cs * cs - sn * sn], axis=1)],
-                        axis=1)
-        cp = np.zeros((n, 3, 3))
-        cp[:, 0, 0], cp[:, 0, 1], cp[:, 1, 0], cp[:, 1, 1] = c_hh, c_hl, c_lh, c_ll
-        cp[:, 2, 2] = shear
-        return amat @ cp @ np.transpose(amat, (0, 2, 1))
+        # the rows of A (stress transformation from the principal axes)
+        a0 = np.stack([cs * cs, sn * sn, sn * cs], axis=1)            # A[:, 0]
+        a1 = np.stack([sn * sn, cs * cs, -sn * cs], axis=1)           # A[:, 1]
+        a2 = np.stack([-2.0 * sn * cs, 2.0 * sn * cs, cs * cs - sn * sn], axis=1)  # A[:, 2]
+        # (A Cp)[:, b], then D = sum_b (A Cp)[:, b] x A[:, b], summed in place
+        ac0 = a0 * c_hh[:, None] + a1 * c_lh[:, None]
+        ac1 = a0 * c_hl[:, None] + a1 * c_ll[:, None]
+        ac2 = a2 * shear[:, None]
+        d = ac0[:, :, None] * a0[:, None, :]
+        d += ac1[:, :, None] * a1[:, None, :]
+        d += ac2[:, :, None] * a2[:, None, :]
+        return d
 
     # ------------------------------------------------- the one call
     def update(self, start: np.ndarray, du: np.ndarray) -> interface.PointsUpdate:

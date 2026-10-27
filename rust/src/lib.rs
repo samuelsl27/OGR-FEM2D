@@ -13,6 +13,10 @@
 //!   global iteration: strains, stresses, internal forces, tangents and the
 //!   stiffness weight B^T D B of every point.
 //!
+//! The inputs are read as C-contiguous slices and the outputs written into
+//! vectors allocated once: nothing is allocated per point (the review before
+//! the measure, spec 001, T13). A non-contiguous input raises ValueError.
+//!
 //! A point whose stress cannot be updated (the apex with psi = 0) does not
 //! raise here: the functions return its index as `failed` (-1 when all went
 //! well), and the Python side raises the engine's StateUpdateError with the
@@ -47,6 +51,30 @@ fn integrate_point(row: &[f64], start: [f64; 4], strain: [f64; 3]) -> Result<([f
     Ok((u.stress, u.region != Region::Elastic, u.tangent))
 }
 
+/// The data of a C-contiguous array as a slice (the Python side,
+/// compiled.py, makes them contiguous).
+fn data<'a, T: numpy::Element, D: numpy::ndarray::Dimension>(
+    a: &'a numpy::ndarray::ArrayView<'a, T, D>,
+    name: &str,
+) -> PyResult<&'a [T]> {
+    a.as_slice()
+        .ok_or_else(|| pyo3::exceptions::PyValueError::new_err(format!("{name} is not C-contiguous")))
+}
+
+fn stress_at(start: &[f64], p: usize) -> [f64; 4] {
+    [start[4 * p], start[4 * p + 1], start[4 * p + 2], start[4 * p + 3]]
+}
+
+/// Writes the stress, the tangent and the flag of point p into the outputs.
+fn store(p: usize, s: [f64; 4], d: &[[f64; 3]; 3], is_plastic: bool,
+         stresses: &mut [f64], tangents: &mut [f64], plastic: &mut [bool]) {
+    stresses[4 * p..4 * p + 4].copy_from_slice(&s);
+    for i in 0..3 {
+        tangents[9 * p + 3 * i..9 * p + 3 * i + 3].copy_from_slice(&d[i]);
+    }
+    plastic[p] = is_plastic;
+}
+
 type Integrated<'py> = (
     Bound<'py, PyArray2<f64>>,
     Bound<'py, PyArray1<bool>>,
@@ -61,36 +89,30 @@ fn integrate<'py>(
     materials: PyReadonlyArray2<'py, f64>,
     start: PyReadonlyArray2<'py, f64>,
     strains: PyReadonlyArray2<'py, f64>,
-) -> Integrated<'py> {
+) -> PyResult<Integrated<'py>> {
     let (materials, start, strains) = (materials.as_array(), start.as_array(), strains.as_array());
     let n = start.nrows();
-    let mut stresses = Array2::<f64>::zeros((n, 4));
-    let mut plastic = Array1::<bool>::from_elem(n, false);
-    let mut tangents = Array3::<f64>::zeros((n, 3, 3));
+    let (m, s0, eps) = (data(&materials, "materials")?, data(&start, "start")?, data(&strains, "strains")?);
+    let mut stresses = vec![0.0; 4 * n];
+    let mut tangents = vec![0.0; 9 * n];
+    let mut plastic = vec![false; n];
     let mut failed = -1i64;
     for p in 0..n {
-        let row = materials.row(p).to_vec();
-        let s0 = [start[[p, 0]], start[[p, 1]], start[[p, 2]], start[[p, 3]]];
-        let eps = [strains[[p, 0]], strains[[p, 1]], strains[[p, 2]]];
-        match integrate_point(&row, s0, eps) {
-            Ok((s, is_plastic, d)) => {
-                for i in 0..4 {
-                    stresses[[p, i]] = s[i];
-                }
-                plastic[p] = is_plastic;
-                for i in 0..3 {
-                    for j in 0..3 {
-                        tangents[[p, i, j]] = d[i][j];
-                    }
-                }
-            }
+        let strain = [eps[3 * p], eps[3 * p + 1], eps[3 * p + 2]];
+        match integrate_point(&m[6 * p..6 * p + 6], stress_at(s0, p), strain) {
+            Ok((s, is_plastic, d)) => store(p, s, &d, is_plastic, &mut stresses, &mut tangents, &mut plastic),
             Err(()) => {
                 failed = p as i64;
                 break;
             }
         }
     }
-    (stresses.into_pyarray(py), plastic.into_pyarray(py), tangents.into_pyarray(py), failed)
+    Ok((
+        Array2::from_shape_vec((n, 4), stresses).unwrap().into_pyarray(py),
+        Array1::from(plastic).into_pyarray(py),
+        Array3::from_shape_vec((n, 3, 3), tangents).unwrap().into_pyarray(py),
+        failed,
+    ))
 }
 
 /// int B^T sigma dA, assembled.
@@ -103,22 +125,17 @@ fn internal_forces<'py>(
     weight: PyReadonlyArray1<'py, f64>,
     stresses: PyReadonlyArray2<'py, f64>,
     n_dofs: usize,
-) -> Bound<'py, PyArray1<f64>> {
+) -> PyResult<Bound<'py, PyArray1<f64>>> {
     let (nodes, dndx, dndy, weight, stresses) =
         (nodes.as_array(), dndx.as_array(), dndy.as_array(), weight.as_array(), stresses.as_array());
+    let (nd, dx, dy, w, s) = (data(&nodes, "nodes")?, data(&dndx, "dndx")?, data(&dndy, "dndy")?,
+                              data(&weight, "weight")?, data(&stresses, "stresses")?);
     let mut f = vec![0.0; n_dofs];
-    for p in 0..nodes.nrows() {
-        let s = [stresses[[p, 0]], stresses[[p, 1]], stresses[[p, 2]], stresses[[p, 3]]];
-        t6::add_internal_forces(
-            &nodes.row(p).to_vec(),
-            &dndx.row(p).to_vec(),
-            &dndy.row(p).to_vec(),
-            weight[p],
-            s,
-            &mut f,
-        );
+    for p in 0..w.len() {
+        let r = 6 * p..6 * p + 6;
+        t6::add_internal_forces(&nd[r.clone()], &dx[r.clone()], &dy[r], w[p], stress_at(s, p), &mut f);
     }
-    Array1::from(f).into_pyarray(py)
+    Ok(Array1::from(f).into_pyarray(py))
 }
 
 type Updated<'py> = (
@@ -142,52 +159,41 @@ fn update<'py>(
     materials: PyReadonlyArray2<'py, f64>,
     start: PyReadonlyArray2<'py, f64>,
     du: PyReadonlyArray1<'py, f64>,
-) -> Updated<'py> {
+) -> PyResult<Updated<'py>> {
     let (nodes, dndx, dndy, weight) = (nodes.as_array(), dndx.as_array(), dndy.as_array(), weight.as_array());
     let (materials, start, du) = (materials.as_array(), start.as_array(), du.as_array());
-    let du = du.to_vec();
-    let n = nodes.nrows();
-    let mut stresses = Array2::<f64>::zeros((n, 4));
+    let (nd, dx, dy, w) = (data(&nodes, "nodes")?, data(&dndx, "dndx")?, data(&dndy, "dndy")?, data(&weight, "weight")?);
+    let (m, s0, du) = (data(&materials, "materials")?, data(&start, "start")?, data(&du, "du")?);
+    let n = w.len();
+    let mut stresses = vec![0.0; 4 * n];
+    let mut tangents = vec![0.0; 9 * n];
+    let mut plastic = vec![false; n];
+    let mut stiffness = vec![0.0; 144 * n];
     let mut f = vec![0.0; du.len()];
-    let mut plastic = Array1::<bool>::from_elem(n, false);
-    let mut tangents = Array3::<f64>::zeros((n, 3, 3));
-    let mut stiffness = Array2::<f64>::zeros((n, 144));
     let mut failed = -1i64;
-    let mut k = [0.0; 144];
     for p in 0..n {
-        let (pn, px, py_) = (nodes.row(p).to_vec(), dndx.row(p).to_vec(), dndy.row(p).to_vec());
-        let eps = t6::strain(&pn, &px, &py_, &du);
-        let s0 = [start[[p, 0]], start[[p, 1]], start[[p, 2]], start[[p, 3]]];
-        let (s, is_plastic, d) = match integrate_point(&materials.row(p).to_vec(), s0, eps) {
+        let r = 6 * p..6 * p + 6;
+        let (pn, px, py_) = (&nd[r.clone()], &dx[r.clone()], &dy[r]);
+        let eps = t6::strain(pn, px, py_, du);
+        let (s, is_plastic, d) = match integrate_point(&m[6 * p..6 * p + 6], stress_at(s0, p), eps) {
             Ok(result) => result,
             Err(()) => {
                 failed = p as i64;
                 break;
             }
         };
-        for i in 0..4 {
-            stresses[[p, i]] = s[i];
-        }
-        plastic[p] = is_plastic;
-        for i in 0..3 {
-            for j in 0..3 {
-                tangents[[p, i, j]] = d[i][j];
-            }
-        }
-        t6::add_internal_forces(&pn, &px, &py_, weight[p], s, &mut f);
-        t6::point_stiffness(&px, &py_, weight[p], &d, &mut k);
-        for i in 0..144 {
-            stiffness[[p, i]] = k[i];
-        }
+        store(p, s, &d, is_plastic, &mut stresses, &mut tangents, &mut plastic);
+        t6::add_internal_forces(pn, px, py_, w[p], s, &mut f);
+        t6::point_stiffness(px, py_, w[p], &d, &mut stiffness[144 * p..144 * p + 144]);
     }
-    (
-        stresses.into_pyarray(py),
+    Ok((
+        Array2::from_shape_vec((n, 4), stresses).unwrap().into_pyarray(py),
         Array1::from(f).into_pyarray(py),
-        plastic.into_pyarray(py),
-        tangents.into_pyarray(py),
-        stiffness.into_pyarray(py),
+        Array1::from(plastic).into_pyarray(py),
+        Array3::from_shape_vec((n, 3, 3), tangents).unwrap().into_pyarray(py),
+        Array2::from_shape_vec((n, 144), stiffness).unwrap().into_pyarray(py),
         failed,
-    )
+    ))
 }
 
 #[pymodule]

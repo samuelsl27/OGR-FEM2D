@@ -136,9 +136,15 @@ tarea: es un deseo.
       equipo y la proporción CPU/reloj de cada medida, y se niega a medir sin el equipo en reposo.
       Repetida con Chrome cerrado (el resto de la carga, 19–29 %, no se puede cerrar): **NumPy /
       Rust = 9.6 (control 9.6)** con proporción CPU/reloj 0.96–0.99, y en otra ejecución **8.6
-      (control 10.9)**, con la primera ronda de Rust interrumpida (0.93). **Criterio 5 sin
-      decidir**: la razón está entre 9.5 y 11, a caballo del ×10, y en este equipo la medida no
-      puede ser válida por la regla del 10 % de carga. Decisión del propietario (T17).)
+      (control 10.9)**, con la primera ronda de Rust interrumpida (0.93). Después, por indicación
+      del propietario, **revisión de las dos variantes por igual** antes de volver a medir: en
+      NumPy la tangente se calcula entrada a entrada (sin matrices 3 × 3 por punto ni productos de
+      matrices por lotes); en Rust, sin reservas de memoria por punto. A/B en el mismo proceso
+      (`poc/resultados/revision_variantes_AB_2026-10-27.txt`): las dos ganan lo mismo (×1.3–1.4)
+      y NumPy / Rust queda en **9.3–9.9**, igual que antes de revisar (9.5–9.9); medida oficial
+      (`benchmark_2026-10-27_195205`): **10.2 (control 9.2)**, y unas 16 veces en la llamada por iteración. **Criterio
+      5: en torno a ×9.6 en la integración constitutiva, justo por debajo del ×10**; decisión del
+      propietario (T17).)
 - [ ] T14. CI de ruedas con `maturin-action` en Windows, macOS ARM y Linux, con los casos — RF-9 —
       Hecho cuando: verde en las tres (criterio 3, primera parte)
 - [ ] T15. Congelado con PyInstaller y comprobación del ejecutable — RF-10 — Hecho cuando: el

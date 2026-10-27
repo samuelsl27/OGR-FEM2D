@@ -1,0 +1,12 @@
+A/B of the review of the variants, integrate() on the seeded set of 100000 points
+Machine before: other programs 39 % of 8 logical cores, 2.6 GB free
+  rust new      32.45 ms  control    31.37 ms  (CPU share 1.00/0.99)
+  rust old      42.77 ms  control    42.99 ms  (CPU share 1.01/1.00)
+  numpy new    301.24 ms  control   310.72 ms  (CPU share 0.98/0.98)
+  numpy old    405.85 ms  control   424.10 ms  (CPU share 1.00/0.97)
+  old NumPy / old Rust: 9.5 (control 9.9)
+  new NumPy / new Rust: 9.3 (control 9.9)
+  old NumPy / new Rust: 12.5 (control 13.5)
+  rust: the review makes it 1.32 times faster (control 1.37)
+  numpy: the review makes it 1.35 times faster (control 1.36)
+Machine after: other programs 37 % of 8 logical cores, 2.6 GB free

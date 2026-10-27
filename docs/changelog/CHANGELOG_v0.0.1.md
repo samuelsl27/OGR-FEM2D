@@ -183,3 +183,18 @@ versión, registrando **qué se encontró**.
   proporción salía 0.78 o 1.22 sin que nada pasara (ahora cada medida dura al menos 1 s); y dos
   ejecuciones del mismo día escribían el mismo archivo (la del 9.6 se perdió; ahora el nombre
   lleva la hora).
+- **Revisión de las dos variantes antes de volver a medir (T13)**, por indicación del propietario
+  y con la medida de partida ya anotada. NumPy: el 68 % de su integración era la tangente, que
+  construía matrices P de 3 × 3 por punto para cada región, las elegía con `np.where` anidados y
+  multiplicaba matrices por lotes; ahora calcula solo las entradas que hacen falta, aprovechando
+  que Dᵉ es isótropa, que P es la identidad menos uno o dos productos exteriores y que Cp es
+  diagonal por bloques (lo mismo que ya hacía Rust). Rust: sin reservas de memoria por punto. Las
+  dos siguen idénticas a la referencia. **A/B en el mismo proceso**, con las versiones anteriores
+  cargadas a la vez: cada variante gana ×1.3–1.4 y la razón NumPy / Rust no cambia (9.5–9.9 antes,
+  9.3–9.9 después); revisar solo Rust la habría llevado a 12.5–13.5, que habría sido una
+  comparación sesgada. Medida oficial: **10.2 (control 9.2)** en la integración constitutiva y
+  unas 16 veces en la llamada por iteración sobre la malla del caso 002, con la proporción
+  CPU/reloj a 0.97–1.00 y la suite de otra sesión cargando el equipo un 32–34 % de forma
+  constante (lo que la regla del 10 % marca como no válida). El criterio 5 queda en **≈ ×9.6**,
+  justo por debajo del umbral. Durante la medida apareció, además, una suite de tests lanzada con
+  el Python del sistema (no de este proyecto); no se tocó.
