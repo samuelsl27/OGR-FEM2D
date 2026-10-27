@@ -40,7 +40,19 @@ Autor y titular del copyright: Samuel Sáez López (UPCT). Licencia AGPL-3.0-or-
   `OGR-FEM2D/.venv`).
 - **Formato de proyecto**: `.ogr` (JSON), compatible con OGR Slip2D en la parte geométrica. Los
   resultados van aparte en `modelo.h5` con la huella del modelo (`ADR-0003`).
-- **Tests**: el runner propio de la suite (`tests/_runner.py`, heredado de Slip2D).
+- **Tests**: el runner de la suite (`ogr_core.testing.runner`), a través de `tests/_runner.py`.
+
+## Comandos
+
+```bash
+.venv/Scripts/python tests/_runner.py          # toda la suite (lo que corre la CI)
+.venv/Scripts/python tests/_runner.py t6       # archivos que contengan eso
+.venv/Scripts/python tests/_runner.py -k patch # tests con ese nombre
+```
+
+**Siempre con el `.venv` del proyecto.** El Python del sistema tiene OGR Slip2D instalado en modo
+editable y allí `ogr_core` es la copia de Slip2D: el runner se niega («WRONG SHARED TREE»). Una
+ejecución filtrada no es evidencia para cerrar una tarea: antes, la suite entera.
 
 ## Las siete reglas (heredadas de OGR Slip2D, sin cambios)
 
