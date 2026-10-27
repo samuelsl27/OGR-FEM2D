@@ -5,13 +5,22 @@ changelog al día, la suite entera en verde, commit y push.
 
 ## Antes de programar
 
-- [ ] T0. El propietario responde D1–D7 de `spec.md` y aprueba el plan — Hecho cuando: las
-      respuestas están anotadas en `spec.md`.
-- [ ] T1. Fuentes que faltan: el T3 (Z&T cap. 4), los términos de fuerzas de volumen, de superficie
+- [x] T0. El propietario responde D1–D7 de `spec.md` y aprueba el plan — Hecho cuando: las
+      respuestas están anotadas en `spec.md`. (Hecho el 2026-10-27: las siete, como se propusieron.)
+- [x] T1. Fuentes que faltan: el T3 (Z&T cap. 4), los términos de fuerzas de volumen, de superficie
       y la carga puntual de la (2.13) de Z&T, y el desplazamiento de Flamant en T&G §33 — Hecho
       cuando: la tabla «Formulación» de `plan.md` no tiene ningún «por comprobar». (Hecho ya: Michell,
       Flamant, Lamé esférico, axisimetría §5.2, tabla 9.2, JCZ §13.2; soluciones cerradas en
-      `comprobaciones/`.)
+      `comprobaciones/`.) (Hecho el 2026-10-27: T3, Z&T §4.2, ecs. (4.5)–(4.10); cargas, Z&T
+      ecs. (2.10)–(2.15) y §5.2.6–5.2.8; desplazamiento de Flamant, T&G §33, ecs. (g)–(72).
+      Hallazgos: la carga puntual dentro de un elemento no está impresa y se deriva del trabajo
+      virtual de la (2.10); la (5.13) y el §5.2.6 confirman D2; en STR-04 no hay desplazamiento de
+      referencia; y en axisimetría con T3 la regla del centroide no integra exactos ni Bᵀσ₀·r ni
+      Nᵀb·r (grado 2), así que la identidad gravitatoria solo es exacta con T6 o en deformación
+      plana: con T3 axisimétrico se espera un desplazamiento que baje con h², no nulo (se
+      comprobará en la T8). **Anomalía en D3, pendiente del propietario**: en axisimetría el
+      equilibrio radial lleva (σr − σθ)/r (T&G §116, ec. 177), y un campo gravitatorio con
+      K ≠ Kz, o uno constante con σr ≠ σθ o τrz ≠ 0, no está en equilibrio.)
 
 ## Entrada y elementos (referencia)
 

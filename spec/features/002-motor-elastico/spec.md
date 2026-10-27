@@ -1,8 +1,8 @@
 # Spec 002 — Motor elástico general
 
-> **Borrador (2026-10-27), pendiente de las decisiones D1–D7 del propietario.** Primera spec de la
-> fase 1 del plan de desarrollo (`spec/constitution/plan_de_desarrollo.md`). Solo el **qué** y el
-> **porqué**; el cómo va en `plan.md`. Nada se programa antes de T0 (decisiones y OK del plan).
+> **Aprobada (2026-10-27)**, con D1–D7 tal como estaban propuestas. Primera spec de la fase 1 del
+> plan de desarrollo (`spec/constitution/plan_de_desarrollo.md`). Solo el **qué** y el **porqué**;
+> el cómo va en `plan.md`.
 
 ## Contexto y objetivo
 
@@ -116,7 +116,8 @@ Valores de referencia, comprobados contra las fuentes (`comprobaciones/solucione
 **Lo que la ficha de STR-04 no dice y hay que tener en cuenta:** el semiespacio es infinito y el
 modelo no; la ficha compara solo tensiones, y es lo correcto, porque en deformación plana el
 desplazamiento bajo una carga en un semiespacio no está acotado (crece con el logaritmo de la
-distancia; por comprobar en T&G §33 en la tarea T1). Además σ3 es muy pequeño a 5 m (0.3 % de q),
+distancia: Timoshenko y Goodier 1951, §33, ecs. (g), (h) y (72), págs. 89–91, donde la constante
+B = (2P/πE)·log d depende del punto, a una distancia d, que se elige como fijo). Además σ3 es muy pequeño a 5 m (0.3 % de q),
 así que un error relativo en σ3 no significa nada: la tolerancia va relativa a q (D4). El error
 del 0.6 % en σ1 de la ficha es lo que obtuvo el programa de referencia: **no es valor esperado**.
 
@@ -151,7 +152,7 @@ del 0.6 % en σ1 de la ficha es lo que obtuvo el programa de referencia: **no es
 
 ## Criterios de finalización
 
-- [ ] D1–D7 decididas por el propietario y anotadas aquí
+- [x] D1–D7 decididas por el propietario y anotadas aquí (2026-10-27)
 - [ ] Cada fórmula comprobada contra su fuente (tabla «Formulación» de `plan.md`) y citada en el
       código
 - [ ] STR-09 y STR-04 dentro de la tolerancia fijada antes de medir, con la malla y el estudio de
@@ -161,7 +162,9 @@ del 0.6 % en σ1 de la ficha es lo que obtuvo el programa de referencia: **no es
 - [ ] Referencia y Rust idénticos a ~1e-10; ruedas y congelado con los casos nuevos
 - [ ] `CHANGELOG_v0.0.2.md` con lo encontrado; fichas STR-04 y STR-09 con su «Seguimiento»
 
-## Decisiones que se piden al propietario
+## Decisiones del propietario (2026-10-27)
+
+Aprobadas las siete tal como se propusieron; la columna «Propuesta» es la decisión.
 
 | # | Pregunta | Propuesta | Por qué |
 |---|---|---|---|
