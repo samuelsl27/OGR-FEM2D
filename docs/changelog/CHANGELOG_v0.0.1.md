@@ -198,3 +198,14 @@ versión, registrando **qué se encontró**.
   constante (lo que la regla del 10 % marca como no válida). El criterio 5 queda en **≈ ×9.6**,
   justo por debajo del umbral. Durante la medida apareció, además, una suite de tests lanzada con
   el Python del sistema (no de este proyecto); no se tocó.
+- **Tarea T14, las ruedas**: verdes en las tres plataformas y con Python 3.11, 3.12 y 3.13, que en
+  local no se podían probar (solo hay 3.14); antes de subir se revisaron las f-strings que solo
+  admite Python ≥ 3.12 (no había ninguna). La primera ejecución falló en macOS en un único test:
+  el benchmark no sabía leer allí la carga del equipo (ni hay API de Windows ni `/proc/stat`) y el
+  test daba por hecho que siempre se puede; se añadió la lectura con `top` y `vm_stat`. Todo lo
+  demás, los casos de validación incluidos, pasó a la primera. Un trabajo de macOS se canceló sin
+  llegar a ejecutarse (no le tocó máquina). La rueda solo lleva el paquete
+  `ogr_fem2d` con su módulo compilado (sin `tests/` ni `poc/`: la variante NumPy no se
+  distribuye, D4). Como el runner exige que `ogr_fem2d` se resuelva dentro del árbol, la CI
+  instala la rueda, la comprueba desde fuera del árbol y copia su módulo compilado al árbol para
+  ejecutar la suite sobre ese binario. Ejecución: https://github.com/samuelsl27/OGR-FEM2D/actions/runs/40568629109.

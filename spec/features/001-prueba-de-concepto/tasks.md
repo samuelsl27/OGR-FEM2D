@@ -145,8 +145,16 @@ tarea: es un deseo.
       (`benchmark_2026-10-27_195205`): **10.2 (control 9.2)**, y unas 16 veces en la llamada por iteración. **Criterio
       5: en torno a ×9.6 en la integración constitutiva, justo por debajo del ×10**; decisión del
       propietario (T17).)
-- [ ] T14. CI de ruedas con `maturin-action` en Windows, macOS ARM y Linux, con los casos — RF-9 —
-      Hecho cuando: verde en las tres (criterio 3, primera parte)
+- [x] T14. CI de ruedas con `maturin-action` en Windows, macOS ARM y Linux, con los casos — RF-9 —
+      Hecho cuando: verde en las tres (criterio 3, primera parte). (Hecho:
+      `.github/workflows/wheels.yml`: una rueda abi3 por plataforma (Linux x86_64 manylinux,
+      Windows x64, macOS ARM); cada una se instala con sus dependencias (`ogr-core` desde su
+      etiqueta), se comprueba fuera del árbol (`.github/scripts/wheel_check.py`: el paquete
+      instalado, y Rust igual que la referencia) y la suite entera, con los dos casos de
+      validación, corre sobre su módulo compilado con Python 3.11, 3.12 y 3.13: los 12 trabajos
+      en verde (https://github.com/samuelsl27/OGR-FEM2D/actions/runs/40568629109). La primera ejecución falló en macOS en un solo test, el de la lectura
+      del estado del equipo del benchmark, que no sabía leerlo allí; los casos pasaban. **Criterio
+      3, primera parte, cumplido.**)
 - [ ] T15. Congelado con PyInstaller y comprobación del ejecutable — RF-10 — Hecho cuando: el
       ejecutable resuelve los dos casos (criterio 3, segunda parte)
 - [ ] T16. Mohr-Coulomb en Rust y en Python lado a lado para el propietario — Hecho cuando: el
