@@ -46,15 +46,19 @@ fuerzas internas».
 
 ## Formulación
 
-**Fuentes que hay que leer antes de programar (tarea T1)**; ninguna está en `Referencias` todavía:
+**Fuentes comprobadas (tarea T1, 2026-10-27).** Están en `../Referencias/Bibliografia/` (fuera del
+repositorio). Las soluciones cerradas, con cada ecuación citada, están escritas y comprobadas en
+`comprobaciones/soluciones_cerradas.py`.
 
-| Qué | Fuente propuesta | Qué se toma de ella |
-|---|---|---|
-| T6: funciones de forma, cuadratura, rigidez y fuerzas internas; tensión inicial en el equilibrio | Zienkiewicz y Taylor, *The Finite Element Method*, vol. 1 | Las funciones de forma cuadráticas en coordenadas de área, la regla de cuadratura y su grado, y el término de tensión inicial en la ecuación de equilibrio |
-| Mohr-Coulomb: superficie, potencial, retorno en tensiones principales con plano, aristas y vértice | de Souza Neto, Perić y Owen (2008), o Clausen, Damkilde y Andersen (2006, 2007) | El algoritmo de retorno, cerrado en tensiones principales, para flujo asociado y no asociado |
-| Hueco elástico en medio infinito | Kirsch (1898), en Jaeger y Cook (1976) | σr, σθ y ur (las de la ficha `VER-STR-01`, a comprobar) |
-| Cilindro de pared gruesa con el exterior fijo | Lamé, en Timoshenko y Goodier, *Theory of Elasticity* | La identidad del dominio finito |
-| Hueco en Mohr-Coulomb | Salençon (1969) | R0, σr, σθ y ur en las zonas plástica y elástica (las de la ficha `VER-STR-02`, a comprobar: la ficha las transcribe del manual del programa de referencia) |
+| Qué | Fuente | Dónde | Lo que se encontró |
+|---|---|---|---|
+| Hueco elástico en medio infinito (STR-01) | Jaeger, Cook y Zimmerman (2007), *Fundamentals of Rock Mechanics*, **4.ª ed.** (la ficha cita la 3.ª, de 1976) | §8.4, ecs. (8.90)–(8.92), y §8.5, ecs. (8.104)–(8.106) (Kirsch, 1898); págs. 216–218 | Coinciden con la ficha. En el texto extraído, la (8.92) sale con «−» en σθ; el límite b → ∞ de la (8.86) y la (8.104) con σ1 = σ2 dan **+**, que es lo que exige la física (σθ(a) = 2P0). Se usan esas. El ur de la excavación es solo el término a²/r de la (8.90): el (1 − 2ν)P0 r es el desplazamiento del estado inicial |
+| Anillo finito con el exterior fijo (identidad del modelo de 21 m) | Jaeger, Cook y Zimmerman (2007) | Solución general §8.4, ecs. (8.78)–(8.81), con u(b) = 0 en vez de la presión de la (8.73) | Derivación nuestra, en `lame_fixed_outer`. **Con b = 21 m, ur(a) queda un 0.60 % por debajo de Kirsch y σθ un 0.38 %** (no «un 0.2 %», como decía la spec antes de calcularlo). No hace falta Timoshenko y Goodier |
+| Hueco en Mohr-Coulomb (STR-02): tensiones y radio plástico | Salençon (1969), *Annales des Ponts et Chaussées*, IV, págs. 231–236 | §3 (criterio y flujo); §5, ecs. (2″), (3″) y (9″), pág. 235 | Coinciden con la ficha pasando de tracción positiva (Salençon) a compresión positiva. H = C cotg φ = q/(Kp − 1). Salençon supone que σz es la tensión principal intermedia: el test lo comprueba en el modelo |
+| STR-02: desplazamiento | Salençon (1969) | Pág. 236: r(r0, c) **solo para k = 1 (ψ = 0°) y en grandes deformaciones**; para otro k remite a su artículo de 1966 | La ficha da ur en pequeñas deformaciones para cualquier ψ. Comprobado: (a) con ψ = 0°, la fórmula publicada linealizada da lo mismo que la ficha (0.008236257 m); (b) con ψ = 0° y 30°, la solución exacta en pequeñas deformaciones del modelo de Salençon (su flujo εpθ = −k εpr, con k = 1/Kps, integrado; es la forma de pequeñas deformaciones de su (6″)) coincide con la ficha hasta 1e-12. Para ψ = 30°, el respaldo es esa derivación, no una fórmula impresa |
+| STR-02 en el anillo finito (identidad del modelo de 21 m) | Salençon (1969) y Jaeger, Cook y Zimmerman (2007) | Las dos anteriores, con u(b) = 0 | Derivación nuestra, en `salencon_finite`; con b → ∞ reproduce Salençon. **Con b = 21 m, ur(a) queda un 1.42 % (ψ = 0°) y un 1.83 % (ψ = 30°) por debajo**; R0 un 0.28 % |
+| Mohr-Coulomb: superficie, potencial y retorno (plano, aristas, vértice) | de Souza Neto, Perić y Owen (2008), *Computational Methods for Plasticity*, Wiley | §8.2, págs. 295–324: flujo (8.55)–(8.60); algoritmo en los Box 8.4 (predictor-corrector, pág. 305), 8.5 (plano), 8.6 (aristas) y 8.7 (vértice) | Mismo convenio que el motor: tracción positiva, σ1 ≥ σ2 ≥ σ3. Flujo no asociado con ψ. Incluye endurecimiento de la cohesión, c(ε̄p): el caso perfectamente plástico es c constante. Contraste disponible: tesis de Clausen (2007, Aalborg) |
+| T6: coordenadas de área, funciones de forma, cuadratura; tensión inicial en el equilibrio | Zienkiewicz y Taylor (2000), *The Finite Element Method*, 5.ª ed., vol. 1 | Ec. (2.13b) y su comentario (pág. 25): la tensión inicial y la **excavación** en roca con tensiones previas; §8.8.1, ecs. (8.30)–(8.33), y el triángulo cuadrático (págs. 180–183); §9.10, tabla 9.2 (págs. 221–222) | El término de tensión inicial de la (2.13b) es exactamente el vector de carga de la excavación que propone este plan |
 
 **Convenio de signos (D1, decidido):** tracción positiva. Vector de tensiones de deformación plana
 (σxx, σyy, σzz, τxy), con σzz guardada en cada punto porque el Mohr-Coulomb de deformación plana la
@@ -64,8 +68,8 @@ entrada y la salida, convertida en un único sitio.
 **Excavación:** la malla no tiene el hueco. Todos los elementos parten de la tensión inicial σ0
 (−30 MPa hidrostática, con tracción positiva), y la excavación es el desequilibrio que esa tensión
 deja en el borde libre del hueco: el vector de carga de la fase es el término de tensión inicial de
-la ecuación de equilibrio, con el contorno exterior fijo. Se aplica en escalones. La forma exacta del
-término se toma de la fuente de T1, no de aquí.
+la ecuación de equilibrio (Zienkiewicz y Taylor 2000, ec. 2.13b, que pone precisamente este
+ejemplo), con el contorno exterior fijo. Se aplica en escalones.
 
 **Iteraciones:** Newton-Raphson modificado con la **rigidez elástica** (rigidez inicial), que
 evita la matriz tangente no simétrica del flujo no asociado y permite factorizar una sola vez.
@@ -75,9 +79,11 @@ decide en la fase 2 con STR-05 (enmienda 3).
 
 **Simetría:** cuarto de corona (0 a 90°) con rodillos en los dos ejes. La geometría y la carga
 hidrostática son simétricas respecto a los dos ejes, así que el cuarto da la misma solución que el
-círculo con un cuarto de los grados de libertad. El contorno exterior a 21 m, fijo en las dos
-direcciones (con carga hidrostática el desplazamiento es radial, así que fijar las dos o solo la
-radial da lo mismo).
+círculo con un cuarto de los grados de libertad. El contorno exterior, fijo en las dos direcciones
+(con carga hidrostática el desplazamiento es radial, así que fijar las dos o solo la radial da lo
+mismo), a **dos distancias** (D3 bis): a **100 m** para los casos de validación contra Kirsch y
+Salençon, donde su efecto es de 0.03–0.08 %, y a **21 m**, la geometría de las fichas, como
+identidad contra la solución exacta del anillo finito.
 
 ## Decisiones de diseño
 
@@ -87,9 +93,11 @@ radial da lo mismo).
 - **Comparar en los puntos de integración y en los nudos**, no en valores suavizados: la tensión se
   compara donde se calcula, con la solución cerrada evaluada en el radio del punto. Así el error
   medido es del elemento y no de una extrapolación.
-- **Lamé además de Kirsch.** Kirsch es para un medio infinito; el modelo acaba a 21 m. Lamé es la
-  solución exacta del modelo tal como es, así que el estudio de convergencia contra Lamé mide solo
-  la discretización, y la diferencia Lamé–Kirsch dice cuánto pesa haber cortado el dominio.
+- **Dos geometrías (D3 bis).** Kirsch y Salençon son para un medio infinito; con el contorno a
+  21 m, la solución exacta del propio modelo ya se aparta de ellos un 0.60 % (STR-01) y hasta un
+  1.83 % (STR-02) en ur(a), así que ninguna malla cumpliría las tolerancias. Los casos de
+  validación van a 100 m (efecto del 0.03–0.08 %), y el modelo de 21 m se compara con la solución
+  exacta del anillo finito, que mide solo la discretización y comprueba además el contorno fijo.
 - **Rigidez inicial y no tangente.** Más iteraciones, pero las mismas en las tres variantes y sin
   matriz no simétrica: la prueba mide la integración constitutiva, no la convergencia de Newton.
 - **Medir como manda el `AGENTS.md` de la suite**: A/B en el mismo proceso, espalda con espalda, con
@@ -107,8 +115,9 @@ radial da lo mismo).
 | Punto material | Trayectorias con solución conocida: compresión triaxial con retorno al plano, a la arista y al vértice | cada región de retorno da lo que dice la fuente |
 | Elemento | Parche: un campo de desplazamiento lineal se reproduce exactamente; movimiento de sólido rígido sin tensión | el elemento pasa la prueba de la parcela |
 | Elemento | Tensión inicial uniforme en un elemento libre da fuerzas internas en equilibrio | el término de tensión inicial está bien |
-| Malla | Lamé (hidrostático, elástico, exterior fijo): error que baja con el refinamiento | la discretización converge |
-| Caso | STR-01 y STR-02 (ψ = 0° y 30°) dentro de tolerancia, con la malla fijada | los casos de validación |
+| Malla | Anillo de 21 m, elástico y Mohr-Coulomb, contra su solución exacta (`lame_fixed_outer`, `salencon_finite`): error que baja con el refinamiento | la discretización converge y el contorno fijo está bien |
+| Caso | STR-01 y STR-02 (ψ = 0° y 30°), contorno a 100 m, contra Kirsch y Salençon dentro de tolerancia, con la malla fijada | los casos de validación |
+| Caso | En STR-02, σz es la tensión principal intermedia en todos los puntos plastificados | la hipótesis de Salençon se cumple en el modelo |
 | Identidad | Python de referencia = Rust (~1e-10) en punto material y en malla; NumPy igual | las variantes calculan lo mismo |
 | Plataformas | Las ruedas pasan los casos en Windows, macOS ARM y Linux; el ejecutable congelado también | se puede distribuir |
 

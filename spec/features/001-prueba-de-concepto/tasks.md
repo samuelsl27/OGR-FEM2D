@@ -5,11 +5,15 @@ tarea: es un deseo.
 
 ## Antes de programar
 
-- [ ] T0. El propietario responde D1–D6 de `spec.md` y aprueba el plan — Hecho cuando: las
-      respuestas están anotadas en `spec.md`. **D1–D4 y D6 anotadas (2026-10-27); falta D5.**
-- [ ] T1. Conseguir y leer las fuentes (D5); comprobar contra ellas cada fórmula que se va a
+- [x] T0. El propietario responde D1–D6 de `spec.md` y aprueba el plan — Hecho cuando: las
+      respuestas están anotadas en `spec.md`. (D1–D6 y D3 bis, 2026-10-27.)
+- [x] T1. Conseguir y leer las fuentes (D5); comprobar contra ellas cada fórmula que se va a
       programar y las de las fichas `VER-STR-01` y `VER-STR-02` — Hecho cuando: una tabla en
-      `plan.md` da, para cada fórmula, autor, año y ecuación o página, y lo que difiere de la ficha
+      `plan.md` da, para cada fórmula, autor, año y ecuación o página, y lo que difiere de la ficha.
+      (Hecho el 2026-10-27: tabla en «Formulación» y `comprobaciones/soluciones_cerradas.py`. Tres
+      hallazgos: el desplazamiento con ψ = 30° no está impreso en Salençon 1969, y se respalda con
+      la integración de su modelo; el signo de la (8.92) de Jaeger et al. en el texto extraído; y
+      el efecto del contorno a 21 m, que llevó a D3 bis.)
 - [x] T2. Licencias de `pyo3`, `numpy` (crate), `ndarray` y `pyinstaller` (D6) — Hecho cuando:
       anotadas y compatibles con AGPL-3.0, y el propietario da el OK. (Hecho el 2026-10-27:
       `spec.md`, D6.)
@@ -24,16 +28,19 @@ tarea: es un deseo.
 - [ ] T5. Ley elástica y Mohr-Coulomb con retorno en plano, arista y vértice — RF-2, RF-4 — Hecho
       cuando: pasan los tests de punto material de las tres regiones y la tolerancia del retorno
       está fijada y justificada
-- [ ] T6. Malla radial de T6 de un cuarto de corona — RF-7 — Hecho cuando: área total exacta (a la
-      tolerancia de la cuadratura) y ningún elemento degenerado
+- [ ] T6. Malla radial de T6 de un cuarto de corona, con el radio exterior como parámetro (21 m y
+      100 m) — RF-7 — Hecho cuando: área total exacta (a la tolerancia de la cuadratura) y ningún
+      elemento degenerado
 - [ ] T7. Escalones, iteraciones con rigidez inicial e historia de convergencia — RF-5, RF-6 —
       Hecho cuando: la no convergencia se detecta y se informa en un test
-- [ ] T8. Lamé: estudio de convergencia con tres mallas — Hecho cuando: el error baja con cada
-      refinamiento y la tasa queda anotada
-- [ ] T9. Casos `001-kirsch-hueco-elastico` y `002-salencon-hueco-mohr-coulomb` (ψ = 0° y 30°):
-      las tolerancias de D3 (0.5 % y 2 %) escritas en `esperado.json` **antes** del estudio de
-      convergencia, que elige la malla que las cumple — Hecho cuando: los tres pasan con esa malla,
-      o el incumplimiento queda reportado como hallazgo
+- [ ] T8. Identidad del anillo de 21 m (D3 bis): elástico contra `lame_fixed_outer` y Mohr-Coulomb
+      (ψ = 0° y 30°) contra `salencon_finite`, con tres mallas — Hecho cuando: el error baja con
+      cada refinamiento y la tasa queda anotada
+- [ ] T9. Casos `001-kirsch-hueco-elastico` y `002-salencon-hueco-mohr-coulomb` (ψ = 0° y 30°),
+      con el contorno a 100 m: las tolerancias de D3 (0.5 % y 2 %) escritas en `esperado.json`
+      **antes** del estudio de convergencia, que elige la malla que las cumple; y la comprobación
+      de que σz es la principal intermedia en los puntos plastificados — Hecho cuando: los tres
+      pasan con esa malla, o el incumplimiento queda reportado como hallazgo
 
 ## Las otras dos variantes
 

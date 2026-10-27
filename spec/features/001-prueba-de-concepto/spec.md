@@ -1,8 +1,8 @@
 # Spec 001 — Prueba de concepto del motor
 
 > **Borrador (2026-10-27).** Fase 0 de la hoja de ruta. Decide si el ADR-0001 (motor en Rust) se
-> queda o se reabre. Solo el **qué** y el **porqué**; el cómo va en `plan.md`. Decisiones D1–D4 y
-> D6 tomadas (al final); falta D5, las fuentes, antes de escribir código.
+> queda o se reabre. Solo el **qué** y el **porqué**; el cómo va en `plan.md`. Decisiones D1–D6 tomadas
+> (al final) y fuentes comprobadas (tarea T1).
 
 ## Contexto y objetivo
 
@@ -74,17 +74,19 @@ validación y el convenio de signos del motor.
 
 | Caso | Fuente científica | Qué se compara |
 |---|---|---|
-| `validacion/casos/001-kirsch-hueco-elastico` (ficha `VER-STR-01`) | Kirsch (1898), a través de Jaeger y Cook (1976), *Fundamentals of Rock Mechanics*, 3.ª ed. | σr, σθ en los puntos de integración y ur en los nudos a lo largo de un radio, r de 1 a 5 m |
-| `validacion/casos/002-salencon-hueco-mohr-coulomb` (ficha `VER-STR-02`), ψ = 0° y ψ = 30° | Salençon (1969) | Lo mismo, más el radio plástico R0 |
-| Identidad del dominio finito (hidrostático, elástico) | Solución de Lamé del cilindro de pared gruesa (en Timoshenko y Goodier) | El problema con el contorno a 21 m **tiene** solución cerrada: separa el error de discretización del error de truncar el dominio infinito |
+| `validacion/casos/001-kirsch-hueco-elastico` (ficha `VER-STR-01`), contorno a 100 m | Kirsch (1898), en Jaeger, Cook y Zimmerman (2007), *Fundamentals of Rock Mechanics*, 4.ª ed., §8.4–8.5 | σr, σθ en los puntos de integración y ur en los nudos a lo largo de un radio, r de 1 a 5 m |
+| `validacion/casos/002-salencon-hueco-mohr-coulomb` (ficha `VER-STR-02`), ψ = 0° y ψ = 30°, contorno a 100 m | Salençon (1969), §5 | Lo mismo, más el radio plástico R0 |
+| Identidad del anillo finito: el modelo de las fichas, con el contorno fijo a 21 m, elástico y Mohr-Coulomb | Solución general de Jaeger, Cook y Zimmerman (2007), ecs. (8.78)–(8.81), con u(b) = 0, y el modelo de Salençon en el mismo anillo (derivación propia, comprobada) | El modelo de 21 m **tiene** solución cerrada: mide solo la discretización y comprueba el contorno fijo |
 | Identidad entre variantes | — | Python de referencia y Rust coinciden con tolerancia relativa del orden de 1e-10, en punto material y en malla (criterio 1 del ADR-0001) |
 | Convergencia de malla | — | Con tres mallas cada vez más finas, el error frente a la solución cerrada **disminuye**; la tolerancia de cada caso se fija con la malla elegida (regla 9) |
 
-Datos de los dos casos (fichas): radio a = 1 m, contorno exterior a 21 m, E = 10 000 MPa,
-ν = 0.2, tensión de campo hidrostática p0 = 30 MPa de compresión; en STR-02, c = 3.45 MPa,
-φ = 30°, ψ = 0° y 30°, presión interior nula. Valores de control propios, de las fórmulas de las
-fichas (hay que comprobarlas contra la fuente, tarea T1): en STR-01, σθ(a) = 60 MPa y ur(a) =
-0.0036 m; en STR-02, R0 ≈ 1.735 m y ur(a) ≈ 0.0082 m (ψ = 0°) y ≈ 0.0191 m (ψ = 30°).
+Datos de los dos casos (fichas): radio a = 1 m, E = 10 000 MPa, ν = 0.2, tensión de campo
+hidrostática p0 = 30 MPa de compresión; en STR-02, c = 3.45 MPa, φ = 30°, ψ = 0° y 30°,
+presión interior nula. El contorno exterior de las fichas está a 21 m; aquí, a 100 m para los
+casos y a 21 m para la identidad (D3 bis). Valores de referencia en medio infinito, comprobados
+contra las fuentes (tarea T1, `comprobaciones/soluciones_cerradas.py`): en STR-01, σθ(a) = 60 MPa
+y ur(a) = 0.0036 m; en STR-02, R0 = 1.734998 m, ur(a) = 0.008236 m (ψ = 0°) y 0.019086 m
+(ψ = 30°).
 
 **Las reproducciones propias del programa de referencia no son valor esperado** (regla de
 `validacion/README.md`). Sí sirven de aviso: en la reproducción P02, con la misma malla gruesa, el
@@ -132,15 +134,8 @@ exige el estudio de convergencia.
 |---|---|---|
 | D1 | **Tracción positiva dentro del motor.** La interfaz muestra compresión positiva donde sea la costumbre geotécnica, con la conversión en un único sitio | Es el convenio de los textos de elementos finitos y de plasticidad que se siguen, y el del motor de referencia por dentro; dar la vuelta a un algoritmo de retorno dentro del motor es donde un signo cambiado no se ve |
 | D2 | **Cargas y desplazamientos impuestos de cada fase, en totales.** El motor recibe el estado total que define el usuario y calcula él el incremento | Un solo convenio para los dos y sin errores acumulados; el motor de referencia los mezcla (duda 12 de S06) |
-| D3 | **Tolerancias fijadas ya:** STR-01, 0.5 % en σθ(a) y en ur(a); STR-02 (ψ = 0° y 30°), 2 % en ur(a), y R0 dentro de un tamaño de elemento. El estudio de convergencia elige la malla que las cumple; si ninguna malla razonable las cumple, es un hallazgo que se reporta, no una tolerancia que se afloja | Criterio fijado antes de medir. Solo cortar el dominio a 21 m mueve ur(a) en torno a un 0.2 % frente a Kirsch; la identidad de Lamé lo separa |
+| D3 | **Tolerancias fijadas ya:** STR-01, 0.5 % en σθ(a) y en ur(a); STR-02 (ψ = 0° y 30°), 2 % en ur(a), y R0 dentro de un tamaño de elemento. El estudio de convergencia elige la malla que las cumple; si ninguna malla razonable las cumple, es un hallazgo que se reporta, no una tolerancia que se afloja | Criterio fijado antes de medir |
+| D3 bis | **Dos geometrías** (decidido el mismo día, tras la tarea T1): los casos de validación, con el contorno a **100 m**, contra Kirsch y Salençon; y el modelo de las fichas, a **21 m**, contra la solución exacta del anillo finito, como identidad. Las tolerancias de D3 no cambian | Al calcularlo (T1) resultó que con el contorno a 21 m la solución exacta del modelo ya se aparta de las fórmulas de medio infinito en ur(a) un **0.60 %** (STR-01), un **1.42 %** (STR-02, ψ = 0°) y un **1.83 %** (ψ = 30°): ninguna malla cumpliría D3 frente a ellas. La versión anterior de esta spec decía «en torno a un 0.2 %»: era una estimación sin calcular, y estaba mal. A 100 m el efecto es del 0.03–0.08 % |
 | D4 | **La referencia en Python en su sitio final** (`ogr_fem2d/engine/reference/`); la variante NumPy en `poc/`; el crate de Rust en `rust/`, compilado como `ogr_fem2d._engine` | La referencia se queda pase lo que pase (es el oráculo); NumPy solo sirve para medir |
+| D5 | **Fuentes conseguidas** por el propietario (2026-10-27) y comprobadas en la tarea T1: Salençon (1969); Jaeger, Cook y Zimmerman (2007, 4.ª ed.); de Souza Neto, Perić y Owen (2008); Zienkiewicz y Taylor (2000, 5.ª ed., vol. 1); de contraste, Timoshenko y Goodier y la tesis de Clausen (2007) | Tabla de fuentes y hallazgos en `plan.md`, «Formulación» |
 | D6 | **OK a `pyo3` 0.30 (MIT o Apache-2.0), `numpy` 0.30 (BSD-2-Clause), `ndarray` 0.17 (MIT o Apache-2.0) y PyInstaller 6.22** (GPL-2.0-or-later con excepción para distribuir programas de cualquier licencia); PyInstaller solo en el `.venv`, como herramienta | Licencias comprobadas el 2026-10-27, compatibles con AGPL-3.0 |
-
-## Pendiente
-
-- **[NECESITA FUENTE] D5 — Las fuentes originales no están en `Referencias`**; el propietario las
-  está buscando. Hacen falta antes de programar: Salençon (1969); Kirsch (1898) o Jaeger y Cook
-  (1976); un algoritmo de retorno de Mohr-Coulomb en tensiones principales (de Souza Neto, Perić y
-  Owen, 2008, *Computational Methods for Plasticity*, o Clausen, Damkilde y Andersen, 2006 y 2007);
-  el elemento T6 y las tensiones iniciales (Zienkiewicz y Taylor, *The Finite Element Method*,
-  vol. 1); Lamé (Timoshenko y Goodier, *Theory of Elasticity*).
