@@ -1,0 +1,26 @@
+{
+  "id": "003-cavidad-esferica-elastica",
+  "ficha": "VER-STR-09",
+  "fuente": "Lamé (1852), en Timoshenko y Goodier (1951), Theory of Elasticity, 2.ª ed., §121, ecs. (197)-(198), págs. 358-359; u_R por la ley de Hooke (§6)",
+  "tipo_referencia": "analitica",
+  "tolerancia_relativa": 0.005,
+  "comparaciones": [
+    {"magnitud": "sigma_t", "donde": {"tipo": "puntos_de_integracion", "anillo": 1},
+     "valor": "P0 (1 + a^3 / (2 R^3)) en el radio R de cada punto; 15.0 MPa en R = a",
+     "unidad": "MPa", "convenio": "compresion positiva",
+     "como": "el mayor error relativo de todos los puntos de integración del primer anillo de elementos (los más cercanos a R = a: la regla de 7 puntos no pone ninguno sobre el hueco), cada uno contra la solución en su radio; las dos tensiones tangenciales, la meridiana y la circunferencial"},
+    {"magnitud": "u_R", "donde": {"tipo": "nudos", "R": 1.0},
+     "valor": 0.0003, "unidad": "m", "convenio": "hacia el centro positivo",
+     "como": "el mayor error de todos los nudos sobre R = a"}
+  ],
+  "modelo": {
+    "analisis": "axisimetria",
+    "geometria": {"a": 1.0, "b": 21.0, "unidad": "m",
+                  "seccion": "cuarto de corona en el plano meridiano, x = r >= 0, y = z >= 0"},
+    "material": {"ley": "elastica", "E": 20000.0, "nu": 0.2, "unidad": "MPa"},
+    "tension_inicial": {"p0": 10.0, "unidad": "MPa", "convenio": "compresion positiva, hidrostatica en las tres direcciones"},
+    "fase": {"escalones": 1, "tolerancia": 1e-10, "iteraciones_max": 5},
+    "malla": null
+  },
+  "notas": "Tolerancia de la spec 002, D4, escrita antes del estudio de convergencia (este archivo aparece con la malla a null). Con el exterior fijo a 21 m la solución exacta del modelo se aparta de la de medio infinito un 0.022 % en u_R(a) y un 0.011 % en sigma_t(a) (comprobaciones de la spec 002, sphere_fixed_outer): una sola geometría basta."
+}
