@@ -173,3 +173,13 @@ versión, registrando **qué se encontró**.
   proporción CPU/reloj de cada medida (por debajo de 1, el sistema le quitó el núcleo; por encima,
   la librería usó más hilos), dice si la medida es válida y, sin `--force`, no mide con el equipo
   cargado. El resultado anterior queda en `poc/resultados/` marcado como no válido.
+- **La medida repetida (T13), con Chrome cerrado**: lo que no se puede cerrar (TextInputHost, la
+  aplicación de Claude, VS Code y ráfagas de cinco procesos `pythonw` a la vez) carga el equipo un
+  19–29 %, así que ninguna medida es válida por la regla del 10 %. Dentro del proceso, una salió
+  limpia (proporción CPU/reloj 0.96–0.99, rondas a 2–4 %): **NumPy / Rust = 9.6, control 9.6**; la
+  otra tuvo la primera ronda de Rust interrumpida (0.93): 8.6, y 10.9 en el control limpio. El
+  criterio 5 queda **sin decidir**, entre 9.5 y 11. Dos fallos del propio benchmark, corregidos:
+  en Windows el reloj de CPU del proceso avanza a saltos de ~15.6 ms, y en bloques cortos la
+  proporción salía 0.78 o 1.22 sin que nada pasara (ahora cada medida dura al menos 1 s); y dos
+  ejecuciones del mismo día escribían el mismo archivo (la del 9.6 se perdió; ahora el nombre
+  lleva la hora).

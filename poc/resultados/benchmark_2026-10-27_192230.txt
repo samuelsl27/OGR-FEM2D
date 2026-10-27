@@ -1,0 +1,16 @@
+Machine before: other programs 23 % of 8 logical cores, 3.5 GB free
+Constitutive integration, 100000 points {'elastic': 40000, 'plane': 30000, 'right edge': 10000, 'left edge': 10000, 'apex': 10000}
+  reference    9320.90 ms  control    9401.17 ms  ( 93209.0 ns/point, rounds differ 0.9 %, CPU share 0.99/0.99)
+  numpy         416.74 ms  control     381.92 ms  (  4167.4 ns/point, rounds differ 9.1 %, CPU share 0.98/1.00)
+  rust           48.30 ms  control      35.15 ms  (   483.0 ns/point, rounds differ 37.4 %, CPU share 0.93/0.99)
+  NumPy / Rust = 8.6 (control 10.9); criterion 5 asks >= 10
+Machine after the integration: other programs 19 % of 8 logical cores, 3.4 GB free
+Mesh of case 002 (psi = 30), 2048 elements, 6144 points (592 plastic), 8192 dofs
+  update reference    1471.58 ms  control    1958.80 ms
+  update numpy          88.62 ms  control      96.74 ms
+  update rust            8.48 ms  control       9.08 ms
+  assembly              35.65 ms  control      38.89 ms
+  factorisation         71.24 ms  control      68.79 ms
+  solve                  2.89 ms  control       2.43 ms
+Machine after the mesh: other programs 23 % of 8 logical cores, 3.6 GB free
+NOT A VALID MEASURE: other programs used 23 % of the machine before (at most 10 %); other programs used 19 % of the machine after the integration (at most 10 %); other programs used 23 % of the machine after the mesh (at most 10 %); integration rust: CPU share 0.93 outside (0.95, 1.05)

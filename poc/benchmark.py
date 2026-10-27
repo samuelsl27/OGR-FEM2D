@@ -29,7 +29,10 @@ valid:
 * the CPU share of every timing: the process's CPU time over the wall time of
   the timed calls. Close to 1 means the process had its core all the time;
   below 1 the system gave the core to someone else in the middle of the
-  measure; above 1 some library used more than one thread.
+  measure; above 1 some library used more than one thread. The process CPU
+  clock of Windows advances in ticks of about 15.6 ms, so every timing
+  repeats its calls until they add up to at least MIN_SECONDS (the tick is
+  then below 2 % of it), and only such blocks are judged.
 
 A measure is VALID when the other programs used at most ``--max-load`` per
 cent of the machine at every sample, and every CPU share is within
@@ -205,39 +208,45 @@ def machine_state(seconds: float = 2.0) -> dict:
             "free_memory_gb": _free_memory_gb()}
 
 
+#: Shortest block of timed calls whose CPU share is judged (see above).
+MIN_SECONDS = 1.0
+
+
 @dataclass(frozen=True)
 class Timing:
-    """Median wall time of the calls, and the CPU share of the process over
-    all of them (CPU time / wall time)."""
+    """Median wall time of the calls, the CPU share of the process over all
+    of them (CPU time / wall time), and the wall time of the whole block."""
     seconds: float
     cpu_share: float
+    block: float = 0.0
 
 
-def timed(call, repeats: int) -> Timing:
-    """``repeats`` calls after one warm-up call."""
+def timed(call, repeats: int, min_seconds: float = 0.0) -> Timing:
+    """At least ``repeats`` calls after one warm-up call, and more until
+    the block lasts ``min_seconds``."""
     call()
     times = []
     cpu_0, wall_0 = time.process_time(), time.perf_counter()
-    for _ in range(repeats):
+    while len(times) < repeats or time.perf_counter() - wall_0 < min_seconds:
         t = time.perf_counter()
         call()
         times.append(time.perf_counter() - t)
     cpu, wall = time.process_time() - cpu_0, time.perf_counter() - wall_0
-    return Timing(statistics.median(times), cpu / wall if wall > 0 else float("nan"))
+    return Timing(statistics.median(times), cpu / wall if wall > 0 else float("nan"), wall)
 
 
-def rounds(calls: dict, repeats: dict) -> dict:
+def rounds(calls: dict, repeats: dict, min_seconds: float = 0.0) -> dict:
     """The A/B of the suite: every call timed one after the other, then the
     whole round again as the control. name -> (first, control) Timing."""
-    first = {name: timed(call, repeats[name]) for name, call in calls.items()}
-    control = {name: timed(call, repeats[name]) for name, call in calls.items()}
+    first = {name: timed(call, repeats[name], min_seconds) for name, call in calls.items()}
+    control = {name: timed(call, repeats[name], min_seconds) for name, call in calls.items()}
     return {name: (first[name], control[name]) for name in calls}
 
 
 def _entry(pair) -> dict:
     a, b = pair
     return {"first": a.seconds, "control": b.seconds,
-            "cpu_share": [a.cpu_share, b.cpu_share]}
+            "cpu_share": [a.cpu_share, b.cpu_share], "block": [a.block, b.block]}
 
 
 def _variants():
@@ -252,7 +261,7 @@ def measure_integration(n: int, repeats: int) -> dict:
     prepared = {name: v.prepare(g) for name, v in _variants().items()}
     calls = {name: (lambda p=p: p.integrate(start, strains)) for name, p in prepared.items()}
     reps = {"reference": max(1, repeats // 3), "numpy": repeats, "rust": repeats}
-    result = rounds(calls, reps)
+    result = rounds(calls, reps, MIN_SECONDS)
     counts = {r: regions.count(r) for r in PROPORTIONS}
     return {"points": n, "regions": counts, "repeats": reps,
             "seconds": {k: _entry(v) for k, v in result.items()},
@@ -293,7 +302,7 @@ def measure_mesh(repeats: int) -> dict:
     prepared = {name: v.prepare(g) for name, v in _variants().items()}
     calls = {name: (lambda p=p: p.update(start, du)) for name, p in prepared.items()}
     reps = {"reference": max(1, repeats // 3), "numpy": repeats, "rust": repeats}
-    update = rounds(calls, reps)
+    update = rounds(calls, reps, MIN_SECONDS)
     up = prepared["rust"].update(start, du)
     rows, cols = interface.stiffness_pattern(g)
 
@@ -306,7 +315,8 @@ def measure_mesh(repeats: int) -> dict:
     rhs = up.internal_forces[free]
     linear = rounds({"assembly": assemble, "factorisation": lambda: splu(k),
                      "solve": lambda: lu.solve(rhs)},
-                    {"assembly": repeats, "factorisation": repeats, "solve": repeats})
+                    {"assembly": repeats, "factorisation": repeats, "solve": repeats},
+                    MIN_SECONDS)
     plastic = int(np.count_nonzero(up.plastic))
     return {"elements": len(model.elements), "points": len(points), "dofs": len(free),
             "plastic_points": plastic, "repeats": reps,
@@ -334,12 +344,12 @@ def verdict(before: dict, integration: dict, mesh: dict, max_load: float) -> lis
         elif load > max_load:
             reasons.append(f"other programs used {load:.0f} % of the machine {where} "
                            f"(at most {max_load:.0f} %)")
-    for block, entries in (("integration", integration["seconds"]),
-                           ("update", mesh["update_seconds"]), ("linear", mesh["linear_seconds"])):
+    for part, entries in (("integration", integration["seconds"]),
+                          ("update", mesh["update_seconds"]), ("linear", mesh["linear_seconds"])):
         for name, e in entries.items():
-            for share in e["cpu_share"]:
-                if not CPU_SHARE[0] <= share <= CPU_SHARE[1]:
-                    reasons.append(f"{block} {name}: CPU share {share:.2f} outside {CPU_SHARE}")
+            for share, block in zip(e["cpu_share"], e.get("block", [MIN_SECONDS] * 2)):
+                if block >= MIN_SECONDS and not CPU_SHARE[0] <= share <= CPU_SHARE[1]:
+                    reasons.append(f"{part} {name}: CPU share {share:.2f} outside {CPU_SHARE}")
     return reasons
 
 
@@ -393,9 +403,9 @@ def main(argv=None) -> int:
                         help="measure on a loaded machine (the result says it is not valid)")
     args = parser.parse_args(argv)
     before = machine_state(3.0)
-    print(_state_line("before", before))
     load = before["other_load_percent"]
     if (load is None or load > args.max_load) and not args.force:
+        print(_state_line("before", before))
         print(f"The machine is not idle (at most {args.max_load:.0f} % allowed): close what "
               "is running, or measure with --force and get a result marked not valid.")
         return 3
@@ -415,7 +425,7 @@ def main(argv=None) -> int:
               "valid": not reasons, "not_valid_because": reasons,
               "integration": integration, "mesh": mesh}
     args.out.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.date.today().isoformat()
+    stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")   # one file per run
     (args.out / f"benchmark_{stamp}.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
     (args.out / f"benchmark_{stamp}.txt").write_text(text + "\n", encoding="utf-8")
     return 0

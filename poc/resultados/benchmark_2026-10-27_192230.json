@@ -1,0 +1,186 @@
+{
+  "date": "2026-10-27T19:22:30",
+  "machine": {
+    "platform": "Windows-11-10.0.26300-SP0",
+    "processor": "Intel64 Family 6 Model 142 Stepping 10, GenuineIntel",
+    "python": "3.14.7",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1"
+    }
+  },
+  "seed": 2026,
+  "proportions": {
+    "elastic": 0.4,
+    "plane": 0.3,
+    "right edge": 0.1,
+    "left edge": 0.1,
+    "apex": 0.1
+  },
+  "machine_before": {
+    "other_load_percent": 23.046875,
+    "logical_cores": 8,
+    "free_memory_gb": 3.5044212341308594
+  },
+  "max_load_percent": 10.0,
+  "valid": false,
+  "not_valid_because": [
+    "other programs used 23 % of the machine before (at most 10 %)",
+    "other programs used 19 % of the machine after the integration (at most 10 %)",
+    "other programs used 23 % of the machine after the mesh (at most 10 %)",
+    "integration rust: CPU share 0.93 outside (0.95, 1.05)"
+  ],
+  "integration": {
+    "points": 100000,
+    "regions": {
+      "elastic": 40000,
+      "plane": 30000,
+      "right edge": 10000,
+      "left edge": 10000,
+      "apex": 10000
+    },
+    "repeats": {
+      "reference": 3,
+      "numpy": 9,
+      "rust": 9
+    },
+    "seconds": {
+      "reference": {
+        "first": 9.320902700070292,
+        "control": 9.401169799966738,
+        "cpu_share": [
+          0.9861302337764521,
+          0.9903540884596149
+        ],
+        "block": [
+          27.87093840003945,
+          27.862509300000966
+        ]
+      },
+      "numpy": {
+        "first": 0.41674420004710555,
+        "control": 0.3819197998382151,
+        "cpu_share": [
+          0.9771030390507515,
+          0.9975507382565645
+        ],
+        "block": [
+          3.7099465001374483,
+          3.4929301000665873
+        ]
+      },
+      "rust": {
+        "first": 0.04829740012064576,
+        "control": 0.03514605003874749,
+        "cpu_share": [
+          0.9339718337270776,
+          0.9908539230080305
+        ],
+        "block": [
+          1.070696100126952,
+          1.0092304998543113
+        ]
+      }
+    },
+    "machine_after": {
+      "other_load_percent": 18.65234375,
+      "logical_cores": 8,
+      "free_memory_gb": 3.377777099609375
+    }
+  },
+  "mesh": {
+    "elements": 2048,
+    "points": 6144,
+    "dofs": 8192,
+    "plastic_points": 592,
+    "repeats": {
+      "reference": 3,
+      "numpy": 9,
+      "rust": 9
+    },
+    "update_seconds": {
+      "reference": {
+        "first": 1.4715753998607397,
+        "control": 1.9588028998114169,
+        "cpu_share": [
+          0.9872286122742129,
+          0.9804039931731618
+        ],
+        "block": [
+          4.637350399978459,
+          5.880866500083357
+        ]
+      },
+      "numpy": {
+        "first": 0.08862159994896501,
+        "control": 0.0967446998693049,
+        "cpu_share": [
+          0.9744766954171874,
+          0.9780847342496147
+        ],
+        "block": [
+          1.0582602999638766,
+          1.0863067000173032
+        ]
+      },
+      "rust": {
+        "first": 0.008483299985527992,
+        "control": 0.009084499906748533,
+        "cpu_share": [
+          0.9806669021587766,
+          0.9996397298910337
+        ],
+        "block": [
+          1.0037812001537532,
+          1.0003603999502957
+        ]
+      }
+    },
+    "linear_seconds": {
+      "assembly": {
+        "first": 0.03565349988639355,
+        "control": 0.03888599993661046,
+        "cpu_share": [
+          0.9993019180611992,
+          0.9906441250677881
+        ],
+        "block": [
+          1.0319703998975456,
+          1.025216800160706
+        ]
+      },
+      "factorisation": {
+        "first": 0.07124385004863143,
+        "control": 0.06879030005075037,
+        "cpu_share": [
+          0.9662190673638994,
+          0.9655101517409709
+        ],
+        "block": [
+          1.01879070000723,
+          1.068088199943304
+        ]
+      },
+      "solve": {
+        "first": 0.002885399851948023,
+        "control": 0.0024339499650523067,
+        "cpu_share": [
+          0.9999304050123226,
+          0.982700086032695
+        ],
+        "block": [
+          1.0000695998314768,
+          1.0017043999396265
+        ]
+      }
+    },
+    "machine_after": {
+      "other_load_percent": 23.2421875,
+      "logical_cores": 8,
+      "free_memory_gb": 3.6118125915527344
+    }
+  }
+}

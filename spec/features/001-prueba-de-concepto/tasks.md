@@ -121,7 +121,7 @@ tarea: es un deseo.
 
 ## Medidas y distribución
 
-- [ ] T13. Conjunto de medida con semilla (regiones elástica, plano, arista, vértice) y
+- [x] T13. Conjunto de medida con semilla (regiones elástica, plano, arista, vértice) y
       `poc/benchmark.py` con A/B en el mismo proceso — RF-8 — Hecho cuando: las tres variantes
       medidas con sus controles; la razón Rust/NumPy anotada (criterio 5). (Hecho: conjunto de
       100 000 puntos de Mohr-Coulomb, ψ = 0°, 15° y 30°, con 40 % elástico, 30 % plano, 10 % cada
@@ -134,7 +134,11 @@ tarea: es un deseo.
       cargado (los demás programas usaban del 36 % al 99 % de la CPU), y por eso el mismo código
       dio 9.5 en una ejecución y 10.4–12.3 en otra. El benchmark registra ahora el estado del
       equipo y la proporción CPU/reloj de cada medida, y se niega a medir sin el equipo en reposo.
-      **Pendiente: repetir la medida con el equipo en reposo.**)
+      Repetida con Chrome cerrado (el resto de la carga, 19–29 %, no se puede cerrar): **NumPy /
+      Rust = 9.6 (control 9.6)** con proporción CPU/reloj 0.96–0.99, y en otra ejecución **8.6
+      (control 10.9)**, con la primera ronda de Rust interrumpida (0.93). **Criterio 5 sin
+      decidir**: la razón está entre 9.5 y 11, a caballo del ×10, y en este equipo la medida no
+      puede ser válida por la regla del 10 % de carga. Decisión del propietario (T17).)
 - [ ] T14. CI de ruedas con `maturin-action` en Windows, macOS ARM y Linux, con los casos — RF-9 —
       Hecho cuando: verde en las tres (criterio 3, primera parte)
 - [ ] T15. Congelado con PyInstaller y comprobación del ejecutable — RF-10 — Hecho cuando: el
