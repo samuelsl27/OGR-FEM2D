@@ -73,3 +73,10 @@
   - la carga puntual dentro de un elemento no está impresa en la fuente: se deriva del trabajo
     virtual de la ec. (2.10), y en axisimetría una fuerza radial puntual sobre el eje se rechaza
     (D1 bis).
+- **Tarea T8, la tensión inicial** (`ogr_fem2d/engine/initial_stress.py`): el campo gravitatorio
+  con estratos horizontales está en equilibrio exacto con el peso propio en deformación plana
+  (T3 y T6) y en axisimetría con T6: la fase de gravedad sale con un desequilibrio de redondeo y
+  no se resuelve. Con T3 en axisimetría no: la regla del centroide no integra exactos los
+  términos de grado 2, y el desplazamiento baja con la malla con razones de 2.7 a 3.9 por cada
+  mitad de h, un orden de 1.4 a 1.9. **En la T1 escribí que bajaría con h²: era una estimación
+  sin calcular, y no se cumple.** El test pide solo que baje en cada refinamiento.

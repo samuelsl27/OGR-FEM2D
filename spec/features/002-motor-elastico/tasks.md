@@ -105,8 +105,19 @@ changelog al día, la suite entera en verde, commit y push.
       columna confinada bajo su peso, exacta con T6 en deformación plana y en axisimetría, y todas
       las cargas a la vez equilibradas por las reacciones. Quince mutaciones cazadas (dos tras
       afinar los tests). Hallazgos en el changelog.)
-- [ ] T8. Preproceso de tensión inicial, constante y gravitatoria — RF-7 — Hecho cuando: campo
-      gravitatorio más peso propio con estratos horizontales da desplazamiento nulo.
+- [x] T8. Preproceso de tensión inicial, constante y gravitatoria — RF-7 — Hecho cuando: campo
+      gravitatorio más peso propio con estratos horizontales da desplazamiento nulo. (Hecho el
+      2026-10-27: `ogr_fem2d/engine/initial_stress.py`, fuera del motor, con compresión positiva a
+      la entrada y la conversión a tracción positiva en un único sitio. Campo constante por la
+      transformación de JCZ (2007) §2.3, ecs. (2.25)–(2.30); gravitatorio con superficie y estratos
+      horizontales, ecs. (13.1) y (13.5), K y Kz por estrato; enmienda de D3 en axisimetría. 8 tests:
+      valores y dirección principales contra las ecs. (2.31)–(2.32), peso de la columna, y el
+      bloque de dos estratos que no se mueve bajo su peso (exacto en deformación plana con T3 y T6 y
+      en axisimetría con T6; la fase es redondeo y no se resuelve), con la reacción igual al peso;
+      un campo constante con sus tracciones de contorno, igual. Trece mutaciones cazadas (una tras
+      cambiar un caso). **Hallazgo**: con T3 en axisimetría el desplazamiento no es nulo y baja con
+      cada mitad de h, pero con razones de 2.7 a 3.9 (orden 1.4–1.9), no el h² que se esperaba en
+      la T1.)
 - [ ] T9. Fases y excavación por desactivación — RF-8, RF-9 — Hecho cuando: desactivar el anillo
       interior da lo mismo que la malla sin él, y una fase sin cambios da incremento nulo.
 

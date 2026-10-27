@@ -30,7 +30,7 @@ kN/m³), y la conversión desde las unidades del usuario se hace en un solo siti
 | `materials` | `Material(law, unit_weight)`: la ley (`Elastic` o `MohrCoulomb`) y el peso específico (0 = sin peso propio) |
 | `element_material` | índice del material de cada elemento |
 | `stages` | la secuencia de fases (al menos una) |
-| `initial_stresses` | un tensor por punto de integración, elemento a elemento y en el orden de la regla del elemento; `None` es cero. Los campos constante y gravitatorio se calculan fuera del motor (spec 002, D3 y su enmienda) |
+| `initial_stresses` | un tensor por punto de integración, elemento a elemento y en el orden de la regla del elemento; `None` es cero. Los campos constante y gravitatorio se calculan fuera del motor, con `initial_stress.constant_field` y `initial_stress.gravitational_field`, que reciben compresión positiva (spec 002, D3 y su enmienda) |
 
 **Puntos de integración por elemento** (spec 002, D1; Zienkiewicz y Taylor 2000, tabla 9.2):
 
