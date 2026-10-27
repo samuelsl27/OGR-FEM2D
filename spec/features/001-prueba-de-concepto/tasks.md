@@ -28,9 +28,14 @@ tarea: es un deseo.
       cuando: pasan la prueba de la parcela, el sólido rígido y la tensión inicial uniforme.
       (Hecho: isoparamétrico, regla cuadrática de la tabla 9.2 de Zienkiewicz y Taylor (2000),
       con los puntos en el centro de los lados; 14 tests.)
-- [ ] T5. Ley elástica y Mohr-Coulomb con retorno en plano, arista y vértice — RF-2, RF-4 — Hecho
+- [x] T5. Ley elástica y Mohr-Coulomb con retorno en plano, arista y vértice — RF-2, RF-4 — Hecho
       cuando: pasan los tests de punto material de las tres regiones y la tolerancia del retorno
-      está fijada y justificada
+      está fijada y justificada. (Hecho: `mohr_coulomb.py`, perfectamente plástico y en forma
+      cerrada (observación 8.1 de de Souza Neto et al.), construido desde la ec. (8.68) y los
+      vectores de flujo; tolerancia 1e-12 relativa, justificada en el código; 10 tests, y una
+      comprobación con errores introducidos a propósito: los tests cazan un vector de flujo de
+      arista equivocado, el signo del término volumétrico y la elección de arista invertida.
+      Con ψ = 0 el retorno al vértice se rechaza con un error, como manda la fuente.)
 - [ ] T6. Malla radial de T6 de un cuarto de corona, con el radio exterior como parámetro (21 m y
       100 m) — RF-7 — Hecho cuando: área total exacta (a la tolerancia de la cuadratura) y ningún
       elemento degenerado

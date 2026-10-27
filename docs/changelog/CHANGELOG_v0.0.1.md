@@ -15,4 +15,13 @@ versión, registrando **qué se encontró**.
     identidad del anillo de 21 m.
 - **Tarea T3, el entorno**: el núcleo se fija a `ogr-core` v0.1.0 y el runner se niega a medir
   contra cualquier otra versión, en particular contra el `ogr_core` de OGR Slip2D, que tiene el
-  mismo nombre de paquete.
+  mismo nombre de paquete. La primera versión del envoltorio fallaba con un `ModuleNotFoundError`
+  confuso en ese caso; ahora lo explica y sale con 2.
+- **Tarea T4, el T6**: la cuadratura cuadrática de la tabla 9.2 de Zienkiewicz y Taylor (2000)
+  pone los puntos en el centro de los lados; con los nudos intermedios del hueco sobre el círculo,
+  hay puntos de integración exactamente en r = a.
+- **Tarea T5, el Mohr-Coulomb**: el Box 8.6 de de Souza Neto et al. (2008) tiene una errata en σ1
+  de la arista izquierda (Δγb por Δγa; la ec. 8.78 y su propia subrutina SUMC están bien), y el
+  criterio de elección de arista solo se pudo fijar con la subrutina. Por eso cada retorno se
+  construye desde la ec. (8.68) y los vectores de flujo, y los tests comprueban las ecuaciones de
+  los planos: una comprobación con errores introducidos a propósito confirma que los cazan.
