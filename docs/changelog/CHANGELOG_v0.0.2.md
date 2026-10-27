@@ -88,3 +88,9 @@
 - **Tarea T10, las mallas de prueba** (`mesh_structured.py`; T3 en `mesh_radial.py`): un nudo
   intermedio fuera del centro de su lado recto no lo cazaba ningún test, porque el área y un
   campo lineal siguen saliendo exactos; se añadió la comprobación del punto medio.
+- **Tarea T11, el caso 003 (cavidad esférica, STR-09)**: con T6 y la regla de 7 puntos, la malla
+  4 × 16 ya cumple el 0.5 % (σt 0.341 %, u_R 0.130 %); el error baja ×4 en σt y ×6–8 en u_R con
+  cada refinamiento. **El T3, que es el elemento de la ficha, necesita 32 × 128** (16 384
+  elementos) para el mismo 0.5 %: converge con orden 1 en tensiones. El caso queda con T6 (regla
+  9). Las comprobaciones de la spec 001 y de la 002 tenían el mismo nombre de módulo y la primera
+  que se cargaba ocupaba el nombre: `tests/_sphere.py` carga la suya por la ruta.

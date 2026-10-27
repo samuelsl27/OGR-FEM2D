@@ -20,7 +20,9 @@
     "material": {"ley": "elastica", "E": 20000.0, "nu": 0.2, "unidad": "MPa"},
     "tension_inicial": {"p0": 10.0, "unidad": "MPa", "convenio": "compresion positiva, hidrostatica en las tres direcciones"},
     "fase": {"escalones": 1, "tolerancia": 1e-10, "iteraciones_max": 5},
-    "malla": null
+    "malla": {"generador": "ogr_fem2d.engine.mesh_radial.quarter_annulus", "elemento": "T6",
+              "n_radial": 16, "n_theta": 4, "crecimiento": 1.3,
+              "estudio": "1.69^(1/2); familia anidada 2x8, 4x16, 8x32 (n_theta x n_radial) con crecimiento 1.69^(1/2^k), T6 con la regla de 7 puntos: error max. en sigma_t (primer anillo) 1.416 %, 0.341 %, 0.089 %; en u_R(a) 0.936 %, 0.130 %, 0.037 %. La de 4x16 es la primera que cumple las dos tolerancias. Con T3 la misma familia: sigma_t 7.35 %, 3.71 %, 1.66 %, 0.73 % (16x64), 0.36 % (32x128); u_R 8.98 %, 3.16 %, 1.10 %, 0.34 %, 0.10 %"}
   },
   "notas": "Tolerancia de la spec 002, D4, escrita antes del estudio de convergencia (este archivo aparece con la malla a null). Con el exterior fijo a 21 m la solución exacta del modelo se aparta de la de medio infinito un 0.022 % en u_R(a) y un 0.011 % en sigma_t(a) (comprobaciones de la spec 002, sphere_fixed_outer): una sola geometría basta."
 }

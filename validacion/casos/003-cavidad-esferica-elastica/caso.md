@@ -48,4 +48,23 @@ Tolerancia de D4: **0.5 %** en los dos.
 
 ## Malla y elemento con que se fija la tolerancia
 
-Pendiente del estudio de convergencia (tarea T11).
+T6 con la regla de 7 puntos (D1) (`ogr_fem2d.engine.mesh_radial.quarter_annulus`): **16 divisiones
+radiales, 4 angulares, crecimiento 1.69^½ = 1.3** (primer elemento de 0.092 m). Estudio de
+convergencia con la familia anidada 2 × 8, 4 × 16, 8 × 32 (n_θ × n_R; crecimiento 1.69^(1/2^k),
+cada refinamiento parte cada elemento en cuatro):
+
+| Malla | T6: σt (primer anillo) | T6: u_R(a) | T3: σt | T3: u_R(a) |
+|---|---|---|---|---|
+| 2 × 8 | 1.416 % | 0.936 % | 7.35 % | 8.98 % |
+| 4 × 16 | **0.341 %** | **0.130 %** | 3.71 % | 3.16 % |
+| 8 × 32 | 0.089 % | 0.037 % | 1.66 % | 1.10 % |
+| 16 × 64 | — | — | 0.73 % | 0.34 % |
+| 32 × 128 | — | — | 0.36 % | 0.10 % |
+
+La de 4 × 16 es la primera con T6 que cumple las dos tolerancias. Frente a la solución exacta del
+modelo con el exterior fijo (identidad: solo discretización), el error del T6 baja ×4 en σt y ×6–8
+en u_R con cada refinamiento, y la distancia entre las dos referencias es la del contorno, 0.01–0.02 %.
+
+El T3, que es lo que usa la ficha, converge con orden 1 en las tensiones (el error se reduce a la
+mitad en cada refinamiento) y solo cumple la tolerancia en 32 × 128 (16 384 elementos, 39 s con la
+referencia en Python). Por la regla 9 el caso queda fijado con T6; un caso con T3 sería otro caso.

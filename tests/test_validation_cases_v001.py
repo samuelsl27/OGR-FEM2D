@@ -46,9 +46,7 @@ from ogr_fem2d.engine.reference.elastic import Elastic
 CASES = Path(__file__).resolve().parents[1] / "validacion" / "casos"
 
 #: Cases written but not runnable yet, with the reason (tasks.md, T9).
-PENDING: dict[str, str] = {
-    "003-cavidad-esferica-elastica": "spec 002, T11: tolerance fixed (D4), mesh after the study",
-}
+PENDING: dict[str, str] = {}
 
 
 def _cases():

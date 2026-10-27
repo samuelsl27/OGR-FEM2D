@@ -145,8 +145,17 @@ changelog al día, la suite entera en verde, commit y push.
       bloque graduado traccionado por sus lados de contorno con la tensión exacta, y el cuarto de
       corona de T3 con los nudos del de T6, el área de los polígonos y la diferencia con la corona
       bajando como Δθ². Once mutaciones cazadas, una tras añadir la comprobación del punto medio.)
-- [ ] T11. Caso 003, STR-09 en axisimetría, con su estudio de convergencia y la identidad de la
-      esfera finita — Hecho cuando: dentro de la tolerancia de D4 con la malla que la fija.
+- [x] T11. Caso 003, STR-09 en axisimetría, con su estudio de convergencia y la identidad de la
+      esfera finita — Hecho cuando: dentro de la tolerancia de D4 con la malla que la fija. (Hecho el
+      2026-10-27: `validacion/casos/003-cavidad-esferica-elastica/`, subido primero con la tolerancia
+      y la malla a null; el estudio fijó T6 con la regla de 7 puntos en 4 × 16, crecimiento 1.3: σt
+      0.341 % (peor punto del primer anillo, las dos componentes tangenciales) y u_R(a) 0.130 %.
+      Con T3 hace falta 32 × 128 (0.36 % y 0.10 %, 39 s): orden 1 en tensiones. `tests/_sphere.py`
+      y `test_validation_cases_v002.py`: el caso, sus datos contra las soluciones cerradas, la
+      simetría esférica en la cavidad y la identidad de la esfera finita con el error bajando más
+      de ×3. Dientes: errores del motor en la axisimetría (regla de 7 puntos, fila circunferencial
+      de B, acoplamiento de D, eje sin sujetar) hacen fallar el caso; los pesos impresos de la tabla
+      (10⁻¹⁰) están por debajo de su resolución y los cazan los tests de la T3.)
 - [ ] T12. Caso 004, STR-04, con los estudios de convergencia y de dominio y la identidad del
       semiespacio truncado — Hecho cuando: dentro de la tolerancia de D4 con la malla y el dominio
       que la fijan.
