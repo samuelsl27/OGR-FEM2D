@@ -1,6 +1,7 @@
 # Plan de desarrollo
 
-> **Borrador para aprobar (2026-10-27).** Desglosa la [hoja de ruta](roadmap.md) aprobada en *specs*
+> **Aprobado por el propietario (2026-10-27)**, con las cuatro propuestas P1–P4 tal como están.
+> Desglosa la [hoja de ruta](roadmap.md) aprobada en *specs*
 > SDD y tareas, desde la fase 1 hasta el final del FEM. Cada *spec* se escribe, se aprueba y se
 > cierra como la 001 (`spec.md`, `plan.md`, `tasks.md`), así que aquí solo va lo que cada una debe
 > resolver, de dónde sale y qué casos la cierran: el detalle se fija al abrirla. Fuentes de este plan:
@@ -21,7 +22,14 @@
   línea de órdenes, servidor MCP, resultados en `.h5`, casos con `modelo.ogr`. El motor solo resuelve
   el cuarto de corona de la spec 001.
 
-## Decisiones que necesito antes de abrir la fase 1
+## Decisiones previas a la fase 1
+
+**Tomadas por el propietario el 2026-10-27: las cuatro propuestas.** P1, opción (b): la parte
+genérica de la interfaz se extrae, copiándola desde Slip2D sin tocarlo, a una versión nueva de
+OGR-Core o a un paquete hermano `ogr-gui`; cuál de los dos se decide en el ADR que abra la *spec* de
+la interfaz, y cada versión nueva de OGR-Core sigue necesitando su OK. P2: T6 y T3 en la fase 1. P3:
+las presiones hidrostáticas pasan a la fase 2 (la hoja de ruta se actualizó). P4: el bucle global
+pasa a Rust en la fase 2, tras medir.
 
 | # | Decisión | Opciones | Propuesta | Por qué importa |
 |---|---|---|---|---|
