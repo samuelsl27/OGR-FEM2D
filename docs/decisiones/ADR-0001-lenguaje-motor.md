@@ -1,7 +1,8 @@
 # ADR-0001 — Lenguaje del motor de cálculo
 
-- **Estado:** ACEPTADA CON CONDICIÓN (2026-10-27, propietario). Se reabre si la prueba de concepto
-  no cumple los criterios de aceptación de abajo.
+- **Estado:** **ACEPTADA** (2026-10-27, propietario), tras la prueba de concepto de la spec 001:
+  criterios 1 a 4 cumplidos y el 5 en ≈ ×9.6, que el propietario da por suficiente (ver
+  «Resultado de la prueba de concepto», al final). Antes: aceptada con condición, el mismo día.
 - **Contexto completo:** `../Referencias/Doc_Guia/Analisis_interfaz_funcionamiento/D_sintesis/S04_decision_lenguaje_motor.md`
   y el informe de investigación `S05_investigacion_lenguaje_motor.md` (fuera del repositorio).
 
@@ -74,4 +75,9 @@ El detalle, en `spec/features/001-prueba-de-concepto/tasks.md` y en `docs/change
 | 5 | Rust ≥ ×10 más rápido que NumPy vectorizado en la integración constitutiva | **≈ ×9.6**: A/B en el mismo proceso, 9.3–9.9 (después de revisar las dos variantes por igual; 9.5–9.9 antes); medida oficial 10.2 (control 9.2). En la llamada completa por iteración (integración, fuerzas internas y rigidez) sobre la malla del caso 002, **unas 16 veces**. Equipo con carga de fondo constante del 32–39 % que no se podía cerrar; las medidas, limpias dentro del proceso (proporción CPU/reloj 0.97–1.01) | **No, por poco** |
 
 Por la regla de este ADR, el criterio 5 sin cumplir **reabre la decisión con las medidas delante**.
-La decisión del propietario: **pendiente**.
+
+**Decisión del propietario (2026-10-27), con estas medidas delante: se mantiene Rust.** En sus
+palabras: «9,6 veces para mí es más que suficiente, es prácticamente 10 y justifica el uso de Rust». El umbral ×10 era una decisión suya, no una cifra publicada (ver arriba), y la
+diferencia con ×9.6 queda dentro de lo que la medida distingue en este equipo; en la llamada por
+iteración, que es lo que el motor hace de verdad, la ventaja es de unas 16 veces. El ADR pasa de
+«aceptada con condición» a **aceptada**.

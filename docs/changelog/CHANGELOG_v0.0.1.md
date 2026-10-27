@@ -216,4 +216,6 @@ versión, registrando **qué se encontró**.
   es de la receta de PyInstaller para SciPy y no afecta. La carpeta pesa 83 MB en macOS, 119 MB
   en Windows y 228 MB en Linux, casi todo NumPy y SciPy. Con esto el **criterio 3 del ADR-0001
   queda cumplido** (https://github.com/samuelsl27/OGR-FEM2D/actions/runs/40570492239).
-
+- **Tarea T17, la decisión sobre el ADR-0001**: criterios 1 a 4 cumplidos, el 5 en ≈ ×9.6 (×16 en
+  la llamada por iteración). El propietario, con las medidas delante: «9,6 veces para mí es más que suficiente, es prácticamente 10 y justifica el uso de Rust». El ADR-0001 pasa
+  a **aceptada**: el motor se escribe en Rust, con la referencia en Python como oráculo.

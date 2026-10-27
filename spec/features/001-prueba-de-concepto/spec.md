@@ -121,9 +121,9 @@ exige el estudio de convergencia.
 
 ## Criterios de finalización
 
-- [ ] Los cinco criterios del ADR-0001 medidos y anotados con sus números, y la decisión del
-      propietario sobre el ADR (se queda o se reabre)
-- [ ] Los dos casos de validación dentro de tolerancia, con la malla que la fija y el estudio de
+- [x] Los cinco criterios del ADR-0001 medidos y anotados con sus números, y la decisión del
+      propietario sobre el ADR (se queda o se reabre): se queda (2026-10-27)
+- [x] Los dos casos de validación dentro de tolerancia, con la malla que la fija y el estudio de
       convergencia que la justifica
 - [ ] Cada fórmula del código, comprobada contra su fuente original (autor, año, ecuación)
 - [ ] Changelog registrando **qué se encontró**

@@ -175,6 +175,8 @@ tarea: es un deseo.
 
 ## Cierre
 
-- [ ] T17. Informe de los cinco criterios con sus números y la decisión del propietario sobre el
-      ADR-0001 — Hecho cuando: el ADR dice «aceptada» o «reabierta» con las medidas citadas
+- [x] T17. Informe de los cinco criterios con sus números y la decisión del propietario sobre el
+      ADR-0001 — Hecho cuando: el ADR dice «aceptada» o «reabierta» con las medidas citadas. (Hecho: informe al final del ADR-0001;
+      criterios 1–4 cumplidos y el 5 en ≈ ×9.6 (×16 en la llamada por iteración). Decisión del
+      propietario, 2026-10-27: **se mantiene Rust**, «9,6 veces para mí es más que suficiente, es prácticamente 10 y justifica el uso de Rust». El ADR dice «aceptada».)
 - [ ] T18. Changelog `CHANGELOG_v0.0.1.md` registrando **qué se encontró**
