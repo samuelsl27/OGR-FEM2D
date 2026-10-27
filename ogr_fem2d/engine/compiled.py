@@ -34,10 +34,12 @@ def _f64(a) -> np.ndarray:
 
 class _Prepared:
     def __init__(self, g: interface.Geometry):
-        if g.nodes.shape[1] != 6:
-            # spec 002: the three-node triangle reaches Rust in task T13
+        if g.nodes.shape[1] != 6 or g.n_over_r is not None:
+            # spec 002: the three-node triangle and axisymmetry reach Rust in
+            # task T13
             raise NotImplementedError("the Rust variant has only the six-node "
-                                      "triangle so far (spec 002, T13)")
+                                      "triangle in plane strain so far (spec "
+                                      "002, T13)")
         self.g = g
         self.nodes = np.ascontiguousarray(g.nodes, dtype=np.int64)
         self.dndx, self.dndy = _f64(g.dndx), _f64(g.dndy)

@@ -93,8 +93,10 @@ from . import element_t3 as t3
 from . import element_t6 as t6
 from . import mohr_coulomb as mc
 from . import triangle
-from .elastic import Elastic, plane_strain_matrix, stress_increment
-from .quadrature import PLANE_STRAIN, rule_for
+from .elastic import (Elastic, axisymmetric_matrix,
+                      axisymmetric_stress_increment, plane_strain_matrix,
+                      stress_increment)
+from .quadrature import AXISYMMETRIC, PLANE_STRAIN, rule_for
 
 Stress = tuple[float, float, float, float]      # sigma_xx, yy, zz, tau_xy
 
@@ -130,13 +132,19 @@ SHAPES = {3: t3, 6: t6}
 @dataclass(frozen=True)
 class Model:
     """What the engine receives (rule 11 of AGENTS.md): nodes, triangles of
-    three or of six nodes (one kind per model), one material per element and
+    three or of six nodes (one kind per model), one material per element,
     the restrained degrees of freedom (2 n for x, 2 n + 1 for y of node n),
-    all held at zero. Plane strain."""
+    all held at zero, and the analysis: plane strain, or axisymmetry with x
+    the radius and y the axis (spec 002, T5)."""
     nodes: list[tuple[float, float]]
     elements: list[tuple[int, ...]]
     materials: list[Elastic | mc.MohrCoulomb]
     restrained: frozenset[int]
+    analysis: str = PLANE_STRAIN
+
+    @property
+    def axisymmetric(self) -> bool:
+        return self.analysis == AXISYMMETRIC
 
 
 @dataclass(frozen=True)
@@ -148,24 +156,35 @@ class IntegrationPoint:
     shape functions (Zienkiewicz and Taylor 2000, Eqs. 2.2-2.4): row eps_x has
     dN_a/dx under u_a, row eps_y has dN_a/dy under v_a, row gamma_xy has
     both. The point keeps those two lists, and strain() and the internal
-    forces write B u and B^T sigma with them."""
+    forces write B u and B^T sigma with them.
+
+    In axisymmetry (spec 002, T5) B has a fourth row, eps_theta = u / r
+    (Zienkiewicz and Taylor 2000, Eqs. 5.5-5.6), with N_a / r under u_a:
+    the point keeps those values too (``n_over_r``; empty in plane strain),
+    and its weight is that of the ring, w det J / 2 times 2 pi r (Eq. 5.13).
+    """
     element: int
     index: int                         # its place in the element's rule
     nodes: tuple[int, ...]             # the nodes of its element
     dndx: tuple[float, ...]            # dN_a/dx, a = 1..n
     dndy: tuple[float, ...]            # dN_a/dy
-    weight: float                      # w det J / 2, so int f dA = sum weight f
+    weight: float                      # w det J / 2 (x 2 pi r), int f dV = sum weight f
     xy: tuple[float, float]
+    n_over_r: tuple[float, ...] = ()   # N_a / r, axisymmetry only
 
-    def strain(self, u: list[float]) -> tuple[float, float, float]:
-        """(eps_x, eps_y, gamma_xy) = B u, u with 2 values per node."""
+    def strain(self, u: list[float]) -> tuple[float, ...]:
+        """B u, u with 2 values per node: (eps_x, eps_y, gamma_xy) in plane
+        strain; (eps_r, eps_z, eps_theta, gamma_rz) in axisymmetry."""
         ex = ey = gxy = 0.0
         for n, dx, dy in zip(self.nodes, self.dndx, self.dndy):
             ux, uy = u[2 * n], u[2 * n + 1]
             ex += dx * ux
             ey += dy * uy
             gxy += dy * ux + dx * uy
-        return ex, ey, gxy
+        if not self.n_over_r:
+            return ex, ey, gxy
+        et = sum(nr * u[2 * n] for n, nr in zip(self.nodes, self.n_over_r))
+        return ex, ey, et, gxy
 
 
 @dataclass
@@ -196,28 +215,39 @@ def element_kind(model: Model):
         raise ValueError(f"elements with {sorted(kinds)} nodes: all must have "
                          "three or all six")
     n = kinds.pop()
-    return SHAPES[n], rule_for(n, PLANE_STRAIN)
+    return SHAPES[n], rule_for(n, model.analysis)
 
 
 def integration_points(model: Model) -> list[IntegrationPoint]:
     """Every point of every element, in element order, then in the order of
     the element's rule."""
     shape, rule = element_kind(model)
+    axi = model.axisymmetric
     points = []
     for e, element in enumerate(model.elements):
         xy = [model.nodes[n] for n in element]
         where = triangle.point_coordinates(shape, xy, rule)
         for g, ((l1, l2, l3), w) in enumerate(rule.points):
             try:
-                b, det = triangle.b_matrix(shape, xy, l1, l2, l3)
+                b, det = triangle.b_matrix(shape, xy, l1, l2, l3, axi)
             except ValueError as err:
                 raise ValueError(f"element {e}: {err}") from None
+            n = len(element)
             points.append(IntegrationPoint(
                 e, g, tuple(element),
-                tuple(b[0][2 * a] for a in range(len(element))),       # dN_a/dx
-                tuple(b[1][2 * a + 1] for a in range(len(element))),   # dN_a/dy
-                w * det / 2.0, where[g]))
+                tuple(b[0][2 * a] for a in range(n)),       # dN_a/dx
+                tuple(b[1][2 * a + 1] for a in range(n)),   # dN_a/dy
+                triangle.weight(shape, xy, l1, l2, l3, w, det, axi), where[g],
+                tuple(b[2][2 * a] for a in range(n)) if axi else ()))   # N_a/r
     return points
+
+
+def elastic_matrix(model: Model, material) -> list[list[float]]:
+    """D of a material in the model's analysis: 3 x 3 (Eq. 4.16) or 4 x 4
+    (Eq. 5.12)."""
+    if model.axisymmetric:
+        return axisymmetric_matrix(material.young, material.poisson)
+    return plane_strain_matrix(material.young, material.poisson)
 
 
 def stiffness(model: Model) -> coo_matrix:
@@ -228,8 +258,8 @@ def stiffness(model: Model) -> coo_matrix:
     rows, cols, values = [], [], []
     for element, material in zip(model.elements, model.materials):
         xy = [model.nodes[n] for n in element]
-        k = triangle.stiffness(shape, xy, plane_strain_matrix(material.young,
-                                                              material.poisson), rule)
+        k = triangle.stiffness(shape, xy, elastic_matrix(model, material), rule,
+                               model.axisymmetric)
         dofs = [2 * n + c for n in element for c in (0, 1)]
         for r in range(len(dofs)):
             for c in range(len(dofs)):
@@ -245,6 +275,8 @@ def point_stiffness(p: IntegrationPoint, d: list[list[float]]) -> list[float]:
     dofs (u1, v1, ..., un, vn) of its n nodes: the layout of
     interface.PointsUpdate. Block of nodes (a, b): B_a^T D B_b,
     B_a = [[dN_a/dx, 0], [0, dN_a/dy], [dN_a/dy, dN_a/dx]]."""
+    if p.n_over_r:
+        return _axisymmetric_point_stiffness(p, d)
     m = 2 * len(p.nodes)
     k = [0.0] * (m * m)
     for a, (ax, ay) in enumerate(zip(p.dndx, p.dndy)):
@@ -259,6 +291,23 @@ def point_stiffness(p: IntegrationPoint, d: list[list[float]]) -> list[float]:
                        d[2][1] * by + d[2][2] * bx)
                 k[m * ra + 2 * b] = p.weight * (c0 * dbu[0] + c1 * dbu[1] + c2 * dbu[2])
                 k[m * ra + 2 * b + 1] = p.weight * (c0 * dbv[0] + c1 * dbv[1] + c2 * dbv[2])
+    return k
+
+
+def _axisymmetric_point_stiffness(p: IntegrationPoint, d: list[list[float]]
+                                  ) -> list[float]:
+    """weight B^T D B of one point in axisymmetry, D 4 x 4 on (eps_r, eps_z,
+    eps_theta, gamma_rz): the column of B for u_a is (dN_a/dr, 0, N_a/r,
+    dN_a/dz) and for v_a (0, dN_a/dz, 0, dN_a/dr) (Eq. 5.6)."""
+    columns = []
+    for dx, dy, nr in zip(p.dndx, p.dndy, p.n_over_r):
+        columns += [(dx, 0.0, nr, dy), (0.0, dy, 0.0, dx)]
+    m = len(columns)
+    k = [0.0] * (m * m)
+    for i, bi in enumerate(columns):
+        for j, bj in enumerate(columns):
+            dbj = [sum(d[r][c] * bj[c] for c in range(4)) for r in range(4)]
+            k[m * i + j] = p.weight * sum(bi[r] * dbj[r] for r in range(4))
     return k
 
 
@@ -281,11 +330,20 @@ def tangent_stiffness(points: list[IntegrationPoint],
 
 
 def update_stress(material: Elastic | mc.MohrCoulomb, stress: Stress,
-                  strain_increment: tuple[float, float, float]
+                  strain_increment: tuple[float, ...]
                   ) -> tuple[Stress, bool, list[list[float]]]:
     """The incremental constitutive function (Eq. 4.60) of one point: the
     stress at the end of the increment, whether it is plastic, and the
-    consistent tangent of that update (Eq. 4.81)."""
+    consistent tangent of that update (Eq. 4.81). Four strain components
+    are axisymmetry, elastic only (spec 002, D6)."""
+    if len(strain_increment) == 4:
+        if isinstance(material, mc.MohrCoulomb):
+            raise ValueError("Mohr-Coulomb is not validated in axisymmetry "
+                             "(spec 002, D6)")
+        d = axisymmetric_stress_increment(material.young, material.poisson,
+                                          strain_increment)
+        return (tuple(s + ds for s, ds in zip(stress, d)), False,
+                axisymmetric_matrix(material.young, material.poisson))
     if isinstance(material, mc.MohrCoulomb):
         result = mc.update(material, stress, strain_increment, tangent=True)
         return result.stress, result.region != "elastic", result.tangent
@@ -298,13 +356,17 @@ def update_stress(material: Elastic | mc.MohrCoulomb, stress: Stress,
 def internal_forces(points: list[IntegrationPoint], stresses: list[Stress],
                     n_dofs: int) -> list[float]:
     """f_int = assembly of int B^T sigma dA (Eq. 4.65; triangle.internal_forces
-    with the B of each point kept). sigma_zz does no work in plane strain."""
+    with the B of each point kept). sigma_zz does no work in plane strain;
+    in axisymmetry it is the hoop stress and adds N_a / r sigma_theta to the
+    radial force of node a (Eq. 5.6)."""
     f = [0.0] * n_dofs
-    for p, (s_xx, s_yy, _s_zz, t_xy) in zip(points, stresses):
+    for p, (s_xx, s_yy, s_zz, t_xy) in zip(points, stresses):
         for n, dx, dy in zip(p.nodes, p.dndx, p.dndy):
             # the two rows of B^T for node n: (dx, 0, dy) and (0, dy, dx)
             f[2 * n] += p.weight * (dx * s_xx + dy * t_xy)
             f[2 * n + 1] += p.weight * (dy * s_yy + dx * t_xy)
+        for n, nr in zip(p.nodes, p.n_over_r):
+            f[2 * n] += p.weight * nr * s_zz
     return f
 
 
@@ -354,7 +416,9 @@ def geometry(model: Model, points: list[IntegrationPoint]) -> interface.Geometry
         index=np.array([p.index for p in points], dtype=np.int64),
         xy=np.array([p.xy for p in points], dtype=np.float64),
         materials=np.array([interface.material_row(model.materials[p.element])
-                            for p in points], dtype=np.float64))
+                            for p in points], dtype=np.float64),
+        n_over_r=(np.array([p.n_over_r for p in points], dtype=np.float64)
+                  if model.axisymmetric else None))
 
 
 def _material_of(row) -> Elastic | mc.MohrCoulomb:
@@ -370,13 +434,15 @@ class _ReferencePrepared:
 
     def __init__(self, g: interface.Geometry):
         self.n_dofs = g.n_dofs
+        hoop = g.n_over_r if g.n_over_r is not None else [()] * len(g.nodes)
         self.points = [IntegrationPoint(int(e), int(i), tuple(int(n) for n in nodes),
                                         tuple(float(x) for x in dx),
                                         tuple(float(y) for y in dy), float(w),
-                                        (float(xy[0]), float(xy[1])))
-                       for e, i, nodes, dx, dy, w, xy
+                                        (float(xy[0]), float(xy[1])),
+                                        tuple(float(v) for v in nr))
+                       for e, i, nodes, dx, dy, w, xy, nr
                        in zip(g.element, g.index, g.nodes, g.dndx, g.dndy,
-                              g.weight, g.xy)]
+                              g.weight, g.xy, hoop)]
         self.materials = [_material_of(row) for row in g.materials]
 
     @staticmethod

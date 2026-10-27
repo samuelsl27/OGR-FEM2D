@@ -44,3 +44,9 @@
   y 002 dan los mismos números **bit a bit** que antes, en la referencia y en Rust. Al probar los
   dientes, la rigidez por punto con el ancho fijo del T6 no la cazaba ningún test, porque en
   elasticidad no se ensambla: se añadió la comprobación de que las dos rutas dan la misma matriz.
+- **Tarea T5, la axisimetría** (Zienkiewicz y Taylor 2000, §5.2): el T3 con el centroide, que es
+  la ec. (5.14) de la fuente, tiene en el elemento aislado **un segundo modo de energía nula**,
+  espurio, porque B es de 4 × 6 en un solo punto. El test esperaba uno solo, como en el T6 con
+  siete puntos. Comprobado que la malla ensamblada no tiene ningún mecanismo, con y sin el eje,
+  y que la parcela y el cilindro traccionado salen exactos con los dos elementos. Los casos 001 y
+  002 siguen dando los mismos números bit a bit.

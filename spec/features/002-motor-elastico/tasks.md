@@ -59,9 +59,22 @@ changelog al día, la suite entera en verde, commit y push.
       bloque traccionado a través de `solve_stage` con T3 y T6 contra la tensión uniforme exacta.
       Diez mutaciones cazadas; una sobrevivía (la rigidez por punto con el ancho del T6, que solo se
       ensambla con plasticidad) y llevó al test de las dos rutas a la misma matriz.)
-- [ ] T5. Axisimetría de T3 y T6 — RF-3, RF-4 — Hecho cuando: parcela axisimétrica (u = a·r,
+- [x] T5. Axisimetría de T3 y T6 — RF-3, RF-4 — Hecho cuando: parcela axisimétrica (u = a·r,
       v = b·z), sólido rígido (solo traslación en z), u_r constante con tensión, ningún punto sobre
-      el eje.
+      el eje. (Hecho el 2026-10-27: Z&T §5.2, ecs. (5.5), (5.6), (5.12)–(5.14). La matriz B gana la
+      fila εθ = u/r, el peso de cada punto lleva 2πr (anillo entero, D2) y la D es la de 4 × 4;
+      en el solver, el modelo dice su análisis y cada punto guarda Nᵢ/r; la tensión circunferencial
+      trabaja en las fuerzas internas. Rust la rechaza hasta la T13; Mohr-Coulomb en axisimetría,
+      rechazado (D6). 14 tests en `test_axisymmetry_v002.py`: D contra la (5.12), B del T3 contra la
+      (5.6), rigidez del centroide contra la (5.14), volumen de Pappus, parcela A y B con T3 y T6 en
+      parcelas que tocan el eje, cilindro traccionado a través de `solve_stage` contra la solución
+      exacta, ningún punto sobre el eje y la rigidez punto a punto igual a la del elemento; trece
+      mutaciones cazadas, una tras añadir ese último test. **Hallazgo**: el T3 con el centroide, que es la (5.14)
+      de la fuente, tiene en el elemento aislado un segundo modo de energía nula, espurio (B es
+      4 × 6 en un solo punto); la malla ensamblada no tiene ningún mecanismo, comprobado con
+      bloques que tocan el eje y que no lo tocan. Los casos 001 y 002 siguen dando los mismos
+      números bit a bit. La imposición automática de u_r = 0 en el eje (D1 bis) va con las
+      restricciones, en la T6.)
 
 ## Contorno, cargas, tensión inicial y fases (referencia)
 

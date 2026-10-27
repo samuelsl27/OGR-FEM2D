@@ -63,6 +63,10 @@ class Geometry:
     index: np.ndarray          # (n,) int64, its place in the element's rule
     xy: np.ndarray             # (n, 2), where the point is
     materials: np.ndarray      # (n, 6), one row of MATERIAL_COLUMNS per point
+    #: (n, k) N_a / r of each point in axisymmetry (spec 002, T5), None in
+    #: plane strain; then strains are (n, 4), tangents (n, 4, 4), and the
+    #: weight includes 2 pi r
+    n_over_r: np.ndarray | None = None
 
 
 @dataclass(frozen=True)

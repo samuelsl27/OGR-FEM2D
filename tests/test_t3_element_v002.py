@@ -41,6 +41,7 @@ import random
 
 import numpy as np
 
+import _blocks
 from ogr_fem2d.engine import interface
 from ogr_fem2d.engine.compiled import RUST
 from ogr_fem2d.engine.reference import element_t3 as t3
@@ -146,36 +147,19 @@ class TestPatch:
         assert np.abs(got - u[free]).max() < 1e-14
 
 
-def _block(six: bool, nx: int = 3, ny: int = 2, w: float = 2.0, h: float = 1.5):
-    """A w x h block of triangles (each rectangle cut by its diagonal), with
-    mid-side nodes for T6; returns (nodes, elements, top nodes with their
-    share of the top edge, restrained dofs)."""
-    step = 2 if six else 1
-    cols, rows = nx * step + 1, ny * step + 1
-    nodes = [(w * i / (cols - 1), h * j / (rows - 1)) for j in range(rows) for i in range(cols)]
-    at = lambda i, j: j * cols + i
-    elements = []
-    for j in range(0, rows - 1, step):
-        for i in range(0, cols - 1, step):
-            a, b = at(i, j), at(i + step, j)
-            c, d = at(i + step, j + step), at(i, j + step)
-            if six:
-                h_ = step // 2
-                mab, mbc = at(i + h_, j), at(i + step, j + h_)
-                mcd, mda, mac = at(i + h_, j + step), at(i, j + h_), at(i + h_, j + h_)
-                elements += [(a, b, c, mab, mbc, mac), (a, c, d, mac, mcd, mda)]
-            else:
-                elements += [(a, b, c), (a, c, d)]
-    restrained = {2 * at(0, j) for j in range(rows)} | {2 * at(i, 0) + 1 for i in range(cols)}
-    # consistent forces of a uniform traction on the top edge, per edge
-    # length dx: ends 1/2 (T3); ends 1/6 and middle 2/3 (T6)
+def _block(six: bool):
+    """The block of _blocks.py on rollers (left in x, bottom in y), and the
+    consistent forces of a unit traction on its top edge: per edge of length
+    dx, 1/2 to each end (T3); 1/6, 2/3, 1/6 (T6)."""
+    b = _blocks.block(six)
+    restrained = {2 * n for n in b.left()} | {2 * n + 1 for n in b.bottom()}
+    shares = (1 / 6, 2 / 3, 1 / 6) if six else (0.5, 0.5)
     top = {}
-    dx = w / nx
-    for i in range(0, cols - 1, step):
-        shares = ((i, 1 / 6), (i + 1, 2 / 3), (i + 2, 1 / 6)) if six else ((i, 0.5), (i + 1, 0.5))
-        for col, share in shares:
-            top[at(col, rows - 1)] = top.get(at(col, rows - 1), 0.0) + share * dx
-    return nodes, elements, top, frozenset(restrained)
+    for edge in b.top_edges():
+        dx = b.nodes[edge[-1]][0] - b.nodes[edge[0]][0]
+        for n, share in zip(edge, shares):
+            top[n] = top.get(n, 0.0) + share * dx
+    return b.nodes, b.elements, top, frozenset(restrained)
 
 
 class TestStageThroughTheEngine:
