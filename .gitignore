@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 *.so
 *.pyd
+*.pdb
 
 # Rust (núcleo compilado, si se aprueba)
 target/

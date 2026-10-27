@@ -2,7 +2,9 @@
 # Copyright (C) 2026 Samuel Sáez López — Universidad Politécnica de Cartagena
 """
 v0.0.1 (spec 001, T11) — the NumPy variant (poc/vectorized.py) computes what
-the Python reference computes, at a material point and on a mesh.
+the Python reference computes, at a material point and on a mesh. The checks
+are functions of the variant: tests/test_rust_variant_v001.py runs them on
+the Rust one (T12).
 
 The reference is validated against closed-form solutions (T4-T9); this
 variant is checked against the reference, the oracle (ADR-0001). Tolerance:
@@ -71,68 +73,80 @@ def _reference(materials, start, strains):
     return out
 
 
-class TestMaterialPoint:
+def check_a_cloud_over_every_region(variant):
+    materials, start, strains = _cloud()
+    ref = _reference(materials, start, strains)
+    ok = np.array([r is not None for r in ref])
+    got = variant.prepare(_geometry(materials[ok])).integrate(start[ok], strains[ok])
+    kept = [r for r in ref if r is not None]
+    ref_s = np.array([r[0] for r in kept])
+    ref_p = np.array([r[1] for r in kept])
+    ref_t = np.array([r[2] for r in kept])
+    assert np.abs(got.stresses - ref_s).max() <= 1e-10 * 40.0
+    assert np.array_equal(got.plastic, ref_p)
+    assert np.abs(got.tangents - ref_t).max() <= 1e-10 * E
+    regions = {r[3] for r in kept}
+    assert regions == {"elastic", "plane", "right edge", "left edge", "apex"}, regions
+    assert (~ok).any()                      # and some refusals to test below
+
+def check_states_on_the_surface(variant):
+    # Starting ON the yield surface (the stresses the reference returned
+    # to it) with strain increments of 1e-9: the trial lies within about
+    # 1e-7 of the surface, where only the tolerance of the return decides
+    # between elastic and plastic. The variant must decide as the
+    # reference does (mohr_coulomb.TOLERANCE).
+    materials, start, strains = _cloud(seed=11)
+    ref = _reference(materials, start, strains)
+    on = [i for i, r in enumerate(ref) if r is not None and r[1]]
+    materials = materials[on]
+    start = np.array([ref[i][0] for i in on])
+    strains = np.random.default_rng(12).uniform(-1e-9, 1e-9, (len(on), 3))
+    ref = _reference(materials, start, strains)
+    ok = np.array([r is not None for r in ref])
+    got = variant.prepare(_geometry(materials[ok])).integrate(start[ok], strains[ok])
+    kept = [r for r in ref if r is not None]
+    flags = np.array([r[1] for r in kept])
+    assert np.array_equal(got.plastic, flags)
+    assert flags.any() and not flags.all()
+    assert np.abs(got.stresses - np.array([r[0] for r in kept])).max() <= 1e-10 * 40.0
+
+def check_the_apex_with_psi_zero_is_refused_at_the_same_point(variant):
+    materials, start, strains = _cloud()
+    ref = _reference(materials, start, strains)
+    first = next(i for i, r in enumerate(ref) if r is None)
+    g = _geometry(materials)
+    try:
+        variant.prepare(g).integrate(start, strains)
+    except solver.StateUpdateError as err:
+        assert (err.element, err.point) == (int(g.element[first]), 0)
+        assert "apex" in err.reason
+        return
+    raise AssertionError("the apex with psi = 0 was not refused")
+
+
+def check_the_ring_gives_the_same_stage(variant):
+    for psi in (0.0, 15.0):
+        m = mc.MohrCoulomb(E, NU, C, PHI, math.radians(psi))
+        _mesh, ref = _hole.excavate(21.0, 12, 4, 1.2, m, 5, 1e-10, 25)
+        _mesh, got = _hole.excavate(21.0, 12, 4, 1.2, m, 5, 1e-10, 25,
+                                    variant=variant)
+        u_ref, u_got = np.array(ref.displacement), np.array(got.displacement)
+        assert np.abs(u_got - u_ref).max() <= 1e-10 * np.abs(u_ref).max()
+        s_ref, s_got = np.array(ref.stresses), np.array(got.stresses)
+        assert np.abs(s_got - s_ref).max() <= 1e-10 * _hole.P0
+        assert got.plastic == ref.plastic and any(ref.plastic)
+        assert [(s, i) for s, i, _ in got.history] == [(s, i) for s, i, _ in ref.history]
+
+
+class TestNumpyVariant:
     def test_a_cloud_over_every_region(self):
-        materials, start, strains = _cloud()
-        ref = _reference(materials, start, strains)
-        ok = np.array([r is not None for r in ref])
-        got = NUMPY.prepare(_geometry(materials[ok])).integrate(start[ok], strains[ok])
-        kept = [r for r in ref if r is not None]
-        ref_s = np.array([r[0] for r in kept])
-        ref_p = np.array([r[1] for r in kept])
-        ref_t = np.array([r[2] for r in kept])
-        assert np.abs(got.stresses - ref_s).max() <= 1e-10 * 40.0
-        assert np.array_equal(got.plastic, ref_p)
-        assert np.abs(got.tangents - ref_t).max() <= 1e-10 * E
-        regions = {r[3] for r in kept}
-        assert regions == {"elastic", "plane", "right edge", "left edge", "apex"}, regions
-        assert (~ok).any()                      # and some refusals to test below
+        check_a_cloud_over_every_region(NUMPY)
 
     def test_states_on_the_surface(self):
-        # Starting ON the yield surface (the stresses the reference returned
-        # to it) with strain increments of 1e-9: the trial lies within about
-        # 1e-7 of the surface, where only the tolerance of the return decides
-        # between elastic and plastic. The variant must decide as the
-        # reference does (mohr_coulomb.TOLERANCE).
-        materials, start, strains = _cloud(seed=11)
-        ref = _reference(materials, start, strains)
-        on = [i for i, r in enumerate(ref) if r is not None and r[1]]
-        materials = materials[on]
-        start = np.array([ref[i][0] for i in on])
-        strains = np.random.default_rng(12).uniform(-1e-9, 1e-9, (len(on), 3))
-        ref = _reference(materials, start, strains)
-        ok = np.array([r is not None for r in ref])
-        got = NUMPY.prepare(_geometry(materials[ok])).integrate(start[ok], strains[ok])
-        kept = [r for r in ref if r is not None]
-        flags = np.array([r[1] for r in kept])
-        assert np.array_equal(got.plastic, flags)
-        assert flags.any() and not flags.all()
-        assert np.abs(got.stresses - np.array([r[0] for r in kept])).max() <= 1e-10 * 40.0
+        check_states_on_the_surface(NUMPY)
 
     def test_the_apex_with_psi_zero_is_refused_at_the_same_point(self):
-        materials, start, strains = _cloud()
-        ref = _reference(materials, start, strains)
-        first = next(i for i, r in enumerate(ref) if r is None)
-        g = _geometry(materials)
-        try:
-            NUMPY.prepare(g).integrate(start, strains)
-        except solver.StateUpdateError as err:
-            assert (err.element, err.point) == (int(g.element[first]), 0)
-            assert "apex" in err.reason
-            return
-        raise AssertionError("the apex with psi = 0 was not refused")
+        check_the_apex_with_psi_zero_is_refused_at_the_same_point(NUMPY)
 
-
-class TestMesh:
     def test_the_ring_gives_the_same_stage(self):
-        for psi in (0.0, 15.0):
-            m = mc.MohrCoulomb(E, NU, C, PHI, math.radians(psi))
-            _mesh, ref = _hole.excavate(21.0, 12, 4, 1.2, m, 5, 1e-10, 25)
-            _mesh, got = _hole.excavate(21.0, 12, 4, 1.2, m, 5, 1e-10, 25,
-                                        variant=NUMPY)
-            u_ref, u_got = np.array(ref.displacement), np.array(got.displacement)
-            assert np.abs(u_got - u_ref).max() <= 1e-10 * np.abs(u_ref).max()
-            s_ref, s_got = np.array(ref.stresses), np.array(got.stresses)
-            assert np.abs(s_got - s_ref).max() <= 1e-10 * _hole.P0
-            assert got.plastic == ref.plastic and any(ref.plastic)
-            assert [(s, i) for s, i, _ in got.history] == [(s, i) for s, i, _ in ref.history]
+        check_the_ring_gives_the_same_stage(NUMPY)

@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Samuel Sáez López — Universidad Politécnica de Cartagena
+#
+# The Rust variant of the engine (spec 001, T12; ADR-0001), compiled with
+# maturin as the module ogr_fem2d._engine. Dependencies approved in spec 001,
+# D6 (licences MIT or Apache-2.0, BSD-2-Clause for numpy).
+
+[package]
+name = "ogr-fem2d-engine"
+version = "0.0.1"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+authors = ["Samuel Sáez López <samuel.saez@edu.upct.es>"]
+publish = false
+
+[lib]
+name = "_engine"
+crate-type = ["cdylib"]
+
+[dependencies]
+# abi3: one wheel per platform for every Python >= 3.11 (spec 001, RF-9)
+pyo3 = { version = "0.30", features = ["extension-module", "abi3-py311"] }
+numpy = "0.30"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"

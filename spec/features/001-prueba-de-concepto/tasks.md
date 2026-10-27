@@ -106,9 +106,18 @@ tarea: es un deseo.
       tolerancia) y a 1e-13 en malla, con las mismas iteraciones; los dos casos pasan con ella en
       7 s frente a 47 s de la referencia. 4 tests, que cazan cuatro errores introducidos a
       propósito.)
-- [ ] T12. Variante Rust con PyO3 (`rust/`, módulo `ogr_fem2d._engine`), construida con `maturin
+- [x] T12. Variante Rust con PyO3 (`rust/`, módulo `ogr_fem2d._engine`), construida con `maturin
       develop` en el `.venv` — RF-3 — Hecho cuando: identidad con la referencia a ~1e-10 en punto
-      material y en malla (criterio 1)
+      material y en malla (criterio 1). (Hecho: `rust/src/` con `elastic.rs`, `mohr_coulomb.rs` y
+      `t6.rs`, gemelos de la referencia función a función y con los mismos nombres (para la T16),
+      y `lib.rs` con la frontera (`integrate`, `internal_forces`, `update`); pyo3 0.30 con abi3
+      para Python ≥ 3.11 y numpy 0.30 (D6; ndarray llega a través de numpy, no hizo falta
+      declararlo); `ogr_fem2d/engine/compiled.py` la pone detrás de la interfaz. Construida con
+      `maturin develop --release --skip-install`, que deja el módulo en el árbol sin reinstalar
+      nada. **Criterio 1 cumplido**: 7e-16 en tensiones y 5e-16 en tangentes en punto material, y
+      1e-14 en malla, con las mismas iteraciones; los dos casos de validación pasan con Rust.
+      5 tests, uno de ellos contra un módulo más viejo que sus fuentes; cazan dos errores
+      introducidos en el código de Rust.)
 
 ## Medidas y distribución
 

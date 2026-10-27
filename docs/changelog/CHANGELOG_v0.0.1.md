@@ -141,4 +141,11 @@ versión, registrando **qué se encontró**.
   tal cual en los puntos elásticos. Una mutación sobrevivió a la primera versión del test (la
   tolerancia del retorno a 1e-6): la nube aleatoria no tenía estados cerca de la superficie, y se
   añadieron.
-
+- **Tarea T12, la variante Rust**: compiló a la primera con pyo3 0.30 y numpy 0.30, y coincide con
+  la referencia a 1e-15 en punto material y a 1e-14 en malla (**criterio 1 del ADR-0001
+  cumplido**), mejor que NumPy porque sigue el mismo orden de operaciones. `maturin develop` sin
+  más reinstalaría las dependencias del paquete en el `.venv` (también `ogr-core` desde git);
+  con `--skip-install` solo deja el módulo en el árbol, que es donde lo buscan los tests. Como un
+  módulo compilado viejo se compararía en lugar del código actual, un test exige que no sea más
+  viejo que `rust/src`. La crate `ndarray` aprobada en D6 no hizo falta declararla: llega con
+  `numpy`, en la versión que este exige.

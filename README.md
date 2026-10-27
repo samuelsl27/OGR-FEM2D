@@ -5,8 +5,10 @@
 
 > **Estado: en preparación, fase 0.** La constitución está aprobada y está en curso la prueba de
 > concepto del motor ([spec 001](spec/features/001-prueba-de-concepto/spec.md),
-> [ADR-0001](docs/decisiones/ADR-0001-lenguaje-motor.md)): ya existe la implementación de
-> referencia en Python del triángulo de 6 nudos y del Mohr-Coulomb. Todavía no hay interfaz.
+> [ADR-0001](docs/decisiones/ADR-0001-lenguaje-motor.md)): la implementación de referencia en
+> Python (triángulo de 6 nudos, Mohr-Coulomb, escalones con Newton) está validada contra Kirsch y
+> Salençon, y las variantes NumPy y Rust coinciden con ella. Faltan las medidas y la distribución.
+> Todavía no hay interfaz.
 
 ## Qué será
 
@@ -30,8 +32,13 @@ y validado contra soluciones analíticas y casos publicados.
 ```bash
 python -m venv .venv
 .venv/Scripts/pip install numpy scipy maturin "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.1.0"
+VIRTUAL_ENV=.venv .venv/Scripts/python -m maturin develop --release --skip-install
 .venv/Scripts/python tests/_runner.py
 ```
+
+El tercer paso compila el motor en Rust (`rust/`, hace falta `cargo`) y deja el módulo
+`ogr_fem2d._engine` dentro del árbol, sin reinstalar nada; hay que repetirlo cada vez que cambia
+`rust/`, y un test avisa si el módulo es más viejo que sus fuentes.
 
 El núcleo (`ogr-core`) va fijado a una etiqueta, y el runner de tests se niega a medir contra
 cualquier otra versión. OGR Slip2D conserva por ahora su propia copia del núcleo: los dos programas
