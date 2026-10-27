@@ -1,8 +1,9 @@
 # Spec 001 — Prueba de concepto del motor
 
-> **Borrador (2026-10-27).** Fase 0 de la hoja de ruta. Decide si el ADR-0001 (motor en Rust) se
-> queda o se reabre. Solo el **qué** y el **porqué**; el cómo va en `plan.md`. Decisiones D1–D6 tomadas
-> (al final) y fuentes comprobadas (tarea T1).
+> **Cerrada (2026-10-27).** Fase 0 de la hoja de ruta. Decidía si el ADR-0001 (motor en Rust) se
+> quedaba o se reabría: **se queda** (ADR-0001, «Resultado de la prueba de concepto»). Solo el
+> **qué** y el **porqué**; el cómo va en `plan.md`. Decisiones D1–D8 al final; lo encontrado, en
+> `docs/changelog/CHANGELOG_v0.0.1.md`.
 
 ## Contexto y objetivo
 
@@ -125,8 +126,9 @@ exige el estudio de convergencia.
       propietario sobre el ADR (se queda o se reabre): se queda (2026-10-27)
 - [x] Los dos casos de validación dentro de tolerancia, con la malla que la fija y el estudio de
       convergencia que la justifica
-- [ ] Cada fórmula del código, comprobada contra su fuente original (autor, año, ecuación)
-- [ ] Changelog registrando **qué se encontró**
+- [x] Cada fórmula del código, comprobada contra su fuente original (autor, año, ecuación):
+      `plan.md`, «Formulación», y la cita en cada módulo
+- [x] Changelog registrando **qué se encontró**: `CHANGELOG_v0.0.1.md`, cerrado
 
 ## Decisiones del propietario (2026-10-27)
 

@@ -1,9 +1,26 @@
-# OGR FEM2D v0.0.1 (en curso)
+# OGR FEM2D v0.0.1 (cerrada el 2026-10-27)
 
-**Fase 0: la prueba de concepto del motor** (spec 001). Esta entrada se completa al cerrar la
-versión, registrando **qué se encontró**.
+**Fase 0: la prueba de concepto del motor** (spec 001, tareas T0–T18).
 
-## 0. Lo que se encontró (hasta ahora)
+## Resultado
+
+- **El motor se queda en Rust**: ADR-0001 aceptada por el propietario con las medidas delante.
+  Criterios 1 a 4 cumplidos; el 5 en ≈ ×9.6 sobre NumPy vectorizado en la integración constitutiva
+  (×16 en la llamada por iteración), que el propietario da por suficiente.
+- **Lo que queda en el repositorio**: la implementación de referencia en Python del triángulo de 6
+  nudos, de la elasticidad y del Mohr-Coulomb perfectamente plástico con su tangente consistente,
+  la malla radial, el solver de escalones con Newton completo y partición del incremento, la
+  interfaz común de las variantes, la variante Rust (`ogr_fem2d._engine`), la variante NumPy y la
+  medida (`poc/`, solo para medir), las ruedas de las tres plataformas en la CI y el congelado.
+- **Validación**: caso 001 (Kirsch) con 0.19 % en el peor punto; caso 002 (Salençon con la zona de
+  arista, D8) con 1.10 % (ψ = 0°) y 1.47 % (ψ = 30°) en ur(a) y R0 dentro de un elemento;
+  identidad del anillo de 21 m, elástico y Mohr-Coulomb, con el error bajando en cada malla.
+- **Decisiones tomadas por el camino**: D7 (Newton completo con la tangente consistente, no rigidez
+  inicial) y D8 (la referencia de STR-02 es la solución exacta del modelo, porque la hipótesis de
+  Salençon no se cumple con los datos de la ficha).
+- 88 tests, en verde en local y en la CI (Windows, macOS ARM y Linux; Python 3.11 a 3.13).
+
+## Lo que se encontró
 
 - **Tarea T1, las fuentes** (`spec/features/001-prueba-de-concepto/plan.md`, «Formulación»):
   - el desplazamiento del hueco en Mohr-Coulomb con dilatancia no nula no está impreso en Salençon

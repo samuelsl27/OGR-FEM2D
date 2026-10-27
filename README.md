@@ -3,12 +3,12 @@
 **Análisis geotécnico 2D por elementos finitos de código abierto** — programa 03 de la suite
 [OpenGeoRock](https://opengeorock.org).
 
-> **Estado: en preparación, fase 0.** La constitución está aprobada y está en curso la prueba de
-> concepto del motor ([spec 001](spec/features/001-prueba-de-concepto/spec.md),
-> [ADR-0001](docs/decisiones/ADR-0001-lenguaje-motor.md)): la implementación de referencia en
-> Python (triángulo de 6 nudos, Mohr-Coulomb, escalones con Newton) está validada contra Kirsch y
-> Salençon, y las variantes NumPy y Rust coinciden con ella. Faltan las medidas y la distribución.
-> Todavía no hay interfaz.
+> **Estado: en preparación; fase 0 cerrada (2026-10-27).** La prueba de concepto del motor
+> ([spec 001](spec/features/001-prueba-de-concepto/spec.md)) decidió que el motor se escribe en
+> Rust ([ADR-0001](docs/decisiones/ADR-0001-lenguaje-motor.md), aceptada), con la implementación de
+> referencia en Python como oráculo: triángulo de 6 nudos, Mohr-Coulomb con su tangente consistente
+> y escalones con Newton, validados contra Kirsch y Salençon, y ruedas para Windows, macOS ARM y
+> Linux. Todavía no hay interfaz.
 
 ## Qué será
 
