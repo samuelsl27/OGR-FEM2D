@@ -2,7 +2,8 @@
 
 > **Aprobada por el propietario (2026-10-27).** El orden sale del catálogo teórico
 > (`../Referencias/.../C_teoria/T00_indice_teoria.md`) y de qué funciones desbloquean más casos de
-> verificación (`../Referencias/Ejemplos/Casos_por_problema/00_INDICE.md`).
+> verificación (`../Referencias/Ejemplos/Casos_por_problema/00_INDICE.md`). El desglose en *specs* y
+> tareas está en [`plan_de_desarrollo.md`](plan_de_desarrollo.md) (borrador para aprobar).
 
 | Fase | Contenido | Casos de validación que la cierran |
 |---|---|---|

@@ -11,7 +11,7 @@
 | **Python 3.11+ para interfaz, modelo y orquestación** | heredada de Slip2D | Legibilidad, ecosistema científico y reutilización directa del código de Slip2D |
 | **PySide6** | heredada | Licencia LGPL compatible |
 | **Formato `.ogr` (JSON)** compartido con Slip2D | heredada | Un modelo debe poder pasar de un programa de la suite a otro |
-| **Motor numérico en Rust (PyO3 + maturin)** | ADR-0001, **aceptada con condición** | Rendimiento compilado para *return mapping*, SSR, probabilístico y, a futuro, métodos explícitos y DEM; seguridad de memoria y de concurrencia comprobada por el compilador; una rueda por plataforma sin dependencias nativas. Se reabre si la prueba de concepto no cumple sus criterios (entre ellos, ×10 sobre NumPy vectorizado) |
+| **Motor numérico en Rust (PyO3 + maturin)** | ADR-0001, **aceptada** (2026-10-27, tras la prueba de concepto de la spec 001) | Rendimiento compilado para *return mapping*, SSR, probabilístico y, a futuro, métodos explícitos y DEM; seguridad de memoria y de concurrencia comprobada por el compilador; una rueda por plataforma sin dependencias nativas. La prueba de concepto cumplió los criterios 1 a 4 y dio ≈ ×9.6 sobre NumPy vectorizado en el 5, que el propietario dio por suficiente |
 | **Implementación de referencia en Python de todos los elementos y leyes constitutivas** | ADR-0001 | Oráculo de los tests del núcleo compilado; código legible para auditar |
 | **Solver lineal inicial: SuperLU (SciPy)**; faer tras medir | ADR-0001 | Sin problemas de licencia ni de distribución; el solver disperso en Rust es el riesgo principal |
 | **Sin PARDISO/MKL** | ADR-0001 | Licencia propietaria incompatible con distribuir AGPL; no existe en macOS ARM |
