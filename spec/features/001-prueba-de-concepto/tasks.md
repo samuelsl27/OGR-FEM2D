@@ -20,11 +20,14 @@ tarea: es un deseo.
 
 ## Referencia en Python
 
-- [ ] T3. `pyproject.toml` (maturin, `ogr-core` fijado a `v0.1.0`) y `tests/_runner.py` con el
+- [x] T3. `pyproject.toml` (maturin, `ogr-core` fijado a `v0.1.0`) y `tests/_runner.py` con el
       runner de `ogr-core` — Hecho cuando: `python tests/_runner.py` corre en el `.venv` y su
-      cabecera nombra el árbol y el núcleo compartido
-- [ ] T4. Elemento T6: funciones de forma, cuadratura, B, rigidez, fuerzas internas — RF-1 — Hecho
-      cuando: pasan la prueba de la parcela, el sólido rígido y la tensión inicial uniforme
+      cabecera nombra el árbol y el núcleo compartido. (Hecho: además, con el Python del sistema
+      el runner se niega con un mensaje claro, porque allí `ogr_core` es la copia de Slip2D.)
+- [x] T4. Elemento T6: funciones de forma, cuadratura, B, rigidez, fuerzas internas — RF-1 — Hecho
+      cuando: pasan la prueba de la parcela, el sólido rígido y la tensión inicial uniforme.
+      (Hecho: isoparamétrico, regla cuadrática de la tabla 9.2 de Zienkiewicz y Taylor (2000),
+      con los puntos en el centro de los lados; 14 tests.)
 - [ ] T5. Ley elástica y Mohr-Coulomb con retorno en plano, arista y vértice — RF-2, RF-4 — Hecho
       cuando: pasan los tests de punto material de las tres regiones y la tolerancia del retorno
       está fijada y justificada

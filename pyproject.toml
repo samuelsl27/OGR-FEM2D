@@ -1,0 +1,45 @@
+[build-system]
+# Rust core compiled with maturin (ADR-0001). The crate arrives in task T12 of
+# spec 001; until then the package is pure Python and its tests run from the
+# tree (python tests/_runner.py), without building it.
+requires = ["maturin>=1.15,<2"]
+build-backend = "maturin"
+
+[project]
+name = "ogr-fem2d"
+version = "0.0.1"
+description = "OGR FEM2D — open-source 2D geotechnical finite-element analysis (OpenGeoRock Suite)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "AGPL-3.0-or-later"}
+authors = [
+    {name = "Samuel Sáez López", email = "samuel.saez@edu.upct.es"},
+]
+keywords = ["geotechnical", "finite-element", "FEM", "plasticity", "tunnelling"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Rust",
+    "Topic :: Scientific/Engineering",
+]
+
+dependencies = [
+    # The core, pinned to a tag (ADR-0002). The test runner refuses to run
+    # against any other version of it.
+    "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.1.0",
+    "numpy>=1.26",
+    "scipy>=1.14",
+]
+
+[project.urls]
+Homepage = "https://opengeorock.org"
+Repository = "https://github.com/samuelsl27/OGR-FEM2D"
+
+[tool.maturin]
+manifest-path = "rust/Cargo.toml"
+module-name = "ogr_fem2d._engine"
+python-source = "."
