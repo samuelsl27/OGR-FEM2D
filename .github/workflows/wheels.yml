@@ -5,7 +5,8 @@
 # abi3 wheel per platform (Python >= 3.11), built with maturin-action on
 # Windows, macOS ARM and Linux; each wheel is then installed and the whole
 # test suite, the validation cases included, runs on its compiled module with
-# Python 3.11, 3.12 and 3.13.
+# Python 3.11, 3.12 and 3.13; and the program of the validation cases is
+# frozen with PyInstaller and solves them on each platform.
 
 name: wheels
 
@@ -84,3 +85,34 @@ jobs:
         run: python .github/scripts/wheel_check.py extract dist/*.whl
       - name: Test suite, validation cases included, on the wheel's binary
         run: python tests/_runner.py
+
+  freeze:
+    # spec 001, RF-10, task T15: the program of the validation cases, frozen
+    # with PyInstaller on each platform, solves both cases outside the tree
+    name: freeze (${{ matrix.os }})
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-14]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheel-${{ matrix.os }}
+          path: dist
+      - name: Install the wheel, and PyInstaller as a tool (spec 001, D6)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install dist/*.whl "pyinstaller==6.22.3"
+      - name: Put the compiled module of the wheel in the tree
+        run: python .github/scripts/wheel_check.py extract dist/*.whl
+      - name: Freeze the cases and run the executable outside the tree
+        run: python poc/freeze/build.py
