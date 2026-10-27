@@ -167,7 +167,10 @@ tarea: es un deseo.
       tolerancia estrechada a propósito dentro del ejecutable lo hace fallar. **Criterio 3
       cumplido entero.**)
 - [ ] T16. Mohr-Coulomb en Rust y en Python lado a lado para el propietario — Hecho cuando: el
-      propietario dice si lo entiende al menos igual (criterio 4)
+      propietario dice si lo entiende al menos igual (criterio 4). (Preparado: `poc/lado_a_lado.py`
+      genera la página desde las fuentes tal cual, catorce pares de piezas con la nota de lo que
+      cambia entre los dos lenguajes y una guía de la sintaxis de Rust que aparece; publicada para
+      el propietario el 2026-10-27. **Pendiente de su respuesta.**)
 
 ## Cierre
 
