@@ -57,3 +57,21 @@ Si falla 5, se reabre esta decisión con las medidas delante.
 - Cada elemento y cada ley constitutiva existe dos veces (Rust y Python de referencia): el doble de
   trabajo, pero un oráculo independiente para los tests.
 - Primer paso obligatorio: la **prueba de concepto** con los criterios de arriba.
+
+## Resultado de la prueba de concepto (spec 001, 2026-10-27)
+
+Medido con la implementación de referencia en Python validada antes contra soluciones cerradas
+(Kirsch; Salençon con la zona de arista, D8), y las variantes NumPy (`poc/vectorized.py`) y Rust
+(`rust/`, módulo `ogr_fem2d._engine`) detrás de la misma interfaz (`ogr_fem2d/engine/interface.py`).
+El detalle, en `spec/features/001-prueba-de-concepto/tasks.md` y en `docs/changelog/CHANGELOG_v0.0.1.md`.
+
+| # | Criterio | Resultado | ¿Cumple? |
+|---|---|---|---|
+| 1 | Python de referencia y Rust coinciden a ~1e-10 | 7e-16 en tensiones y 5e-16 en tangentes en punto material (todas las regiones del retorno); 1e-14 en malla, con las mismas iteraciones | **Sí** |
+| 2 | Los casos cumplen la tolerancia de su `esperado.json` | 001 (Kirsch): 0.19 % en el peor punto (tolerancia 0.5 %); 002 (Salençon): 1.10 % con ψ = 0° y 1.47 % con ψ = 30° (tolerancia 2 %), R0 dentro de un elemento. La referencia de ur(a) en 002 es la solución exacta del modelo, porque la hipótesis de Salençon no se cumple con los datos de la ficha (D8) | **Sí** |
+| 3 | Ruedas en Windows, macOS ARM y Linux, y congelado con PyInstaller | 15 trabajos de CI en verde: tres ruedas abi3; suite entera con los casos en Python 3.11, 3.12 y 3.13 en cada plataforma; el ejecutable congelado resuelve los dos casos fuera del árbol en las tres | **Sí** |
+| 4 | El propietario entiende el Mohr-Coulomb en Rust al menos como en Python | Página lado a lado generada desde las fuentes; respuesta del propietario: «Rust se entiende perfectamente» | **Sí** |
+| 5 | Rust ≥ ×10 más rápido que NumPy vectorizado en la integración constitutiva | **≈ ×9.6**: A/B en el mismo proceso, 9.3–9.9 (después de revisar las dos variantes por igual; 9.5–9.9 antes); medida oficial 10.2 (control 9.2). En la llamada completa por iteración (integración, fuerzas internas y rigidez) sobre la malla del caso 002, **unas 16 veces**. Equipo con carga de fondo constante del 32–39 % que no se podía cerrar; las medidas, limpias dentro del proceso (proporción CPU/reloj 0.97–1.01) | **No, por poco** |
+
+Por la regla de este ADR, el criterio 5 sin cumplir **reabre la decisión con las medidas delante**.
+La decisión del propietario: **pendiente**.
