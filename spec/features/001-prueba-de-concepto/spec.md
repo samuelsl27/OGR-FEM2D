@@ -1,0 +1,146 @@
+# Spec 001 — Prueba de concepto del motor
+
+> **Borrador (2026-10-27).** Fase 0 de la hoja de ruta. Decide si el ADR-0001 (motor en Rust) se
+> queda o se reabre. Solo el **qué** y el **porqué**; el cómo va en `plan.md`. Decisiones D1–D4 y
+> D6 tomadas (al final); falta D5, las fuentes, antes de escribir código.
+
+## Contexto y objetivo
+
+El ADR-0001 aceptó un motor numérico en Rust con una condición: que una prueba de concepto lo
+justifique con criterios fijados **antes** de medir. Esta función es esa prueba. Resuelve el mismo
+problema —un elemento finito, dos leyes de material, dos casos con solución cerrada— en tres
+variantes (Python de referencia, NumPy vectorizado y Rust), comprueba que las tres dan lo mismo y
+que dan lo que dice la solución analítica, y mide lo que cuesta cada una. Si Rust no gana lo
+bastante, o no se puede distribuir, o el propietario no lo entiende, la decisión se reabre con las
+medidas delante.
+
+Lo que sale de aquí y se queda, pase lo que pase: la implementación de referencia en Python del
+elemento y de las dos leyes (es el oráculo de los tests, ADR-0001), los dos primeros casos de
+validación y el convenio de signos del motor.
+
+## Usuarios / actores
+
+- **El propietario**, que decide con las medidas si sigue Rust (criterios 4 y 5 del ADR-0001).
+- **Los tests**, que usan la implementación de referencia como oráculo del código compilado.
+
+## Historias de usuario
+
+- H1: Como propietario quiero ver, con números medidos de la misma forma, cuánto más rápido es Rust
+  que NumPy en la integración constitutiva, para decidir si compensa un segundo lenguaje.
+- H2: Como propietario quiero leer el Mohr-Coulomb en Rust al lado del de Python, para juzgar si
+  podré auditarlo.
+- H3: Como ingeniero quiero que el resultado del hueco circular coincida con Kirsch y con Salençon,
+  con una tolerancia fijada antes de medir y una malla documentada, para fiarme del elemento y de la
+  ley.
+
+## Requisitos funcionales (EARS)
+
+**Elemento y material**
+
+- RF-1: EL SISTEMA calcula, para un triángulo de 6 nudos en deformación plana con deformaciones
+  pequeñas, la matriz de rigidez y el vector de fuerzas internas a partir de las tensiones en sus
+  puntos de integración.
+- RF-2: EL SISTEMA integra la ley elástica lineal isótropa y la ley de Mohr-Coulomb perfectamente
+  plástica (cohesión, rozamiento y dilatancia; flujo asociado y no asociado) en cada punto de
+  integración, dado el incremento de deformación, guardando también la tensión fuera del plano.
+- RF-3: EL SISTEMA ofrece RF-1 y RF-2 en tres variantes con la misma interfaz: **Python de
+  referencia** (bucles legibles, una función por paso de la formulación), **NumPy vectorizado** y
+  **Rust** expuesto con PyO3.
+- RF-4: CUANDO un punto de integración plastifica, EL SISTEMA devuelve la tensión corregida sobre la
+  superficie de fluencia, sea cual sea la región de retorno (plano, arista o vértice). SI el
+  algoritmo de retorno no converge, ENTONCES EL SISTEMA lo dice con el punto, el elemento y el
+  incremento, y no devuelve una tensión.
+
+**Análisis**
+
+- RF-5: EL SISTEMA resuelve una fase de excavación: tensión inicial de campo constante, excavación
+  sin presión interior, contorno exterior fijo, en escalones de carga con iteraciones de equilibrio
+  hasta una tolerancia dada, con la frontera Python ↔ Rust de **una llamada por iteración global**.
+- RF-6: SI una iteración no converge en el número máximo dado, ENTONCES EL SISTEMA se detiene y
+  devuelve la historia de convergencia, sin dar el resultado como válido.
+- RF-7: EL SISTEMA construye una malla radial estructurada de T6 para el hueco circular, con
+  número de divisiones y gradación radial como parámetros.
+
+**Medida y distribución**
+
+- RF-8: EL SISTEMA mide, con el método A/B en el mismo proceso que usa la suite, el tiempo de la
+  integración constitutiva de las tres variantes sobre el mismo conjunto de puntos e incrementos, y
+  además el del ensamblaje y el de la solución lineal.
+- RF-9: EL SISTEMA se construye como una rueda por plataforma (Windows, macOS ARM, Linux) en la
+  integración continua, y la rueda se instala y pasa los casos en las tres.
+- RF-10: EL SISTEMA se puede congelar con PyInstaller y el ejecutable resuelve los dos casos.
+
+## Validación numérica
+
+| Caso | Fuente científica | Qué se compara |
+|---|---|---|
+| `validacion/casos/001-kirsch-hueco-elastico` (ficha `VER-STR-01`) | Kirsch (1898), a través de Jaeger y Cook (1976), *Fundamentals of Rock Mechanics*, 3.ª ed. | σr, σθ en los puntos de integración y ur en los nudos a lo largo de un radio, r de 1 a 5 m |
+| `validacion/casos/002-salencon-hueco-mohr-coulomb` (ficha `VER-STR-02`), ψ = 0° y ψ = 30° | Salençon (1969) | Lo mismo, más el radio plástico R0 |
+| Identidad del dominio finito (hidrostático, elástico) | Solución de Lamé del cilindro de pared gruesa (en Timoshenko y Goodier) | El problema con el contorno a 21 m **tiene** solución cerrada: separa el error de discretización del error de truncar el dominio infinito |
+| Identidad entre variantes | — | Python de referencia y Rust coinciden con tolerancia relativa del orden de 1e-10, en punto material y en malla (criterio 1 del ADR-0001) |
+| Convergencia de malla | — | Con tres mallas cada vez más finas, el error frente a la solución cerrada **disminuye**; la tolerancia de cada caso se fija con la malla elegida (regla 9) |
+
+Datos de los dos casos (fichas): radio a = 1 m, contorno exterior a 21 m, E = 10 000 MPa,
+ν = 0.2, tensión de campo hidrostática p0 = 30 MPa de compresión; en STR-02, c = 3.45 MPa,
+φ = 30°, ψ = 0° y 30°, presión interior nula. Valores de control propios, de las fórmulas de las
+fichas (hay que comprobarlas contra la fuente, tarea T1): en STR-01, σθ(a) = 60 MPa y ur(a) =
+0.0036 m; en STR-02, R0 ≈ 1.735 m y ur(a) ≈ 0.0082 m (ψ = 0°) y ≈ 0.0191 m (ψ = 30°).
+
+**Las reproducciones propias del programa de referencia no son valor esperado** (regla de
+`validacion/README.md`). Sí sirven de aviso: en la reproducción P02, con la misma malla gruesa, el
+cuadrilátero de 4 nudos se quedó un 11 % corto en ur(a) y el de 8 nudos un 1.9 %. Por eso esta spec
+exige el estudio de convergencia.
+
+## Requisitos no funcionales
+
+- **Criterios de aceptación del ADR-0001, fijados antes de medir**: (1) Python de referencia y Rust
+  coinciden a ~1e-10; (2) los casos cumplen su tolerancia; (3) las ruedas se instalan y funcionan en
+  los tres sistemas y el congelado con PyInstaller funciona; (4) el propietario entiende el
+  Mohr-Coulomb en Rust al menos tan bien como en Python; (5) **Rust ≥ ×10 más rápido que NumPy
+  vectorizado** en la integración constitutiva.
+- Python ≥ 3.11 (CI con 3.11, 3.12 y 3.13; en local solo hay 3.14).
+- Sin dependencias nuevas sin el OK del propietario y sin comprobar su licencia (AGPL-3.0).
+
+## Casos límite
+
+- Punto que plastifica en la arista o en el vértice del cono de Mohr-Coulomb.
+- Incremento que pasa de elástico a plástico dentro del mismo escalón.
+- Elemento degenerado (área nula o negativa): error con el número de elemento, no un resultado.
+- Iteración que no converge (RF-6).
+- ψ = φ (asociado) frente a ψ = 0 (no asociado): el segundo no es simétrico en la matriz tangente
+  consistente; esta prueba no la usa (ver plan).
+
+## Fuera de alcance
+
+- Interfaz, proyecto `.ogr`, resultados en `.h5`, MCP, idiomas: nada de eso entra en la fase 0.
+- Otros elementos (T3, Q4, Q8), axisimetría, otras leyes, fases múltiples, SSR, agua, soporte.
+- Elegir el solver lineal definitivo: aquí se usa SuperLU de SciPy en las tres variantes.
+- Paralelismo: se mide en un hilo; el paralelo (rayon) se mira después, si la prueba sale bien.
+
+## Criterios de finalización
+
+- [ ] Los cinco criterios del ADR-0001 medidos y anotados con sus números, y la decisión del
+      propietario sobre el ADR (se queda o se reabre)
+- [ ] Los dos casos de validación dentro de tolerancia, con la malla que la fija y el estudio de
+      convergencia que la justifica
+- [ ] Cada fórmula del código, comprobada contra su fuente original (autor, año, ecuación)
+- [ ] Changelog registrando **qué se encontró**
+
+## Decisiones del propietario (2026-10-27)
+
+| # | Decisión | Por qué |
+|---|---|---|
+| D1 | **Tracción positiva dentro del motor.** La interfaz muestra compresión positiva donde sea la costumbre geotécnica, con la conversión en un único sitio | Es el convenio de los textos de elementos finitos y de plasticidad que se siguen, y el del motor de referencia por dentro; dar la vuelta a un algoritmo de retorno dentro del motor es donde un signo cambiado no se ve |
+| D2 | **Cargas y desplazamientos impuestos de cada fase, en totales.** El motor recibe el estado total que define el usuario y calcula él el incremento | Un solo convenio para los dos y sin errores acumulados; el motor de referencia los mezcla (duda 12 de S06) |
+| D3 | **Tolerancias fijadas ya:** STR-01, 0.5 % en σθ(a) y en ur(a); STR-02 (ψ = 0° y 30°), 2 % en ur(a), y R0 dentro de un tamaño de elemento. El estudio de convergencia elige la malla que las cumple; si ninguna malla razonable las cumple, es un hallazgo que se reporta, no una tolerancia que se afloja | Criterio fijado antes de medir. Solo cortar el dominio a 21 m mueve ur(a) en torno a un 0.2 % frente a Kirsch; la identidad de Lamé lo separa |
+| D4 | **La referencia en Python en su sitio final** (`ogr_fem2d/engine/reference/`); la variante NumPy en `poc/`; el crate de Rust en `rust/`, compilado como `ogr_fem2d._engine` | La referencia se queda pase lo que pase (es el oráculo); NumPy solo sirve para medir |
+| D6 | **OK a `pyo3` 0.30 (MIT o Apache-2.0), `numpy` 0.30 (BSD-2-Clause), `ndarray` 0.17 (MIT o Apache-2.0) y PyInstaller 6.22** (GPL-2.0-or-later con excepción para distribuir programas de cualquier licencia); PyInstaller solo en el `.venv`, como herramienta | Licencias comprobadas el 2026-10-27, compatibles con AGPL-3.0 |
+
+## Pendiente
+
+- **[NECESITA FUENTE] D5 — Las fuentes originales no están en `Referencias`**; el propietario las
+  está buscando. Hacen falta antes de programar: Salençon (1969); Kirsch (1898) o Jaeger y Cook
+  (1976); un algoritmo de retorno de Mohr-Coulomb en tensiones principales (de Souza Neto, Perić y
+  Owen, 2008, *Computational Methods for Plasticity*, o Clausen, Damkilde y Andersen, 2006 y 2007);
+  el elemento T6 y las tensiones iniciales (Zienkiewicz y Taylor, *The Finite Element Method*,
+  vol. 1); Lamé (Timoshenko y Goodier, *Theory of Elasticity*).

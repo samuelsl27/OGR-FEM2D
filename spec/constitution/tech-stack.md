@@ -20,6 +20,8 @@
 | **Resultados en `modelo.h5` aparte, con la huella del modelo** | ADR-0003 | Un cálculo con fases y SSR puede durar horas; la huella impide presentar resultados obsoletos como válidos |
 | **AGPL-3.0-or-later y el CLA de la suite** | decisión D4 | Igual que Slip2D: el CLA está redactado para toda la suite y conserva la opción de un servicio alojado con otras condiciones |
 | **Repositorio público `samuelsl27/OGR-FEM2D`** | decisión D5 | Igual que Slip2D; la constitución y las decisiones se publican desde el principio |
+| **Tracción positiva dentro del motor; cargas y desplazamientos de cada fase en totales** | spec 001, D1 y D2 | El convenio de los textos de elementos finitos y plasticidad que se siguen; un solo convenio para cargas y desplazamientos, sin errores acumulados |
+| **Rust: `pyo3`, `numpy` (crate) y `ndarray`; PyInstaller para el congelado** | spec 001, D6 | MIT/Apache-2.0, BSD-2-Clause y GPL-2.0+ con excepción de distribución: compatibles con AGPL-3.0 |
 
 ## Separaciones que no deben romperse
 

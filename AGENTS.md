@@ -60,7 +60,10 @@ Autor y titular del copyright: Samuel Sáez López (UPCT). Licencia AGPL-3.0-or-
    tensiones conocida) antes de usarse en un modelo.
 9. **Convergencia de malla**: un caso de validación fija la malla y el orden de elemento con los que
    se establece su tolerancia; cambiar la malla de un caso es cambiar el caso.
-10. **Un único convenio de signos interno**, documentado (las fuentes usan convenios distintos).
+10. **Un único convenio de signos interno**, documentado (las fuentes usan convenios distintos):
+    **tracción positiva** dentro del motor; la interfaz convierte a compresión positiva donde sea la
+    costumbre geotécnica, en un único sitio. Las cargas y los desplazamientos impuestos de cada fase
+    entran al motor **en totales**, y el motor calcula el incremento (spec 001, D1 y D2).
 11. **El motor no conoce la interfaz**: recibe nudos, elementos, propiedades, tensiones iniciales,
     restricciones y secuencia de fases; no sabe de contornos, menús ni unidades de usuario.
 12. **Un valor por defecto que cambia el resultado se muestra junto al resultado.** En las
