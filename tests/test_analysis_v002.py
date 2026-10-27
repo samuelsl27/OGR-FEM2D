@@ -30,8 +30,8 @@ Invariants protected:
 * **restraints that are not enough** are found before solving, and the free
   motion is named: a translation, a rotation about the node that holds it,
   or, in axisymmetry, the translation along the axis;
-* **what is not there yet** (self weight and edge and point loads, T7;
-  inactive elements, T9) is refused, not ignored; a bad input is refused
+* **what is not there yet** (inactive elements, T9) is refused, not
+  ignored; a bad input is refused
   with the validation of T2.
 """
 from __future__ import annotations
@@ -221,11 +221,8 @@ class TestRefused:
     def test_what_is_not_there_yet_and_bad_input(self):
         b = _blocks.block(False)
         base = block_model(False, [stage(b, restraints=rollers(b))])[1]
-        heavy = replace(base, materials=(m.Material(Elastic(E, NU), unit_weight=0.027),))
         dug = replace(base, stages=(replace(base.stages[0], active=(False,) + (True,) * 11),))
-        edge = replace(base, stages=(replace(base.stages[0], edge_loads=(
-            m.EdgeLoad(0, 0, (0.0, -1.0), (0.0, -1.0)),)),))
-        for model, task in ((heavy, "T7"), (dug, "T9"), (edge, "T7")):
+        for model, task in ((dug, "T9"),):
             try:
                 analysis.run(model)
             except NotImplementedError as err:

@@ -93,8 +93,18 @@ changelog al día, la suite entera en verde, commit y push.
       libre por su nombre. Catorce mutaciones cazadas (dos tras añadir comprobaciones). Casos 001
       y 002, idénticos bit a bit. **Dos hallazgos**, en el changelog: el umbral de «fase sin carga»
       y el suelo de redondeo de la convergencia.)
-- [ ] T7. Cargas nodales, puntuales, repartidas y peso propio — RF-6 — Hecho cuando: resultante y
-      momento de cada carga, y peso propio, contra su valor cerrado.
+- [x] T7. Cargas nodales, puntuales, repartidas y peso propio — RF-6 — Hecho cuando: resultante y
+      momento de cada carga, y peso propio, contra su valor cerrado. (Hecho el 2026-10-27:
+      `reference/loads.py` y `analysis.stage_load`: peso propio por la regla del elemento (Z&T
+      ecs. 2.13b y 5.19), cargas repartidas por Gauss-Legendre de 10 puntos (tabla 9.1, ec. 2.15),
+      carga puntual con la transformación del elemento invertida (trabajo virtual de la ec. 2.10,
+      derivación propia); en axisimetría, sobre el anillo. 13 tests en `test_loads_v002.py`: tabla
+      9.1 dígito a dígito, trapecio de carga (resultante, momento, reparto), carga normal en lado
+      curvo contra la cuerda girada, anillo, peso contra área y volumen, reparto del T6 por la
+      ec. (8.38), carga puntual (nudo, resultante, momento, inversión), y a través del análisis la
+      columna confinada bajo su peso, exacta con T6 en deformación plana y en axisimetría, y todas
+      las cargas a la vez equilibradas por las reacciones. Quince mutaciones cazadas (dos tras
+      afinar los tests). Hallazgos en el changelog.)
 - [ ] T8. Preproceso de tensión inicial, constante y gravitatoria — RF-7 — Hecho cuando: campo
       gravitatorio más peso propio con estratos horizontales da desplazamiento nulo.
 - [ ] T9. Fases y excavación por desactivación — RF-8, RF-9 — Hecho cuando: desactivar el anillo

@@ -104,5 +104,20 @@ ajustes que cambian el resultado. Además:
 
 **Lo que solo se ve al calcular** lo informa el solver, no `validate()`: una matriz de rigidez
 singular (restricciones insuficientes), un punto de integración con det J ≤ 0 en un T6 de nudos
-intermedios mal colocados, y una carga puntual fuera de su elemento (hace falta invertir la
-transformación del elemento, que llega con la tarea T7).
+intermedios mal colocados, y una carga puntual fuera de su elemento o, en axisimetría, una fuerza
+puntual radial sobre el eje (`LoadError`, con la fase y el elemento).
+
+## Cómo se convierten las cargas
+
+Todas pasan a **fuerzas nodales consistentes** (`ogr_fem2d/engine/reference/loads.py`):
+
+| Carga | Fuerzas nodales | Fuente |
+|---|---|---|
+| Nodal | tal cual | Zienkiewicz y Taylor (2000), ec. (2.14) |
+| Peso propio | ∫Nᵀb dV con b = (0, −γ), por la regla del elemento; en axisimetría, sobre el anillo | ecs. (2.13b) y (5.19) |
+| Repartida sobre un lado | ∫Nᵀt ds, con t lineal de la primera esquina a la segunda, por Gauss-Legendre de 10 puntos; en axisimetría, con 2π r | ec. (2.15) y tabla 9.1 |
+| Puntual | Nₐ(x, y)·P, con (x, y) llevado a coordenadas de área invirtiendo la transformación del elemento | trabajo virtual de la ec. (2.10) (derivación propia) |
+
+En un lado recto, o con carga normal en un lado curvo, la integral es exacta. Con la carga en
+componentes globales sobre un lado curvo del T6 es una aproximación: 2·10⁻¹¹ en un lado que abarca
+90° de circunferencia, redondeo a partir de 22.5°.

@@ -13,7 +13,10 @@ the next:
   end of the stage; the stage imposes the difference with the displacement
   it starts from;
 * loads (D2): totals; the stage goes from the force its starting stresses
-  balance to the total given (reference/solver.py);
+  balance to the total given (reference/solver.py). Nodal, point and edge
+  loads and the self weight of the active elements are turned into
+  consistent nodal forces by reference/loads.py (T7); a point load outside
+  its element is reported with its stage and element;
 * the axis (spec 002, D1 bis): in axisymmetry every node at x = r = 0 has
   u_r = 0 by symmetry, and the engine holds it whether or not the user did;
   the result lists those nodes (rule 12: a default that changes the result
@@ -29,9 +32,8 @@ the next:
   starting state) is not solved: its state is the previous one, and the
   result says so (``solved``).
 
-Not yet (spec 002): edge and point loads and self weight (T7), and elements
-that are not active (T9): the engine refuses them with the task that brings
-them, rather than ignoring them.
+Not yet (spec 002): elements that are not active (T9): the engine refuses
+them with the task that brings them, rather than ignoring them.
 
 Author: Samuel Sáez López (UPCT)
 """
@@ -43,9 +45,18 @@ import numpy as np
 
 from . import interface
 from .model import AXISYMMETRIC, EngineModel, validate
-from .reference import solver
+from .reference import loads, solver
+from .reference.quadrature import rule_for
 
 Stress = tuple[float, float, float, float]
+
+
+class LoadError(ValueError):
+    """A load that cannot be applied where it was given."""
+
+    def __init__(self, stage: int, element: int, reason: str):
+        self.stage, self.element, self.reason = stage, element, reason
+        super().__init__(f"stage {stage}, load on element {element}: {reason}")
 
 
 class InsufficientRestraintError(ValueError):
@@ -77,11 +88,7 @@ class StageOutcome:
 
 
 def _not_yet(m: EngineModel) -> None:
-    if any(mat.unit_weight for mat in m.materials):
-        raise NotImplementedError("self weight arrives in spec 002, T7")
     for i, s in enumerate(m.stages):
-        if s.point_loads or s.edge_loads:
-            raise NotImplementedError(f"stage {i}: point and edge loads arrive in spec 002, T7")
         if not all(s.active):
             raise NotImplementedError(f"stage {i}: inactive elements arrive in spec 002, T9")
 
@@ -134,6 +141,46 @@ def free_motions(m: EngineModel, constrained: set[int]) -> list[str]:
     return out
 
 
+def stage_load(m: EngineModel, i: int) -> np.ndarray:
+    """The TOTAL external force of stage ``i``, one value per dof: its nodal,
+    point and edge loads and the self weight of its active elements, as
+    consistent nodal forces (reference/loads.py)."""
+    stage = m.stages[i]
+    axi = m.analysis == AXISYMMETRIC
+    shape = solver.SHAPES[m.nodes_per_element]
+    rule = rule_for(m.nodes_per_element, m.analysis)
+    f = np.zeros(2 * len(m.nodes))
+
+    def add(nodes, forces):
+        for n, (fx, fy) in zip(nodes, forces):
+            f[2 * n] += fx
+            f[2 * n + 1] += fy
+
+    for load in stage.nodal_loads:
+        add((load.node,), ((load.fx, load.fy),))
+    for e, element in enumerate(m.elements):
+        weight = m.materials[m.element_material[e]].unit_weight
+        if stage.active[e] and weight:
+            xy = [m.nodes[n] for n in element]
+            add(element, loads.body_forces(shape, xy, (0.0, -weight), rule, axi))
+    for p in stage.point_loads:
+        element = m.elements[p.element]
+        if axi and p.x == 0.0 and p.fx != 0.0:
+            raise LoadError(i, p.element, "a radial force on the axis (D1 bis)")
+        try:
+            forces = loads.point_forces(shape, [m.nodes[n] for n in element],
+                                        p.x, p.y, p.fx, p.fy)
+        except ValueError as err:
+            raise LoadError(i, p.element, str(err)) from None
+        add(element, forces)
+    for q in stage.edge_loads:
+        element = m.elements[q.element]
+        nodes = [element[k] for k in loads.side_nodes(len(element), q.side)]
+        add(nodes, loads.edge_forces([m.nodes[n] for n in nodes], q.start, q.end,
+                                     q.normal, axi))
+    return f
+
+
 def _reactions(result_reactions: dict[int, float]) -> dict[int, tuple[float, float]]:
     out: dict[int, list[float]] = {}
     for dof, value in result_reactions.items():
@@ -163,10 +210,7 @@ def run(m: EngineModel, variant: interface.Variant = solver.REFERENCE) -> list[S
         free = free_motions(m, held | set(imposed_total))
         if free:
             raise InsufficientRestraintError(i, free)
-        load = np.zeros(n_dofs)
-        for f in stage.nodal_loads:
-            load[2 * f.node] += f.fx
-            load[2 * f.node + 1] += f.fy
+        load = stage_load(m, i)
         engine_model = solver.Model(list(m.nodes), list(m.elements), laws,
                                     frozenset(held), m.analysis)
         increments = {dof: value - displacement[dof] for dof, value in imposed_total.items()}

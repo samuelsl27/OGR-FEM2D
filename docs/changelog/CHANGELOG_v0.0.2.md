@@ -63,3 +63,13 @@
     1e-12 veces la mayor fuerza en juego también converge. Donde la tolerancia se alcanza, ese
     suelo queda muy por debajo y no cambia nada: los casos 001 y 002 dan los mismos números bit
     a bit. La tolerancia por defecto del programa sigue siendo cosa de la fase 2 (spec 007).
+- **Tarea T7, las cargas** (`reference/loads.py`):
+  - con **cinco** puntos de Gauss, una carga en componentes globales sobre un lado curvo del T6
+    tenía un error de 1.7·10⁻⁶ en un lado de 90° de circunferencia (|dx/ds| no es un
+    polinomio); con **diez**, 2·10⁻¹¹, y redondeo a partir de 22.5°. Se usan diez;
+  - la tabla 9.1 de Zienkiewicz y Taylor (2000) **redondea** a 15 decimales (la 9.2 truncaba):
+    cada valor es el exacto, calculado con 40 cifras, redondeado. Los de NumPy se apartan
+    2·10⁻¹⁶ y no sirven para comprobar dígito a dígito;
+  - la carga puntual dentro de un elemento no está impresa en la fuente: se deriva del trabajo
+    virtual de la ec. (2.10), y en axisimetría una fuerza radial puntual sobre el eje se rechaza
+    (D1 bis).
