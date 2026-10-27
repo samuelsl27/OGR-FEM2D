@@ -25,6 +25,19 @@ Sources:
   sphérique ou cylindrique dans un milieu élasto-plastique ». Annales des Ponts
   et Chaussées, IV, pp. 231-236: criterion and flow (§3), cylindrical cavity
   (§5): (2''), (3''), (9''), (4''), (6''), and r(r0, c) for k = 1 (p. 236).
+* de Souza Neto, E. A., Perić, D. and Owen, D. R. J. (2008). Computational
+  Methods for Plasticity, Wiley, §8.2: the flow vectors of an edge of the
+  Mohr-Coulomb pyramid, Eqs. (8.58)-(8.59), for the edge zone below.
+
+THE EXACT SOLUTION OF THE MODEL (spec 001, D8). Salençon assumes sigma_z is the
+intermediate principal stress (§5, (4'')). With the data of STR-02 it is not
+near the wall: with no plastic strain in z, sigma_z = P0 - nu (d_sigma_r +
+d_sigma_theta) would reach 20.39 MPa at r = a, above sigma_theta = 11.95 MPa,
+so for a <= r < r_e = 1.2814 m the stress lies on the edge sigma_z =
+sigma_theta and the flow has a z component. Equilibrium does not involve
+sigma_z, so sigma_r, sigma_theta and R0 stay Salençon's; the displacement
+does not: salencon_edge_* below. Salençon's own u_r(a) is kept as an
+informative value.
 """
 from __future__ import annotations
 
@@ -178,6 +191,109 @@ def salencon_k1_published(r0_pos: float) -> float:
     return -r2_minus / (2.0 * r0_pos)
 
 
+# ------------------------------------------------- Salençon with the edge
+def sigma_z_without_plastic_z(r: float) -> float:
+    """sigma_z in the plastic zone if eps_p_z = 0 (Salençon's (4'')): the
+    elastic eps_z is then zero, so d_sigma_z = nu (d_sigma_r + d_sigma_theta)
+    (plane strain), compression positive."""
+    s_r, s_t = _plastic_stress(r)
+    return P0 - NU * ((P0 - s_r) + (P0 - s_t))
+
+
+def edge_radius() -> float:
+    """r_e: below it sigma_z (as above) would exceed sigma_theta, and the
+    stress is on the edge sigma_z = sigma_theta. A if there is no such zone."""
+    def excess(r):
+        return sigma_z_without_plastic_z(r) - _plastic_stress(r)[1]
+    if excess(A) <= 0.0:
+        return A
+    return brentq(excess, A, 10.0 * A)
+
+
+def _integrate_plastic_with_edge(r0: float, u0_in: float, psi: float) -> float:
+    """u_in(a) from u_in(r0), small strain, with the edge zone.
+
+    Flow: on the main plane (sigma_1 = sigma_r, sigma_3 = sigma_theta, tension
+    positive) the vector N1 of Eq. (8.55); on the edge with sigma_z =
+    sigma_theta, N1 and the vector of the plane (sigma_r, sigma_z), Eqs.
+    (8.58)-(8.59) with psi:
+        eps_p = dgamma_a [(1 + sin psi) e_r - (1 - sin psi) e_theta]
+              + dgamma_b [(1 + sin psi) e_r - (1 - sin psi) e_z].
+    With k = (1 - sin psi)/(1 + sin psi) both give, at every instant and so in
+    total, k eps_p_r + eps_p_theta + eps_p_z = 0. Plane strain, eps_z = 0, so
+    eps_p_z = -e_z (the elastic z strain, zero on the plane zone), and with
+    eps_r = du/dr, eps_theta = u/r (u outward):
+        u/r + k du/dr = e_theta + k e_r + e_z,
+    the elastic strains being those of the stress change from P0 (three
+    dimensional, sigma_z = sigma_theta in the edge zone). Without the edge
+    zone it is _integrate_plastic. Its consistency (dgamma_a, dgamma_b >= 0:
+    eps_p_theta <= 0 everywhere, e_z >= 0 in the edge zone) is checked by
+    check_edge_consistency(). Our derivation from the two sources.
+    """
+    k = k_flow(psi)
+    r_e = edge_radius()
+
+    def rhs(r, u):
+        e_r, e_t, e_z = _elastic_strains_with_edge(r, r_e)
+        return [((e_t + k * e_r + e_z) - u[0] / r) / k]
+
+    sol = solve_ivp(rhs, (r0, A), [-u0_in], rtol=1e-12, atol=1e-15,
+                    max_step=1e-3)
+    return -sol.y[0][-1]
+
+
+def _elastic_strains_with_edge(r: float, r_e: float
+                               ) -> tuple[float, float, float]:
+    """(e_r, e_theta, e_z) of the stress change from the field, isotropic
+    elasticity, tension positive."""
+    s_r, s_t = _plastic_stress(r)
+    s_z = s_t if r < r_e else sigma_z_without_plastic_z(r)
+    d_r, d_t, d_z = P0 - s_r, P0 - s_t, P0 - s_z
+    return ((d_r - NU * (d_t + d_z)) / E,
+            (d_t - NU * (d_r + d_z)) / E,
+            (d_z - NU * (d_r + d_t)) / E)
+
+
+def salencon_edge_infinite(psi: float) -> dict:
+    """R0 and the elastic zone of salencon_infinite; u_in(a) with the edge."""
+    base = salencon_infinite(psi)
+    return {"R0": base["R0"], "r_e": edge_radius(),
+            "u_a": _integrate_plastic_with_edge(base["R0"], base["u_R0"], psi),
+            "u_a_salencon": base["u_a"]}
+
+
+def salencon_edge_finite(b: float, psi: float) -> dict:
+    """The same on the ring with u(b) = 0 (the elastic part of
+    salencon_finite)."""
+    base = salencon_finite(b, psi)
+    return {"R0": base["R0"], "r_e": edge_radius(),
+            "u_a": _integrate_plastic_with_edge(base["R0"], base["u_R0"], psi),
+            "u_a_salencon": base["u_a"]}
+
+
+def check_edge_consistency(psi: float, n: int = 400) -> tuple[float, float]:
+    """(min of -eps_p_theta over the plastic zone, min of e_z over the edge
+    zone): both must be >= 0 for the multipliers to be non-negative."""
+    k = k_flow(psi)
+    r_e = edge_radius()
+    base = salencon_infinite(psi)
+
+    def rhs(r, u):
+        e_r, e_t, e_z = _elastic_strains_with_edge(r, r_e)
+        return [((e_t + k * e_r + e_z) - u[0] / r) / k]
+
+    sol = solve_ivp(rhs, (base["R0"], A), [-base["u_R0"]], rtol=1e-12,
+                    atol=1e-15, max_step=1e-3, dense_output=True)
+    worst_theta, worst_z = math.inf, math.inf
+    for i in range(1, n):
+        r = A + (base["R0"] - A) * i / n
+        e_r, e_t, e_z = _elastic_strains_with_edge(r, r_e)
+        worst_theta = min(worst_theta, -(sol.sol(r)[0] / r - e_t))
+        if r < r_e:
+            worst_z = min(worst_z, e_z)
+    return worst_theta, worst_z
+
+
 if __name__ == "__main__":
     print("Kirsch, wall:", kirsch_hydrostatic(A))
     for psi_deg in (0.0, 30.0):
@@ -194,3 +310,15 @@ if __name__ == "__main__":
         print(f"{b:5.0f}  {(lame_fixed_outer(A, b)[2] / u_k - 1) * 100:+8.3f} %"
               f"   {(salencon_finite(b, 0.0)['u_a'] / s0 - 1) * 100:+8.3f} %"
               f"   {(salencon_finite(b, math.radians(30.0))['u_a'] / s30 - 1) * 100:+8.3f} %")
+    print(f"Edge zone (D8): r_e = {edge_radius():.4f} m; "
+          f"sigma_z without plastic z at r = a: {sigma_z_without_plastic_z(A):.3f} MPa "
+          f"vs sigma_theta(a) = {_plastic_stress(A)[1]:.3f} MPa")
+    for psi_deg in (0.0, 30.0):
+        psi = math.radians(psi_deg)
+        inf = salencon_edge_infinite(psi)
+        worst_theta, worst_z = check_edge_consistency(psi)
+        print(f"psi={psi_deg:.0f}: u_a with edge {inf['u_a']:.9f} "
+              f"({(inf['u_a'] / inf['u_a_salencon'] - 1) * 100:+.3f} % on Salencon); "
+              f"b=21 {salencon_edge_finite(21.0, psi)['u_a']:.9f}, "
+              f"b=100 {salencon_edge_finite(100.0, psi)['u_a']:.9f}; "
+              f"consistency (>= 0): {worst_theta:.2e} {worst_z:.2e}")

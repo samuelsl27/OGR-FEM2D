@@ -1,15 +1,17 @@
 {
   "id": "002-salencon-hueco-mohr-coulomb",
   "ficha": "VER-STR-02",
-  "fuente": "Salençon (1969), Annales des Ponts et Chaussées IV, págs. 231-236: §5, ecs. (2''), (3'') y (9''), pág. 235; el desplazamiento, integración del modelo de Salençon en pequeñas deformaciones (spec 001, plan, «Formulación»)",
+  "fuente": "Salençon (1969), Annales des Ponts et Chaussées IV, págs. 231-236: §5, ecs. (2''), (3'') y (9''), pág. 235, para las tensiones y R0; el desplazamiento, la solución exacta del modelo: el de Salençon integrado en pequeñas deformaciones con la zona de arista sigma_z = sigma_theta donde su hipótesis no se cumple, con el flujo de las ecs. (8.58)-(8.59) de de Souza Neto, Perić y Owen (2008) (spec 001, D8; comprobaciones/soluciones_cerradas.py, salencon_edge_infinite)",
   "tipo_referencia": "analitica",
   "tolerancia_relativa": 0.02,
   "variantes": [
     {"psi": 0.0,
      "comparaciones": [
        {"magnitud": "u_r", "donde": {"tipo": "nudos", "r": 1.0},
-        "valor": 0.008236257071412201, "unidad": "m", "convenio": "hacia el centro positivo",
-        "como": "el mayor error de todos los nudos sobre r = a"},
+        "valor": 0.008317517483033516, "unidad": "m", "convenio": "hacia el centro positivo",
+        "como": "el mayor error de todos los nudos sobre r = a",
+        "informativo": {"salencon_1969": 0.008236257071412201,
+                        "por_que_no": "supone sigma_z intermedia, que no se cumple para r < 1.2814 m (D8)"}},
        {"magnitud": "R0", "valor": 1.7349981445794187, "unidad": "m",
         "tolerancia": {"tipo": "tamano_de_elemento", "valor": 1},
         "como": "radio del punto de integración plástico más alejado, frente a R0, con la longitud radial del elemento que contiene R0 como tolerancia"}
@@ -17,16 +19,19 @@
     {"psi": 30.0,
      "comparaciones": [
        {"magnitud": "u_r", "donde": {"tipo": "nudos", "r": 1.0},
-        "valor": 0.019085774157322016, "unidad": "m", "convenio": "hacia el centro positivo",
-        "como": "el mayor error de todos los nudos sobre r = a"},
+        "valor": 0.019447485117356812, "unidad": "m", "convenio": "hacia el centro positivo",
+        "como": "el mayor error de todos los nudos sobre r = a",
+        "informativo": {"salencon_1969": 0.019085774157322016,
+                        "por_que_no": "supone sigma_z intermedia, que no se cumple para r < 1.2814 m (D8)"}},
        {"magnitud": "R0", "valor": 1.7349981445794187, "unidad": "m",
         "tolerancia": {"tipo": "tamano_de_elemento", "valor": 1},
         "como": "radio del punto de integración plástico más alejado, frente a R0, con la longitud radial del elemento que contiene R0 como tolerancia"}
      ]}
   ],
   "comprobaciones": [
-    {"que": "sigma_z es la tensión principal intermedia en todos los puntos plastificados",
-     "por_que": "es la hipótesis de Salençon (1969), §5 y ec. (4''): sin ella la solución cerrada no es la del modelo"}
+    {"que": "regiones del retorno: los puntos plastificados con r < r_e = 1.2814 m están en la arista sigma_z = sigma_theta, y los demás en el plano principal con sigma_z intermedia",
+     "r_e": 1.2813810507759302,
+     "por_que": "la hipótesis de Salençon (1969), §5 y ec. (4''), solo se cumple para r >= r_e; la solución de referencia cuenta con ello (D8). La spec pedía comprobar que sigma_z es intermedia en todos los puntos plastificados: no lo es, y esa es la razón de D8"}
   ],
   "modelo": {
     "geometria": {"a": 1.0, "b": 100.0, "unidad": "m"},
@@ -35,5 +40,5 @@
     "fase": null,
     "malla": null
   },
-  "notas": "Tolerancias de la spec 001, D3, escritas antes del estudio de convergencia. La malla y los parámetros de la fase (escalones, tolerancia del equilibrio) los fija el estudio: hasta entonces, null. Presión interior nula."
+  "notas": "Tolerancias de la spec 001, D3, escritas antes del estudio de convergencia (commit 962f504) y sin cambiar. Los valores de u_r(a) se cambiaron por decisión del propietario (D8), también antes del estudio, en el commit que trae esta nota. La malla y los parámetros de la fase (escalones, tolerancia del equilibrio) los fija el estudio: hasta entonces, null. Presión interior nula."
 }
