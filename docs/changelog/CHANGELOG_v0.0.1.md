@@ -25,3 +25,10 @@ versión, registrando **qué se encontró**.
   criterio de elección de arista solo se pudo fijar con la subrutina. Por eso cada retorno se
   construye desde la ec. (8.68) y los vectores de flujo, y los tests comprueban las ecuaciones de
   los planos: una comprobación con errores introducidos a propósito confirma que los cazan.
+- **Tarea T6, la malla radial**: el área de la malla no es la de la corona (los arcos son parábolas)
+  pero se conoce exacta, por la cuadratura de la parábola de Arquímedes, y la cuadratura del T6 la
+  da a 1e-16; la diferencia con π(b² − a²)/4 baja como Δθ⁴. Una mutación sobrevivió a los primeros
+  tests (el nudo intermedio de un lado radial fuera de su centro: no cambia el área ni invierte
+  nada), y se añadió el invariante que define la construcción: en polares, cada nudo intermedio es
+  la media de sus esquinas. Con la diagonal recta, la malla de una sola división angular sale con
+  un elemento degenerado; la construcción polar lo evita.

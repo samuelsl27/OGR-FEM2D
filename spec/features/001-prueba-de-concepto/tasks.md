@@ -36,9 +36,14 @@ tarea: es un deseo.
       comprobación con errores introducidos a propósito: los tests cazan un vector de flujo de
       arista equivocado, el signo del término volumétrico y la elección de arista invertida.
       Con ψ = 0 el retorno al vértice se rechaza con un error, como manda la fuente.)
-- [ ] T6. Malla radial de T6 de un cuarto de corona, con el radio exterior como parámetro (21 m y
+- [x] T6. Malla radial de T6 de un cuarto de corona, con el radio exterior como parámetro (21 m y
       100 m) — RF-7 — Hecho cuando: área total exacta (a la tolerancia de la cuadratura) y ningún
-      elemento degenerado
+      elemento degenerado. (Hecho: `ogr_fem2d/engine/mesh_radial.py`. Cada nudo, esquina o
+      intermedio, es la imagen exacta de su punto (r, θ): los intermedios de los arcos quedan sobre
+      el círculo y los de los lados radiales en su centro; gradación radial geométrica. El área por
+      cuadratura coincide a 1e-16 con la cuadratura de la parábola de Arquímedes, y la diferencia
+      con π(b² − a²)/4 baja como Δθ⁴; det J > 0 en nudos y puntos de integración; 8 tests, que
+      cazan seis errores introducidos a propósito.)
 - [ ] T7. Escalones, iteraciones con rigidez inicial e historia de convergencia — RF-5, RF-6 —
       Hecho cuando: la no convergencia se detecta y se informa en un test
 - [ ] T8. Identidad del anillo de 21 m (D3 bis): elástico contra `lame_fixed_outer` y Mohr-Coulomb
