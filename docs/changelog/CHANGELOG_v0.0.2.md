@@ -80,3 +80,8 @@
   términos de grado 2, y el desplazamiento baja con la malla con razones de 2.7 a 3.9 por cada
   mitad de h, un orden de 1.4 a 1.9. **En la T1 escribí que bajaría con h²: era una estimación
   sin calcular, y no se cumple.** El test pide solo que baje en cada refinamiento.
+- **Tarea T9, las fases y la excavación**: excavar desactivando elementos da lo mismo, a 1e-12,
+  que la malla sin ellos con el hueco abierto, lo que hacía la spec 001; la carga de la
+  excavación sale sola del desequilibrio de las tensiones que quedan (Z&T ec. 2.13b). **Decisión
+  de diseño**: un elemento que vuelve a activarse (construcción, relleno) se rechaza hasta que
+  una spec defina su estado al volver; no se adivina.

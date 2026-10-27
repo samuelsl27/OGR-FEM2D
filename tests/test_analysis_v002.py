@@ -30,8 +30,8 @@ Invariants protected:
 * **restraints that are not enough** are found before solving, and the free
   motion is named: a translation, a rotation about the node that holds it,
   or, in axisymmetry, the translation along the axis;
-* **what is not there yet** (inactive elements, T9) is refused, not
-  ignored; a bad input is refused
+* **what is not there yet** (an element that becomes active again, whose
+  state no spec defines) is refused, not guessed; a bad input is refused
   with the validation of T2.
 """
 from __future__ import annotations
@@ -221,14 +221,14 @@ class TestRefused:
     def test_what_is_not_there_yet_and_bad_input(self):
         b = _blocks.block(False)
         base = block_model(False, [stage(b, restraints=rollers(b))])[1]
-        dug = replace(base, stages=(replace(base.stages[0], active=(False,) + (True,) * 11),))
-        for model, task in ((dug, "T9"),):
-            try:
-                analysis.run(model)
-            except NotImplementedError as err:
-                assert task in str(err)
-            else:
-                raise AssertionError(f"{task} was not refused")
+        dug = replace(base.stages[0], active=(False,) + (True,) * 11)
+        back = replace(base, stages=(dug, base.stages[0]))       # element 0 comes back
+        try:
+            analysis.run(back)
+        except NotImplementedError as err:
+            assert "element 0 becomes active again" in str(err)
+        else:
+            raise AssertionError("a reactivated element was solved")
         try:
             analysis.run(replace(base, element_material=(0, 9) + (0,) * 10))
         except m.InputError as err:

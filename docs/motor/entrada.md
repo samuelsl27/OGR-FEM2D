@@ -100,7 +100,12 @@ ajustes que cambian el resultado. Además:
   deformación plana, las dos traslaciones y el giro; en axisimetría, la traslación axial) y, si
   no, dice cuál queda libre (`InsufficientRestraintError`);
 - una fase cuyo desequilibrio es redondeo (menos de 1e-12 de la mayor fuerza en juego) no se
-  resuelve: su estado es el de la anterior, y el resultado lo dice (`solved = False`).
+  resuelve: su estado es el de la anterior, y el resultado lo dice (`solved = False`);
+- cada fase se resuelve sobre sus elementos **activos**: quitar elementos es excavar, y la carga
+  es el desequilibrio que dejan las tensiones de los que quedan (Z&T ec. 2.13b). Los nudos que se
+  quedan sin elementos salen del sistema, conservan su desplazamiento y se listan
+  (`removed_nodes`); las tensiones de los elementos inactivos son `None`. Un elemento que vuelve
+  a activarse se rechaza (spec 002, T9).
 
 **Lo que solo se ve al calcular** lo informa el solver, no `validate()`: una matriz de rigidez
 singular (restricciones insuficientes), un punto de integración con det J ≤ 0 en un T6 de nudos

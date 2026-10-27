@@ -118,8 +118,19 @@ changelog al día, la suite entera en verde, commit y push.
       cambiar un caso). **Hallazgo**: con T3 en axisimetría el desplazamiento no es nulo y baja con
       cada mitad de h, pero con razones de 2.7 a 3.9 (orden 1.4–1.9), no el h² que se esperaba en
       la T1.)
-- [ ] T9. Fases y excavación por desactivación — RF-8, RF-9 — Hecho cuando: desactivar el anillo
-      interior da lo mismo que la malla sin él, y una fase sin cambios da incremento nulo.
+- [x] T9. Fases y excavación por desactivación — RF-8, RF-9 — Hecho cuando: desactivar el anillo
+      interior da lo mismo que la malla sin él, y una fase sin cambios da incremento nulo. (Hecho el
+      2026-10-27: `analysis.run` resuelve cada fase sobre sus elementos activos, renumerados; la
+      carga de la excavación es el desequilibrio que dejan las tensiones de la fase anterior (Z&T
+      ec. 2.13b), sin cálculo aparte. Los nudos sin elementos activos salen del sistema, conservan
+      su desplazamiento y se listan; las tensiones de los elementos inactivos son None. Un elemento
+      que vuelve a activarse se rechaza: ninguna spec define aún con qué estado vuelve. 3 tests en
+      `test_stages_v002.py`: el anillo interior de 0.5 a 1 m desactivado da lo mismo que la malla
+      de 1 a 5.5 m con el hueco abierto (desplazamientos, tensiones y reacciones nudo a nudo, a
+      1e-12, T3 y T6); la excavación de la capa superior de una columna en su campo gravitatorio da
+      la solución exacta (el campo de la columna más corta y la subida γ·t·y/M) y la reacción del
+      peso que queda; los nudos retirados conservan lo que tenían. La fase sin cambios ya estaba
+      probada en la T6. Ocho mutaciones cazadas, dos tras añadir comprobaciones.)
 
 ## Casos
 

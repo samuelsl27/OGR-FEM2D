@@ -30,10 +30,18 @@ the next:
   matrix, which the linear solver reports;
 * a stage that changes nothing (no load, nothing imposed beyond the
   starting state) is not solved: its state is the previous one, and the
-  result says so (``solved``).
-
-Not yet (spec 002): elements that are not active (T9): the engine refuses
-them with the task that brings them, rather than ignoring them.
+  result says so (``solved``);
+* excavation (RF-8, T9): each stage is solved on its ACTIVE elements only.
+  The stresses of the elements that stay are those at the end of the
+  previous stage, and their internal forces no longer balance the external
+  ones where the removed elements were: that out-of-balance is the load of
+  the excavation, the initial-stress term of Zienkiewicz and Taylor (2000),
+  Eq. (2.13b), with nothing to compute apart. Nodes left without an active
+  element leave the system: they keep the displacement they had, and the
+  result lists them (``removed_nodes``); the stresses of inactive elements
+  are None. An element that becomes active again is refused: the state it
+  would come back with (construction, backfill) is not defined by any spec
+  yet.
 
 Author: Samuel Sáez López (UPCT)
 """
@@ -72,7 +80,8 @@ class InsufficientRestraintError(ValueError):
 class StageOutcome:
     """The state at the end of a stage, in totals."""
     displacement: list[float]                  # 2 per node
-    stresses: list[Stress]                     # per integration point
+    #: per integration point; None for the points of inactive elements
+    stresses: list[Stress | None]
     #: node -> (R_x, R_y) on every node with a restrained or imposed dof,
     #: R = f_int - f_ext (0 in a free component)
     reactions: dict[int, tuple[float, float]]
@@ -85,12 +94,18 @@ class StageOutcome:
     steps: int = 0
     tolerance: float = 0.0
     cuts: int = 0
+    #: the elements of the stage, and the nodes left without any (T9)
+    active: tuple[bool, ...] = ()
+    removed_nodes: tuple[int, ...] = ()
 
 
 def _not_yet(m: EngineModel) -> None:
-    for i, s in enumerate(m.stages):
-        if not all(s.active):
-            raise NotImplementedError(f"stage {i}: inactive elements arrive in spec 002, T9")
+    for e in range(len(m.elements)):
+        flags = [s.active[e] for s in m.stages]
+        if any(not a and b for a, b in zip(flags, flags[1:])):
+            raise NotImplementedError(
+                f"element {e} becomes active again: the state it would come back with "
+                "(construction, backfill) is not defined yet (spec 002, T9)")
 
 
 def axis_nodes(m: EngineModel) -> tuple[int, ...]:
@@ -100,15 +115,17 @@ def axis_nodes(m: EngineModel) -> tuple[int, ...]:
     return tuple(n for n, (x, _) in enumerate(m.nodes) if x == 0.0)
 
 
-def free_motions(m: EngineModel, constrained: set[int]) -> list[str]:
-    """The rigid-body motions the ``constrained`` dofs do not stop, by name.
+def free_motions(coordinates: list[tuple[float, float]], analysis: str,
+                 constrained: set[int]) -> list[str]:
+    """The rigid-body motions the ``constrained`` dofs (of the nodes at
+    ``coordinates``) do not stop, by name.
 
     Each motion is a vector over the dofs; the constrained dofs stop the
     combinations that are non-zero on at least one of them. The free ones
     are the null space of the motions restricted to the constrained dofs."""
-    nodes = np.array(m.nodes, dtype=float)
+    nodes = np.array(coordinates, dtype=float)
     n = len(nodes)
-    if m.analysis == AXISYMMETRIC:
+    if analysis == AXISYMMETRIC:
         modes = [np.tile([0.0, 1.0], n)]
     else:
         centre = nodes.mean(axis=0)
@@ -128,7 +145,7 @@ def free_motions(m: EngineModel, constrained: set[int]) -> list[str]:
         null = np.eye(basis.shape[1])
     out = []
     for v in null:
-        if m.analysis == AXISYMMETRIC:
+        if analysis == AXISYMMETRIC:
             out.append("translation along the axis (y = z)")
             continue
         a, b, c = v
@@ -181,58 +198,82 @@ def stage_load(m: EngineModel, i: int) -> np.ndarray:
     return f
 
 
-def _reactions(result_reactions: dict[int, float]) -> dict[int, tuple[float, float]]:
+def _reactions(result_reactions: dict[int, float], used: list[int]
+               ) -> dict[int, tuple[float, float]]:
+    """node -> (R_x, R_y), from the reactions of the stage's system, whose
+    node k is the model's node used[k]."""
     out: dict[int, list[float]] = {}
     for dof, value in result_reactions.items():
-        out.setdefault(dof // 2, [0.0, 0.0])[dof % 2] = value
+        out.setdefault(used[dof // 2], [0.0, 0.0])[dof % 2] = float(value)
     return {n: (r[0], r[1]) for n, r in sorted(out.items())}
 
 
 def run(m: EngineModel, variant: interface.Variant = solver.REFERENCE) -> list[StageOutcome]:
     """Every stage of ``m``, in order. The input is validated first
-    (model.InputError with every problem); then each stage is solved from the
-    end of the previous one."""
+    (model.InputError with every problem); then each stage is solved, on its
+    active elements, from the end of the previous one."""
     validate(m)
     _not_yet(m)
-    n_dofs = 2 * len(m.nodes)
     laws = [m.materials[k].law for k in m.element_material]
-    axis = axis_nodes(m)
-    stresses = (list(m.initial_stresses) if m.initial_stresses is not None
-                else [(0.0, 0.0, 0.0, 0.0)] * m.n_points)
-    displacement = np.zeros(n_dofs)
+    per_element = m.n_points // len(m.elements)
+    axis = set(axis_nodes(m))
+    stresses: list[Stress | None] = (list(m.initial_stresses) if m.initial_stresses is not None
+                                     else [(0.0, 0.0, 0.0, 0.0)] * m.n_points)
+    displacement = np.zeros(2 * len(m.nodes))
     outcomes = []
     for i, stage in enumerate(m.stages):
+        # the stage's system: its active elements and their nodes, renumbered
+        active = [e for e in range(len(m.elements)) if stage.active[e]]
+        used = sorted({n for e in active for n in m.elements[e]})
+        local = {n: k for k, n in enumerate(used)}
+        dofs = np.array([2 * n + c for n in used for c in (0, 1)], dtype=np.int64)
+        local_dof = {2 * n + c: 2 * k + c for n, k in local.items() for c in (0, 1)}
+        points = [g for e in active for g in range(e * per_element, (e + 1) * per_element)]
+
         imposed_total = {2 * d.node + d.component: d.value for d in stage.imposed}
         held = {2 * r.node + c for r in stage.restraints
-                for c, on in ((0, r.x), (1, r.y)) if on}
-        held |= {2 * n for n in axis}
+                for c, on in ((0, r.x), (1, r.y)) if on and r.node in local}
+        held |= {2 * n for n in axis if n in local}
         held -= set(imposed_total)
-        free = free_motions(m, held | set(imposed_total))
+        constrained = {local_dof[d] for d in held | set(imposed_total)}
+        free = free_motions([m.nodes[n] for n in used], m.analysis, constrained)
         if free:
             raise InsufficientRestraintError(i, free)
-        load = stage_load(m, i)
-        engine_model = solver.Model(list(m.nodes), list(m.elements), laws,
-                                    frozenset(held), m.analysis)
-        increments = {dof: value - displacement[dof] for dof, value in imposed_total.items()}
+
+        load = stage_load(m, i)[dofs]
+        engine_model = solver.Model([m.nodes[n] for n in used],
+                                    [tuple(local[n] for n in m.elements[e]) for e in active],
+                                    [laws[e] for e in active],
+                                    frozenset(local_dof[d] for d in held), m.analysis)
+        start = [stresses[g] for g in points]
+        increments = {local_dof[d]: value - displacement[d] for d, value in imposed_total.items()}
+        removed = tuple(n for n in range(len(m.nodes)) if n not in local)
         try:
-            result = solver.solve_stage(engine_model, stresses, list(load), stage.steps,
+            result = solver.solve_stage(engine_model, start, list(load), stage.steps,
                                         stage.tolerance, stage.max_iterations,
                                         stage.max_cuts, variant, increments)
         except solver.NoLoadError:
             # nothing changes: the state stays; its reactions are recomputed
-            points = solver.integration_points(engine_model)
-            f_int = solver.internal_forces(points, stresses, n_dofs)
-            constrained = held | set(imposed_total)
-            reactions = {dof: f_int[dof] - load[dof] for dof in sorted(constrained)}
-            outcomes.append(StageOutcome([float(u) for u in displacement], list(stresses),
-                                         _reactions(reactions),
-                                         [False] * len(stresses), axis, solved=False,
-                                         steps=stage.steps, tolerance=stage.tolerance))
+            f_int = solver.internal_forces(solver.integration_points(engine_model), start,
+                                           len(dofs))
+            reactions = {d: f_int[d] - load[d] for d in sorted(constrained)}
+            stresses = [stresses[g] if stage.active[g // per_element] else None
+                        for g in range(m.n_points)]
+            outcomes.append(StageOutcome(
+                [float(u) for u in displacement], list(stresses), _reactions(reactions, used),
+                [False] * m.n_points, tuple(sorted(axis & set(used))), False,
+                steps=stage.steps, tolerance=stage.tolerance,
+                active=tuple(stage.active), removed_nodes=removed))
             continue
-        displacement = displacement + np.array(result.displacement)
-        stresses = result.stresses
-        outcomes.append(StageOutcome([float(u) for u in displacement], list(stresses),
-                                     _reactions(result.reactions), result.plastic, axis,
-                                     True, result.history, result.steps, result.tolerance,
-                                     result.cuts))
+        displacement[dofs] += np.array(result.displacement)
+        new: list[Stress | None] = [None] * m.n_points
+        plastic = [False] * m.n_points
+        for g, s, yielded in zip(points, result.stresses, result.plastic):
+            new[g], plastic[g] = s, yielded
+        stresses = new
+        outcomes.append(StageOutcome(
+            [float(u) for u in displacement], list(stresses),
+            _reactions(result.reactions, used), plastic, tuple(sorted(axis & set(used))),
+            True, result.history, result.steps, result.tolerance, result.cuts,
+            tuple(stage.active), removed))
     return outcomes
