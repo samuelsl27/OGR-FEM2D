@@ -50,3 +50,16 @@
   siete puntos. Comprobado que la malla ensamblada no tiene ningún mecanismo, con y sin el eje,
   y que la parcela y el cilindro traccionado salen exactos con los dos elementos. Los casos 001 y
   002 siguen dando los mismos números bit a bit.
+- **Tarea T6, restricciones, impuestos y reacciones** (`ogr_fem2d/engine/analysis.py`). Dos hallazgos
+  en el criterio de las fases, los dos por el redondeo:
+  - **una fase con la misma carga total que la anterior no daba carga cero**, sino un resto de
+    redondeo de 1e-16 de las fuerzas; dividido por él, el residuo relativo era ruido y Newton no
+    convergía. Ahora una fase cuyo desequilibrio es menor que 1e-12 veces la mayor fuerza en juego
+    no tiene carga y no se resuelve (`solver.NO_LOAD`); el resultado lo dice (`solved`);
+  - **una carga pequeña frente a las fuerzas presentes no podía converger**: el residuo no baja
+    del redondeo de esas fuerzas, y relativo a una carga de 1e-9 de ellas ese suelo es 1e-7,
+    por encima de cualquier tolerancia estricta. Es el caso de una sobrecarga pequeña sobre un
+    terreno con grandes tensiones gravitatorias. Ahora una iteración con el residuo por debajo de
+    1e-12 veces la mayor fuerza en juego también converge. Donde la tolerancia se alcanza, ese
+    suelo queda muy por debajo y no cambia nada: los casos 001 y 002 dan los mismos números bit
+    a bit. La tolerancia por defecto del programa sigue siendo cosa de la fase 2 (spec 007).

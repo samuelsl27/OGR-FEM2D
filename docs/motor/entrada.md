@@ -87,6 +87,21 @@ kN/m³), y la conversión desde las unidades del usuario se hace en un solo siti
 | `finite` | un valor de carga o de desplazamiento que no es finito | — |
 | `stage_settings` | escalones < 1, iteraciones < 1, particiones < 0 o tolerancia ≤ 0 | — |
 
+## Lo que hace el motor con ella
+
+`analysis.run` (`ogr_fem2d/engine/analysis.py`) valida la entrada y resuelve las fases en orden.
+Por fase devuelve los desplazamientos y las tensiones **totales**, las **reacciones** por nudo
+(R = f_int − f_ext en cada componente restringida o impuesta), la historia de convergencia y los
+ajustes que cambian el resultado. Además:
+
+- en axisimetría sujeta u_r = 0 en todos los nudos con x = 0 aunque no se pida, y devuelve la
+  lista (`axis_held`; spec 002, D1 bis);
+- antes de resolver comprueba que las restricciones paran los movimientos de sólido rígido (en
+  deformación plana, las dos traslaciones y el giro; en axisimetría, la traslación axial) y, si
+  no, dice cuál queda libre (`InsufficientRestraintError`);
+- una fase cuyo desequilibrio es redondeo (menos de 1e-12 de la mayor fuerza en juego) no se
+  resuelve: su estado es el de la anterior, y el resultado lo dice (`solved = False`).
+
 **Lo que solo se ve al calcular** lo informa el solver, no `validate()`: una matriz de rigidez
 singular (restricciones insuficientes), un punto de integración con det J ≤ 0 en un T6 de nudos
 intermedios mal colocados, y una carga puntual fuera de su elemento (hace falta invertir la

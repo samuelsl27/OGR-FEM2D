@@ -30,6 +30,7 @@ iteración por escalón; el bucle es el mismo que con Mohr-Coulomb.
 | `ogr_fem2d/engine/reference/loads.py` (nuevo) | fuerzas nodales consistentes: nodales, puntuales, repartidas, peso propio | RF-6 |
 | `ogr_fem2d/engine/initial_stress.py` (nuevo) | preproceso: campo constante y gravitatorio (fuera del motor, D3) | RF-7 |
 | `ogr_fem2d/engine/reference/solver.py` | fases, elementos activos, restricciones y desplazamientos impuestos, reacciones | RF-5, RF-8, RF-9 |
+| `ogr_fem2d/engine/analysis.py` (nuevo, T6) | resuelve un `EngineModel` fase a fase: totales a incrementos, eje (D1 bis), restricciones insuficientes, reacciones por nudo | RF-5, RF-9 |
 | `ogr_fem2d/engine/interface.py`, `compiled.py` | la interfaz admite T3/T6 y los dos tipos de análisis | RF-10 |
 | `ogr_fem2d/engine/mesh_structured.py` (nuevo) | rectángulo graduado de T3 o T6 para los tests y STR-04 (no es el generador de la spec 003) | — |
 | `ogr_fem2d/engine/mesh_radial.py` | opción T3 | — |

@@ -63,12 +63,32 @@ an excavation is zero (the hole is left free). The residual is divided by the
 norm of the load of the stage, ||f_end - f_start||, the force the stage has to
 take away, which is the scale every step's out-of-balance is measured against.
 
+The rounding floor (spec 002, T6): the residual cannot go below the rounding
+of the forces in play, about 1e-16 of the largest of them, whatever the
+stage's load. When that load is small beside them (a small surcharge on
+ground with large gravitational stresses), the floor divided by the load
+can exceed any tolerance, and the stage would never converge. An iteration
+whose residual is below NO_LOAD (1e-12) times the largest force in play is
+therefore converged too: that residual is rounding, as a load that small
+would be. Where the tolerance is reachable the floor is far below it and
+changes nothing (the cases of spec 001 give the same numbers, bit for bit).
+
 The tolerance and the step count are the caller's: they change the result,
 and the result carries them (rule 12 of AGENTS.md).
 
-Restraints: zero displacement on the listed degrees of freedom (the rollers
-and the fixed outer boundary of the spec 001 cases). Imposed non-zero
-displacements are not in this proof of concept.
+Restraints: the listed degrees of freedom do not move in the stage (the
+rollers and the fixed outer boundary of the spec 001 cases). Imposed
+displacements (spec 002, T6): the increment of the stage on some degrees of
+freedom, applied in proportion to the load factor like the loads (the TOTAL
+given by the user becomes this increment in analysis.py, D2). Their
+out-of-balance, measured with the elastic stiffness, is part of what the
+stage has to take away, and goes into the norm the residual is divided by.
+
+Reactions (spec 002, RF-5): on every restrained or imposed degree of
+freedom, R = f_int - f_ext at the end of the stage, the force the support
+adds to the external one so that the node is in equilibrium; with them, the
+external forces and the reactions add up to the internal forces, whose
+resultant is zero in plane strain.
 
 The linear solve is SciPy's SuperLU (spec 001, "Fuera de alcance").
 Everything per integration point is plain Python, written to be read: this
@@ -111,6 +131,20 @@ class StateUpdateError(mc.ReturnMappingError):
         self.reason = reason
         super().__init__(f"element {element}, integration point {point}, "
                          f"step {step}, iteration {iteration}: {reason}")
+
+
+class NoLoadError(ValueError):
+    """The stage changes nothing: no load and no imposed displacement beyond
+    what the starting state already balances."""
+
+
+#: A stage whose out-of-balance is below this fraction of the largest force
+#: in play (the starting internal forces, the total load, the force of the
+#: imposed displacements) changes nothing: it is rounding. Two stages with
+#: the same total load leave a difference of the order of 1e-16 of the
+#: forces, not zero, and dividing the residual by it would chase noise
+#: (spec 002, T6).
+NO_LOAD = 1e-12
 
 
 class NotConvergedError(RuntimeError):
@@ -205,6 +239,8 @@ class StageResult:
     steps: int = 0
     tolerance: float = 0.0
     cuts: int = 0
+    #: R = f_int - f_ext on each restrained or imposed dof (spec 002, RF-5)
+    reactions: dict[int, float] = field(default_factory=dict)
 
 
 def element_kind(model: Model):
@@ -488,18 +524,21 @@ def _norm(v, free) -> float:
 def solve_stage(model: Model, initial_stresses: list[Stress],
                 external_load: list[float], steps: int, tolerance: float,
                 max_iterations: int, max_cuts: int = 0,
-                variant: interface.Variant = REFERENCE) -> StageResult:
+                variant: interface.Variant = REFERENCE,
+                imposed: dict[int, float] | None = None) -> StageResult:
     """Solve one stage from ``initial_stresses`` (one per integration point,
     in integration_points() order; the displacements start at zero) to the
-    TOTAL ``external_load`` (one value per dof; the restrained ones are
-    reactions and are ignored), in ``steps`` equal increments, with at most
-    ``max_cuts`` cuts of an increment in two in the whole stage, the work
-    per integration point done by ``variant`` (interface.py).
+    TOTAL ``external_load`` (one value per dof; on the restrained and imposed
+    ones it is carried straight into the reaction), in ``steps`` equal
+    increments, with the displacement INCREMENTS ``imposed`` (dof -> value)
+    applied in the same proportion, with at most ``max_cuts`` cuts of an
+    increment in two in the whole stage, the work per integration point done
+    by ``variant`` (interface.py).
 
-    Raises NotConvergedError when an increment does not reach ``tolerance``
-    in ``max_iterations`` solves, and StateUpdateError when a point cannot
-    be updated, once the cuts allowed are used up: in neither case is a
-    result given.
+    Raises NoLoadError when the stage changes nothing, NotConvergedError when
+    an increment does not reach ``tolerance`` in ``max_iterations`` solves,
+    and StateUpdateError when a point cannot be updated, once the cuts
+    allowed are used up: in none of these cases is a result given.
     """
     if (steps < 1 or max_iterations < 1 or tolerance <= 0.0
             or max_cuts < 0):
@@ -509,8 +548,15 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
     if len(initial_stresses) != len(points):
         raise ValueError("one initial stress per integration point")
     n_dofs = 2 * len(model.nodes)
-    free = np.array([i for i in range(n_dofs) if i not in model.restrained],
+    imposed = dict(imposed or {})
+    if set(imposed) & model.restrained:
+        raise ValueError("a dof is both restrained and imposed")
+    constrained = set(model.restrained) | set(imposed)
+    free = np.array([i for i in range(n_dofs) if i not in constrained],
                     dtype=np.int64)
+    du_imposed = np.zeros(n_dofs)
+    for dof, value in imposed.items():
+        du_imposed[dof] = value
     g = geometry(model, points)
     prepared = variant.prepare(g)
     rows, cols = interface.stiffness_pattern(g)
@@ -518,32 +564,57 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
     def factorise(matrix: coo_matrix):
         return splu(matrix.tocsr()[free][:, free].tocsc())
 
-    elastic = factorise(stiffness(model))
+    k_elastic = stiffness(model)
+    elastic = factorise(k_elastic)
 
     start0 = np.array(initial_stresses, dtype=np.float64)
     f_start = prepared.internal_forces(start0)
-    load = np.asarray(external_load, dtype=np.float64) - f_start
-    scale = _norm(load, free)
-    if scale == 0.0:
-        raise ValueError("the stage has no load: nothing to solve")
+    f_end = np.asarray(external_load, dtype=np.float64)
+    load = f_end - f_start
+    # what the stage has to take away: its load and, with imposed
+    # displacements, the out-of-balance they cause in the elastic stiffness
+    imposed_force = k_elastic.tocsr() @ du_imposed if imposed else np.zeros(n_dofs)
+    driving = load - imposed_force if imposed else load
+    scale = _norm(driving, free)
+    level = max(float(np.linalg.norm(f_start)), float(np.linalg.norm(f_end)),
+                float(np.linalg.norm(imposed_force)))
+    if scale <= NO_LOAD * level:
+        raise NoLoadError("the stage has no load: nothing to solve")
 
     history: list[tuple[int, int, float]] = []
 
-    def increment(number: int, start: np.ndarray, factor: float):
-        """One increment from the converged ``start`` to the load factor
-        ``factor`` (Box 4.2). Returns (du, stresses, plastic)."""
+    def increment(number: int, start: np.ndarray, before: float, factor: float):
+        """One increment from the converged ``start``, at load factor
+        ``before``, to the load factor ``factor`` (Box 4.2). Returns (du,
+        stresses, plastic)."""
         target = f_start + factor * load
         du = np.zeros(n_dofs)
         # Iteration 0 is the increment's start: its residual is the load added.
         f_int = prepared.internal_forces(start)
         stresses, plastic = start, np.zeros(len(points), dtype=bool)
         solver = elastic            # the tangent with no strain increment
+        if imposed:
+            # the imposed share of the increment goes in first; the residual
+            # of iteration 0 is then what it and the load leave unbalanced
+            du += (factor - before) * du_imposed
+            try:
+                result = prepared.update(start, du)
+            except StateUpdateError as err:
+                raise StateUpdateError(err.element, err.point, number, 0,
+                                       err.reason) from None
+            stresses, f_int, plastic = (result.stresses,
+                                        result.internal_forces, result.plastic)
+            if plastic.any():
+                solver = factorise(coo_matrix(
+                    (result.stiffness.ravel(), (rows, cols)),
+                    shape=(n_dofs, n_dofs)))
         for iteration in range(0, max_iterations + 1):
             # r = f_ext - f_int with the sign of the right-hand side of (4.71)
             r = target - f_int
             relative = _norm(r, free) / scale
             history.append((number, iteration, relative))
-            if iteration > 0 and relative <= tolerance:
+            if iteration > 0 and (relative <= tolerance
+                                  or _norm(r, free) <= NO_LOAD * level):
                 return du, stresses, plastic
             if iteration == max_iterations:
                 raise NotConvergedError(number, history)
@@ -574,7 +645,7 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
     while pending:
         number += 1
         try:
-            du, stresses, step_plastic = increment(number, converged,
+            du, stresses, step_plastic = increment(number, converged, factor,
                                                    pending[0])
         except (NotConvergedError, StateUpdateError) as err:
             if cuts == max_cuts:
@@ -588,7 +659,9 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
         converged, plastic = stresses, step_plastic
         displacement = displacement + du
 
+    f_int = prepared.internal_forces(converged)
+    reactions = {dof: float(f_int[dof] - f_end[dof]) for dof in sorted(constrained)}
     return StageResult([float(u) for u in displacement],
                        [tuple(float(x) for x in s) for s in converged],
                        [bool(x) for x in plastic], points, history,
-                       increments, steps, tolerance, cuts)
+                       increments, steps, tolerance, cuts, reactions)

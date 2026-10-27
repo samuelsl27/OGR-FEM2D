@@ -78,8 +78,21 @@ changelog al día, la suite entera en verde, commit y push.
 
 ## Contorno, cargas, tensión inicial y fases (referencia)
 
-- [ ] T6. Restricciones, desplazamientos impuestos en totales y reacciones — RF-5 — Hecho cuando:
-      equilibrio global de reacciones en cada fase.
+- [x] T6. Restricciones, desplazamientos impuestos en totales y reacciones — RF-5 — Hecho cuando:
+      equilibrio global de reacciones en cada fase. (Hecho el 2026-10-27: `ogr_fem2d/engine/analysis.py`
+      resuelve un `EngineModel` fase a fase; `solve_stage` gana los desplazamientos impuestos
+      (incremento de la fase, repartido entre escalones como la carga) y las reacciones
+      R = f_int − f_ext en cada grado de libertad restringido o impuesto. El driver convierte los
+      totales en incrementos, impone u_r = 0 en los nudos del eje y lo dice (D1 bis), comprueba
+      antes de resolver que las restricciones paran los movimientos de sólido rígido y nombra el
+      que queda libre (traslación, giro alrededor de un punto, traslación axial), y no resuelve una
+      fase que no cambia nada. Rechaza lo que aún no está: peso propio y cargas repartidas y
+      puntuales (T7), elementos inactivos (T9). 8 tests en `test_analysis_v002.py`: equilibrio de
+      fuerzas y momentos en cada fase con T3 y T6, y axial en axisimetría; cargas e impuestos en
+      totales; bloque comprimido contra la solución exacta y la suma de reacciones; el eje; el modo
+      libre por su nombre. Catorce mutaciones cazadas (dos tras añadir comprobaciones). Casos 001
+      y 002, idénticos bit a bit. **Dos hallazgos**, en el changelog: el umbral de «fase sin carga»
+      y el suelo de redondeo de la convergencia.)
 - [ ] T7. Cargas nodales, puntuales, repartidas y peso propio — RF-6 — Hecho cuando: resultante y
       momento de cada carga, y peso propio, contra su valor cerrado.
 - [ ] T8. Preproceso de tensión inicial, constante y gravitatoria — RF-7 — Hecho cuando: campo
