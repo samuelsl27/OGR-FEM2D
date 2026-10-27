@@ -41,6 +41,14 @@ so the elastic stiffness is factorised once and reused there. Every later
 correction assembles and factorises K_T anew; with non-associated flow it is
 not symmetric, and SuperLU solves it as it is.
 
+Automatic increment cutting (§5.4.3, pp. 123-124, and Fig. 5.2): when an
+increment does not converge in the iterations allowed, or a point cannot be
+updated (an iterate far from equilibrium can send a point to the apex, which
+psi = 0 refuses), the increment is split into two equal halves and restarted
+from the last converged state. It stops, and the error is raised, after
+``max_cuts`` successive cuts. A cut changes the path, not the equilibrium
+sought; the result says how many there were (rule 12).
+
 Loads in totals (spec 001, D2): the stage receives the TOTAL external force at
 its end. The engine takes the internal force of the starting stresses as the
 force the stage starts from and goes, in n equal steps, from it to the total
@@ -95,7 +103,7 @@ class StateUpdateError(mc.ReturnMappingError):
 
 
 class NotConvergedError(RuntimeError):
-    """A step did not reach the tolerance in the iterations allowed
+    """An increment did not reach the tolerance in the iterations allowed
     (spec 001, RF-6). No result is given; the history is."""
 
     def __init__(self, step: int, history: list[tuple[int, int, float]]):
@@ -155,10 +163,15 @@ class StageResult:
     #: state (a point that yielded earlier and then unloaded is not in it)
     plastic: list[bool]
     points: list[IntegrationPoint]
+    #: (increment, iteration, relative residual), every iteration tried,
+    #: those of the increments that were cut included
     history: list[tuple[int, int, float]] = field(default_factory=list)
-    #: The settings that change the result (rule 12).
+    #: (load factor at the start, at the end, "converged" or why it was cut)
+    increments: list[tuple[float, float, str]] = field(default_factory=list)
+    #: The settings that change the result, and the cuts made (rule 12).
     steps: int = 0
     tolerance: float = 0.0
+    cuts: int = 0
 
 
 def integration_points(model: Model) -> list[IntegrationPoint]:
@@ -282,18 +295,22 @@ def _norm(v, free) -> float:
 
 def solve_stage(model: Model, initial_stresses: list[Stress],
                 external_load: list[float], steps: int, tolerance: float,
-                max_iterations: int) -> StageResult:
+                max_iterations: int, max_cuts: int = 0) -> StageResult:
     """Solve one stage from ``initial_stresses`` (one per integration point,
     in integration_points() order; the displacements start at zero) to the
     TOTAL ``external_load`` (one value per dof; the restrained ones are
-    reactions and are ignored).
+    reactions and are ignored), in ``steps`` equal increments, each split
+    in two at most ``max_cuts`` successive times.
 
-    Raises NotConvergedError when a step does not reach ``tolerance`` in
-    ``max_iterations`` solves, and StateUpdateError when a point cannot be
-    updated: in neither case is a result given.
+    Raises NotConvergedError when an increment does not reach ``tolerance``
+    in ``max_iterations`` solves, and StateUpdateError when a point cannot
+    be updated, once the cuts allowed are used up: in neither case is a
+    result given.
     """
-    if steps < 1 or max_iterations < 1 or tolerance <= 0.0:
-        raise ValueError("need steps >= 1, max_iterations >= 1, tolerance > 0")
+    if (steps < 1 or max_iterations < 1 or tolerance <= 0.0
+            or max_cuts < 0):
+        raise ValueError("need steps >= 1, max_iterations >= 1, "
+                         "tolerance > 0 and max_cuts >= 0")
     points = integration_points(model)
     if len(initial_stresses) != len(points):
         raise ValueError("one initial stress per integration point")
@@ -311,41 +328,67 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
     if scale == 0.0:
         raise ValueError("the stage has no load: nothing to solve")
 
-    displacement = [0.0] * n_dofs
-    converged = list(initial_stresses)
-    plastic = [False] * len(points)
     history: list[tuple[int, int, float]] = []
-    for step in range(1, steps + 1):
-        target = [f_start[i] + step / steps * load[i] for i in range(n_dofs)]
+
+    def increment(number: int, start: list[Stress], factor: float):
+        """One increment from the converged ``start`` to the load factor
+        ``factor`` (Box 4.2). Returns (du, stresses, plastic)."""
+        target = [f_start[i] + factor * load[i] for i in range(n_dofs)]
         du = [0.0] * n_dofs
-        # Iteration 0 is the step's start: its residual is the load added.
-        f_int = internal_forces(points, converged, n_dofs)
-        stresses, step_plastic = converged, [False] * len(points)
+        # Iteration 0 is the increment's start: its residual is the load added.
+        f_int = internal_forces(points, start, n_dofs)
+        stresses, plastic = start, [False] * len(points)
         solver = elastic            # the tangent with no strain increment
         for iteration in range(0, max_iterations + 1):
             # r = f_ext - f_int with the sign of the right-hand side of (4.71)
             r = [target[i] - f_int[i] for i in range(n_dofs)]
             relative = _norm(r, free) / scale
-            history.append((step, iteration, relative))
+            history.append((number, iteration, relative))
             if iteration > 0 and relative <= tolerance:
-                break
+                return du, stresses, plastic
             if iteration == max_iterations:
-                raise NotConvergedError(step, history)
+                raise NotConvergedError(number, history)
             correction = solver.solve(np.array([r[i] for i in free]))
             for j, i in enumerate(free):
                 du[i] += float(correction[j])
             try:
-                stresses, f_int, step_plastic, tangents = update_points(
-                    points, model.materials, converged, du)
+                stresses, f_int, plastic, tangents = update_points(
+                    points, model.materials, start, du)
             except StateUpdateError as err:
-                raise StateUpdateError(err.element, err.point, step,
+                raise StateUpdateError(err.element, err.point, number,
                                        iteration + 1, err.reason) from None
-            if any(step_plastic):
+            if any(plastic):
                 solver = factorise(tangent_stiffness(points, tangents, n_dofs))
             else:
                 solver = elastic
+        raise AssertionError("unreachable")
+
+    displacement = [0.0] * n_dofs
+    converged = list(initial_stresses)
+    plastic = [False] * len(points)
+    increments: list[tuple[float, float, str]] = []
+    # Load factors still to reach, in order (Box 4.1); a cut inserts the
+    # midpoint of the failed increment in front (§5.4.3).
+    pending = [i / steps for i in range(1, steps + 1)]
+    factor, number, cuts, successive = 0.0, 0, 0, 0
+    while pending:
+        number += 1
+        try:
+            du, stresses, step_plastic = increment(number, converged,
+                                                   pending[0])
+        except (NotConvergedError, StateUpdateError) as err:
+            if successive == max_cuts:
+                raise
+            increments.append((factor, pending[0], f"cut: {err}"))
+            pending.insert(0, 0.5 * (factor + pending[0]))
+            cuts += 1
+            successive += 1
+            continue
+        increments.append((factor, pending[0], "converged"))
+        factor = pending.pop(0)
+        successive = 0
         converged, plastic = stresses, step_plastic
         displacement = [u + d for u, d in zip(displacement, du)]
 
     return StageResult(displacement, converged, plastic, points, history,
-                       steps, tolerance)
+                       increments, steps, tolerance, cuts)

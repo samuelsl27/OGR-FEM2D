@@ -51,12 +51,12 @@ def model(b, n_radial, n_theta, growth, material):
 
 
 def excavate(b, n_radial, n_theta, growth, material, steps, tolerance,
-             max_iterations):
+             max_iterations, max_cuts=0):
     mesh, m = model(b, n_radial, n_theta, growth, material)
     n_points = 3 * len(mesh.elements)
     result = solver.solve_stage(m, [FIELD] * n_points,
                                 [0.0] * (2 * len(mesh.nodes)), steps,
-                                tolerance, max_iterations)
+                                tolerance, max_iterations, max_cuts)
     return mesh, result
 
 

@@ -32,6 +32,9 @@ Invariants protected:
   in every plastic step the last correction cuts the relative residual to
   at most its previous value to the power 1.5. With a wrong tangent (the
   elastic one, say) the convergence is linear and this fails;
+* **increment cutting** (§5.4.3): a stage that fails without cuts converges
+  with them, to the equilibrium that 16 equal steps reach; the cuts allowed
+  are successive ones, and when they run out the error comes out;
 * **no convergence is detected and reported** (RF-6): with too few
   iterations allowed, NotConvergedError carries the step and the whole
   history, and no result is returned;
@@ -184,6 +187,54 @@ class TestNewton:
             assert checked >= 1, (psi, steps)
 
 
+class TestIncrementCutting:
+    """de Souza Neto et al. (2008), §5.4.3: a failed increment is split in
+    two and restarted from the last converged state. The setting moves the
+    result (rule 7): without cuts the stage fails, with them it converges.
+
+    It is NOT asserted that the result equals that of some number of equal
+    steps: the Mohr-Coulomb result depends on the steps when a point already
+    on the plane ends an increment on an edge (the backward-Euler return is
+    exact only within one region), changelog v0.0.1."""
+
+    def test_cuts_turn_a_failure_into_a_converged_stage(self):
+        try:
+            _hole.excavate(*COARSE, MC0, 1, 1e-10, 4)
+        except solver.NotConvergedError:
+            pass
+        else:
+            raise AssertionError("expected no convergence in 4 iterations")
+        _mesh, cut = _hole.excavate(*COARSE, MC0, 1, 1e-10, 4, max_cuts=3)
+        assert cut.cuts >= 1
+        reasons = [why for _a, _b, why in cut.increments]
+        assert sum(why.startswith("cut:") for why in reasons) == cut.cuts
+        # every cut halves its increment, and is retried from its start
+        for (a, b, why), (a2, b2, _) in zip(cut.increments, cut.increments[1:]):
+            if why.startswith("cut:"):
+                assert (a2, b2) == (a, 0.5 * (a + b)), (a, b, a2, b2)
+        # the converged increments tile [0, 1] with no gap
+        done = [(a, b) for a, b, why in cut.increments if why == "converged"]
+        assert done[0][0] == 0.0 and done[-1][1] == 1.0
+        assert all(b1 == a2 for (_, b1), (a2, _) in zip(done, done[1:]))
+        # and the last iteration of the stage is within tolerance
+        assert cut.history[-1][2] <= 1e-10
+
+    def test_the_cuts_allowed_are_successive_ones(self):
+        # the apex with psi = 0 is refused whatever the increment: the cuts
+        # run out and the located error comes out
+        model = _one_element_model(MC0)
+        target = (100.0, 100.0, 40.0, 0.0)
+        load = t6.internal_forces(model.nodes, [target] * 3)
+        try:
+            solver.solve_stage(model, [(0.0, 0.0, 0.0, 0.0)] * 3, load, 1,
+                               1e-8, 10, max_cuts=2)
+        except solver.StateUpdateError as err:
+            assert err.step == 3          # the first try and two cuts
+            assert "apex" in err.reason
+            return
+        raise AssertionError("the apex with psi = 0 was not refused")
+
+
 class TestNoConvergence:
     def test_too_few_iterations_raise_with_the_history(self):
         try:
@@ -252,7 +303,7 @@ class TestBadInput:
         mesh, model = _hole.model(*COARSE, ELASTIC)
         n_points = 3 * len(mesh.elements)
         zero = [0.0] * (2 * len(mesh.nodes))
-        for args in ((0, 1e-8, 5), (1, 0.0, 5), (1, 1e-8, 0)):
+        for args in ((0, 1e-8, 5), (1, 0.0, 5), (1, 1e-8, 0), (1, 1e-8, 5, -1)):
             try:
                 solver.solve_stage(model, [_hole.FIELD] * n_points, zero, *args)
             except ValueError:

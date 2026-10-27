@@ -87,4 +87,13 @@ versión, registrando **qué se encontró**.
 - **Newton sin control diverge con ψ = 0° y mallas finas**: en el anillo de 21 m con 16 × 48
   divisiones, en el último escalón (cuando la zona plástica crece de 272 a 555 puntos) el residuo
   sube a 2.6 y un iterado intermedio lleva un punto al vértice, que con ψ = 0° no tiene solución.
-  Pendiente: la partición automática del incremento de de Souza Neto et al. (2008), §5.4.3.
+  Se añadió la partición automática del incremento de de Souza Neto et al. (2008), §5.4.3: el
+  incremento que falla se parte en dos y se reintenta desde el último estado convergido, hasta
+  `max_cuts` particiones sucesivas; el resultado dice cuántas hubo.
+- **El resultado del Mohr-Coulomb depende del número de escalones**: en la malla gruesa del anillo
+  con ψ = 0°, 1, 2 y 4 escalones dan lo mismo a 1e-15, pero 8 y 32 se apartan un 0.31 % y un
+  0.17 % en ur(a). Un punto que ya está en el plano y acaba el incremento en la arista recibe una
+  proyección de Euler implícito que solo es exacta dentro de una región. El número de escalones
+  se fija, como la malla, con un estudio. Lo descubrió un test que comparaba la partición con 16
+  escalones iguales y pasaba por coincidencia (los dos terminan con el mismo incremento); se
+  rehízo para comprobar lo que es de principio.
