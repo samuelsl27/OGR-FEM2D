@@ -38,16 +38,16 @@ from dataclasses import dataclass
 
 from .reference.elastic import Elastic
 from .reference.mohr_coulomb import MohrCoulomb
+from .reference.quadrature import AXISYMMETRIC, PLANE_STRAIN, rule_for
 
-PLANE_STRAIN, AXISYMMETRIC = "plane_strain", "axisymmetric"
 ANALYSES = (PLANE_STRAIN, AXISYMMETRIC)
 
-#: Integration points per element (spec 002, D1): the rules of Zienkiewicz
-#: and Taylor (2000), table 9.2, p. 222. T3, the centroid; T6 in plane
-#: strain, the three mid-side points (validated in spec 001); T6 in
-#: axisymmetry, the seven interior points, so that none lies on the axis.
-POINTS_PER_ELEMENT = {(3, PLANE_STRAIN): 1, (3, AXISYMMETRIC): 1,
-                      (6, PLANE_STRAIN): 3, (6, AXISYMMETRIC): 7}
+#: Integration points per element (spec 002, D1): the length of its rule in
+#: reference/quadrature.py (Zienkiewicz and Taylor 2000, table 9.2, p. 222).
+#: T3, the centroid; T6 in plane strain, the three mid-side points
+#: (validated in spec 001); T6 in axisymmetry, the seven interior points, so
+#: that none lies on the axis.
+POINTS_PER_ELEMENT = {(n, a): len(rule_for(n, a)) for n in (3, 6) for a in ANALYSES}
 
 #: A corner triangle whose area is below this fraction of the square of its
 #: longest side is taken as degenerate (a sliver this thin is a meshing

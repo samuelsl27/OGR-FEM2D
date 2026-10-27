@@ -37,8 +37,15 @@ changelog al día, la suite entera en verde, commit y push.
       de diseño: una restricción en un nudo sin elementos activos se acepta (no sujeta nada) y una
       carga o un desplazamiento impuesto allí no (se perderían); la carga puntual fuera de su
       elemento la detecta la T7, que invierte la transformación del elemento.)
-- [ ] T3. `quadrature.py` con las reglas lineal, cuadrática y quíntica — Hecho cuando: cada una
-      integra exactos los monomios hasta su grado y falla en el siguiente.
+- [x] T3. `quadrature.py` con las reglas lineal, cuadrática y quíntica — Hecho cuando: cada una
+      integra exactos los monomios hasta su grado y falla en el siguiente. (Hecho el 2026-10-27:
+      `ogr_fem2d/engine/reference/quadrature.py`, con `rule_for` según D1; el T6 y `model.py` toman
+      de ahí la regla y el número de puntos, sin cambiar los de la spec 001. Referencia externa: la
+      integral exacta de los monomios en coordenadas de área, Z&T ec. (8.38), pág. 183. 7 tests;
+      diez mutaciones (pesos, coordenadas, permutaciones, orden de la regla cuadrática, grado, regla
+      de D1) cazadas. Hallazgo: la tabla 9.2 **trunca** a diez decimales, no redondea; la quíntica se
+      escribe en forma cerrada, que no está impresa en la fuente: se comprueba contra cada dígito
+      impreso y contra los monomios hasta grado 5 a 1e-15.)
 - [ ] T4. T6 generalizado y T3 en deformación plana — RF-3 — Hecho cuando: parcela, sólido rígido y
       tensión inicial uniforme pasan con los dos, y los casos 001 y 002 dan los mismos números.
 - [ ] T5. Axisimetría de T3 y T6 — RF-3, RF-4 — Hecho cuando: parcela axisimétrica (u = a·r,

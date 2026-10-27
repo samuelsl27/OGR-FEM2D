@@ -33,3 +33,9 @@
   esquema discreto y 27 reglas de validación, que informan todas a la vez con su sitio. Al probar
   los dientes, tres mutaciones sobrevivían (un elemento de área nula, que la tabla solo probaba
   invertido; un nudo con x < 0 en deformación plana; ψ > φ): se añadió el test que las caza.
+- **Tarea T3, las reglas de integración** (`ogr_fem2d/engine/reference/quadrature.py`): la tabla 9.2
+  de Zienkiewicz y Taylor (2000) **trunca** sus valores a diez decimales, no los redondea (α₂ =
+  0.79742698535… sale como 0.7974269853), y sus pesos suman 0.9999999996. La regla quíntica se
+  escribe en forma cerrada, que la fuente no imprime, y se comprueba contra cada dígito de la tabla
+  y contra la integral exacta de los monomios hasta grado 5 (ec. 8.38) a 1e-15. La regla cuadrática
+  del T6 sale ahora de este módulo, con los mismos puntos y en el mismo orden que en la spec 001.

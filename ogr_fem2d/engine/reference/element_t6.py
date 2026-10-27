@@ -32,14 +32,14 @@ Author: Samuel Sáez López (UPCT)
 """
 from __future__ import annotations
 
+from .quadrature import QUADRATIC
+
 #: Area coordinates of the six nodes, in the order of Fig. 8.15(b).
 NODES_L = ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0),
            (0.5, 0.5, 0.0), (0.0, 0.5, 0.5), (0.5, 0.0, 0.5))
 
-#: Table 9.2, quadratic rule: (area coordinates, weight).
-GAUSS_POINTS = (((0.5, 0.5, 0.0), 1.0 / 3.0),
-                ((0.0, 0.5, 0.5), 1.0 / 3.0),
-                ((0.5, 0.0, 0.5), 1.0 / 3.0))
+#: Table 9.2, quadratic rule: (area coordinates, weight), from quadrature.py.
+GAUSS_POINTS = QUADRATIC.points
 
 
 def shape_functions(l1: float, l2: float, l3: float) -> list[float]:
