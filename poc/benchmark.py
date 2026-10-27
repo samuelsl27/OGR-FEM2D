@@ -23,8 +23,9 @@ runs). It is recorded with every result and decides whether the result is
 valid:
 
 * the load of the whole system (busy share of all the logical cores, from
-  the operating system: GetSystemTimes on Windows, /proc/stat on Linux) and
-  the free memory, sampled for a moment before the measure and after each
+  the operating system: GetSystemTimes on Windows, /proc/stat on Linux,
+  ``top -l 2`` on macOS) and the free memory (GlobalMemoryStatusEx,
+  /proc/meminfo, ``vm_stat``), sampled for a moment before the measure and after each
   block of it, while the benchmark itself is idle;
 * the CPU share of every timing: the process's CPU time over the wall time of
   the timed calls. Close to 1 means the process had its core all the time;
@@ -73,6 +74,7 @@ import json  # noqa: E402
 import math  # noqa: E402
 import platform  # noqa: E402
 import statistics  # noqa: E402
+import subprocess  # noqa: E402
 import sys  # noqa: E402
 import time  # noqa: E402
 from dataclasses import dataclass  # noqa: E402
@@ -173,6 +175,31 @@ def _system_times():
     return None
 
 
+def _macos_busy(seconds: float):
+    """Busy share of the machine on macOS: the second sample of ``top -l 2``
+    (the first one is since boot), «CPU usage: x% user, y% sys, z% idle»."""
+    try:
+        out = subprocess.run(["top", "-l", "2", "-n", "0", "-s", str(max(1, round(seconds)))],
+                             capture_output=True, text=True, timeout=60).stdout
+        usage = [line for line in out.splitlines() if line.startswith("CPU usage:")]
+        idle = usage[-1].split(",")[-1].strip().split("%")[0]
+        return 100.0 - float(idle)
+    except (OSError, IndexError, ValueError, subprocess.SubprocessError):
+        return None
+
+
+def _macos_free_memory_gb():
+    """Free pages of ``vm_stat`` times its page size."""
+    try:
+        out = subprocess.run(["vm_stat"], capture_output=True, text=True, timeout=30).stdout
+        page = int(out.splitlines()[0].split("page size of")[1].split()[0])
+        free = next(int(line.split(":")[1].strip().rstrip(".")) for line in out.splitlines()
+                    if line.startswith("Pages free"))
+        return free * page / 2 ** 30
+    except (OSError, IndexError, ValueError, StopIteration, subprocess.SubprocessError):
+        return None
+
+
 def _free_memory_gb():
     if sys.platform == "win32":
         class Status(ctypes.Structure):
@@ -198,6 +225,9 @@ def _free_memory_gb():
 def machine_state(seconds: float = 2.0) -> dict:
     """Busy share of the whole machine over ``seconds`` while this process
     waits (so it is the load of the OTHER programs), and the free memory."""
+    if sys.platform == "darwin":
+        return {"other_load_percent": _macos_busy(seconds), "logical_cores": os.cpu_count(),
+                "free_memory_gb": _macos_free_memory_gb()}
     before = _system_times()
     time.sleep(seconds)
     after = _system_times()

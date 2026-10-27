@@ -71,9 +71,16 @@ class TestProtocol:
 
 class TestMachineState:
     def test_the_load_and_the_memory_are_read(self):
-        state = benchmark.machine_state(0.5)
-        assert 0.0 <= state["other_load_percent"] <= 100.0
-        assert state["logical_cores"] >= 1 and state["free_memory_gb"] > 0.0
+        # Windows, Linux and macOS have a way; elsewhere the state is None and
+        # the verdict says the load could not be read (test_the_verdict)
+        import sys
+        state = benchmark.machine_state(1.0)
+        assert state["logical_cores"] >= 1
+        if sys.platform in ("win32", "linux", "darwin"):
+            assert 0.0 <= state["other_load_percent"] <= 100.0, state
+            assert state["free_memory_gb"] > 0.0, state
+        else:
+            assert state["other_load_percent"] is None
 
     def test_the_cpu_share_sees_a_core_taken_away(self):
         import time
@@ -94,6 +101,9 @@ class TestMachineState:
         robbed = dict(good, cpu_share=[0.80, 1.0])
         assert benchmark.verdict(idle, dict(integration, seconds={"rust": robbed}),
                                  mesh, 10.0)
+        unknown = dict(idle, other_load_percent=None)
+        assert any("could not be read" in r
+                   for r in benchmark.verdict(unknown, integration, mesh, 10.0))
         threaded = dict(good, cpu_share=[1.0, 1.9])
         assert benchmark.verdict(idle, integration,
                                  dict(mesh, linear_seconds={"solve": threaded}), 10.0)
