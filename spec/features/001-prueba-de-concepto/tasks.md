@@ -155,8 +155,17 @@ tarea: es un deseo.
       en verde (https://github.com/samuelsl27/OGR-FEM2D/actions/runs/40568629109). La primera ejecución falló en macOS en un solo test, el de la lectura
       del estado del equipo del benchmark, que no sabía leerlo allí; los casos pasaban. **Criterio
       3, primera parte, cumplido.**)
-- [ ] T15. Congelado con PyInstaller y comprobación del ejecutable — RF-10 — Hecho cuando: el
-      ejecutable resuelve los dos casos (criterio 3, segunda parte)
+- [x] T15. Congelado con PyInstaller y comprobación del ejecutable — RF-10 — Hecho cuando: el
+      ejecutable resuelve los dos casos (criterio 3, segunda parte). (Hecho: `poc/freeze/casos.py`
+      resuelve los dos casos de validación con la variante Rust y los compara con su
+      `esperado.json`, como el test de validación (peor nudo y punto, R0 y regiones del retorno);
+      `poc/freeze/build.py` lo congela con PyInstaller 6.22.3 (carpeta, con los `esperado.json`
+      dentro) y ejecuta el programa desde una carpeta temporal fuera del árbol, sin `PYTHONPATH`
+      ni `PYTHONHOME`, exigiendo que esté congelado, que use el motor que va dentro y que salga
+      con 0. Resuelve los dos casos en Windows en local y en la CI en las tres plataformas
+      (https://github.com/samuelsl27/OGR-FEM2D/actions/runs/40570492239): Windows 3.4 s y 119 MB, macOS ARM 2.7 s y 83 MB, Linux 2.3 s y 228 MB. Una
+      tolerancia estrechada a propósito dentro del ejecutable lo hace fallar. **Criterio 3
+      cumplido entero.**)
 - [ ] T16. Mohr-Coulomb en Rust y en Python lado a lado para el propietario — Hecho cuando: el
       propietario dice si lo entiende al menos igual (criterio 4)
 

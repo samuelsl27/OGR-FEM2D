@@ -209,3 +209,11 @@ versión, registrando **qué se encontró**.
   distribuye, D4). Como el runner exige que `ogr_fem2d` se resuelva dentro del árbol, la CI
   instala la rueda, la comprueba desde fuera del árbol y copia su módulo compilado al árbol para
   ejecutar la suite sobre ese binario. Ejecución: https://github.com/samuelsl27/OGR-FEM2D/actions/runs/40568629109.
+- **Tarea T15, el congelado**: PyInstaller 6.22.3 congela el programa de los dos casos sin recetas
+  propias, a la primera en las tres plataformas; el ejecutable los resuelve desde fuera del árbol
+  y sin Python a mano, con el motor compilado que lleva dentro (la comprobación lo exige: un motor
+  encontrado en otra parte no valdría). El único aviso, que no encuentra `scipy.special._cdflib`,
+  es de la receta de PyInstaller para SciPy y no afecta. La carpeta pesa 83 MB en macOS, 119 MB
+  en Windows y 228 MB en Linux, casi todo NumPy y SciPy. Con esto el **criterio 3 del ADR-0001
+  queda cumplido** (https://github.com/samuelsl27/OGR-FEM2D/actions/runs/40570492239).
+
