@@ -156,9 +156,21 @@ changelog al día, la suite entera en verde, commit y push.
       de ×3. Dientes: errores del motor en la axisimetría (regla de 7 puntos, fila circunferencial
       de B, acoplamiento de D, eje sin sujetar) hacen fallar el caso; los pesos impresos de la tabla
       (10⁻¹⁰) están por debajo de su resolución y los cazan los tests de la T3.)
-- [ ] T12. Caso 004, STR-04, con los estudios de convergencia y de dominio y la identidad del
+- [x] T12. Caso 004, STR-04, con los estudios de convergencia y de dominio y la identidad del
       semiespacio truncado — Hecho cuando: dentro de la tolerancia de D4 con la malla y el dominio
-      que la fijan.
+      que la fijan. (Hecho el 2026-11-02: `validacion/casos/004-carga-en-faja-elastica/`, subido
+      primero con la tolerancia y la malla y el dominio a null. **Hallazgo: el dominio de la ficha
+      (50 × 25 m) no basta**: σ3 se queda a 0.035 q de Michell con cualquier malla; el efecto del
+      contorno baja como 1/L. Fijado W = D = 200 m (medio modelo) con T6, h0 = 0.125 m y
+      g = 1.5^¼: σ1 0.0012 q, σ3 0.0054 q, tolerancia 0.01 q. Con el contorno exacto de Michell
+      (identidad), el T6 baja ×4 por refinamiento y el T3 ×2, sin cumplir en σ3 ni con 37 088
+      elementos. `tests/_strip.py` y 5 tests más en `test_validation_cases_v002.py`: el caso, sus
+      datos, Michell en componentes contra Flamant superpuesto, la identidad del semiespacio
+      truncado y que el dominio de la ficha no basta. Dientes: los errores del motor (carga normal
+      y tangencial cruzadas, módulo de corte, acoplamiento de D) y del modelo (faja más ancha,
+      signo del cortante de las tracciones exactas, comparación solo en el eje) hacen fallar un
+      test; cambiar las diagonales de la malla o dejar el fondo libre en x son variantes legítimas
+      y no mueven el resultado fuera de la tolerancia.)
 
 ## Rust y distribución
 

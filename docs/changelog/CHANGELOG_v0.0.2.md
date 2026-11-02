@@ -94,3 +94,13 @@
   elementos) para el mismo 0.5 %: converge con orden 1 en tensiones. El caso queda con T6 (regla
   9). Las comprobaciones de la spec 001 y de la 002 tenían el mismo nombre de módulo y la primera
   que se cargaba ocupaba el nombre: `tests/_sphere.py` carga la suya por la ruta.
+- **Tarea T12, el caso 004 (carga en faja, STR-04)**: **el dominio de la ficha, 50 × 25 m, no
+  basta.** Con el contorno apoyado a 25 m del eje, σ3 se queda a 0.035 q de Michell con cualquier
+  malla, más de tres veces la tolerancia (0.01 q). El efecto del contorno baja como 1/L (las
+  tensiones de Flamant decaen como 1/r): 0.018 q a 50 m, 0.009 q a 100 m, 0.0045 q a 200 m. El
+  caso se fija con W = D = 200 m, T6 y h0 = 0.125 m (σ1 0.0012 q, σ3 0.0054 q). La identidad del
+  semiespacio truncado (las tracciones exactas de Michell en el contorno) separa la
+  discretización del dominio: el T6 baja ×4 por refinamiento y el T3 ×2, sin cumplir en σ3 ni
+  con 37 088 elementos. El manual del programa de referencia publica un 0.6 % de error en σ1 con
+  el dominio de la ficha y no da el de σ3, que es donde está el efecto del contorno; ese 0.6 % es
+  el resultado de otro programa y no un valor esperado.

@@ -22,7 +22,22 @@ Invariants protected:
   mesh of the case's family;
 * **spherical symmetry**: in the case, the radial displacement is the same
   at every node of the cavity, whatever its angle, to the case's tolerance,
-  and the tangential displacement there is nought to the same measure.
+  and the tangential displacement there is nought to the same measure;
+* **case 004, the strip load** (J. H. Michell 1902, in Timoshenko and Goodier
+  1951, §34): sigma_1 and sigma_3 within 0.01 q at EVERY integration point
+  of the first column of elements with 0.25 <= z <= 5 m, each against
+  Michell at its own (x, z), on the domain and mesh the case fixes;
+* **Michell in components** (tests/_strip.py, from the principal stresses
+  and the bisector): the same as superposing Flamant's point force over the
+  strip (T&G §33, Eq. 66), to rounding, at points on both sides of the
+  axis and far away;
+* **the truncated half-space** (identity): with Michell's own tractions on
+  its far sides the model has the infinite solution, and the error, only
+  discretization, falls by more than three times from h0 = 0.5 to 0.25 m;
+* **the domain of the ficha is not enough** (the finding of T12): with the
+  supported boundary at 25 m, sigma_3 misses the tolerance, and the error
+  falls as the domain grows (25, 50, 100 m), as it should if it is the
+  boundary's.
 """
 from __future__ import annotations
 
@@ -31,6 +46,7 @@ import math
 from pathlib import Path
 
 import _sphere
+import _strip
 
 CASES = Path(__file__).resolve().parents[1] / "validacion" / "casos"
 
@@ -87,3 +103,52 @@ class TestFiniteSphere:
             errors.append(_sphere.worst_errors(mesh, model, outcome, exact))
         (s1, u1), (s2, u2) = errors
         assert s1 / s2 > 3.0 and u1 / u2 > 3.0, errors
+
+
+def run_004():
+    c = case("004-carga-en-faja-elastica")
+    geometry, mesh = c["modelo"]["geometria"], c["modelo"]["malla"]
+    return c, _strip.solve(geometry["W"], geometry["D"], mesh["h0"], mesh["crecimiento"],
+                           6 if mesh["elemento"] == "T6" else 3)
+
+
+class TestCase004:
+
+    def test_the_case_is_the_model_it_says(self):
+        c = case("004-carga-en-faja-elastica")
+        model = c["modelo"]
+        assert model["carga"]["q"] == _strip.Q and model["geometria"]["b"] == _strip.B
+        assert (model["material"]["E"], model["material"]["nu"]) == (_strip.E, _strip.NU)
+        assert model["analisis"] == "deformacion_plana"
+
+    def test_004_michell_strip(self):
+        c, (mesh, model, outcome) = run_004()
+        e1, e3 = _strip.worst_errors(mesh, model, outcome)
+        tolerance = c["tolerancia_absoluta"]
+        assert e1 <= tolerance and e3 <= tolerance, (e1, e3)
+
+    def test_michell_in_components_is_flamant_superposed(self):
+        for x, z in ((0.0, 0.5), (0.7, 0.4), (2.5, 1.5), (-1.3, 3.0), (1.0, 0.01), (15.0, 20.0)):
+            got = _strip.michell_components(x, z)
+            want = _strip.closed.strip_by_flamant(x, z)
+            assert max(abs(a - b) for a, b in zip(got, want)) < 1e-14, (x, z, got, want)
+
+
+class TestTruncatedHalfSpace:
+
+    def test_the_discretization_error_falls(self):
+        errors = []
+        for h0, growth in ((0.5, 1.5), (0.25, 1.5 ** 0.5)):
+            mesh, model, outcome = _strip.solve(25.0, 25.0, h0, growth, 6, "exact")
+            errors.append(_strip.worst_errors(mesh, model, outcome))
+        (a1, a3), (b1, b3) = errors
+        assert a1 / b1 > 3.0 and a3 / b3 > 3.0, errors
+
+    def test_the_domain_of_the_ficha_is_not_enough(self):
+        tolerance = case("004-carga-en-faja-elastica")["tolerancia_absoluta"]
+        sigma_3 = []
+        for size in (25.0, 50.0, 100.0):
+            mesh, model, outcome = _strip.solve(size, size, 0.25, 1.5 ** 0.5)
+            sigma_3.append(_strip.worst_errors(mesh, model, outcome)[1])
+        assert sigma_3[0] > 3 * tolerance, sigma_3
+        assert sigma_3[0] > sigma_3[1] > sigma_3[2], sigma_3

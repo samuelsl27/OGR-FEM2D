@@ -53,4 +53,36 @@ esperado.**
 
 ## Dominio, malla y elemento con que se fija la tolerancia
 
-Pendientes de los estudios de dominio y de convergencia (tarea T12).
+**El dominio de la ficha no basta.** Con el medio modelo de 25 × 25 m y el contorno apoyado, σ3 se
+queda a **0.035 q** de Michell con cualquier malla: más de tres veces la tolerancia. Es el efecto del
+contorno, y baja despacio, como 1/L, porque las tensiones de un semiespacio cargado decaen como 1/r
+(Flamant, T&G §33) y lo que el apoyo corta a la distancia L perturba el eje en proporción a q b / L.
+
+Para separar los dos errores se usa también un **contorno exacto**: en x = W y en y = −D se
+aplican las tracciones de la propia solución de Michell (σ·n, integradas con Gauss-Legendre de 10
+puntos), con u = 0 en el eje y un solo v sujeto. Ese modelo tiene la solución del semiespacio
+infinito y su error es solo de discretización.
+
+**Convergencia** (contorno exacto, 25 × 25 m, h0 = tamaño en la faja, g = 1.5^(1/2^k)):
+
+| h0 | T6: σ1 | T6: σ3 | T3: σ1 | T3: σ3 |
+|---|---|---|---|---|
+| 0.5 | 0.0215 q | 0.0189 q | 0.134 q | 0.159 q |
+| 0.25 | 0.0051 q | 0.0040 q | 0.051 q | 0.097 q |
+| 0.125 | **0.0012 q** | **0.0009 q** | 0.020 q | 0.052 q |
+| 0.0625 | 0.0003 q | 0.0002 q | 0.0085 q | 0.026 q |
+| 0.03125 | — | — | 0.0040 q | 0.013 q |
+
+El T6 baja ×4 por refinamiento; el T3, ×2, y no cumple en σ3 ni con 37 088 elementos.
+
+**Dominio** (contorno apoyado, T6, h0 = 0.125):
+
+| W = D | σ1 | σ3 | efecto del dominio en σ3 |
+|---|---|---|---|
+| 100 m | 0.0011 q | 0.0097 q | 0.0088 q |
+| 200 m | **0.0012 q** | **0.0054 q** | 0.0045 q |
+| 400 m | 0.0011 q | 0.0031 q | 0.0022 q |
+
+**Se fija W = D = 200 m** (el rectángulo completo, 400 × 200 m) **con T6, h0 = 0.125 m y g = 1.5^¼**:
+σ1 0.0012 q y σ3 0.0054 q, con la tolerancia de 0.01 q. Con 100 m también cumpliría, pero con un 3 %
+de margen y el efecto del dominio ocupando él solo casi toda la tolerancia; con 200 m es la mitad.

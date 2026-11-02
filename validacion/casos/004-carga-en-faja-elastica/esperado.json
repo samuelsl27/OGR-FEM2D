@@ -17,12 +17,16 @@
     "analisis": "deformacion_plana",
     "geometria": {"b": 1.0, "unidad": "m",
                   "seccion": "medio dominio por simetría, 0 <= x <= W, -D <= y <= 0 (y hacia arriba, superficie en y = 0, z = -y)",
-                  "W": null, "D": null},
+                  "W": 200.0, "D": 200.0,
+                  "estudio": "contorno apoyado, T6 con h0 = 0.125 y crecimiento 1.5^(1/4): W = D = 100, 200, 400 m dan en sigma_3 0.00971, 0.00535, 0.00311 q (sigma_1 0.0011 q en los tres); con el contorno exacto de Michell, 0.0009 q en los tres: el efecto del dominio es 0.0088, 0.0045, 0.0022 q, como 1/L. Con el dominio de la ficha (25 m) sigma_3 se queda en 0.035 q con cualquier malla. 200 m: el efecto del dominio es la mitad de la tolerancia; con 100 m el margen seria del 3 %"},
     "material": {"ley": "elastica", "E": 20000.0, "nu": 0.2, "unidad": "MPa"},
     "carga": {"q": 1.0, "unidad": "MPa", "donde": "presión uniforme sobre 0 <= x <= b en la superficie"},
     "contorno": "x = 0: u = 0 (simetría); x = W: u = 0; y = -D: u = v = 0",
     "fase": {"escalones": 1, "tolerancia": 1e-10, "iteraciones_max": 5},
-    "malla": null
+    "malla": {"generador": "tests/_strip.py, mesh_for (sobre ogr_fem2d.engine.mesh_structured.rectangle, diagonales alternas)",
+              "elemento": "T6", "h0": 0.125, "crecimiento": 1.1066819197003215,
+              "lineas": "x: celdas de h0 en 0 <= x <= b y geométricas de razón g hasta W; z: geométricas desde h0 hasta 5 m y desde allí hasta D",
+              "estudio": "contorno exacto de Michell (solo discretización), 25 x 25 m, h0 = 0.5, 0.25, 0.125, 0.0625 con g = 1.5^(1/2^k): T6 sigma_1 0.0215, 0.0051, 0.0012, 0.0003 q y sigma_3 0.0189, 0.0040, 0.0009, 0.0002 q (x4 por refinamiento); T3 sigma_1 0.134, 0.051, 0.020, 0.0085, 0.0040 q (h0 hasta 0.03125) y sigma_3 0.159, 0.097, 0.052, 0.026, 0.013 q (x2): el T3 no cumple con 37 088 elementos. Con el dominio fijado, h0 = 0.25 daría 0.0085 q en sigma_3 (margen del 15 %); h0 = 0.125, 0.0054 q"}
   },
   "notas": "Tolerancia de la spec 002, D4, escrita antes de los estudios (este archivo aparece con la malla y el dominio a null): absoluta, 0.01 q, porque sigma_3 es del orden de 0.003 q a 5 m y un error relativo no significaría nada; desde z = 0.25 m porque en la superficie la tracción salta en el borde de la faja. El dominio lo fija un estudio (si el de la ficha, 50 x 25 m, no basta, es un hallazgo y se agranda; no se afloja la tolerancia). Solo tensiones: en deformación plana el desplazamiento bajo una carga en un semiespacio no está acotado (T&G §33, ecs. g-72)."
 }
