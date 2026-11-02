@@ -120,4 +120,13 @@
   **Un test de la spec 001 es intermitente en el CI**: `test_the_cpu_share_sees_a_core_taken_away`
   pide que un `time.sleep(0.02)` pase menos del 20 % del tiempo en la CPU, y en los ejecutores
   compartidos a veces no se cumple (Linux con Python 3.11 aquí, Windows en la T8). Repetido el
-  job, pasa. Queda reportado para decidir qué se hace con él.
+  job, pasa. **Causa en Windows, medida**: el tiempo de CPU de un proceso avanza a saltos de
+  15.6 ms, y el bloque medido eran tres sueños de 20 ms, unos 60 ms; un solo salto que cae dentro
+  da 0.26. **En Linux, hipótesis sin confirmar**: allí el reloj es fino, y lo que cuenta son los
+  hilos del álgebra lineal que arrancaron tests anteriores (el benchmark limita NumPy a un hilo
+  solo si se importa antes que NumPy, y en la suite ya está importado). **Arreglo** (con el OK del
+  propietario): bloques de al menos medio segundo (un salto pesa 0.03), y los dos bucles, el
+  ocupado y el dormido, medidos en un intérprete nuevo que importa primero el benchmark, como
+  se ejecuta él. Se añadió el tope de un núcleo al bucle ocupado (≤ 1.1): una mutación que
+  dividía la CPU de todo el bloque por el tiempo de la última llamada sobrevivía; ahora las
+  cuatro mutaciones de la medida de la cuota se cazan.

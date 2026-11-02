@@ -204,7 +204,7 @@ changelog al día, la suite entera en verde, commit y push.
       en las tres plataformas (4–8 s; 83–228 MB). Diente: sin las soluciones cerradas dentro, el
       ejecutable falla en vez de buscarlas en las fuentes. **Anomalía**: en el primer intento falló
       `test_the_cpu_share_sees_a_core_taken_away` (spec 001, `test_benchmark_v001.py`) en Linux
-      con Python 3.11, y había fallado igual en Windows en la T8; repetido el job, verde. No es de
-      esta tarea: queda reportado, sin tocar.)
+      con Python 3.11, y había fallado igual en Windows en la T8; repetido el job, verde. Arreglado
+      a continuación, con el OK del propietario: ver el changelog.)
 - [ ] T15. Cierre: `CHANGELOG_v0.0.2.md`, fichas STR-04 y STR-09 («Seguimiento») y criterios de
       finalización de `spec.md` marcados.

@@ -20,11 +20,20 @@ Invariants protected:
   CPU share of the process, and a measure is not valid when the others used
   more than allowed at any sample or a CPU share falls outside [0.95, 1.05];
   a single-threaded busy loop on this process shows a CPU share near 1, and
-  a sleeping one near 0, which is what the share is meant to see.
+  a sleeping one near 0, which is what the share is meant to see. Both over
+  blocks of at least half a second, because Windows counts the CPU time of a
+  process in ticks of 15.6 ms; and the sleeping one in a fresh interpreter
+  that imports the benchmark first, as the benchmark runs (NumPy limited to
+  one thread), because in the suite the threads of the linear algebra that
+  earlier tests started count as this process's too (spec 002, T14: it
+  failed now and then on the CI with blocks of 60 ms in the suite's process).
 """
 from __future__ import annotations
 
 import math
+import subprocess
+import sys
+from pathlib import Path
 
 from ogr_fem2d.engine.reference import mohr_coulomb as mc
 from poc import benchmark
@@ -83,11 +92,16 @@ class TestMachineState:
             assert state["other_load_percent"] is None
 
     def test_the_cpu_share_sees_a_core_taken_away(self):
-        import time
-        busy = benchmark.timed(lambda: sum(i * i for i in range(100_000)), 3)
-        asleep = benchmark.timed(lambda: time.sleep(0.02), 3)
-        assert busy.cpu_share > 0.5            # it had the core most of the time
-        assert asleep.cpu_share < 0.2          # it did not
+        code = ("import time; from poc import benchmark; "
+                "print(benchmark.timed(lambda: sum(i * i for i in range(100_000)), 3, 0.5)"
+                ".cpu_share, benchmark.timed(lambda: time.sleep(0.02), 3, 0.5).cpu_share)")
+        done = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
+                              check=True, cwd=Path(__file__).resolve().parents[1])
+        busy, asleep = (float(x) for x in done.stdout.split())
+        # it had the core most of the time, and one thread cannot have more
+        # than one core (two ticks of 15.6 ms over the half second: 0.06)
+        assert 0.5 < busy <= 1.1, busy
+        assert asleep < 0.2, asleep            # it did not
 
     def test_the_verdict(self):
         idle = {"other_load_percent": 2.0, "logical_cores": 8, "free_memory_gb": 8.0}
