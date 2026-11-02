@@ -114,3 +114,10 @@
   6.3 s con Rust), porque el tiempo se va en Python preparando los puntos y la K. Un pánico de
   Rust (índice fuera de rango) no es una excepción normal en Python: tumba el runner de la suite,
   que sale con código 1 y el traceback, sin informe de los demás tests.
+- **Tarea T14, ruedas y congelado**: el CI no necesitó cambios, porque ya corría la suite
+  entera sobre cada rueda; el programa congelado resuelve los cuatro casos en las tres
+  plataformas, con el mismo código de los tests para construir y comparar el 003 y el 004.
+  **Un test de la spec 001 es intermitente en el CI**: `test_the_cpu_share_sees_a_core_taken_away`
+  pide que un `time.sleep(0.02)` pase menos del 20 % del tiempo en la CPU, y en los ejecutores
+  compartidos a veces no se cumple (Linux con Python 3.11 aquí, Windows en la T8). Repetido el
+  job, pasa. Queda reportado para decidir qué se hace con él.

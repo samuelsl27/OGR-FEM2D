@@ -193,7 +193,18 @@ changelog al día, la suite entera en verde, commit y push.
       tumba el runner, que sale con código 1). En elástico la rigidez de Rust no llega al
       desplazamiento, que sale de la K elástica que monta Python: la miden los tests de los
       puntos.)
-- [ ] T14. CI de ruedas y congelado con los casos 003 y 004 — Hecho cuando: CI verde en las tres
-      plataformas y el ejecutable resuelve los cuatro casos.
+- [x] T14. CI de ruedas y congelado con los casos 003 y 004 — Hecho cuando: CI verde en las tres
+      plataformas y el ejecutable resuelve los cuatro casos. (Hecho el 2026-11-02: las ruedas ya
+      corrían la suite entera, con los casos 003 y 004 y la identidad de Rust de la T13, en
+      Windows, macOS ARM y Linux con Python 3.11 a 3.13; no hizo falta cambiar el CI.
+      `poc/freeze/casos.py` resuelve ahora los cuatro casos con Rust: el 003 y el 004 los
+      construye y compara el mismo código que sus tests (`tests/_sphere.py`, `tests/_strip.py`),
+      que van dentro del programa con las soluciones cerradas de la spec 002; `build.py` los
+      empaqueta y exige «ALL 4 CASES PASS». El ejecutable, fuera del árbol, resuelve los cuatro
+      en las tres plataformas (4–8 s; 83–228 MB). Diente: sin las soluciones cerradas dentro, el
+      ejecutable falla en vez de buscarlas en las fuentes. **Anomalía**: en el primer intento falló
+      `test_the_cpu_share_sees_a_core_taken_away` (spec 001, `test_benchmark_v001.py`) en Linux
+      con Python 3.11, y había fallado igual en Windows en la T8; repetido el job, verde. No es de
+      esta tarea: queda reportado, sin tocar.)
 - [ ] T15. Cierre: `CHANGELOG_v0.0.2.md`, fichas STR-04 y STR-09 («Seguimiento») y criterios de
       finalización de `spec.md` marcados.
