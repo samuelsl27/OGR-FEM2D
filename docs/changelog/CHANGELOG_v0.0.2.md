@@ -141,7 +141,9 @@
   compartidos a veces no se cumple (Linux con Python 3.11 aquí, Windows en la T8). Repetido el
   job, pasa. **Causa en Windows, medida**: el tiempo de CPU de un proceso avanza a saltos de
   15.6 ms, y el bloque medido eran tres sueños de 20 ms, unos 60 ms; un solo salto que cae dentro
-  da 0.26. **En Linux, hipótesis sin confirmar**: allí el reloj es fino, y lo que cuenta son los
+  da 0.26. Es el mismo salto que la spec 001 ya encontró en el propio benchmark (por eso cada
+  medida dura allí al menos 1 s), pero el test se quedó con bloques cortos. **En Linux, hipótesis
+  sin confirmar**: allí el reloj es fino, y lo que cuenta son los
   hilos del álgebra lineal que arrancaron tests anteriores (el benchmark limita NumPy a un hilo
   solo si se importa antes que NumPy, y en la suite ya está importado). **Arreglo** (con el OK del
   propietario): bloques de al menos medio segundo (un salto pesa 0.03), y los dos bucles, el
@@ -163,7 +165,9 @@
     R = 3.6 m y al 1.3 % en R = 4.9 m (ur contra Lamé, 1.53 % en R ≤ 5 m). En el caso 004, «z de 0 a
     5 m» no cambia nada: la primera columna no tiene puntos por encima de z = 0.25 m que muevan el
     resultado (σ3 0.0053 q en los dos tramos);
-  - las fichas STR-01 y STR-02 siguen con el «Seguimiento» vacío: la spec 001 no lo pedía;
+  - las fichas STR-01 y STR-02 tenían el «Seguimiento» vacío: la spec 001 no lo pedía. Rellenado
+    después del cierre, a petición del propietario, con lo que dejó la spec 001 (modelo, resultados,
+    el contorno a 100 m y la zona de arista de D8);
   - **decisión del propietario**: la tabla se alinea con D4 (σt y ur junto a la cavidad; z de
     0.25 a 5 m en el 004), con la nota de que a lo largo del radio haría falta un contorno más
     lejano y otro caso.
