@@ -1,6 +1,25 @@
-# OGR FEM2D v0.0.2 (en curso)
+# OGR FEM2D v0.0.2 (cerrada el 2026-11-02)
 
-**Fase 1, primera parte: el motor elástico general** (spec 002).
+**Fase 1, primera parte: el motor elástico general** (spec 002, tareas T0–T15).
+
+## Resultado
+
+- **El motor es general en elástico**: triángulos de 3 y de 6 nudos, deformación plana y
+  axisimetría (anillo entero, D2; u_r = 0 en el eje, D1 bis), cargas nodales, puntuales,
+  repartidas y peso propio como fuerzas consistentes, tensión inicial constante y gravitatoria por
+  estratos (preproceso, D3 y su enmienda), fases con elementos que se desactivan, restricciones y
+  desplazamientos impuestos en totales, y reacciones por nudo. Entrada validada antes de calcular
+  (`docs/motor/entrada.md`). Mohr-Coulomb, solo con T6 en deformación plana (D6).
+- **Validación**: caso 003 (cavidad esférica, STR-09) con T6, σt 0.341 % y ur(a) 0.130 % (0.5 %);
+  caso 004 (carga en faja, STR-04) con T6, σ1 0.0012 q y σ3 0.0054 q (0.01 q), en un dominio de
+  200 × 200 m porque el de la ficha no basta. Identidades de la esfera finita y del semiespacio
+  truncado (solo discretización). Los casos 001 y 002 dan **exactamente** lo que daban.
+- **Rust** con todo lo anterior, idéntico a la referencia a ≤ 2·10⁻¹⁶; ruedas y ejecutable
+  congelado con los cuatro casos en Windows, macOS ARM y Linux.
+- **Decisiones por el camino**: enmienda de D3 (en axisimetría K = Kz, σr = σθ y τrz = 0); el
+  elemento que vuelve a activarse se rechaza hasta que una spec lo defina; la tabla de validación
+  del caso 003 se alinea con D4 (T15).
+- 185 tests, en verde en local y en la CI (Windows, macOS ARM y Linux; Python 3.11 a 3.13).
 
 ## Lo que se encontró
 
@@ -144,4 +163,7 @@
     R = 3.6 m y al 1.3 % en R = 4.9 m (ur contra Lamé, 1.53 % en R ≤ 5 m). En el caso 004, «z de 0 a
     5 m» no cambia nada: la primera columna no tiene puntos por encima de z = 0.25 m que muevan el
     resultado (σ3 0.0053 q en los dos tramos);
-  - las fichas STR-01 y STR-02 siguen con el «Seguimiento» vacío: la spec 001 no lo pedía.
+  - las fichas STR-01 y STR-02 siguen con el «Seguimiento» vacío: la spec 001 no lo pedía;
+  - **decisión del propietario**: la tabla se alinea con D4 (σt y ur junto a la cavidad; z de
+    0.25 a 5 m en el 004), con la nota de que a lo largo del radio haría falta un contorno más
+    lejano y otro caso.

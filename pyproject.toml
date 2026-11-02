@@ -7,7 +7,7 @@ build-backend = "maturin"
 
 [project]
 name = "ogr-fem2d"
-version = "0.0.1"
+version = "0.0.2"
 description = "OGR FEM2D — open-source 2D geotechnical finite-element analysis (OpenGeoRock Suite)"
 readme = "README.md"
 requires-python = ">=3.11"

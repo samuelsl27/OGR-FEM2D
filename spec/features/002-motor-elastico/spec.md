@@ -1,8 +1,9 @@
 # Spec 002 — Motor elástico general
 
-> **Aprobada (2026-10-27)**, con D1–D7 tal como estaban propuestas. Primera spec de la fase 1 del
-> plan de desarrollo (`spec/constitution/plan_de_desarrollo.md`). Solo el **qué** y el **porqué**;
-> el cómo va en `plan.md`.
+> **Cerrada (2026-11-02).** Aprobada el 2026-10-27, con D1–D7 tal como estaban propuestas, y la
+> enmienda de D3. Primera spec de la fase 1 del plan de desarrollo
+> (`spec/constitution/plan_de_desarrollo.md`). Solo el **qué** y el **porqué**; el cómo va en
+> `plan.md`; lo encontrado, en `docs/changelog/CHANGELOG_v0.0.2.md`.
 
 ## Contexto y objetivo
 
@@ -90,9 +91,9 @@ y validado al recibirlos, y dice qué dato está mal y dónde.
 
 | Caso | Fuente científica | Qué se compara |
 |---|---|---|
-| `validacion/casos/003-cavidad-esferica-elastica` (ficha `VER-STR-09`), axisimetría | Lamé (1852), en Timoshenko y Goodier (1951), §121, ecs. (197)–(198), págs. 358–359; ur por la ley de Hooke | σR, σt en los puntos de integración y ur en los nudos a lo largo de un radio, R de 1 a 5 m |
+| `validacion/casos/003-cavidad-esferica-elastica` (ficha `VER-STR-09`), axisimetría | Lamé (1852), en Timoshenko y Goodier (1951), §121, ecs. (197)–(198), págs. 358–359; ur por la ley de Hooke | σt (meridiana y circunferencial) en los puntos de integración del primer anillo y ur en los nudos de la cavidad, R = a (D4). *Corregido en la T15: decía «σR, σt y ur a lo largo de un radio, R de 1 a 5 m», que no es lo que fijó D4 y que con la esfera de 21 m no se cumple (ver abajo)* |
 | Identidad de la esfera finita con el exterior fijo | Las mismas, con u(b) = 0 (derivación propia, `comprobaciones/`, `sphere_fixed_outer`) | El modelo tiene solución cerrada: mide solo la discretización |
-| `validacion/casos/004-carga-en-faja-elastica` (ficha `VER-STR-04`), deformación plana | J. H. Michell (1902), en Timoshenko y Goodier (1951), §34, ec. (f), págs. 92–95; comprobada por superposición de Flamant, §33, ec. (66), pág. 85 | σ1 y σ3 en los puntos de integración bajo el centro de la faja, z de 0 a 5 m |
+| `validacion/casos/004-carga-en-faja-elastica` (ficha `VER-STR-04`), deformación plana | J. H. Michell (1902), en Timoshenko y Goodier (1951), §34, ec. (f), págs. 92–95; comprobada por superposición de Flamant, §33, ec. (66), pág. 85 | σ1 y σ3 en los puntos de integración de la primera columna de elementos, bajo el centro de la faja, con z de 0.25 a 5 m (D4) |
 | Identidad del semiespacio truncado | Michell, con las tracciones exactas de su solución aplicadas en el contorno del dominio finito | Sin efecto del dominio: mide solo la discretización |
 | Casos 001 y 002 por el motor general | Los de la spec 001 | Los mismos números que en la spec 001, a redondeo (el motor general no cambia lo validado) |
 | Excavación por desactivación | — | Desactivar el anillo interior de una malla da lo mismo, a redondeo, que la malla sin ese anillo (lo que hacía la spec 001) |
@@ -109,7 +110,10 @@ Valores de referencia, comprobados contra las fuentes (`comprobaciones/solucione
 - STR-09: σt(a) = 15 MPa, σR(a) = 0, ur(a) = 3.000·10⁻⁴ m. Con el contorno exterior esférico y
   fijo a 21 m, la solución exacta del modelo se aparta de la del medio infinito un **0.022 %** en
   ur(a) y un 0.011 % en σt(a) (1/b³: mucho menos que el 0.60 % del hueco cilíndrico, que va con
-  1/b²). Por eso aquí basta **una** geometría.
+  1/b²). Por eso aquí basta **una** geometría **para lo que compara D4, junto a la cavidad**. Lejos
+  de ella no: la diferencia con el medio infinito crece como R³, y en ur pasa del 0.5 % hacia
+  R = 3.6 m y llega al 1.3 % en R = 4.9 m (T15). Comparar a lo largo de un radio hasta 5 m, como
+  las figuras de la ficha, pediría un contorno más lejano y otro caso.
 - STR-04: Michell y la superposición numérica de Flamant coinciden a 2·10⁻¹⁶ MPa en seis puntos;
   en el eje, a 1 m, σ1 = 0.818310 y σ3 = 0.181690 MPa; a 5 m, 0.248093 y 0.003239 MPa.
 
@@ -153,14 +157,17 @@ del 0.6 % en σ1 de la ficha es lo que obtuvo el programa de referencia: **no es
 ## Criterios de finalización
 
 - [x] D1–D7 decididas por el propietario y anotadas aquí (2026-10-27)
-- [ ] Cada fórmula comprobada contra su fuente (tabla «Formulación» de `plan.md`) y citada en el
-      código
-- [ ] STR-09 y STR-04 dentro de la tolerancia fijada antes de medir, con la malla y el estudio de
-      convergencia (y de dominio, en STR-04) que la justifican
-- [ ] Las identidades de la tabla, en verde y con dientes
-- [ ] Los casos 001 y 002 dan lo mismo que en la spec 001
-- [ ] Referencia y Rust idénticos a ~1e-10; ruedas y congelado con los casos nuevos
-- [ ] `CHANGELOG_v0.0.2.md` con lo encontrado; fichas STR-04 y STR-09 con su «Seguimiento»
+- [x] Cada fórmula comprobada contra su fuente (tabla «Formulación» de `plan.md`) y citada en el
+      código (la ec. 2.14, la última, en la T15)
+- [x] STR-09 y STR-04 dentro de la tolerancia fijada antes de medir, con la malla y el estudio de
+      convergencia (y de dominio, en STR-04) que la justifican: caso 003, σt 0.341 % y ur(a)
+      0.130 %; caso 004, σ1 0.0012 q y σ3 0.0054 q, con el dominio agrandado a 200 × 200 m
+- [x] Las identidades de la tabla, en verde y con dientes
+- [x] Los casos 001 y 002 dan lo mismo que en la spec 001: idénticos bit a bit, en la referencia y
+      en Rust
+- [x] Referencia y Rust idénticos a ~1e-10 (lo son a ≤ 2·10⁻¹⁶); ruedas y congelado con los casos
+      nuevos, en Windows, macOS ARM y Linux
+- [x] `CHANGELOG_v0.0.2.md` con lo encontrado; fichas STR-04 y STR-09 con su «Seguimiento»
 
 ## Decisiones del propietario (2026-10-27)
 

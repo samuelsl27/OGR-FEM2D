@@ -14,7 +14,9 @@ del plano meridiano, a ≤ R ≤ b, con x = r ≥ 0 y y = z ≥ 0, y el eje de r
 contorno exterior es esférico y fijo, a **b = 21 m**: la solución exacta del modelo se aparta de
 la de medio infinito un **0.022 %** en u_R(a) y un **0.011 %** en σt(a) (`sphere_fixed_outer` en
 `spec/features/002-motor-elastico/comprobaciones/`). El efecto va con 1/b³, no con 1/b² como en el
-hueco cilíndrico, y una sola geometría basta (spec 002, D4).
+hueco cilíndrico, y una sola geometría basta para lo que se compara, junto a la cavidad (spec 002,
+D4). Lejos de ella no: la diferencia crece como R³, y en u_R pasa del 0.5 % hacia R = 3.6 m y llega
+al 1.3 % en R = 4.9 m. El caso no compara a lo largo del radio.
 
 La ficha usa un contorno exterior rectangular y triángulos de 3 nudos; aquí el contorno es esférico
 porque la malla general llega con la spec 003 (D5), y el elemento lo fija el estudio de abajo.

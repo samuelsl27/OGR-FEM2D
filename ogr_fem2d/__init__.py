@@ -8,6 +8,6 @@ In preparation: phase 0 of the roadmap, the proof of concept of the engine
 
 Author: Samuel Sáez López — PhD Student, UPCT
 """
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __author__ = "Samuel Sáez López"
 __institution__ = "Universidad Politécnica de Cartagena (UPCT)"

@@ -206,5 +206,12 @@ changelog al día, la suite entera en verde, commit y push.
       `test_the_cpu_share_sees_a_core_taken_away` (spec 001, `test_benchmark_v001.py`) en Linux
       con Python 3.11, y había fallado igual en Windows en la T8; repetido el job, verde. Arreglado
       a continuación, con el OK del propietario: ver el changelog.)
-- [ ] T15. Cierre: `CHANGELOG_v0.0.2.md`, fichas STR-04 y STR-09 («Seguimiento») y criterios de
-      finalización de `spec.md` marcados.
+- [x] T15. Cierre: `CHANGELOG_v0.0.2.md`, fichas STR-04 y STR-09 («Seguimiento») y criterios de
+      finalización de `spec.md` marcados. (Hecho el 2026-11-02: cada criterio comprobado de nuevo.
+      Faltaba citar la ec. (2.14) de Z&T, vuelta a leer y citada en `analysis.stage_load`; los
+      casos 001 y 002, idénticos bit a bit al código anterior a la spec. **Anomalía, error propio
+      de la spec**: la tabla «Validación numérica» decía que el caso 003 compara σR, σt y ur a lo
+      largo del radio de 1 a 5 m; D4 fijó σt(a) y ur(a), y a lo largo del radio la esfera de 21 m
+      se aparta del medio infinito como R³ (1.3 % en ur a 4.9 m). Reportada, y por decisión del
+      propietario la tabla se alinea con D4, con la nota en la spec y en `caso.md`. Fichas STR-04 y
+      STR-09 con su «Seguimiento» (fuera del repositorio). Versión del paquete a 0.0.2.)
