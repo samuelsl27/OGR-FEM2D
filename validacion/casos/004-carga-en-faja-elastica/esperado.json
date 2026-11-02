@@ -1,0 +1,28 @@
+{
+  "id": "004-carga-en-faja-elastica",
+  "ficha": "VER-STR-04",
+  "fuente": "J. H. Michell (1902), en Timoshenko y Goodier (1951), Theory of Elasticity, 2.ª ed., §34, ec. (f), págs. 92-95; comprobada por superposición de Flamant (1892), §33, ec. (66), pág. 85",
+  "tipo_referencia": "analitica",
+  "tolerancia_absoluta": 0.01,
+  "tolerancia_unidad": "q",
+  "comparaciones": [
+    {"magnitud": "sigma_1", "donde": {"tipo": "puntos_de_integracion", "columna": 1, "z_min": 0.25, "z_max": 5.0},
+     "valor": "q/pi (alpha + sin alpha) en el (x, z) de cada punto", "unidad": "MPa", "convenio": "compresion positiva",
+     "como": "el mayor error absoluto, relativo a q, de todos los puntos de integración de la primera columna de elementos (junto al eje x = 0) con 0.25 <= z <= 5 m, cada uno contra Michell en su posición"},
+    {"magnitud": "sigma_3", "donde": {"tipo": "puntos_de_integracion", "columna": 1, "z_min": 0.25, "z_max": 5.0},
+     "valor": "q/pi (alpha - sin alpha) en el (x, z) de cada punto", "unidad": "MPa", "convenio": "compresion positiva",
+     "como": "lo mismo para sigma_3"}
+  ],
+  "modelo": {
+    "analisis": "deformacion_plana",
+    "geometria": {"b": 1.0, "unidad": "m",
+                  "seccion": "medio dominio por simetría, 0 <= x <= W, -D <= y <= 0 (y hacia arriba, superficie en y = 0, z = -y)",
+                  "W": null, "D": null},
+    "material": {"ley": "elastica", "E": 20000.0, "nu": 0.2, "unidad": "MPa"},
+    "carga": {"q": 1.0, "unidad": "MPa", "donde": "presión uniforme sobre 0 <= x <= b en la superficie"},
+    "contorno": "x = 0: u = 0 (simetría); x = W: u = 0; y = -D: u = v = 0",
+    "fase": {"escalones": 1, "tolerancia": 1e-10, "iteraciones_max": 5},
+    "malla": null
+  },
+  "notas": "Tolerancia de la spec 002, D4, escrita antes de los estudios (este archivo aparece con la malla y el dominio a null): absoluta, 0.01 q, porque sigma_3 es del orden de 0.003 q a 5 m y un error relativo no significaría nada; desde z = 0.25 m porque en la superficie la tracción salta en el borde de la faja. El dominio lo fija un estudio (si el de la ficha, 50 x 25 m, no basta, es un hallazgo y se agranda; no se afloja la tolerancia). Solo tensiones: en deformación plana el desplazamiento bajo una carga en un semiespacio no está acotado (T&G §33, ecs. g-72)."
+}
