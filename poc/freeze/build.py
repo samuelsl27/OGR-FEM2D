@@ -11,12 +11,15 @@ The build needs the compiled engine (ogr_fem2d._engine: maturin develop, or
 the wheel installed) and PyInstaller, which is only a tool of the project's
 environment (spec 001, D6). It goes to build/freeze/ (ignored by git); the
 program, to build/freeze/dist/ogr-fem2d-casos/ (one folder, PyInstaller's
-default), with the esperado.json of both validation cases inside.
+default), with the esperado.json of the validation cases inside and, for
+cases 003 and 004 (spec 002, T14), the modules that build them
+(tests/_sphere.py, tests/_strip.py) and the closed forms they compare
+against.
 
 The check runs the executable from a temporary folder OUTSIDE the source
 tree, with PYTHONPATH and PYTHONHOME removed, so it cannot fall back on the
-sources or on an installed Python: it must say it is frozen, solve both
-cases within their tolerances with the compiled engine that travels inside
+sources or on an installed Python: it must say it is frozen, solve all
+the cases within their tolerances with the compiled engine that travels inside
 it (not one found elsewhere), and exit with 0.
 
 Author: Samuel Sáez López (UPCT)
@@ -34,7 +37,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 NAME = "ogr-fem2d-casos"
 WORK = ROOT / "build" / "freeze"
-CASES = ("001-kirsch-hueco-elastico", "002-salencon-hueco-mohr-coulomb")
+#: The cases of poc/freeze/casos.py, whose esperado.json go inside.
+CASES = ("001-kirsch-hueco-elastico", "002-salencon-hueco-mohr-coulomb",
+         "003-cavidad-esferica-elastica", "004-carga-en-faja-elastica")
+CLOSED_FORMS = ROOT / "spec" / "features" / "002-motor-elastico" / "comprobaciones"
 
 
 def executable() -> Path:
@@ -47,9 +53,11 @@ def build() -> int:
     for case in CASES:
         source = ROOT / "validacion" / "casos" / case / "esperado.json"
         data += ["--add-data", f"{source}{os.pathsep}casos/{case}"]
+    data += ["--add-data",
+             f"{CLOSED_FORMS / 'soluciones_cerradas.py'}{os.pathsep}comprobaciones_002"]
     command = [sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean",
                "--name", NAME, "--console",
-               "--paths", str(ROOT),
+               "--paths", str(ROOT), "--paths", str(ROOT / "tests"),
                "--distpath", str(WORK / "dist"), "--workpath", str(WORK / "work"),
                "--specpath", str(WORK),
                *data, str(ROOT / "poc" / "freeze" / "casos.py")]
@@ -80,7 +88,7 @@ def check() -> int:
     if not inside:
         print(f"the engine it loaded, {engine or '(none)'}, is not the one inside the program")
     ok = (done.returncode == 0 and ", frozen;" in done.stdout and inside
-          and "BOTH CASES PASS" in done.stdout)
+          and f"ALL {len(CASES)} CASES PASS" in done.stdout)
     size = sum(f.stat().st_size for f in program.parent.rglob("*") if f.is_file())
     print(f"executable {program.name}: exit {done.returncode} in {elapsed:.1f} s, "
           f"folder {size / 2 ** 20:.0f} MB -> {'FROZEN PROGRAM OK' if ok else 'FAILS'}")

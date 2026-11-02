@@ -2,14 +2,15 @@
 # Copyright (C) 2026 Samuel Sáez López — Universidad Politécnica de Cartagena
 """
 The program that is frozen with PyInstaller (spec 001, RF-10, task T15;
-ADR-0001, criterion 3): it solves the two validation cases with the Rust
+ADR-0001, criterion 3): it solves the validation cases with the Rust
 variant of the engine and compares them with their esperado.json, exactly
-as tests/test_validation_cases_v001.py does.
+as tests/test_validation_cases_v001.py and _v002.py do. Cases 001 and 002
+since spec 001; 003 and 004 since spec 002, task T14.
 
     python poc/freeze/casos.py          # from the source tree
     dist/ogr-fem2d-casos/ogr-fem2d-casos.exe   # frozen (poc/freeze/build.py)
 
-Exit code 0 only when both cases are within their tolerances; it prints
+Exit code 0 only when every case is within its tolerances; it prints
 every comparison. The esperado.json files travel inside the frozen program
 (they are read from sys._MEIPASS there).
 
@@ -18,6 +19,13 @@ mesh_radial with the mesh the case fixes, rollers on the axes, the outer
 boundary fixed, a hydrostatic field of 30 MPa of compression and a stage
 whose total load is zero. Compression positive and u_r inward in the
 comparisons, as in the cases.
+
+Cases 003 and 004 are built and compared by the same code as their tests,
+tests/_sphere.py and tests/_strip.py (the strip's mesh is defined there),
+which go inside the program with the closed forms they compare against
+(spec/features/002-motor-elastico/comprobaciones/soluciones_cerradas.py):
+here that file is loaded first, from the tree or from inside the program,
+under the name the two modules look for.
 
 Author: Samuel Sáez López (UPCT)
 """
@@ -29,16 +37,35 @@ import sys
 import time
 from pathlib import Path
 
+_ROOT = Path(__file__).resolve().parents[2]
 if not getattr(sys, "frozen", False):                 # from the source tree
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    sys.path[:0] = [str(_ROOT), str(_ROOT / "tests")]
 
+
+def _load_closed_forms() -> None:
+    import importlib.util
+    frozen = getattr(sys, "_MEIPASS", None)
+    where = (Path(frozen) / "comprobaciones_002" if frozen else
+             _ROOT / "spec" / "features" / "002-motor-elastico" / "comprobaciones")
+    spec = importlib.util.spec_from_file_location("soluciones_cerradas_002",
+                                                  where / "soluciones_cerradas.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+
+
+_load_closed_forms()
+
+import _sphere  # noqa: E402
+import _strip  # noqa: E402
 from ogr_fem2d.engine.compiled import RUST  # noqa: E402
 from ogr_fem2d.engine.mesh_radial import quarter_annulus  # noqa: E402
 from ogr_fem2d.engine.reference import mohr_coulomb as mc  # noqa: E402
 from ogr_fem2d.engine.reference import solver  # noqa: E402
 from ogr_fem2d.engine.reference.elastic import Elastic  # noqa: E402
 
-CASES = ("001-kirsch-hueco-elastico", "002-salencon-hueco-mohr-coulomb")
+CASES = ("001-kirsch-hueco-elastico", "002-salencon-hueco-mohr-coulomb",
+         "003-cavidad-esferica-elastica", "004-carga-en-faja-elastica")
 
 
 def _cases_dir() -> Path:
@@ -149,6 +176,46 @@ def case_002(case) -> list[str]:
     return failures
 
 
+def _element(mesh_spec: dict) -> int:
+    return 6 if mesh_spec["elemento"] == "T6" else 3
+
+
+def _report(errors: dict, tolerance: float, unit: str) -> list[str]:
+    failures = []
+    for name, error in errors.items():
+        ok = error <= tolerance
+        shown = (f"{error * 100:.3f} %  (tolerance {tolerance * 100:.1f} %)" if unit == "%"
+                 else f"{error:.4f} q  (tolerance {tolerance} q)")
+        print(f"  {name:12s} worst error {shown}  {'ok' if ok else 'FAILS'}")
+        if not ok:
+            failures.append(name)
+    return failures
+
+
+def case_003(case) -> list[str]:
+    """The spherical cavity, axisymmetric (test_validation_cases_v002.py,
+    test_003_lame_sphere)."""
+    model, mesh_spec, stage = case["modelo"], case["modelo"]["malla"], case["modelo"]["fase"]
+    mesh, engine_model, outcome = _sphere.excavate(
+        model["geometria"]["b"], mesh_spec["n_radial"], mesh_spec["n_theta"],
+        mesh_spec["crecimiento"], _element(mesh_spec), variant=RUST,
+        steps=stage["escalones"], tolerance=stage["tolerancia"],
+        max_iterations=stage["iteraciones_max"])
+    errors = _sphere.worst_errors(mesh, engine_model, outcome, _sphere.closed.sphere_infinite)
+    return _report(dict(zip(("sigma_t", "u_R"), errors)), case["tolerancia_relativa"], "%")
+
+
+def case_004(case) -> list[str]:
+    """The strip load, plane strain (test_validation_cases_v002.py,
+    test_004_michell_strip)."""
+    geometry, mesh_spec = case["modelo"]["geometria"], case["modelo"]["malla"]
+    mesh, engine_model, outcome = _strip.solve(
+        geometry["W"], geometry["D"], mesh_spec["h0"], mesh_spec["crecimiento"],
+        _element(mesh_spec), variant=RUST)
+    errors = _strip.worst_errors(mesh, engine_model, outcome)
+    return _report(dict(zip(("sigma_1", "sigma_3"), errors)), case["tolerancia_absoluta"], "q")
+
+
 def main() -> int:
     import ogr_fem2d
     from ogr_fem2d import _engine
@@ -157,13 +224,14 @@ def main() -> int:
           f"Python {sys.version.split()[0]}")
     print(f"engine: {Path(_engine.__file__).resolve()}")
     failures = []
-    for name, check in zip(CASES, (case_001, case_002)):
+    for name, check in zip(CASES, (case_001, case_002, case_003, case_004)):
         case = json.loads((_cases_dir() / name / "esperado.json").read_text(encoding="utf-8"))
         print(f"{name} ({case['ficha']})")
         t = time.perf_counter()
         failures += [f"{name}: {f}" for f in check(case)]
         print(f"  solved in {time.perf_counter() - t:.1f} s")
-    print("BOTH CASES PASS" if not failures else "FAILURES: " + "; ".join(failures))
+    print(f"ALL {len(CASES)} CASES PASS" if not failures
+          else "FAILURES: " + "; ".join(failures))
     return 0 if not failures else 1
 
 

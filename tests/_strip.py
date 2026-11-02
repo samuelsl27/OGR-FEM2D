@@ -43,12 +43,14 @@ from ogr_fem2d.engine.reference.elastic import Elastic
 
 _CHECKS = (Path(__file__).resolve().parents[1] / "spec" / "features"
            / "002-motor-elastico" / "comprobaciones" / "soluciones_cerradas.py")
-_spec = importlib.util.spec_from_file_location("soluciones_cerradas_002", _CHECKS)
-if _spec.name in sys.modules:
-    closed = sys.modules[_spec.name]
+# the same module as tests/_sphere.py, under the same name
+_NAME = "soluciones_cerradas_002"
+if _NAME in sys.modules:
+    closed = sys.modules[_NAME]
 else:
+    _spec = importlib.util.spec_from_file_location(_NAME, _CHECKS)
     closed = importlib.util.module_from_spec(_spec)
-    sys.modules[_spec.name] = closed
+    sys.modules[_NAME] = closed
     _spec.loader.exec_module(closed)
 
 Q, B, E, NU = closed.Q, closed.B_HALF, 20000.0, 0.2

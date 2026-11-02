@@ -32,11 +32,17 @@ from ogr_fem2d.engine.reference.elastic import Elastic
 _CHECKS = (Path(__file__).resolve().parents[1] / "spec" / "features"
            / "002-motor-elastico" / "comprobaciones" / "soluciones_cerradas.py")
 # Loaded by its path under its own name: spec 001 has a module of the same
-# name (tests/_hole.py), and whichever came first would take the name.
-_spec = importlib.util.spec_from_file_location("soluciones_cerradas_002", _CHECKS)
-closed = importlib.util.module_from_spec(_spec)
-sys.modules[_spec.name] = closed
-_spec.loader.exec_module(closed)
+# name (tests/_hole.py), and whichever came first would take the name. Taken
+# from sys.modules when tests/_strip.py, or the frozen program of the cases
+# (poc/freeze/casos.py, which carries the file inside), loaded it first.
+_NAME = "soluciones_cerradas_002"
+if _NAME in sys.modules:
+    closed = sys.modules[_NAME]
+else:
+    _spec = importlib.util.spec_from_file_location(_NAME, _CHECKS)
+    closed = importlib.util.module_from_spec(_spec)
+    sys.modules[_NAME] = closed
+    _spec.loader.exec_module(closed)
 
 A, P0, E, NU = closed.A, closed.P0, closed.E, closed.NU
 
