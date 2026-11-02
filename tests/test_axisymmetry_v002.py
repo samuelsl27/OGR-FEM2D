@@ -36,8 +36,9 @@ vol. 1, §5.2, pp. 112-119, or identities that need no source:
 * **the axis** (D1): no integration point of an element with a side on the
   axis is at r = 0, while the quadratic rule of plane strain would put one
   there, and the engine says so instead of dividing by zero;
-* **D6**: Mohr-Coulomb in axisymmetry is refused; Rust says it has no
-  axisymmetry yet (T13).
+* **D6**: Mohr-Coulomb in axisymmetry is refused, in the reference and in
+  Rust (since T13; its identity with the reference is in
+  test_rust_variant_v002.py).
 """
 from __future__ import annotations
 
@@ -293,11 +294,15 @@ class TestRefused:
         else:
             raise AssertionError("Mohr-Coulomb ran in axisymmetry")
         nodes, elements, _ = _patch(True)
-        m = solver.Model(nodes, elements, [Elastic(E, NU)] * len(elements), frozenset(),
-                         analysis=AXI)
-        try:
-            RUST.prepare(solver.geometry(m, solver.integration_points(m)))
-        except NotImplementedError as exc:
-            assert "T13" in str(exc)
-        else:
-            raise AssertionError("Rust took an axisymmetric model")
+        m = solver.Model(nodes, elements, [law] * len(elements), frozenset(), analysis=AXI)
+        points = solver.integration_points(m)
+        prepared = RUST.prepare(solver.geometry(m, points))
+        start, du = np.zeros((len(points), 4)), np.full(2 * len(nodes), 1e-4)
+        for call in (lambda: prepared.update(start, du),
+                     lambda: prepared.integrate(start, np.full((len(points), 4), 1e-4))):
+            try:
+                call()
+            except ValueError as exc:
+                assert "D6" in str(exc)
+            else:
+                raise AssertionError("Rust ran Mohr-Coulomb in axisymmetry")

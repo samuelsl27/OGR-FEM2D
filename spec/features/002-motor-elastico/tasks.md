@@ -174,8 +174,25 @@ changelog al día, la suite entera en verde, commit y push.
 
 ## Rust y distribución
 
-- [ ] T13. T3 y axisimetría en Rust; Mohr-Coulomb rechazado fuera de lo validado (D6) — RF-10,
-      RF-11 — Hecho cuando: referencia = Rust a ~1e-10 en elemento, malla y casos.
+- [x] T13. T3 y axisimetría en Rust; Mohr-Coulomb rechazado fuera de lo validado (D6) — RF-10,
+      RF-11 — Hecho cuando: referencia = Rust a ~1e-10 en elemento, malla y casos. (Hecho el
+      2026-11-02: `rust/src/t6.rs` pasa a `triangle.rs`, gemelo de `solver.py` para k = 3 o 6
+      nudos (leído del ancho de `nodes`) y con `n_over_r` opcional: la fila εθ en la deformación,
+      σθ en las fuerzas internas y la rigidez axisimétrica con la columna de B de la (5.6), con
+      el mismo orden de operaciones que la referencia. `elastic.rs` gana la D de la (5.12). En
+      axisimetría Rust rechaza Mohr-Coulomb con el mismo ValueError de la referencia (D6); con T3
+      en deformación plana calcula lo mismo que ella, y es el motor (`model.py`) quien rechaza
+      ese modelo. `compiled.py` ya no se niega. **Identidad**: en los puntos, 0 en deformación
+      plana y ≤ 2·10⁻¹⁶ en axisimetría (la `sum` de Python compensa el redondeo); en las mallas
+      T3 y en los casos 003 y 004, desplazamientos idénticos bit a bit y tensiones y reacciones a
+      ≤ 1.2·10⁻¹⁶, con las mismas iteraciones. 7 tests en `test_rust_variant_v002.py` (los cuatro
+      tipos de elemento y análisis en los puntos, Mohr-Coulomb con T3 y puntos plásticos, la
+      rigidez de cada punto contra B^T D B escrita aparte con la B entera, las dos mallas T3 y los
+      dos casos); los tests que esperaban la negativa de Rust pasan a comprobar el rechazo de D6.
+      Trece mutaciones en Rust, todas cazadas (una revienta Rust con un índice fuera de rango y
+      tumba el runner, que sale con código 1). En elástico la rigidez de Rust no llega al
+      desplazamiento, que sale de la K elástica que monta Python: la miden los tests de los
+      puntos.)
 - [ ] T14. CI de ruedas y congelado con los casos 003 y 004 — Hecho cuando: CI verde en las tres
       plataformas y el ejecutable resuelve los cuatro casos.
 - [ ] T15. Cierre: `CHANGELOG_v0.0.2.md`, fichas STR-04 y STR-09 («Seguimiento») y criterios de

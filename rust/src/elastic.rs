@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Samuel Sáez López — Universidad Politécnica de Cartagena
-//! Linear isotropic elasticity in plane strain: the twin of
-//! ogr_fem2d/engine/reference/elastic.py.
+//! Linear isotropic elasticity in plane strain and in axisymmetry: the twin
+//! of ogr_fem2d/engine/reference/elastic.py.
 //!
 //! Source: Zienkiewicz, O. C. and Taylor, R. L. (2000). *The Finite Element
 //! Method*, 5th ed., vol. 1, §4.2.4, Eqs. (4.15)-(4.16), p. 91: with eps_z = 0,
-//! sigma_z = nu (sigma_x + sigma_y), and D on (eps_x, eps_y, gamma_xy).
+//! sigma_z = nu (sigma_x + sigma_y), and D on (eps_x, eps_y, gamma_xy). In
+//! axisymmetry (spec 002, T5), §5.2.4, Eq. (5.12), p. 117: D on (eps_r,
+//! eps_z, eps_theta, gamma_rz), and the stress vector is (sigma_r, sigma_z,
+//! sigma_theta, tau_rz).
 //! Stresses tension-positive (spec 001, D1), stress vector
 //! (sigma_xx, sigma_yy, sigma_zz, tau_xy).
 
@@ -29,4 +32,29 @@ pub fn stress_increment(young: f64, poisson: f64, strain: [f64; 3]) -> [f64; 4] 
     let s_yy = d[1][0] * strain[0] + d[1][1] * strain[1];
     let t_xy = d[2][2] * strain[2];
     [s_xx, s_yy, poisson * (s_xx + s_yy), t_xy]
+}
+
+/// The 4x4 matrix D of Eq. (5.12), on (eps_r, eps_z, eps_theta, gamma_rz).
+pub fn axisymmetric_matrix(young: f64, poisson: f64) -> [[f64; 4]; 4] {
+    let factor = young / ((1.0 + poisson) * (1.0 - 2.0 * poisson));
+    let (a, b) = (factor * (1.0 - poisson), factor * poisson);
+    [
+        [a, b, b, 0.0],
+        [b, a, b, 0.0],
+        [b, b, a, 0.0],
+        [0.0, 0.0, 0.0, factor * (1.0 - 2.0 * poisson) / 2.0],
+    ]
+}
+
+/// (d_sigma_r, d_sigma_z, d_sigma_theta, d_tau_rz) for a strain increment
+/// (d_eps_r, d_eps_z, d_eps_theta, d_gamma_rz): Eq. (5.12).
+pub fn axisymmetric_stress_increment(young: f64, poisson: f64, strain: [f64; 4]) -> [f64; 4] {
+    let d = axisymmetric_matrix(young, poisson);
+    let mut s = [0.0; 4];
+    for i in 0..4 {
+        for j in 0..4 {
+            s[i] += d[i][j] * strain[j];
+        }
+    }
+    s
 }

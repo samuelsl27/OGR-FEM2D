@@ -32,7 +32,8 @@ vol. 1, or against identities that need no source:
   assembled point by point (the route of the iterations and the variants,
   2n x 2n per point) is the element-by-element one;
 * **one kind per model**: mixing three- and six-node triangles is refused,
-  and the Rust variant says that it has only the six-node one (T13).
+  and the stiffness pattern of the variants follows the element (Rust with
+  both elements: test_rust_variant_v002.py).
 """
 from __future__ import annotations
 
@@ -43,7 +44,6 @@ import numpy as np
 
 import _blocks
 from ogr_fem2d.engine import interface
-from ogr_fem2d.engine.compiled import RUST
 from ogr_fem2d.engine.reference import element_t3 as t3
 from ogr_fem2d.engine.reference import solver
 from ogr_fem2d.engine.reference.elastic import Elastic, plane_strain_matrix
@@ -213,16 +213,10 @@ class TestOneKind:
         else:
             raise AssertionError("a mixed mesh was accepted")
 
-    def test_the_pattern_follows_the_element_and_rust_says_what_it_lacks(self):
+    def test_the_pattern_follows_the_element(self):
         nodes, elements = _patch()
         m = solver.Model(nodes, elements, [Elastic(E, NU)] * 5, frozenset())
         g = solver.geometry(m, solver.integration_points(m))
         rows, cols = interface.stiffness_pattern(g)
         assert len(rows) == len(elements) * 36
         assert rows[6] == 2 * elements[0][0] + 1 and cols[6] == 2 * elements[0][0]
-        try:
-            RUST.prepare(g)
-        except NotImplementedError as exc:
-            assert "T13" in str(exc)
-        else:
-            raise AssertionError("Rust took a three-node mesh")

@@ -13,6 +13,11 @@ in the layout the module expects (contiguous float64 and int64) and a point
 the module could not update is turned into the engine's StateUpdateError,
 with its element and point, as the other variants report it.
 
+Triangles of three and of six nodes, in plane strain and in axisymmetry
+(spec 002, T13): the module reads k from the width of ``nodes``, and gets
+the N_a / r of every point when the geometry has them. Mohr-Coulomb in
+axisymmetry is refused in Rust with the reference's ValueError (D6).
+
 Author: Samuel Sáez López (UPCT)
 """
 from __future__ import annotations
@@ -34,16 +39,11 @@ def _f64(a) -> np.ndarray:
 
 class _Prepared:
     def __init__(self, g: interface.Geometry):
-        if g.nodes.shape[1] != 6 or g.n_over_r is not None:
-            # spec 002: the three-node triangle and axisymmetry reach Rust in
-            # task T13
-            raise NotImplementedError("the Rust variant has only the six-node "
-                                      "triangle in plane strain so far (spec "
-                                      "002, T13)")
         self.g = g
         self.nodes = np.ascontiguousarray(g.nodes, dtype=np.int64)
         self.dndx, self.dndy = _f64(g.dndx), _f64(g.dndy)
         self.weight, self.materials = _f64(g.weight), _f64(g.materials)
+        self.n_over_r = None if g.n_over_r is None else _f64(g.n_over_r)
 
     def _check(self, failed: int) -> None:
         if failed >= 0:
@@ -54,7 +54,7 @@ class _Prepared:
     def internal_forces(self, stresses):
         return _engine.internal_forces(self.nodes, self.dndx, self.dndy,
                                        self.weight, _f64(stresses),
-                                       self.g.n_dofs)
+                                       self.g.n_dofs, self.n_over_r)
 
     def integrate(self, start, strains):
         stresses, plastic, tangents, failed = _engine.integrate(
@@ -65,7 +65,7 @@ class _Prepared:
     def update(self, start, du):
         stresses, f_int, plastic, tangents, stiffness, failed = _engine.update(
             self.nodes, self.dndx, self.dndy, self.weight, self.materials,
-            _f64(start), _f64(du))
+            _f64(start), _f64(du), self.n_over_r)
         self._check(failed)
         return interface.PointsUpdate(stresses, f_int, plastic, tangents,
                                       stiffness)

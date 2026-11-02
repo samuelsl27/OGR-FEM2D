@@ -25,7 +25,7 @@ three variants receive exactly the same numbers:
 
 What comes back, ``PointsUpdate``: the stresses (n, 4), the internal forces
 (n_dofs,), whether each point is plastic (n,), its consistent tangent
-(n, 3, 3), and the tangent stiffness of each point, weight B^T D B, as a
+(n, 3, 3), (n, 4, 4) in axisymmetry, and the tangent stiffness of each point, weight B^T D B, as a
 2k x 2k block (n, 4k^2), row-major in the dofs (u1, v1, ..., uk, vk) of its
 nodes; ``stiffness_pattern`` gives the global row and column of each value,
 so the solver assembles K_T with one sparse constructor.
@@ -75,7 +75,7 @@ class PointsUpdate:
     stresses: np.ndarray       # (n, 4)
     internal_forces: np.ndarray  # (n_dofs,)
     plastic: np.ndarray        # (n,) bool
-    tangents: np.ndarray       # (n, 3, 3)
+    tangents: np.ndarray       # (n, 3, 3); (n, 4, 4) in axisymmetry
     stiffness: np.ndarray      # (n, 4 k^2)
 
 
@@ -84,7 +84,7 @@ class Integration:
     """The constitutive integration alone."""
     stresses: np.ndarray       # (n, 4)
     plastic: np.ndarray        # (n,) bool
-    tangents: np.ndarray       # (n, 3, 3)
+    tangents: np.ndarray       # (n, 3, 3); (n, 4, 4) in axisymmetry
 
 
 class Prepared(Protocol):
@@ -95,7 +95,8 @@ class Prepared(Protocol):
 
     def integrate(self, start: np.ndarray, strains: np.ndarray) -> Integration:
         """Stress update of every point from ``start`` (n, 4) with the strain
-        increments ``strains`` (n, 3) = (d_eps_xx, d_eps_yy, d_gamma_xy)."""
+        increments ``strains`` (n, 3) = (d_eps_xx, d_eps_yy, d_gamma_xy);
+        in axisymmetry (n, 4) = (d_eps_r, d_eps_z, d_eps_theta, d_gamma_rz)."""
 
     def update(self, start: np.ndarray, du: np.ndarray) -> PointsUpdate:
         """THE call per global iteration."""

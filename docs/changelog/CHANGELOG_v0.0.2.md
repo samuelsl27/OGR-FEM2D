@@ -104,3 +104,13 @@
   con 37 088 elementos. El manual del programa de referencia publica un 0.6 % de error en σ1 con
   el dominio de la ficha y no da el de σ3, que es donde está el efecto del contorno; ese 0.6 % es
   el resultado de otro programa y no un valor esperado.
+- **Tarea T13, Rust con T3 y axisimetría**: con el mismo orden de operaciones que la referencia,
+  la identidad es exacta en deformación plana y de 2·10⁻¹⁶ en axisimetría, donde la `sum` de
+  Python (que compensa el redondeo desde la 3.12) y el bucle de Rust difieren en el último bit.
+  En los casos 003 y 004 los desplazamientos salen idénticos bit a bit. Dos cosas que conviene
+  saber: **en elástico la rigidez que calcula Rust no llega al resultado** (la primera corrección
+  usa la K elástica que monta Python y la fase converge con ella), así que solo la vigilan los
+  tests de los puntos; y **Rust apenas acelera el elástico** (caso 004: 9.4 s con la referencia,
+  6.3 s con Rust), porque el tiempo se va en Python preparando los puntos y la K. Un pánico de
+  Rust (índice fuera de rango) no es una excepción normal en Python: tumba el runner de la suite,
+  que sale con código 1 y el traceback, sin informe de los demás tests.

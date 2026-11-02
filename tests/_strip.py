@@ -183,6 +183,7 @@ def worst_errors(mesh, engine_model, outcome, z_min=0.25, z_max=5.0):
     return e1, e3
 
 
-def solve(w, d, h0, growth, nodes_per_element=6, boundary="supported"):
+def solve(w, d, h0, growth, nodes_per_element=6, boundary="supported", variant=None):
     mesh, engine_model = model(w, d, h0, growth, nodes_per_element, boundary)
-    return mesh, engine_model, analysis.run(engine_model)[0]
+    kwargs = {} if variant is None else {"variant": variant}
+    return mesh, engine_model, analysis.run(engine_model, **kwargs)[0]
