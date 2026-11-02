@@ -173,6 +173,9 @@ def stage_load(m: EngineModel, i: int) -> np.ndarray:
             f[2 * n] += fx
             f[2 * n + 1] += fy
 
+    # concentrated forces at the nodes join the nodal equilibrium as they are
+    # (Zienkiewicz and Taylor 2000, Eq. 2.14, p. 25); in axisymmetry, the
+    # force of the whole ring (D2)
     for load in stage.nodal_loads:
         add((load.node,), ((load.fx, load.fy),))
     for e, element in enumerate(m.elements):

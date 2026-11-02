@@ -130,3 +130,18 @@
   se ejecuta él. Se añadió el tope de un núcleo al bucle ocupado (≤ 1.1): una mutación que
   dividía la CPU de todo el bloque por el tiempo de la última llamada sobrevivía; ahora las
   cuatro mutaciones de la medida de la cuota se cazan.
+- **Tarea T15, el cierre**, repasando cada criterio de finalización:
+  - de la tabla «Formulación», solo faltaba citar en el código la ec. (2.14) de Zienkiewicz y
+    Taylor (fuerzas concentradas en los nudos, pág. 25): vuelta a leer en la fuente y citada en
+    `analysis.stage_load`;
+  - los casos 001 y 002 dan, en la referencia y en Rust, **exactamente** los mismos números que
+    con el código anterior a la spec 002;
+  - **anomalía, error propio de la spec**: la tabla «Validación numérica» dice que en el caso 003
+    se comparan σR, σt y ur «a lo largo de un radio, R de 1 a 5 m», y que «basta una geometría».
+    D4 fijó la tolerancia en σt(a) y ur(a), y eso es lo que compara el caso. A lo largo del radio
+    no basta: el error de la malla se queda por debajo del 0.36 % hasta R = 5 m, pero la esfera
+    exterior fija a 21 m se aparta del medio infinito como R³, del 0.022 % en R = a al 0.5 % hacia
+    R = 3.6 m y al 1.3 % en R = 4.9 m (ur contra Lamé, 1.53 % en R ≤ 5 m). En el caso 004, «z de 0 a
+    5 m» no cambia nada: la primera columna no tiene puntos por encima de z = 0.25 m que muevan el
+    resultado (σ3 0.0053 q en los dos tramos);
+  - las fichas STR-01 y STR-02 siguen con el «Seguimiento» vacío: la spec 001 no lo pedía.
