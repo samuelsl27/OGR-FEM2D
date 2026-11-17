@@ -29,7 +29,7 @@ v0.1.370 (2026-10-27):
    `seepage.*`. El núcleo pasa a contener ese solver compartido. La extracción completa está
    especificada en Slip2D, `spec/features/009-extraer-ogr-core/` (decisiones P1–P7 del
    2026-10-27: `ogr-core` con serie de versiones propia desde 0.1.0, dependencia git con etiqueta,
-   runner de tests único en `ogr-core`, carpeta `C:\Samuel\OpenGeoRock_Core\OGR-Core`).
+   runner de tests único en `ogr-core`, carpeta `C:\Samuel\OGR_Suite\Core\OGR-Core`).
 3. Slip2D y FEM2D dependen de una **versión fijada** de `ogr-core` en cada publicación; durante el
    desarrollo se instala en modo editable.
 4. Liberado el nombre, el paquete de este programa es **`ogr_fem2d`** (distribución `ogr-fem2d`).

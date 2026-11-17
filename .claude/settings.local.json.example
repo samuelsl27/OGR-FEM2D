@@ -1,0 +1,27 @@
+{
+  "$comment": [
+    "Copy to .claude/settings.local.json (ignored by git) and adjust the",
+    "paths to your machine.",
+    "additionalDirectories gives the agent folders outside this repository;",
+    "a folder mounted in the VS Code workspace is NOT given to the agent by",
+    "that alone. It grants reading AND editing, so each repository this one",
+    "must not change gets a deny rule on Edit (which also covers Write).",
+    "Referencias holds the starting specification and the verification",
+    "cases (AGENTS.md, 'Antes de nada'); it is never published.",
+    "OGR-Core is changed only from its own window; OGR Slip2D is read to",
+    "reuse its code and is never touched from here.",
+    "Use absolute paths. In deny rules, //c/... is C:\\... on Windows."
+  ],
+  "permissions": {
+    "additionalDirectories": [
+      "C:/Samuel/OGR_Suite/FEM2D/Referencias",
+      "C:/Samuel/OGR_Suite/FEM2D/Promts_desarrollo",
+      "C:/Samuel/OGR_Suite/Core/OGR-Core",
+      "C:/Samuel/OGR_Suite/Slip2D/OGR-Slip2D"
+    ],
+    "deny": [
+      "Edit(//c/Samuel/OGR_Suite/Core/OGR-Core/**)",
+      "Edit(//c/Samuel/OGR_Suite/Slip2D/OGR-Slip2D/**)"
+    ]
+  }
+}
