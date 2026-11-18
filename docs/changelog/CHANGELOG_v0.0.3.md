@@ -95,6 +95,12 @@ En la máquina de desarrollo (Windows, Python del `.venv`), el 2026-11-18:
 | Mutantes de `poc/benchmark.py` y de `tests/_runner.py` (uno a uno, restaurando el archivo) | 5 de 5 mueren |
 | El código de antes (importar pone las variables) contra el runner 0.2.0 | el test nuevo falla, y el detector nombra las tres variables (`✗ [LEAK]`) |
 
+**La CI** (run 44387274486, sobre `230d40f`): Windows, macOS 15 (Apple silicon) y Linux, con Python
+3.11, 3.12 y 3.13, con la rueda y el núcleo instalados desde la etiqueta
+(`shared: ogr_core 0.2.0 …/site-packages/ogr_core (installed, no git tree)`): **189 de 189 en las
+nueve combinaciones, ninguna fuga**; el ejecutable congelado, en verde en los tres sistemas. Fuera de
+Windows, el detector de fugas no nombra nada.
+
 El núcleo 0.1.0 instalado se quitó del `.venv` y el de OGR-Core se instaló en editable con
 `pip install --no-deps -e`, para que pip no reinstale el núcleo desde GitHub encima.
 
@@ -103,7 +109,6 @@ El núcleo 0.1.0 instalado se quitó del `.venv` y el de OGR-Core se instaló en
 - **El benchmark llamado desde Python** (regla 12): que el registro guarde los hilos con los que
   cargó NumPy (leídos antes de importarlo) y que el informe y el veredicto lo digan cuando no son
   uno. Es un cambio de la herramienta de la spec 001; va aparte, con el OK del propietario.
-- **La CI** tras el push: corre en Windows, macOS y Linux e instala el núcleo desde la etiqueta.
-  Es la primera vez que el detector de fugas mira esta suite fuera de Windows.
+- Que un sistema caído en `build` no deje a los otros dos sin probar (ver «Lo que se encontró»).
 - Cuando Slip2D fusione su adopción: actualizar la frase de ADR-0002, `AGENTS.md`, `README.md` y
   `tech-stack.md` que dicen que aún no lo ha hecho.
