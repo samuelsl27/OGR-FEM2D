@@ -23,20 +23,78 @@ Invariants protected:
   a sleeping one near 0, which is what the share is meant to see. Both over
   blocks of at least half a second, because Windows counts the CPU time of a
   process in ticks of 15.6 ms; and the sleeping one in a fresh interpreter
-  that imports the benchmark first, as the benchmark runs (NumPy limited to
-  one thread), because in the suite the threads of the linear algebra that
-  earlier tests started count as this process's too (spec 002, T14: it
-  failed now and then on the CI with blocks of 60 ms in the suite's process).
+  with the benchmark's environment (NumPy limited to one thread, ONE_THREAD),
+  because in the suite the threads of the linear algebra that earlier tests
+  started count as this process's too (spec 002, T14: it failed now and then
+  on the CI with blocks of 60 ms in the suite's process);
+* **one thread when it runs, nothing changed when imported** (v0.0.3): run as
+  a script, the benchmark has the three variables of ONE_THREAD in the
+  environment by the time NumPy is imported, keeping a value the user set;
+  imported, it leaves the environment of the process as it was. Until v0.0.3
+  the import set them, and they stayed for every later test and every
+  process those tests started (the leak check of OGR Core 0.2.0 named it).
 """
 from __future__ import annotations
 
+import json
 import math
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 from ogr_fem2d.engine.reference import mohr_coulomb as mc
 from poc import benchmark
+
+_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _without_the_threads() -> dict:
+    """This process's environment without the variables of ONE_THREAD, so
+    that what a child ends up with is what the benchmark put there."""
+    return {k: v for k, v in os.environ.items() if k not in benchmark.ONE_THREAD}
+
+
+class TestOneThread:
+    def test_importing_it_changes_nothing(self):
+        code = ("import json, os; from poc import benchmark; "
+                "print(json.dumps({k: os.environ.get(k) for k in benchmark.ONE_THREAD}))")
+        done = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
+                              check=True, cwd=_ROOT, env=_without_the_threads())
+        assert json.loads(done.stdout) == {k: None for k in benchmark.ONE_THREAD}, done.stdout
+
+    def test_running_it_limits_numpy_before_it_loads(self):
+        # The variables are read when NumPy's libraries load: a finder first
+        # in the import machinery writes down the environment at the moment
+        # numpy is first asked for. --help stops the run before any measure.
+        code = (
+            "import json, os, runpy, sys\n"
+            "seen = {}\n"
+            "class Spy:\n"
+            "    def find_spec(self, name, path=None, target=None):\n"
+            "        if name == 'numpy' and not seen:\n"
+            f"            seen.update({{k: os.environ.get(k) for k in {list(benchmark.ONE_THREAD)!r}}})\n"
+            "        return None\n"
+            "sys.meta_path.insert(0, Spy())\n"
+            "sys.argv = ['benchmark.py', '--help']\n"
+            "try:\n"
+            "    runpy.run_path('poc/benchmark.py', run_name='__main__')\n"
+            "except SystemExit:\n"
+            "    pass\n"
+            "print('SEEN', json.dumps(seen))\n")
+        done = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
+                              check=True, cwd=_ROOT, env=_without_the_threads())
+        line = [x for x in done.stdout.splitlines() if x.startswith("SEEN ")]
+        assert line, done.stdout + done.stderr
+        assert json.loads(line[0][5:]) == benchmark.ONE_THREAD, line[0]
+
+    def test_a_value_already_set_is_kept(self):
+        env = {"OMP_NUM_THREADS": "4", "PATH": "x"}
+        benchmark.one_thread(env)
+        assert env == {"OMP_NUM_THREADS": "4", "PATH": "x",
+                       "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1"}, env
+        assert set(benchmark.ONE_THREAD) == {"OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS",
+                                             "MKL_NUM_THREADS"}
 
 
 class TestSeededSet:
@@ -95,8 +153,10 @@ class TestMachineState:
         code = ("import time; from poc import benchmark; "
                 "print(benchmark.timed(lambda: sum(i * i for i in range(100_000)), 3, 0.5)"
                 ".cpu_share, benchmark.timed(lambda: time.sleep(0.02), 3, 0.5).cpu_share)")
+        env = dict(os.environ)
+        benchmark.one_thread(env)               # as the benchmark runs
         done = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
-                              check=True, cwd=Path(__file__).resolve().parents[1])
+                              check=True, cwd=_ROOT, env=env)
         busy, asleep = (float(x) for x in done.stdout.split())
         # it had the core most of the time, and one thread cannot have more
         # than one core (two ticks of 15.6 ms over the half second: 0.06)

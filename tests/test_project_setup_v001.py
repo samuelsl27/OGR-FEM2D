@@ -8,8 +8,10 @@ Invariants protected:
 
 * **the trees**: ``ogr_fem2d`` resolves inside this repository; ``ogr_core``
   resolves to the ``ogr-core`` distribution at the version ``pyproject.toml``
-  pins (``v0.1.0``), so a run can never measure OGR Slip2D's own copy of the
-  core, which has the same package name (ADR-0002, modification);
+  pins (``v0.2.0`` since v0.0.3), so a run can never measure OGR Slip2D's own
+  copy of the core, which has the same package name while Slip2D's ``main``
+  carries it (ADR-0002); and a Python where nothing answers for ``ogr_core``
+  is refused with the reason, not with a traceback (v0.0.3);
 * **the pin is a pin**: a git tag reference, read as the version it names;
 * **one version**: ``pyproject.toml`` and ``ogr_fem2d.__version__`` agree,
   and that version has its changelog (rule of the suite: every version
@@ -23,6 +25,8 @@ import contextlib
 import glob
 import io
 import re
+import subprocess
+import sys
 import tomllib
 from pathlib import Path
 
@@ -47,8 +51,17 @@ class TestTheTrees:
         assert "OGR-Slip2D" not in str(where), where
         assert _runner.runner.shared_problems(origins, _runner.pinned()) == []
 
+    def test_a_python_without_the_core_is_refused(self):
+        # -S leaves site-packages out: nothing answers for ogr_core, as in a
+        # Python where OGR Slip2D's editable install has no core checked out.
+        done = subprocess.run([sys.executable, "-S", str(_ROOT / "tests" / "_runner.py"),
+                               "--list"], capture_output=True, text=True, cwd=_ROOT)
+        assert done.returncode == 2, (done.returncode, done.stdout, done.stderr)
+        assert "WRONG SHARED TREE - ogr_core resolves to (nothing)" in done.stdout, done.stdout
+        assert ".venv/Scripts/python tests/_runner.py" in done.stdout, done.stdout
+
     def test_the_pin_is_read_from_pyproject(self):
-        assert _runner.pinned() == {"ogr_core": "0.1.0"}
+        assert _runner.pinned() == {"ogr_core": "0.2.0"}
 
     def test_the_banner_names_both_trees(self):
         buf = io.StringIO()
@@ -57,7 +70,7 @@ class TestTheTrees:
         text = buf.getvalue()
         assert code == 2, text            # nothing selected: nothing run
         assert f"tree: {_ROOT}" in text, text
-        assert "shared: ogr_core 0.1.0" in text, text
+        assert "shared: ogr_core 0.2.0" in text, text
 
 
 class TestOneVersion:

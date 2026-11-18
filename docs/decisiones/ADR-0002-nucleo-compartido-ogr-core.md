@@ -86,3 +86,30 @@ Consecuencias:
   programa.
 - El requisito de la fase 1 (fase 0b de la hoja de ruta) queda cumplido con OGR-Core v0.1.0; ya no
   depende de cambiar Slip2D.
+
+## Se levanta la modificación (2026-11-18, propietario)
+
+**Vuelve a haber un solo núcleo, y se cambia solo en OGR-Core.** Lo que la modificación aceptó como
+estado temporal (dos copias que podían divergir) se cierra así:
+
+- **OGR-Core v0.2.0** (etiqueta `v0.2.0`, CI en verde en Python 3.11–3.13) es el `ogr_core` de
+  Slip2D en su commit `d48e2b3` (`main`, v0.1.471), con la malla y la filtración en `ogr_core/fem/`
+  y el runner de tests de Slip2D fusionado con el de la v0.1.0. Ningún nombre público de la v0.1.0
+  desaparece. Desde aquí, un cambio del núcleo se hace en OGR-Core y llega a cada programa al subir la
+  versión que fija (`CHANGELOG_v0.2.0.md` de OGR-Core).
+- **OGR FEM2D fija `v0.2.0`** desde su v0.0.3.
+- **OGR Slip2D adopta ese núcleo en su v0.1.473**: sin `ogr_core/` ni ningún paquete `ogr_fem2d`, y
+  con `ogr-core` fijado en `v0.2.0`. **Esa parte no está terminada**: el 2026-11-18 la adopción está
+  verificada en la rama local `dev/adoptar-ogr-core` de Slip2D, sin subir ni fusionar, y su `main`
+  sigue en `d48e2b3`, con su copia. Cuando la fusione, esta frase se actualiza.
+
+Lo que cambia:
+
+- **La consecuencia «dos copias que pueden divergir» deja de valer** para OGR-Core y este programa.
+  Para Slip2D, deja de valer cuando su `main` lleve la adopción; hasta entonces su copia no recibe
+  cambios del núcleo (los hace OGR-Core).
+- **«Slip2D y este programa no pueden compartir un entorno de Python»** sigue siendo cierto mientras
+  el `main` de Slip2D lleve `ogr_core` y `ogr_fem2d` propios. Tras la fusión, el choque de nombres
+  desaparece; aun así este programa se sigue desarrollando en su `.venv`.
+- **El runner compartido mira ahora la regla 5** (lo que un archivo de tests deja cambiado en el
+  proceso). Al subir, nombró una fuga que este programa tenía desde la v0.0.1 (changelog v0.0.3).

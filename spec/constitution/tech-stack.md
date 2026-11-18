@@ -16,7 +16,7 @@
 | **Solver lineal inicial: SuperLU (SciPy)**; faer tras medir | ADR-0001 | Sin problemas de licencia ni de distribución; el solver disperso en Rust es el riesgo principal |
 | **Sin PARDISO/MKL** | ADR-0001 | Licencia propietaria incompatible con distribuir AGPL; no existe en macOS ARM |
 | **Malla sin `triangle`** | heredada | Licencia incompatible con AGPL (se usa Delaunay de SciPy; en Rust, `spade`) |
-| **Núcleo `ogr_core` del paquete `ogr-core`** (repositorio OGR-Core, etiqueta `v0.1.0` fijada), con la malla y la filtración | ADR-0002, modificada | Sale del núcleo de Slip2D. **De momento Slip2D conserva el suyo** y la integración se decide más adelante: hasta entonces hay dos copias, y Slip2D y este programa no comparten entorno de Python |
+| **Núcleo `ogr_core` del paquete `ogr-core`** (repositorio OGR-Core, etiqueta `v0.2.0` fijada desde v0.0.3), con la malla y la filtración | ADR-0002 (modificación levantada el 2026-11-18) | Sale del núcleo de Slip2D y desde OGR-Core 0.2.0 se cambia solo en OGR-Core. **Slip2D aún no lo ha adoptado en su `main`** (su adopción está en una rama): hasta que la fusione, lleva su propia copia, y Slip2D y este programa no comparten entorno de Python |
 | **Resultados en `modelo.h5` aparte, con la huella del modelo** | ADR-0003 | Un cálculo con fases y SSR puede durar horas; la huella impide presentar resultados obsoletos como válidos |
 | **AGPL-3.0-or-later y el CLA de la suite** | decisión D4 | Igual que Slip2D: el CLA está redactado para toda la suite y conserva la opción de un servicio alojado con otras condiciones |
 | **Repositorio público `samuelsl27/OGR-FEM2D`** | decisión D5 | Igual que Slip2D; la constitución y las decisiones se publican desde el principio |

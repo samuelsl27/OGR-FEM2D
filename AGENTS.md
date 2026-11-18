@@ -33,11 +33,13 @@ Autor y titular del copyright: Samuel Sáez López (UPCT). Licencia AGPL-3.0-or-
 - **Motor numérico**: Rust + PyO3 + maturin, **aceptado con condición** de que la prueba de concepto
   cumpla sus criterios (`docs/decisiones/ADR-0001-lenguaje-motor.md`). **Cada elemento y cada ley
   constitutiva tiene su implementación de referencia en Python**, que es el oráculo de los tests.
-- **Núcleo**: `ogr_core`, del paquete `ogr-core` (repositorio OGR-Core, etiqueta `v0.1.0`), con la
-  malla y la filtración (`ADR-0002`). El paquete de este programa es `ogr_fem2d`. **De momento OGR
-  Slip2D conserva su propio núcleo**: hay dos copias, cada cambio de OGR-Core se anota en su
-  changelog, y este programa **no comparte entorno de Python con Slip2D** (se desarrolla en
-  `OGR-FEM2D/.venv`).
+- **Núcleo**: `ogr_core`, del paquete `ogr-core` (repositorio OGR-Core, etiqueta `v0.2.0`), con la
+  malla y la filtración (`ADR-0002`). El paquete de este programa es `ogr_fem2d`. **El núcleo se
+  cambia solo en OGR-Core**; en desarrollo, el `.venv` lo tiene instalado en editable desde
+  `C:\Samuel\OGR_Suite\Core\OGR-Core`. **OGR Slip2D aún no lo ha adoptado** en su `main`
+  (2026-11-18: sigue en v0.1.471, con su propia copia de `ogr_core` y su paquete `ogr_fem2d`; la
+  adopción, v0.1.473, está en su rama `dev/adoptar-ogr-core`, sin subir). Mientras sea así, este
+  programa **no comparte entorno de Python con Slip2D** y se desarrolla en `OGR-FEM2D/.venv`.
 - **Formato de proyecto**: `.ogr` (JSON), compatible con OGR Slip2D en la parte geométrica. Los
   resultados van aparte en `modelo.h5` con la huella del modelo (`ADR-0003`).
 - **Tests**: el runner de la suite (`ogr_core.testing.runner`), a través de `tests/_runner.py`.
@@ -51,8 +53,11 @@ Autor y titular del copyright: Samuel Sáez López (UPCT). Licencia AGPL-3.0-or-
 ```
 
 **Siempre con el `.venv` del proyecto.** El Python del sistema tiene OGR Slip2D instalado en modo
-editable y allí `ogr_core` es la copia de Slip2D: el runner se niega («WRONG SHARED TREE»). Una
-ejecución filtrada no es evidencia para cerrar una tarea: antes, la suite entera.
+editable, y lo que allí responde por `ogr_core` depende de la rama que tenga Slip2D en su carpeta: su
+propia copia, o nada. En los dos casos el runner se niega («WRONG SHARED TREE»). Para instalar algo
+más en el `.venv`, `--no-deps`: con sus dependencias, pip reinstalaría el núcleo desde GitHub encima
+del editable (la línea `shared:` del runner dice de dónde sale). Una ejecución filtrada no es
+evidencia para cerrar una tarea: antes, la suite entera.
 
 ## Las siete reglas (heredadas de OGR Slip2D, sin cambios)
 

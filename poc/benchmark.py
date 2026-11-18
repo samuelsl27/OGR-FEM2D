@@ -42,7 +42,8 @@ cent of the machine at every sample, and every CPU share is within
 
 One thread for everyone: the Rust variant runs in one thread (spec 001,
 "Fuera de alcance"), so the thread pools of NumPy's libraries are limited to
-one before NumPy is imported.
+one before NumPy is imported (ONE_THREAD). Only when the benchmark runs as a
+script: importing this module leaves the environment as it was.
 
 What is measured:
 
@@ -64,8 +65,25 @@ from __future__ import annotations
 
 import os
 
-for _name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
-    os.environ.setdefault(_name, "1")
+#: The variables that limit the thread pools of NumPy's libraries, and the
+#: value the benchmark runs with. They are read when those libraries load, so
+#: they must be in the environment before NumPy is imported.
+ONE_THREAD = {"OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1"}
+
+
+def one_thread(environ) -> None:
+    """Put :data:`ONE_THREAD` in ``environ`` (``os.environ``, or the
+    environment of a process about to start), keeping a value already there."""
+    for name, value in ONE_THREAD.items():
+        environ.setdefault(name, value)
+
+
+# Only when the benchmark runs (python poc/benchmark.py, or -m poc.benchmark),
+# never on import: importing a module must not change the process that
+# imports it (rule 5; the suite's leak check found it, OGR Core 0.2.0). A test
+# that needs a process limited like the benchmark's gives it this environment.
+if __name__ == "__main__":
+    one_thread(os.environ)
 
 import argparse  # noqa: E402
 import ctypes  # noqa: E402
@@ -448,8 +466,7 @@ def main(argv=None) -> int:
               "machine": {"platform": platform.platform(), "processor": platform.processor(),
                           "python": sys.version.split()[0], "numpy": np.__version__,
                           "scipy": scipy.__version__,
-                          "threads": {k: os.environ.get(k) for k in
-                                      ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")}},
+                          "threads": {k: os.environ.get(k) for k in ONE_THREAD}},
               "seed": SEED, "proportions": PROPORTIONS,
               "machine_before": before, "max_load_percent": args.max_load,
               "valid": not reasons, "not_valid_because": reasons,

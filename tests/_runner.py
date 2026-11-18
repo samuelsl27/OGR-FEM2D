@@ -9,10 +9,13 @@ pointed at this repository.
     python tests/_runner.py -k patch   # tests whose name contains it
     python tests/_runner.py --list     # show the selection, run nothing
 
-Run it with the project's environment (``.venv``): OGR Slip2D, installed in
-editable mode in the system Python, also provides a package named
-``ogr_core`` (ADR-0002, modification), and this runner would refuse it for
-not being the pinned version.
+Run it with the project's environment (``.venv``), where ``ogr-core`` is
+installed at the version ``pyproject.toml`` pins. Another Python may give
+``ogr_core`` from somewhere else, or nothing: what the system Python gives
+depends on what OGR Slip2D, installed there in editable mode, has checked
+out (its own copy of the core, while its ``main`` carries one; nothing, on
+its branch that adopts ``ogr-core``). This runner refuses anything that is
+not the pinned distribution.
 
 ``ogr_fem2d`` is this repository's own package and must resolve inside it.
 ``ogr_core`` is shared: it comes from the ``ogr-core`` distribution, pinned in
@@ -33,16 +36,16 @@ sys.path.insert(0, str(_ROOT))
 try:
     from ogr_core.testing import runner  # noqa: E402
 except ImportError:
-    # The runner lives in the core since ogr-core 0.1.0. Without it, the
-    # ogr_core that answered is not that distribution: most likely OGR
-    # Slip2D's own copy, from an editable install in this Python.
+    # The runner lives in the core since ogr-core 0.1.0. Without it, either
+    # nothing answers for ogr_core in this Python, or what answers is not
+    # that distribution (OGR Slip2D's own copy, say).
     import importlib.util
     _spec = importlib.util.find_spec("ogr_core")
     # ASCII only: this prints before the runner widens the console encoding.
     print("WRONG SHARED TREE - ogr_core resolves to "
           f"{_spec.origin if _spec else '(nothing)'}, which is not the "
-          "ogr-core distribution this repository pins (it has no "
-          "ogr_core.testing). Run with the project's environment: "
+          "ogr-core distribution this repository pins (no "
+          "ogr_core.testing there). Run with the project's environment: "
           ".venv/Scripts/python tests/_runner.py")
     sys.exit(2)
 
