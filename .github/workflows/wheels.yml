@@ -34,7 +34,7 @@ jobs:
           - os: windows-latest
             target: x64
             manylinux: ""
-          - os: macos-14          # Apple silicon
+          - os: macos-15          # Apple silicon
             target: aarch64
             manylinux: ""
     steps:
@@ -60,7 +60,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-14]
+        os: [ubuntu-latest, windows-latest, macos-15]
         python: ["3.11", "3.12", "3.13"]
     defaults:
       run:
@@ -95,7 +95,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-14]
+        os: [ubuntu-latest, windows-latest, macos-15]
     defaults:
       run:
         shell: bash

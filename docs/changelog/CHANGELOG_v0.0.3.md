@@ -72,6 +72,13 @@ ni `rust/` se tocan.
 - **El `main` de OGR Slip2D no ha adoptado el núcleo** (local y remoto en `d48e2b3`, v0.1.471). La
   adopción (v0.1.472–0.1.473) está en `dev/adoptar-ogr-core`, verificada y solo en local. La
   documentación de este repositorio lo dice con esa salvedad.
+- **La CI no probaba nada desde el 2 de noviembre.** GitHub retiró ese día las máquinas `macos-14`
+  (aviso del 2026-10-01 en su changelog), y el job `build (macos-14)` moría en un segundo con «The
+  configuration 'macos-14-arm64-us-default' is not supported». Como `test` y `freeze` esperan a
+  todo `build`, se saltaban en los tres sistemas: el push de `e3d34ba` y el primero de esta versión
+  (`ecc87b7`) salieron en rojo sin correr la suite. El workflow pasa a `macos-15` (Apple silicon,
+  una versión fija como antes; `macos-latest` cambiaría de sistema sin avisar). Queda a la vista que
+  un solo sistema caído deja a los otros dos sin probar; cambiarlo es otra decisión.
 - **`rust/Cargo.toml` sigue en 0.0.2.** En la v0.0.2 se subió junto con la versión del programa,
   pero ningún test ata las dos, el motor no cambia y esta fase pide `rust/` intacto (cambiarlo
   obligaría además a recompilar el módulo, que un test compara con la fecha de sus fuentes).
