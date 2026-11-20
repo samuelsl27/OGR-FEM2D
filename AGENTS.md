@@ -66,6 +66,9 @@ OGR Core es la biblioteca común de la suite y la usan varios programas a la vez
 este programa (las reglas del núcleo, en el `AGENTS.md` de OGR-Core y en su `docs/consumidores.md`):
 
 - **Un solo `main`** y cada cambio en una **rama corta con su PR**. Sin ramas largas.
+- **Una rama se borra cuando su PR se fusiona**, en GitHub y en local. Una rama sin fusionar no
+  se borra sin el OK de la propietaria; si lleva algo que `main` no tiene y hay que conservarlo,
+  antes se archiva con una etiqueta `archivo/<nombre>`.
 - **El código de `ogr_core` solo se cambia en OGR-Core, y aquí no se copia.** Lo que este programa
   necesite del núcleo se pide a la sesión de OGR-Core, con lo que se encontró y la evidencia; aquí
   no se rodea.
