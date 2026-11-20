@@ -27,7 +27,9 @@ Invariants protected:
   and that version has its changelog (rule of the suite: every version
   records what was found);
 * **licence headers**: every Python file carries the SPDX identifier and the
-  copyright line near its top (rule 4).
+  copyright line near its top (rule 4), those in hidden folders too: the
+  ones with code are declared and walked, the others are declared with their
+  reason, and a hidden folder with a ``.py`` in neither list fails (v0.0.5).
 """
 from __future__ import annotations
 
@@ -202,13 +204,65 @@ class TestOneVersion:
         assert path.exists(), path
 
 
+#: Hidden folders (name starting with a dot) that carry code of this program.
+#: ``glob("**")`` does not go into them, so the census walks each one itself
+#: (v0.0.5: until then ``.github/scripts/wheel_check.py`` was never looked at).
+_HIDDEN_WITH_CODE = (".github",)
+
+#: Hidden folders that are not this program's code, each with its reason.
+_HIDDEN_NOT_OURS = {
+    ".git": "git's own store",
+    ".venv": "the environment: installed packages, the core among them",
+    ".claude": "the agent's local settings",
+}
+
+
+def _hidden_folders_with_python(root: Path) -> list:
+    """Every folder under ``root`` whose name starts with a dot and that
+    holds some ``.py`` below it, outside the folders already accounted for.
+    Its own walk, not ``glob``: it has to see what ``glob`` does not."""
+    found = []
+    for here, dirs, files in os.walk(root):
+        here = Path(here)
+        for d in list(dirs):
+            if d in _HIDDEN_NOT_OURS or d == "__pycache__":
+                dirs.remove(d)
+            elif d.startswith(".") and any(
+                    f.endswith(".py") for _, _, fs in os.walk(here / d) for f in fs):
+                found.append((here / d).relative_to(root).as_posix())
+    return found
+
+
 class TestLicenceHeaders:
     def _sources(self):
-        for f in glob.glob(str(_ROOT / "**" / "*.py"), recursive=True):
-            p = Path(f)
-            if {"__pycache__", ".venv", "target"} & set(p.parts):
-                continue
-            yield p
+        tops = [_ROOT] + [_ROOT / h for h in _HIDDEN_WITH_CODE]
+        for top in tops:
+            for f in glob.glob(str(top / "**" / "*.py"), recursive=True):
+                p = Path(f)
+                if {"__pycache__", ".venv", "target"} & set(p.parts):
+                    continue
+                yield p
+
+    def test_every_hidden_folder_with_python_is_declared(self):
+        found = _hidden_folders_with_python(_ROOT)
+        stray = [d for d in found if d not in _HIDDEN_WITH_CODE]
+        assert not stray, (f"hidden folders with .py that the census does not see: {stray}; "
+                           "add them to _HIDDEN_WITH_CODE or _HIDDEN_NOT_OURS with a reason")
+
+    def test_the_hidden_folder_scan_sees_what_glob_does_not(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".tools" / "deep").mkdir(parents=True)
+            (root / ".tools" / "deep" / "x.py").write_text("", encoding="utf-8")
+            (root / ".empty").mkdir()
+            (root / ".git").mkdir()
+            (root / ".git" / "hook.py").write_text("", encoding="utf-8")
+            assert glob.glob(str(root / "**" / "*.py"), recursive=True) == []
+            assert _hidden_folders_with_python(root) == [".tools"]
+
+    def test_the_census_sees_the_hidden_code(self):
+        names = {p.relative_to(_ROOT).as_posix() for p in self._sources()}
+        assert ".github/scripts/wheel_check.py" in names, sorted(names)
 
     def test_every_source_file_has_the_spdx_line_near_the_top(self):
         missing = [str(p.relative_to(_ROOT)) for p in self._sources()
