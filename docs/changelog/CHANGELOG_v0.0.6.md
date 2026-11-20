@@ -36,7 +36,7 @@ Windows, Python del `.venv`.
 
 | Corrida | Resultado |
 |---|---|
-| Suite entera, contra la etiqueta instalada (`shared: ogr_core 0.2.2 … (installed, no git tree)`) **205 de 205**, código 0 |
+| Suite entera, contra la etiqueta instalada (`shared: ogr_core 0.2.2 … (installed, no git tree)`) | **205 de 205**, código 0 |
 
 ### Sin probar
 
