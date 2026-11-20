@@ -10,17 +10,22 @@ pointed at this repository.
     python tests/_runner.py --list     # show the selection, run nothing
 
 Run it with the project's environment (``.venv``), where ``ogr-core`` is
-installed at the version ``pyproject.toml`` pins. Another Python may give
-``ogr_core`` from somewhere else, or nothing: what the system Python gives
-depends on what OGR Slip2D, installed there in editable mode, has checked
-out (its own copy of the core, while its ``main`` carries one; nothing, on
-its branch that adopts ``ogr-core``). This runner refuses anything that is
-not the pinned distribution.
+installed from the tag ``pyproject.toml`` pins, as in CI. Another Python may
+give ``ogr_core`` from somewhere else, at another version, or nothing. This
+runner refuses anything that is not the pinned version.
 
 ``ogr_fem2d`` is this repository's own package and must resolve inside it.
 ``ogr_core`` is shared: it comes from the ``ogr-core`` distribution, pinned in
 ``pyproject.toml``, and the runner names its tree and version on every run
 and refuses any other version.
+
+Against a core that is being changed (a ``X.Y.Z.devN`` of a later release),
+from the core's tree or worktree, without installing anything::
+
+    PYTHONPATH=<OGR-Core tree> .venv/Scripts/python tests/_runner.py --dev-core
+
+Such a run says ``DEV CORE`` before and after its totals, and is not
+evidence for a release of this program.
 """
 from __future__ import annotations
 
@@ -38,7 +43,7 @@ try:
 except ImportError:
     # The runner lives in the core since ogr-core 0.1.0. Without it, either
     # nothing answers for ogr_core in this Python, or what answers is not
-    # that distribution (OGR Slip2D's own copy, say).
+    # that distribution (a copy of the core older than it, say).
     import importlib.util
     _spec = importlib.util.find_spec("ogr_core")
     # ASCII only: this prints before the runner widens the console encoding.

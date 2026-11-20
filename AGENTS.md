@@ -33,13 +33,13 @@ Autor y titular del copyright: Samuel Sáez López (UPCT). Licencia AGPL-3.0-or-
 - **Motor numérico**: Rust + PyO3 + maturin, **aceptado con condición** de que la prueba de concepto
   cumpla sus criterios (`docs/decisiones/ADR-0001-lenguaje-motor.md`). **Cada elemento y cada ley
   constitutiva tiene su implementación de referencia en Python**, que es el oráculo de los tests.
-- **Núcleo**: `ogr_core`, del paquete `ogr-core` (repositorio OGR-Core, etiqueta `v0.2.0`), con la
-  malla y la filtración (`ADR-0002`). El paquete de este programa es `ogr_fem2d`. **El núcleo se
-  cambia solo en OGR-Core**; en desarrollo, el `.venv` lo tiene instalado en editable desde
-  `C:\Samuel\OGR_Suite\Core\OGR-Core`. **OGR Slip2D aún no lo ha adoptado** en su `main`
-  (2026-11-18: sigue en v0.1.471, con su propia copia de `ogr_core` y su paquete `ogr_fem2d`; la
-  adopción, v0.1.473, está en su rama `dev/adoptar-ogr-core`, sin subir). Mientras sea así, este
-  programa **no comparte entorno de Python con Slip2D** y se desarrolla en `OGR-FEM2D/.venv`.
+- **Núcleo**: `ogr_core`, del paquete `ogr-core` (repositorio OGR-Core, etiqueta `v0.2.2` desde la
+  v0.0.4), con la malla y la filtración (`ADR-0002`). El paquete de este programa es `ogr_fem2d`.
+  **El núcleo se cambia solo en OGR-Core** (abajo, «Un núcleo y varios programas»). El `.venv`
+  tiene el núcleo **instalado desde la etiqueta fijada**, como la CI, y no en editable desde
+  `C:\Samuel\OGR_Suite\Core\OGR-Core`: ese árbol sigue al `main` del núcleo. OGR Slip2D adoptó el
+  núcleo en su v0.1.473 (ya no lleva `ogr_core/` ni ningún paquete `ogr_fem2d`), fija su propia
+  etiqueta y tiene su propio `.venv`; los dos programas pueden fijar versiones distintas.
 - **Formato de proyecto**: `.ogr` (JSON), compatible con OGR Slip2D en la parte geométrica. Los
   resultados van aparte en `modelo.h5` con la huella del modelo (`ADR-0003`).
 - **Tests**: el runner de la suite (`ogr_core.testing.runner`), a través de `tests/_runner.py`.
@@ -52,12 +52,46 @@ Autor y titular del copyright: Samuel Sáez López (UPCT). Licencia AGPL-3.0-or-
 .venv/Scripts/python tests/_runner.py -k patch # tests con ese nombre
 ```
 
-**Siempre con el `.venv` del proyecto.** El Python del sistema tiene OGR Slip2D instalado en modo
-editable, y lo que allí responde por `ogr_core` depende de la rama que tenga Slip2D en su carpeta: su
-propia copia, o nada. En los dos casos el runner se niega («WRONG SHARED TREE»). Para instalar algo
-más en el `.venv`, `--no-deps`: con sus dependencias, pip reinstalaría el núcleo desde GitHub encima
-del editable (la línea `shared:` del runner dice de dónde sale). Una ejecución filtrada no es
-evidencia para cerrar una tarea: antes, la suite entera.
+**Siempre con el `.venv` del proyecto.** Otro Python puede no tener el núcleo (el del sistema no lo
+tiene, 2026-11-20) o tener otra versión, y el runner se niega («WRONG SHARED TREE»). La línea
+`shared:` de la cabecera dice qué núcleo se mide, de dónde sale y qué versión es: en una corrida
+normal, `shared: ogr_core 0.2.2 …\.venv\Lib\site-packages\ogr_core (installed, no git tree)`. Para
+instalar algo más en el `.venv`, `--no-deps`: con sus dependencias, pip volvería a resolver el
+núcleo por su cuenta. Una ejecución filtrada no es evidencia para cerrar una tarea: antes, la suite
+entera.
+
+## Un núcleo y varios programas
+
+OGR Core es la biblioteca común de la suite y la usan varios programas a la vez. Desde el lado de
+este programa (las reglas del núcleo, en el `AGENTS.md` de OGR-Core y en su `docs/consumidores.md`):
+
+- **Un solo `main`** y cada cambio en una **rama corta con su PR**. Sin ramas largas.
+- **El código de `ogr_core` solo se cambia en OGR-Core, y aquí no se copia.** Lo que este programa
+  necesite del núcleo se pide a la sesión de OGR-Core, con lo que se encontró y la evidencia; aquí
+  no se rodea.
+- **La fijación se sube a propósito, en un commit suyo**, a una etiqueta (nunca a una rama): el
+  `pyproject.toml`, el entorno y lo que el changelog de esa versión del núcleo pida a los programas.
+  El entorno no se entera solo:
+
+  ```bash
+  .venv/Scripts/python -m pip install --no-deps --force-reinstall "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@vX.Y.Z"
+  ```
+
+  Después, la suite entera: la cabecera nombra la versión nueva.
+- **Cuando se sube la fijación, la fila de este programa en `docs/consumidores.md` de OGR-Core se
+  corrige allí**, no aquí: se le dice al propietario, y lo hace la sesión de OGR-Core.
+- **Un núcleo sin etiquetar se prueba sin instalar nada**, con el árbol o el worktree de OGR-Core
+  por delante del instalado:
+
+  ```bash
+  PYTHONPATH=<árbol o worktree de OGR-Core> .venv/Scripts/python tests/_runner.py --dev-core
+  ```
+
+  Acepta solo una `X.Y.Z.devN` de una versión posterior a la fijada, dice `DEV CORE` antes y
+  después de los totales y **no es evidencia para publicar** este programa. Mientras dura deja
+  `OGR_DEV_CORE=1` en el entorno: un test pregunta con `ogr_core.testing.runner.dev_core_run()` en
+  qué corrida está, y la suite tiene que salir entera en verde también así (la CI de OGR-Core la
+  corre contra el núcleo de cada PR).
 
 ## Las siete reglas (heredadas de OGR Slip2D, sin cambios)
 

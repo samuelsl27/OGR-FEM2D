@@ -113,3 +113,10 @@ Lo que cambia:
   desaparece; aun así este programa se sigue desarrollando en su `.venv`.
 - **El runner compartido mira ahora la regla 5** (lo que un archivo de tests deja cambiado en el
   proceso). Al subir, nombró una fuga que este programa tenía desde la v0.0.1 (changelog v0.0.3).
+
+**Nota (2026-11-20, v0.0.4).** OGR Slip2D fusionó la adopción: su `main` la lleva desde la v0.1.473
+(sin `ogr_core/` ni paquete `ogr_fem2d`) y fija la `v0.2.1` desde su v0.1.474. Lo que arriba depende
+de esa fusión deja de estar pendiente: no hay dos copias ni choque de nombres. Este programa fija
+`v0.2.2` desde su v0.0.4, y cada programa tiene el núcleo instalado desde su etiqueta en su propio
+`.venv`, de modo que los dos pueden fijar versiones distintas (`AGENTS.md`, «Un núcleo y varios
+programas»).

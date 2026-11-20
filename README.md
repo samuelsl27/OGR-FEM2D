@@ -31,7 +31,7 @@ y validado contra soluciones analíticas y casos publicados.
 
 ```bash
 python -m venv .venv
-.venv/Scripts/pip install numpy scipy maturin "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.2.0"
+.venv/Scripts/pip install numpy scipy maturin "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.2.2"
 VIRTUAL_ENV=.venv .venv/Scripts/python -m maturin develop --release --skip-install
 .venv/Scripts/python tests/_runner.py
 ```
@@ -40,12 +40,13 @@ El tercer paso compila el motor en Rust (`rust/`, hace falta `cargo`) y deja el 
 `ogr_fem2d._engine` dentro del árbol, sin reinstalar nada; hay que repetirlo cada vez que cambia
 `rust/`, y un test avisa si el módulo es más viejo que sus fuentes.
 
-El núcleo (`ogr-core`) va fijado a una etiqueta, y el runner de tests se niega a medir contra
-cualquier otra versión. Para trabajar a la vez en el núcleo, se instala en editable desde su
-repositorio (`pip install --no-deps -e ../../Core/OGR-Core`). OGR Slip2D aún lleva su propia copia
-del núcleo en `main` (su adopción de `ogr-core` 0.2.0 está en una rama): hasta que la fusione, los
-dos programas no comparten entorno de Python
-([ADR-0002](docs/decisiones/ADR-0002-nucleo-compartido-ogr-core.md)).
+El núcleo (`ogr-core`) va fijado a una etiqueta e instalado desde ella, y el runner de tests se
+niega a medir contra cualquier otra versión
+([ADR-0002](docs/decisiones/ADR-0002-nucleo-compartido-ogr-core.md)). Para probar este programa
+contra un núcleo que se está cambiando no se instala nada: con su árbol por delante,
+`PYTHONPATH=<árbol de OGR-Core> .venv/Scripts/python tests/_runner.py --dev-core`, una corrida que
+lo dice antes y después de sus totales y que no vale para publicar (`AGENTS.md`, «Un núcleo y
+varios programas»).
 
 ## Contribuir
 
