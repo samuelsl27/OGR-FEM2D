@@ -23,6 +23,10 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       «Lo que se pide a OGR-Core»: entrada, algoritmo con sus fuentes y páginas, salida, medidas de
       calidad, determinismo, los tests que lo demostrarían y el hallazgo de `generate_mesh` como
       nota — Hecho cuando: el escrito está y la propietaria lo ha llevado a la sesión del núcleo.
+      (Escrito el 2026-11-22: `Promts_desarrollo/2026_11_22_peticion_ogr_core_mallador_de_calidad.md`,
+      que vale pegado tal cual, con el sondeo dentro y comprobado. La sesión del núcleo no puede leer
+      `Promts_desarrollo` ni la bibliografía: los tres PDF hay que dárselos aparte. Falta que la
+      propietaria lo lleve.)
 
 ## Lo que no espera al núcleo
 
