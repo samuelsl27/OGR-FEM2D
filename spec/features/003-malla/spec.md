@@ -76,7 +76,7 @@ condicionamiento; el elemento curvo, con el criterio del jacobiano de Zienkiewic
   ellos por la graduación propia del refinado (tamaño local de rasgo, Shewchuk 2002a, §3.2, pág. 11),
   con una cota de tamaño máximo opcional (D5). La garantía de graduación (teorema 8, pág. 23) exige
   **B > √2 estrictamente**: con el B = √2 por defecto no está garantizada y se **mide**; el test
-  del teorema 8 se hace con B = 1.93. *Enmendado el 2026-11-22: decía que la graduación tenía fuente
+  del teorema 8 se hace con B = 1/(2 sen 15°) = 1.93185…. *Enmendado el 2026-11-22: decía que la graduación tenía fuente
   con el B por defecto, y no es así (`plan.md`, «Anomalías»).*
 - RF-6: **Malla uniforme**: una cota de tamaño constante, dada directamente o a partir de un número
   aproximado de elementos (D5).

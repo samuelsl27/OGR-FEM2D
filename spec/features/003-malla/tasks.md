@@ -85,7 +85,7 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       semillas y vacíos, y la proyección de D13. **Hallazgo: D13 puede invertir elementos; D14
       abierta en la spec.** Falta el mallador de dos pasos, con el núcleo.)
 - [ ] T13. Las garantías vistas desde FEM2D y el resumen de calidad: cota B (teorema 4), cota de
-      tamaño, Delaunay final, teorema 8 con B = 1.93, teorema 12 y terminación con un ángulo de
+      tamaño, Delaunay final, teorema 8 con B = 1/(2 sen 15°), teorema 12 y terminación con un ángulo de
       entrada de 5°; medidas de calidad (1, 0, < 0, invariantes) — RF-4, RF-9, RF-12 — Hecho cuando:
       en verde y con dientes.
 - [ ] T14. La fijación sube a la versión del núcleo que trae la petición, en un commit propio — Hecho

@@ -288,6 +288,23 @@ cadena cerrada son piezas del PSLG y tiene el signo de área del anillo), y el b
 que el punto de prueba no veía por estar en el lado que la regla de cruces ya cuenta (puntos en los
 cuatro lados). Al final, 13 de 13.
 
+## Lo que corrigió el plan de la sesión de OGR-Core (2026-11-22)
+
+La sesión del núcleo leyó las fuentes enteras para su plan del mallador y corrigió dos cosas de los
+documentos de esta spec; se aplican aquí:
+
+- **Las constantes de normalización de las medidas de calidad tienen fuente**: la tabla 6 (pág. 53)
+  de Shewchuk (2002b) imprime 4(12 + 7√3)^(1/3)/3 y 4√3. El plan las daba como aritmética propia.
+  Comprobado que coinciden con las que se habían calculado (elevando al cubo).
+- **El B del ejemplo del teorema 8 es 1/(2 sen 15°) = 1.93185…**, no 1.93 (con 1.93 justo, D_S da
+  9.03 y no 9.01). Cambiado en la spec, el plan y la T13.
+
+Sus otras precisiones (el lema 1 no dice por sí solo que la malla final sea de Delaunay; las capas
+concéntricas valen para todo subsegmento con un extremo compartido y hacen que la malla dependa de la
+unidad de longitud; el teorema 8 pide también α_min > 60°) son de su implementación y no cambian lo
+que esta spec afirma. Las puntualizaciones de FEM2D a ese plan, en
+`Promts_desarrollo/2026_11_22_respuesta_al_plan_de_ogr_core.md`.
+
 ## Pruebas
 
 | Corrida | Resultado |
