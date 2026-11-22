@@ -118,11 +118,22 @@ suite del 2026-11-22, de `C:\Samuel\OGR_Suite` a `C:\Desarrollo\OGR_Suite`.
 
 - **Los changelogs v0.0.3 y v0.0.4 y el `ADR-0002` también nombran `C:\Samuel\OGR_Suite\…`**, pero
   cuentan lo que era verdad entonces y no se tocan.
-- **`.claude/settings.local.json.example` sigue con las rutas de antes** (`C:/Samuel/OGR_Suite/…`
-  en los directorios adicionales y en los permisos de edición). Se reportó y, con el OK de la
-  propietaria, se corrigió a `C:/Desarrollo/OGR_Suite/…`: ahora coincide con el
-  `settings.local.json` de este PC. Ahí las rutas siguen siendo absolutas, porque el propio
-  ejemplo lo pide (las reglas de permisos las necesitan), y quien lo copie las ajusta a su máquina.
+- **`.claude/settings.local.json.example` lleva `C:/Samuel/OGR_Suite` a propósito, y se queda.**
+  Se tomó por otro fleco de la mudanza, se reportó y, con el OK de la propietaria, se cambió a
+  `C:/Desarrollo/OGR_Suite` (`64e439e`). Eso rompía la sustitución del script de la suite:
+  `OGR_Suite/_herramientas/preparar_entorno.py` busca en cada ejemplo el texto exacto
+  `C:/Samuel/OGR_Suite` (y su forma `//c/Samuel/OGR_Suite` en las reglas *deny*) y lo cambia por
+  la raíz real al crear el `settings.local.json` de un PC nuevo. Con otra raíz, en otro PC el
+  script no encuentra su texto y crea el archivo con rutas que allí no existen, sin avisar, y las
+  reglas que impiden editar OGR-Core y OGR Slip2D no protegerían nada. Los ejemplos de OGR-Core,
+  OGR Slip2D, la web y la plantilla llevan la misma raíz.
+- **Se devolvió en un commit nuevo**, sin reescribir la historia: el archivo quedó idéntico al de
+  `980a38b` (mismo blob, `576024a`). Después, en su lista `"$comment"` (que admite texto sin dejar
+  de ser JSON válido), se añadió que esa raíz la sustituye `preparar_entorno.py` y que no se
+  cambia aquí. El comentario no escribe la raíz literal: el script reemplaza en todo el texto.
+  Se comprobó que el ejemplo es JSON válido y que la sustitución del script, aplicada con una raíz
+  ficticia, cambia las seis rutas y no deja ninguna `Samuel`. El `settings.local.json` de este PC
+  no se tocó: ya tiene las rutas de aquí.
 
 ### Pruebas
 

@@ -10,18 +10,22 @@
     "cases (AGENTS.md, 'Antes de nada'); it is never published.",
     "OGR-Core is changed only from its own window; OGR Slip2D is read to",
     "reuse its code and is never touched from here.",
-    "Use absolute paths. In deny rules, //c/... is C:\\... on Windows."
+    "Use absolute paths. In deny rules, //c/... is C:\\... on Windows.",
+    "The suite root written below (also in its //c/... form in the deny",
+    "rules) is the exact text that OGR_Suite/_herramientas/preparar_entorno.py",
+    "replaces with the real root when it creates settings.local.json on a",
+    "new PC. Do not change it here: the script would no longer find it."
   ],
   "permissions": {
     "additionalDirectories": [
-      "C:/Desarrollo/OGR_Suite/FEM2D/Referencias",
-      "C:/Desarrollo/OGR_Suite/FEM2D/Promts_desarrollo",
-      "C:/Desarrollo/OGR_Suite/Core/OGR-Core",
-      "C:/Desarrollo/OGR_Suite/Slip2D/OGR-Slip2D"
+      "C:/Samuel/OGR_Suite/FEM2D/Referencias",
+      "C:/Samuel/OGR_Suite/FEM2D/Promts_desarrollo",
+      "C:/Samuel/OGR_Suite/Core/OGR-Core",
+      "C:/Samuel/OGR_Suite/Slip2D/OGR-Slip2D"
     ],
     "deny": [
-      "Edit(//c/Desarrollo/OGR_Suite/Core/OGR-Core/**)",
-      "Edit(//c/Desarrollo/OGR_Suite/Slip2D/OGR-Slip2D/**)"
+      "Edit(//c/Samuel/OGR_Suite/Core/OGR-Core/**)",
+      "Edit(//c/Samuel/OGR_Suite/Slip2D/OGR-Slip2D/**)"
     ]
   }
 }
