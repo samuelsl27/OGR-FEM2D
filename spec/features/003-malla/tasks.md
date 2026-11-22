@@ -30,10 +30,13 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
 
 ## Lo que no espera al núcleo
 
-- [ ] T3. `ogr_fem2d/mesh/geometry.py` y `docs/malla/entrada.md`: la entrada (regiones, segmentos con
+- [x] T3. `ogr_fem2d/mesh/geometry.py` y `docs/malla/entrada.md`: la entrada (regiones, segmentos con
       arco opcional, parámetros) y su validación — RF-1 — Hecho cuando: cada regla tiene su test con
       una entrada que la incumple y el error dice el sitio. La versión pasa a 0.0.8 y empieza
-      `CHANGELOG_v0.0.8.md`.
+      `CHANGELOG_v0.0.8.md`. (Hecho el 2026-11-22: 25 reglas, la tabla de casos las cubre
+      exactamente; 19 tests en `test_mesh_input_v008.py`; 36 mutaciones, dos sobrevivían al
+      principio: una era una comprobación redundante, que se quitó, y la otra llevó a
+      `test_a_region_given_twice`; al final, 35 de 35 cazadas. Suite entera 224 de 224.)
 - [ ] T4. `discretize.py`: paso 1, con número de divisiones repartido o forzado por segmento y los
       arcos con sus nudos sobre la circunferencia — RF-2, D5, D10 — Hecho cuando: los nudos por
       segmento, los extremos compartidos y \|x − c\| = R a redondeo tienen su test.
