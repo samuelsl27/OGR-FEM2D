@@ -125,6 +125,42 @@ mallas T3 que ya existían: el rectángulo estructurado de la spec 002, el cuart
 de la cuerda en vez del arco, arco mayor, punto fuera del centro en un lado recto, nudos sin
 compartir, orden de los intermedios y de las esquinas, lado con sentido): 8 de 8 cazadas.
 
+## T6 — las comprobaciones de la malla (2026-11-22)
+
+`ogr_fem2d/mesh/checks.py`: el jacobiano de cada elemento (RF-13) y la topología (RF-14): lados de
+tres elementos y nudos colgantes, que impiden entregar la malla; piezas sin lados comunes y nudos que
+unen abanicos de elementos (dos regiones unidas por un nudo), que son avisos; y la relación de Euler
+V − E + T = C − H, que da los huecos del dominio.
+
+- **La «mitad central» de Zienkiewicz y Taylor (2000, §9.2, fig. 9.6) es exactamente det J > 0 en las
+  esquinas**: con el nudo intermedio de un lado recto a la fracción t, det J vale 2(4t − 1) y 2(3 − 4t)
+  en las dos esquinas del triángulo de prueba (calculado a mano desde las funciones de forma de la
+  pág. 182). El test acepta t = 0.26 y 0.74 y rechaza 0.25, 0.2, 0.75 y 0.8.
+- **Anomalía, error propio del plan, corregido en esta tarea**: el plan decía que el jacobiano se
+  comprobaba «en los seis nudos y en los puntos de integración» y que una garantía en todo el elemento
+  no se afirmaba. **No basta**: una búsqueda al azar encontró en 148 intentos un T6 con det J > 0 en
+  sus seis nudos (mínimo 0.167) y −0.055 en un punto interior de la regla de 7 puntos. En axisimetría
+  se habría rechazado; en deformación plana no, porque allí los puntos de integración del T6 son sus
+  nudos intermedios, y el motor lo habría calculado con determinantes positivos en todos los puntos
+  que mira, con el elemento plegado. RF-13 de la spec pide el signo en todo el elemento. El arreglo
+  no necesita fuente nueva: det J es un polinomio de grado 2, la interpolación cuadrática por los
+  seis nudos lo reproduce exacto, y su mínimo sobre el triángulo está en un vértice, en el extremo de
+  la parábola de un lado o en el punto estacionario interior (un sistema lineal de 2 × 2). Se hizo
+  sin preguntar porque la propietaria pidió seguir hasta el final y el cambio solo endurece la
+  comprobación hacia lo que pide la spec; queda enmendada la fila del plan. **Para revisar.**
+- El mínimo exacto se comprueba contra un barrido de det J con el jacobiano del motor en 45 451
+  puntos del triángulo, en el elemento plegado, en uno con el mínimo en el interior (encontrado al
+  azar), en dos rectos y en cinco del cuarto de corona curvo.
+
+**Los tests**: `tests/test_mesh_checks_v008.py`, 13. **Dientes**: 17 mutaciones. Sobrevivían tres:
+
+- la lista de lados de contorno no la miraba ningún test: se añadió la comparación con el perímetro
+  del rectángulo, sacado de la geometría;
+- quitar el punto estacionario interior o equivocar su fórmula: ningún caso tenía el mínimo dentro;
+  se añadió uno.
+
+Al final, 17 de 17.
+
 ## Pruebas
 
 | Corrida | Resultado |
@@ -132,3 +168,4 @@ compartir, orden de los intermedios y de las esquinas, lado con sentido): 8 de 8
 | T3, suite entera contra la etiqueta instalada (`shared: ogr_core 0.2.3 … (installed, no git tree)`) | **224 de 224** (205 de antes y 19 nuevos), código 0, ninguna fuga |
 | T4, la misma | **239 de 239** (15 nuevos), código 0, ninguna fuga |
 | T5, la misma | **245 de 245** (6 nuevos), código 0, ninguna fuga |
+| T6, la misma | **258 de 258** (13 nuevos), código 0, ninguna fuga |

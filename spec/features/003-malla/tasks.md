@@ -47,10 +47,13 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       ± 2/3·cuerda·flecha, probados sobre mallas T3 que ya existen. (Hecho el 2026-11-22: 6 tests en
       `test_mesh_quadratic_v008.py`, sobre el rectángulo de la spec 002, el cuarto de corona de la
       001 y el generador del núcleo; 8 mutaciones, 8 cazadas.)
-- [ ] T6. `checks.py`: jacobiano del T6 en los seis nudos y en los puntos de integración (Z&T §9.2,
+- [x] T6. `checks.py`: jacobiano del T6 en los seis nudos y en los puntos de integración (Z&T §9.2,
       §9.5), conformidad, Euler (V − E + T = 1 − H), conexión y regiones unidas por un nudo — RF-13,
       RF-14 — Hecho cuando: un nudo intermedio fuera de la mitad central se rechaza con su motivo y
-      cada comprobación caza su malla rota a propósito.
+      cada comprobación caza su malla rota a propósito. (Hecho el 2026-11-22: 13 tests en
+      `test_mesh_checks_v008.py`; 17 mutaciones, 17 cazadas al final. **Anomalía corregida, para
+      revisar**: nudos y puntos de integración no bastan; se halla el mínimo exacto de det J en
+      todo el elemento, y se enmendó el plan.)
 - [ ] T7. Parcela sobre mallas generadas (Z&T §9.7, teorema 3): campo lineal exacto con T3 y T6 de
       lados curvos, en deformación plana y en axisimetría, a través del motor — Hecho cuando: en
       verde y con dientes.
