@@ -9,6 +9,9 @@ add more on a segment when it must (Shewchuk 2002a, §3.1).
 How many divisions a segment gets:
 
 * a forced number (``SegmentSpec.divisions``) is kept (D10);
+* an arc gets at least ceil(theta / 60 degrees) divisions in every case, so
+  that no piece of it turns more than 60 degrees (D14; Pav and Walkington,
+  def. 4); a forced number below that is refused by the input's validation;
 * graded mesh (D5): ``boundary_nodes`` is the total number of divisions of
   the segments that take it (the excavation, or the outer boundary when
   there is no excavation; on a closed boundary it is its number of nodes).
@@ -72,14 +75,17 @@ def segment_length(m: g.MeshInput, s: g.Segment) -> float:
     return geo.r * geo.theta
 
 
-def share_out(total: int, lengths: list[float]) -> list[int]:
-    """``total`` divisions in proportion to ``lengths``, at least one each,
-    adding up exactly (the largest remainder rule; ties to the first)."""
-    if total < len(lengths):
-        raise ValueError(f"{total} divisions for {len(lengths)} segments")
+def share_out(total: int, lengths: list[float], minimums: list[int] | None = None
+              ) -> list[int]:
+    """``total`` divisions in proportion to ``lengths``, at least
+    ``minimums`` each (one by default), adding up exactly (the largest
+    remainder rule; ties to the first)."""
+    minimums = minimums or [1] * len(lengths)
+    if total < sum(minimums):
+        raise ValueError(f"{total} divisions for segments that need {sum(minimums)}")
     whole = sum(lengths)
     ideal = [total * length / whole for length in lengths]
-    counts = [max(1, math.floor(x)) for x in ideal]
+    counts = [max(least, math.floor(x)) for least, x in zip(minimums, ideal)]
     left = total - sum(counts)
     if left > 0:
         order = sorted(range(len(ideal)), key=lambda k: (-(ideal[k] - counts[k]), k))
@@ -88,7 +94,7 @@ def share_out(total: int, lengths: list[float]) -> list[int]:
     while left < 0:
         # the minimum of one pushed the sum over: take back from the largest
         # excess over the ideal share, among those above one
-        k = max((k for k in range(len(counts)) if counts[k] > 1),
+        k = max((k for k in range(len(counts)) if counts[k] > minimums[k]),
                 key=lambda k: (counts[k] - ideal[k], -k))
         counts[k] -= 1
         left += 1
@@ -114,18 +120,21 @@ def divisions(m: g.MeshInput) -> tuple[tuple[g.Segment, int], ...]:
         targets = g.graded_targets(segs)
         if targets:
             shares = share_out(st.boundary_nodes,
-                               [segment_length(m, s) for s in targets])
+                               [segment_length(m, s) for s in targets],
+                               [g.minimum_divisions(m, s) for s in targets])
             ids = {id(s): k for k, s in enumerate(targets)}
             for k, s in enumerate(segs):
                 if id(s) in ids:
                     count[k] = shares[ids[id(s)]]
         for k, s in enumerate(segs):
-            count.setdefault(k, s.divisions if s.divisions is not None else 1)
+            count.setdefault(k, s.divisions if s.divisions is not None
+                             else g.minimum_divisions(m, s))
     else:
         h = uniform_size(m)
         for k, s in enumerate(segs):
             count[k] = (s.divisions if s.divisions is not None
-                        else max(1, math.ceil(segment_length(m, s) / h)))
+                        else max(g.minimum_divisions(m, s),
+                                 math.ceil(segment_length(m, s) / h)))
     return tuple((s, count[k]) for k, s in enumerate(segs))
 
 

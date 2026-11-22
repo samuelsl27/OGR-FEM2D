@@ -62,6 +62,14 @@ DEFAULT_QUALITY_BOUND = math.sqrt(2.0)
 #: the diagonal of the bounding box of the points.
 ARC_TOL = 1e-9
 
+#: The most a piece of an arc may turn (spec 003, D14): Delaunay refinement
+#: with curved input assumes that the tangent of every curve turns at most
+#: pi/3, "achieved by splitting curves in a preprocessing step" (Pav and
+#: Walkington, Delaunay refinement by corner lopping, def. 4, p. 4, after
+#: Boivin and Ollivier-Gooch 2002). An arc is therefore divided into at least
+#: ceil(theta / (pi/3)) pieces, theta the angle it subtends.
+MAX_ARC_TURN = math.pi / 3.0
+
 Point = tuple[float, float]
 
 
@@ -409,6 +417,24 @@ def segments(m: MeshInput) -> tuple[Segment, ...]:
     return tuple(out)
 
 
+def arc_angle(m: MeshInput, s) -> float:
+    """The angle an arc subtends (0 for a straight segment); ``s`` is a
+    Segment or a SegmentSpec."""
+    if s.arc is None:
+        return 0.0
+    return _ArcGeo(m.points[s.a], m.points[s.b], s.arc.centre).theta
+
+
+def minimum_divisions(m: MeshInput, s) -> int:
+    """The fewest divisions of a segment: one, or, for an arc, enough for
+    every piece to turn at most MAX_ARC_TURN (D14). An arc of exactly 60
+    degrees is one piece (the rounding of theta is not allowed to add one)."""
+    theta = arc_angle(m, s)
+    if theta == 0.0:
+        return 1
+    return max(1, math.ceil(theta / MAX_ARC_TURN - 1e-12))
+
+
 def graded_targets(segs) -> tuple[Segment, ...]:
     """The segments the nodes of a graded mesh are spread over (spec 003,
     D5): the excavation segments, or the outer boundary when there is no
@@ -585,6 +611,12 @@ def _segment_problems(m: MeshInput, add, uses: dict) -> bool:
                     "the centre is on the chord: a half circle or more must be split by a "
                     "point (spec 003, D4)")
                 ok = False
+            elif isinstance(s.divisions, int) and not isinstance(s.divisions, bool)                     and 1 <= s.divisions < minimum_divisions(m, s):
+                need = minimum_divisions(m, s)
+                add("divisions", where,
+                    f"{s.divisions} divisions for an arc of {math.degrees(arc_angle(m, s)):.4g} "
+                    f"degrees: it needs at least {need}, so that no piece turns more than 60 "
+                    "degrees (spec 003, D14; Pav and Walkington, def. 4)")
     return ok
 
 
@@ -716,10 +748,11 @@ def problems(m: MeshInput) -> list[Problem]:
             add("graded_nodes", "settings",
                 f"boundary_nodes {nodes!r}: a graded mesh needs the number of nodes on "
                 "its excavations (or on its outer boundary), an integer >= 1")
-        elif nodes < len(targets):
+        elif nodes < sum(minimum_divisions(m, s) for s in targets):
+            need = sum(minimum_divisions(m, s) for s in targets)
             add("graded_nodes", "settings",
-                f"{nodes} nodes for {len(targets)} segments: each needs at least one "
-                "division")
+                f"{nodes} nodes for {len(targets)} segments that need at least {need} "
+                "divisions (one each, and an arc enough pieces of at most 60 degrees, D14)")
     if segments_ok:
         _geometry_problems(m, add, uses)
     return out

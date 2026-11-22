@@ -152,7 +152,10 @@ class TestUniformSize:
             got = {(s.a, s.b): n for s, n in d.divisions(m)}
             for key, length in lengths.items():
                 n = got[key]
-                assert length / n <= h and (n == 1 or length / (n - 1) > h), (key, n)
+                # the fewest that keep h, unless an arc needs more pieces of at
+                # most 60 degrees (D14): a quarter circle, two
+                least = 2 if key == (4, 7) else 1
+                assert length / n <= h and (n == least or length / (n - 1) > h), (key, n)
         assert {(s.a, s.b): n for s, n in d.divisions(slope)}[(0, 1)] == 14   # 40/3 = 13.3
 
     def test_an_arc_is_measured_along_the_arc(self):

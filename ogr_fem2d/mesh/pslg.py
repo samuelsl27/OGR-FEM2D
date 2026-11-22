@@ -27,6 +27,14 @@ each such vertex radially onto its circle; the jacobian of the elements that
 use it is then checked (``checks``, RF-13), and the mesh says how many moved
 (rule 12).
 
+D13 is replaced by D14 (2026-11-22): moving those vertices can turn over the
+thin elements against the chord when its sagitta is near the element size
+(found in T12, kept in tests/test_mesh_pslg_v008.py). The core is asked to
+split a piece of an arc at the middle of the arc instead, during the
+refinement (Pav and Walkington, after Boivin and Ollivier-Gooch 2002), so
+that no vertex is left on a chord. ``onto_arcs`` stays as the record of the
+finding, and is not part of the mesher.
+
 Author: Samuel Sáez López (UPCT)
 """
 from __future__ import annotations

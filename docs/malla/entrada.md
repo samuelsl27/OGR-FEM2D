@@ -62,10 +62,11 @@ más en un segmento cuando lo necesita (RF-3, D10).
 
 | Caso | Divisiones de un segmento |
 |---|---|
-| Divisiones forzadas (`SegmentSpec.divisions`) | esas (D10) |
-| Malla graduada, segmentos de excavación (o del contorno exterior si no hay excavación) | `boundary_nodes` repartidas en proporción a la longitud (la del arco en los arcos): cada uno recibe la parte entera de lo suyo, al menos una, y las que quedan van a los mayores restos, con los empates al primero; la suma es exacta (D5) |
-| Malla graduada, los demás segmentos | una: entran con sus extremos y el refinado gradúa |
-| Malla uniforme | ⌈L/h⌉, la menor con la que ningún trozo pasa de h; con `elements` = N, h² = 4A/(√3 N), el área A del dominio cubierta por N triángulos equiláteros (D5) |
+| Arco, en todos los casos | al menos ⌈θ/60°⌉, para que ningún tramo gire más de 60° (D14; Pav y Walkington, def. 4, pág. 4); un arco de 60° justos es un tramo aunque sus coordenadas vengan redondeadas |
+| Divisiones forzadas (`SegmentSpec.divisions`) | esas (D10), si no bajan del mínimo del arco |
+| Malla graduada, segmentos de excavación (o del contorno exterior si no hay excavación) | `boundary_nodes` repartidas en proporción a la longitud (la del arco en los arcos): cada uno recibe la parte entera de lo suyo, al menos su mínimo, y las que quedan van a los mayores restos, con los empates al primero; la suma es exacta (D5) |
+| Malla graduada, los demás segmentos | su mínimo (una en un segmento recto): entran con sus extremos y el refinado gradúa |
+| Malla uniforme | ⌈L/h⌉ (o el mínimo del arco, si es mayor), la menor con la que ningún trozo pasa de h; con `elements` = N, h² = 4A/(√3 N), el área A del dominio cubierta por N triángulos equiláteros (D5) |
 
 Los nudos de un segmento recto están a distancias iguales; los de un arco, a ángulos iguales del
 arco menor, sobre la circunferencia. Los extremos son los puntos de la entrada, compartidos con los
@@ -114,7 +115,7 @@ no se corten.
 | `shared_edge` | un segmento en más de dos anillos, o en dos que lo recorren en el mismo sentido | dos regiones que se tocan lo recorren en sentidos opuestos; en el mismo, se solapan |
 | `unknown_segment` | atributos de un par de puntos que no es lado de ningún anillo | — |
 | `segment_twice` | atributos del mismo segmento dados dos veces | ¿cuál vale? |
-| `divisions` | un número de divisiones que no es un entero ≥ 1 | — |
+| `divisions` | un número de divisiones que no es un entero ≥ 1, o que en un arco no llega a ⌈θ/60°⌉ | D14: ningún tramo de arco gira más de 60° (Pav y Walkington, def. 4) |
 | `arc` | un centro no finito, puntos a distinta distancia del centro, o el centro sobre la cuerda (medio círculo o más) | el arco es el menor; uno de 180° o más se parte con un punto (D4) |
 | `orientation` | un contorno que no va en sentido antihorario o un hueco que no va en sentido horario (por el área exacta, arcos incluidos) | el convenio de `ogr_core`; sin él no se sabe de qué lado está la región |
 | `crossing` | dos segmentos rectos que se cortan, se solapan, o un punto de uno en el interior de otro (una unión en T) | Shewchuk (2002a), §1 |
@@ -125,7 +126,7 @@ no se corten.
 | `element_kind` | elementos que no son de 3 ni de 6 nudos | los del motor |
 | `mesh_kind` | un tipo de malla que no es graduada ni uniforme | — |
 | `quality_bound` | B < √2 o no finita | sin garantía de que el refinado termine (RF-9) |
-| `graded_nodes` | graduada sin `boundary_nodes`, con menos nudos que segmentos que los reciben, o con `boundary_nodes` cuando todos tienen sus divisiones forzadas; uniforme con `boundary_nodes` | cada segmento necesita al menos una división; un valor que no hace nada se rechaza (regla 7) |
+| `graded_nodes` | graduada sin `boundary_nodes`, con menos nudos que la suma de los mínimos de los segmentos que los reciben, o con `boundary_nodes` cuando todos tienen sus divisiones forzadas; uniforme con `boundary_nodes` | cada segmento necesita al menos una división; un valor que no hace nada se rechaza (regla 7) |
 | `max_size` | una cota que no es una longitud > 0, o una cota máxima en una malla uniforme | regla 7 |
 | `uniform_size` | uniforme sin `size` ni `elements`, con los dos, o con un valor no válido; graduada con alguno de ellos | regla 7 |
 | `window` | una ventana de menos de tres puntos, sin área, que se corta a sí misma o con un tamaño no válido | — |

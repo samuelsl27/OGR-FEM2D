@@ -72,6 +72,16 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       2026-11-22: las dos cosas, a 10⁻¹⁴ y a 10⁻⁶; 5 tests en `test_kirsch_closed_v008.py`; 8
       mutaciones, 8 cazadas.)
 
+- [x] T4b. **D14 en FEM2D**: cada arco, en tramos que giran como mucho 60° (Pav y Walkington, def. 4):
+      mínimo de ⌈θ/60°⌉ divisiones en todos los modos, divisiones forzadas por debajo rechazadas,
+      `boundary_nodes` al menos la suma de los mínimos — Hecho cuando: cada tramo de arco gira ≤ 60° y
+      las dos reglas cazan su entrada mala. (Hecho el 2026-11-22: 6 tests en
+      `test_mesh_arc_pieces_v008.py`; 8 mutaciones, 8 cazadas.)
+- [ ] T2b. **La petición de D14 al núcleo**: partir los tramos de arco por su punto medio durante el
+      refinamiento — Hecho cuando: el escrito está en `Promts_desarrollo/` y la propietaria lo ha
+      llevado. (Escrito el 2026-11-22: `2026_11_22_peticion_ogr_core_contornos_curvos.md`; falta
+      llevarlo.)
+
 ## Con el generador del núcleo (`--dev-core` hasta que esté etiquetado)
 
 - [ ] T11. `sizing.py`: cotas uniforme (h o N), graduada (cota máxima opcional) y de ventanas y
@@ -79,7 +89,9 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       cada opción mueve la malla (regla 7). (2026-11-22, parte hecha: `sizing.py` y sus tests como
       función; falta comprobarla sobre la malla, con el núcleo.)
 - [ ] T12. `mesher.py`: los dos pasos de principio a fin; los vértices añadidos sobre cuerdas llevados
-      al arco (D13); las notas con cada valor por defecto (regla 12); determinismo — RF-3, RF-11,
+      al arco (D13, sustituida por D14: el núcleo los pone ya sobre el arco; la red de seguridad (a),
+      volver a mallar con el doble de divisiones en los arcos de elementos rechazados, con tope); las
+      notas con cada valor por defecto (regla 12); determinismo — RF-3, RF-11,
       RF-15 — Hecho cuando: cada segmento es unión de lados, D13 comprobado con el jacobiano, y dos
       mallados iguales bit a bit. (2026-11-22, parte hecha: `pslg.py`, el PSLG para el núcleo con
       semillas y vacíos, y la proyección de D13. **Hallazgo: D13 puede invertir elementos; D14

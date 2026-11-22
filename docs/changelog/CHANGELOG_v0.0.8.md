@@ -305,6 +305,45 @@ unidad de longitud; el teorema 8 pide también α_min > 60°) son de su implemen
 que esta spec afirma. Las puntualizaciones de FEM2D a ese plan, en
 `Promts_desarrollo/2026_11_22_respuesta_al_plan_de_ogr_core.md`.
 
+## D14 decidida y T4b: los arcos, en tramos de 60° como mucho (2026-11-22)
+
+**Lo que se buscó.** A petición de la propietaria se buscó en la literatura cómo se trata un contorno
+curvo en el refinado de Delaunay. Tres familias:
+
+- **Refinar sobre la curva**: Pav y Walkington («Delaunay refinement by corner lopping», Meshing
+  Roundtable, hacia 2005; leído §1–3), siguiendo a Boivin y Ollivier-Gooch (2002; de pago, no
+  conseguido). La curva se parte por un punto de la curva (en un arco, su punto medio), la invasión se
+  mide con el círculo de la cuerda y cada curva se trocea antes en piezas cuya tangente gira como mucho
+  π/3; la terminación la prueban con «corner lopping», no con capas concéntricas.
+- **Curvar después y arreglar el interior** (las mallas de orden alto: Sherwin y Peiró 2002, Persson y
+  Peraire, Toulorge et al. 2013): iterativo, sin garantía general. Leído solo a través de quien los cita.
+- **Mallado curvo con calidad garantizada** (Mandad y Campen 2021): solo el resumen; desproporcionado
+  para T6 en 2D.
+
+**La decisión (D14), de la propietaria**: refinar sobre la curva, pedido al núcleo
+(`Promts_desarrollo/2026_11_22_peticion_ogr_core_contornos_curvos.md`), con la red de seguridad de
+volver a mallar con más divisiones si RF-13 rechaza la malla. D13 queda sustituida. Las dos copias de
+Pav y Walkington y de Miller, Pav y Walkington (2005), en la bibliografía.
+
+**T4b**: `geometry.minimum_divisions`, ⌈θ/60°⌉ para un arco (Pav y Walkington, def. 4, pág. 4), en
+todos los modos de `discretize` (la graduada los reparte con `share_out` respetando mínimos); unas
+divisiones forzadas por debajo se rechazan (`divisions`) y `boundary_nodes` tiene que llegar a la suma
+de los mínimos (`graded_nodes`). Un arco de 60° justos es un tramo aunque sus coordenadas vengan
+redondeadas (con (0.5, 0.8660254037845), θ sale 1.00000000000003 × π/3: sin el margen se partiría en
+dos). Enmienda de D3 y de RF-2 en la spec.
+
+- Siete tests de antes se cayeron, todos por la regla nueva y como se esperaba: datos con menos nudos
+  que la suma de mínimos (el cuadrado mordido por un arco de 127°, el gajo de 179°, el arco del eje),
+  `boundary_nodes = 4` en el túnel (ahora hacen falta 8), y «la menor cantidad de divisiones», que
+  ahora tiene el suelo de 60°. Se ajustaron los datos y la expectativa, no el código.
+- Las mutaciones de la T4 se volvieron a pasar: cinco «sobrevivían» porque su texto ya no existía en
+  el código cambiado; rehechas sobre el código nuevo, 18 de 18. Las de la T3, 35 de 35.
+
+**Los tests**: `tests/test_mesh_arc_pieces_v008.py`, 6 (el giro de cada tramo medido desde el centro,
+no con la función del código). **Dientes**: 8 mutaciones (giro máximo de 90°, sin margen de redondeo,
+forzadas por debajo aceptadas, suma de mínimos olvidada, reparto sin mínimos, segmentos que no reciben
+nudos con una sola división, uniforme sin mínimo, devolver divisiones por debajo del mínimo): 8 de 8.
+
 ## Pruebas
 
 | Corrida | Resultado |
@@ -318,3 +357,4 @@ que esta spec afirma. Las puntualizaciones de FEM2D a ese plan, en
 | T8, la misma | **274 de 274** (8 nuevos), código 0, ninguna fuga |
 | T10, la misma | **279 de 279** (5 nuevos), código 0, ninguna fuga |
 | T11, T12 y T15 (parte sin el núcleo), la misma | **287 de 287** (8 nuevos), código 0, ninguna fuga |
+| T4b (D14), la misma | **293 de 293** (6 nuevos), código 0, ninguna fuga |
