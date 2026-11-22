@@ -54,9 +54,10 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       `test_mesh_checks_v008.py`; 17 mutaciones, 17 cazadas al final. **Anomalía corregida, para
       revisar**: nudos y puntos de integración no bastan; se halla el mínimo exacto de det J en
       todo el elemento, y se enmendó el plan.)
-- [ ] T7. Parcela sobre mallas generadas (Z&T §9.7, teorema 3): campo lineal exacto con T3 y T6 de
+- [x] T7. Parcela sobre mallas generadas (Z&T §9.7, teorema 3): campo lineal exacto con T3 y T6 de
       lados curvos, en deformación plana y en axisimetría, a través del motor — Hecho cuando: en
-      verde y con dientes.
+      verde y con dientes. (Hecho el 2026-11-22: 3 tests en `test_mesh_patch_v008.py`; 3 mutaciones
+      de `quadratic.py` contra ellos, 3 cazadas.)
 - [ ] T8. `radial.py`: el anillo completo — RF-8, D8 — Hecho cuando: los radios siguen la
       progresión y el anillo a 100 m da σθ(a) y ur(a) a menos del 0.5 % de `lame_fixed_outer`.
 - [ ] T9. Salida para el motor: `EngineModel` (nudos, elementos, material por elemento) y el mapa

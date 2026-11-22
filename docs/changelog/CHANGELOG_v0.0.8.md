@@ -161,6 +161,22 @@ V − E + T = C − H, que da los huecos del dominio.
 
 Al final, 17 de 17.
 
+## T7 — la prueba de la parcela con mallas generadas (2026-11-22)
+
+`tests/test_mesh_patch_v008.py`: con el desplazamiento de un campo lineal impuesto en los nudos del
+contorno (esquinas y nudos intermedios), el motor da ese campo en todos los nudos interiores a 10⁻¹⁰ y
+la tensión de Hooke, constante, en todos los puntos de integración a 10⁻⁹ (Zienkiewicz y Taylor 2000,
+§9.7, teorema 3, y §5.2.2 en axisimetría). En deformación plana, con T3 del generador del núcleo en el
+cuadrado con el hueco y con esos T6 curvos sobre el círculo; en axisimetría, con el cuarto de corona
+del generador, T3 y T6 curvos, con nudos sobre el eje.
+
+- **Un error de mis datos de prueba**: el vértice «sobre el eje» salía de cos(π/2) = 6·10⁻¹⁷, no de 0.
+  Se fijan los extremos exactos.
+- **Lo que esta prueba no puede ver, por su propia fuente**: un nudo intermedio desplazado a lo largo
+  de su lado (el teorema 3 vale para cualquier posición). Eso lo ven la T5 (posición) y la T6
+  (jacobiano). Sí ve nudos intermedios sin compartir y en lados equivocados: 3 mutaciones de
+  `quadratic.py` corridas contra estos tests, 3 cazadas.
+
 ## Pruebas
 
 | Corrida | Resultado |
@@ -169,3 +185,4 @@ Al final, 17 de 17.
 | T4, la misma | **239 de 239** (15 nuevos), código 0, ninguna fuga |
 | T5, la misma | **245 de 245** (6 nuevos), código 0, ninguna fuga |
 | T6, la misma | **258 de 258** (13 nuevos), código 0, ninguna fuga |
+| T7, la misma | **261 de 261** (3 nuevos), código 0, ninguna fuga |
