@@ -226,6 +226,28 @@ n_theta mínimo 2, cada regla apagada, material olvidado). Sobrevivían dos: el 
 test ponía distinto de 0 (test añadido), y «arcos sin marcar», que era una mutación mía que no
 cambiaba nada (`{} or {…}` vale el segundo); rehecha, cazada. Al final, 10 de 10.
 
+## T10 — Kirsch con campo no hidrostático (2026-11-22)
+
+`spec/features/003-malla/comprobaciones/soluciones_cerradas.py`: las tensiones de Kirsch
+(Jaeger, Cook y Zimmerman 2007, ecs. 8.113–8.115, pág. 219) y el desplazamiento que causa la
+excavación: el de las ecs. (8.121)–(8.125), págs. 220–221, menos el del medio sin hueco (A = B = C =
+0 en la 8.122, derivación propia), con σ2 girando 90°; y su paso al convenio del motor. Es el lado
+externo de la identidad del caso 005. `tests/_kirsch.py` lo carga por su ruta con un nombre propio,
+como `_sphere.py`.
+
+- **Las dos partes de la fuente se comprueban una contra otra**: las deformaciones del desplazamiento
+  (diferencias centradas, deformaciones en polares), por la ley de Hooke en deformación plana, dan el
+  cambio de tensión de las (8.113)–(8.115) a 10⁻⁶ de la escala, con campos uniaxial, biaxial,
+  invertido y con una tracción. Eso fija los signos de u_r y de u_θ (la fuente cuenta los
+  desplazamientos positivos hacia −r y −θ) y la resta del campo sin hueco. Con σ1 = σ2 da la (8.90)
+  de la spec 001 a 10⁻¹⁴.
+- Girar σ2 con θ − π/2 en vez de θ + π/2 sería una mutación equivalente (las funciones de 2θ no lo
+  distinguen); por eso la mutación del giro usa 45°.
+
+**Los tests**: `tests/test_kirsch_closed_v008.py`, 5. **Dientes**: 8 mutaciones (signo de u_θ, κ + 1
+por κ − 1, sin restar el campo sin hueco, σ2 girado 45°, 8G por 4G, un coeficiente de la 8.113, el
+convenio del motor de dos maneras): 8 de 8 cazadas.
+
 ## Pruebas
 
 | Corrida | Resultado |
@@ -237,3 +259,4 @@ cambiaba nada (`{} or {…}` vale el segundo); rehecha, cazada. Al final, 10 de 
 | T7, la misma | **261 de 261** (3 nuevos), código 0, ninguna fuga |
 | T9, la misma | **266 de 266** (5 nuevos), código 0, ninguna fuga |
 | T8, la misma | **274 de 274** (8 nuevos), código 0, ninguna fuga |
+| T10, la misma | **279 de 279** (5 nuevos), código 0, ninguna fuga |
