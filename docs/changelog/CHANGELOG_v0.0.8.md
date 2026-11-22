@@ -177,6 +177,25 @@ del generador, T3 y T6 curvos, con nudos sobre el eje.
   (jacobiano). Sí ve nudos intermedios sin compartir y en lados equivocados: 3 mutaciones de
   `quadratic.py` corridas contra estos tests, 3 cazadas.
 
+## T9 — la salida del mallador y su paso al motor (2026-11-22)
+
+Se hace antes que la T8 porque la malla radial entrega su resultado con esta salida.
+`ogr_fem2d/mesh/mesher.py`: `Mesh` (nudos, elementos, región y material de cada elemento, contornos,
+notas, avisos), `boundary_map` (para cada tramo de un contorno, los elementos y el lado que lo tienen,
+con la convención de `EdgeLoad.side`, y su nudo intermedio; rechaza un tramo que no es lado, RF-3) y
+`to_engine` (el `EngineModel`, validado por el motor). Documentado en `docs/malla/entrada.md`.
+
+- **El mapa sirve para poner cargas**: una presión uniforme en el hueco, puesta en los lados de la roca
+  que da el mapa y con la excavación desactivada, es un contorno cerrado: las reacciones suman cero a
+  10⁻⁹ y la pared se mueve hacia fuera, con T3 y con T6.
+- **Un punto débil de mis datos, visto antes de las mutaciones**: la región y el material coincidían
+  (0 y 1), y confundir uno con otro en `to_engine` habría pasado. En el test la roca es ahora región 0
+  y material 1.
+
+**Los tests**: `tests/test_mesh_output_v008.py`, 5. **Dientes**: 6 mutaciones (un solo elemento por
+tramo, el nudo intermedio del lado siguiente, el lado mal numerado, aceptar un tramo que no es lado,
+no validar, material = región): 6 de 6 cazadas.
+
 ## Pruebas
 
 | Corrida | Resultado |
@@ -186,3 +205,4 @@ del generador, T3 y T6 curvos, con nudos sobre el eje.
 | T5, la misma | **245 de 245** (6 nuevos), código 0, ninguna fuga |
 | T6, la misma | **258 de 258** (13 nuevos), código 0, ninguna fuga |
 | T7, la misma | **261 de 261** (3 nuevos), código 0, ninguna fuga |
+| T9, la misma | **266 de 266** (5 nuevos), código 0, ninguna fuga |

@@ -60,8 +60,10 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       de `quadratic.py` contra ellos, 3 cazadas.)
 - [ ] T8. `radial.py`: el anillo completo — RF-8, D8 — Hecho cuando: los radios siguen la
       progresión y el anillo a 100 m da σθ(a) y ur(a) a menos del 0.5 % de `lame_fixed_outer`.
-- [ ] T9. Salida para el motor: `EngineModel` (nudos, elementos, material por elemento) y el mapa
-      segmento → nudos y lados — RF-15 — Hecho cuando: probado con las mallas de T5 y T8.
+- [x] T9. Salida para el motor: `EngineModel` (nudos, elementos, material por elemento) y el mapa
+      segmento → nudos y lados — RF-15 — Hecho cuando: probado con las mallas de T5 y T8. (Hecho el
+      2026-11-22, antes que la T8, que la usa: 5 tests en `test_mesh_output_v008.py` con la malla
+      del núcleo de la T5, T3 y T6; la de T8 la prueba la propia T8; 6 mutaciones, 6 cazadas.)
 - [ ] T10. `comprobaciones/soluciones_cerradas.py`: Kirsch no hidrostático, el desplazamiento que
       causa la excavación (JCZ ecs. 8.121–8.125) — Hecho cuando: con σ1 = σ2 da la (8.90), y sus
       deformaciones por la ley de Hooke dan el cambio de tensión de las (8.113)–(8.115).

@@ -1,8 +1,7 @@
 # Entrada del mallador
 
 > Spec 003, RF-1. Código: `ogr_fem2d/mesh/geometry.py`; tests: `tests/test_mesh_input_v008.py`. Es
-> lo que el modelo (spec 004) tiene que entregar al mallador. La salida se documentará aquí cuando
-> exista (T9 y T12).
+> lo que el modelo (spec 004) tiene que entregar al mallador, y lo que recibe de él.
 
 El mallador recibe una **geometría** (puntos, regiones de material, atributos de los segmentos) y los
 **ajustes de la malla**. No sabe de menús ni de unidades de usuario: las longitudes llegan en las
@@ -74,6 +73,24 @@ segmentos que llegan a ellos, y los nudos nuevos se numeran después de los punt
 segmento a segmento en el orden de `segments(m)`: la misma entrada da los mismos nudos (D11). Las
 ventanas no se miran aquí: son cotas del refinado. La h de una malla uniforme va con el resultado
 (`Discretization.size`, regla 12).
+
+## La salida: `Mesh`
+
+`ogr_fem2d/mesh/mesher.py` (RF-15).
+
+| Campo | Qué es |
+|---|---|
+| `analysis` | el de la entrada |
+| `nodes`, `elements` | como en el motor: esquinas en sentido antihorario y, en el T6, los nudos intermedios de los lados 0-1, 1-2 y 2-0 |
+| `element_region`, `element_material` | la región de cada elemento y el índice de su material |
+| `boundaries` | `Boundary(name, nodes, sides, mids)`: para cada contorno («segment a-b», o el nombre que le dé el mallador), sus nudos de esquina en orden y, por tramo, los (elemento, lado) que lo tienen (uno en el contorno exterior, dos en un contacto) y su nudo intermedio con T6. El lado k va de la esquina k a la k + 1, como `EdgeLoad.side` |
+| `notes` | cada valor que decidió la malla (regla 12) |
+| `warnings` | los avisos de las comprobaciones: piezas sin lados comunes, nudos que unen abanicos (RF-14) |
+
+`boundary_map(elementos, cadenas)` hace los `Boundary` y rechaza una cadena con un tramo que no es
+lado de la malla (RF-3). `to_engine(malla, materiales, fases, tensiones_iniciales)` da el
+`EngineModel`, validado por las reglas del motor; los materiales, las fases y las tensiones los pone
+quien llama (spec 004).
 
 ## Reglas de validación
 
