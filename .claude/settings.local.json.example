@@ -14,14 +14,14 @@
   ],
   "permissions": {
     "additionalDirectories": [
-      "C:/Samuel/OGR_Suite/FEM2D/Referencias",
-      "C:/Samuel/OGR_Suite/FEM2D/Promts_desarrollo",
-      "C:/Samuel/OGR_Suite/Core/OGR-Core",
-      "C:/Samuel/OGR_Suite/Slip2D/OGR-Slip2D"
+      "C:/Desarrollo/OGR_Suite/FEM2D/Referencias",
+      "C:/Desarrollo/OGR_Suite/FEM2D/Promts_desarrollo",
+      "C:/Desarrollo/OGR_Suite/Core/OGR-Core",
+      "C:/Desarrollo/OGR_Suite/Slip2D/OGR-Slip2D"
     ],
     "deny": [
-      "Edit(//c/Samuel/OGR_Suite/Core/OGR-Core/**)",
-      "Edit(//c/Samuel/OGR_Suite/Slip2D/OGR-Slip2D/**)"
+      "Edit(//c/Desarrollo/OGR_Suite/Core/OGR-Core/**)",
+      "Edit(//c/Desarrollo/OGR_Suite/Slip2D/OGR-Slip2D/**)"
     ]
   }
 }

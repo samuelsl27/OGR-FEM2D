@@ -119,8 +119,10 @@ suite del 2026-11-22, de `C:\Samuel\OGR_Suite` a `C:\Desarrollo\OGR_Suite`.
 - **Los changelogs v0.0.3 y v0.0.4 y el `ADR-0002` también nombran `C:\Samuel\OGR_Suite\…`**, pero
   cuentan lo que era verdad entonces y no se tocan.
 - **`.claude/settings.local.json.example` sigue con las rutas de antes** (`C:/Samuel/OGR_Suite/…`
-  en los directorios adicionales y en los permisos de edición). No es documentación y queda fuera
-  de esta tarea: se reporta y no se corrige.
+  en los directorios adicionales y en los permisos de edición). Se reportó y, con el OK de la
+  propietaria, se corrigió a `C:/Desarrollo/OGR_Suite/…`: ahora coincide con el
+  `settings.local.json` de este PC. Ahí las rutas siguen siendo absolutas, porque el propio
+  ejemplo lo pide (las reglas de permisos las necesitan), y quien lo copie las ajusta a su máquina.
 
 ### Pruebas
 
