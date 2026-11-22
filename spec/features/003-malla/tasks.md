@@ -58,8 +58,10 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       lados curvos, en deformación plana y en axisimetría, a través del motor — Hecho cuando: en
       verde y con dientes. (Hecho el 2026-11-22: 3 tests en `test_mesh_patch_v008.py`; 3 mutaciones
       de `quadratic.py` contra ellos, 3 cazadas.)
-- [ ] T8. `radial.py`: el anillo completo — RF-8, D8 — Hecho cuando: los radios siguen la
+- [x] T8. `radial.py`: el anillo completo — RF-8, D8 — Hecho cuando: los radios siguen la
       progresión y el anillo a 100 m da σθ(a) y ur(a) a menos del 0.5 % de `lame_fixed_outer`.
+      (Hecho el 2026-11-22: 0.020 % y 0.159 % con 32 × 32; 8 tests en
+      `test_mesh_radial_v008.py`; 10 mutaciones, 10 cazadas. El hueco no se malla.)
 - [x] T9. Salida para el motor: `EngineModel` (nudos, elementos, material por elemento) y el mapa
       segmento → nudos y lados — RF-15 — Hecho cuando: probado con las mallas de T5 y T8. (Hecho el
       2026-11-22, antes que la T8, que la usa: 5 tests en `test_mesh_output_v008.py` con la malla

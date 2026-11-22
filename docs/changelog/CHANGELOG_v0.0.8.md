@@ -196,6 +196,36 @@ con la convención de `EdgeLoad.side`, y su nudo intermedio; rechaza un tramo qu
 tramo, el nudo intermedio del lado siguiente, el lado mal numerado, aceptar un tramo que no es lado,
 no validar, material = región): 6 de 6 cazadas.
 
+## T8 — la malla radial (2026-11-22)
+
+`ogr_fem2d/mesh/radial.py`: el anillo completo a ≤ r ≤ b alrededor de un hueco circular (D8), con
+la progresión de radios de `engine/mesh_radial.graded_radii`, n_theta ángulos iguales (al menos 3,
+para que cada arco sea de menos de 180°), cada celda partida por la misma diagonal, los nudos sobre
+los ejes exactos y, en T6, los lados de r constante sobre su circunferencia (`quadratic.promote`).
+Entrega la salida común (`Mesh`) con los contornos «hole» y «outer».
+
+- **Decisión de detalle dentro de D8**: el hueco no se malla. El dominio es el anillo y la excavación
+  entra como en el caso 001, por la tensión inicial de los elementos que quedan (ec. 2.13b). Mallar el
+  círculo con una rejilla polar pondría en su centro un abanico de triángulos degenerados, y la malla
+  radial del programa de referencia es para verificar. Es solo de deformación plana: alrededor de un
+  centro, el anillo pasa por x < 0.
+- **El anillo contra su solución exacta**: excavar un hueco de 1 m con 30 MPa hidrostáticos (STR-01),
+  hasta b = 100 m con el exterior fijo, frente a `lame_fixed_outer` (spec 001; Jaeger, Cook y
+  Zimmerman 2007, ecs. 8.78–8.81). Con la densidad de la malla que fija el caso 001 (8 divisiones
+  angulares por cuadrante, 32 radiales, crecimiento 1.69^¼): **0.020 % en ur(a) y 0.159 % en σθ(a)**,
+  el peor punto (tolerancia 0.5 %); con 64 × 64, 0.002 % y 0.042 % (σθ baja unas cuatro veces).
+- **Con pocos ángulos, los T6 se pliegan**: con 4 divisiones del hueco (arcos de 90°), la flecha del
+  arco, R(1 − cos 45°), es mayor que el ancho de su anillo de elementos; el lado curvo cruza el
+  triángulo y det J cambia de signo. La comprobación de la T6 lo rechaza con su motivo (con T3, que
+  usa cuerdas, no pasa nada). Lo encontró un test mío con 6 × 2, que se cambió a 12 × 2; el rechazo
+  queda fijado en su propio test.
+
+**Los tests**: `tests/test_mesh_radial_v008.py`, 8. **Dientes**: 10 mutaciones (crecimiento olvidado,
+diagonal invertida, arcos sin marcar, ejes no exactos, el contorno exterior en el anillo anterior,
+n_theta mínimo 2, cada regla apagada, material olvidado). Sobrevivían dos: el material, que ningún
+test ponía distinto de 0 (test añadido), y «arcos sin marcar», que era una mutación mía que no
+cambiaba nada (`{} or {…}` vale el segundo); rehecha, cazada. Al final, 10 de 10.
+
 ## Pruebas
 
 | Corrida | Resultado |
@@ -206,3 +236,4 @@ no validar, material = región): 6 de 6 cazadas.
 | T6, la misma | **258 de 258** (13 nuevos), código 0, ninguna fuga |
 | T7, la misma | **261 de 261** (3 nuevos), código 0, ninguna fuga |
 | T9, la misma | **266 de 266** (5 nuevos), código 0, ninguna fuga |
+| T8, la misma | **274 de 274** (8 nuevos), código 0, ninguna fuga |
