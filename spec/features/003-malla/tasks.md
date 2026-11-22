@@ -42,9 +42,11 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       segmento, los extremos compartidos y \|x − c\| = R a redondeo tienen su test. (Hecho el
       2026-11-22: 15 tests en `test_mesh_discretize_v008.py`; 18 mutaciones, cuatro sobrevivían al
       principio y llevaron a tres tests y a un caso de desempate; al final, 18 de 18.)
-- [ ] T5. `quadratic.py`: T3 → T6, un nudo intermedio por lado, en el punto medio o en el punto
+- [x] T5. `quadratic.py`: T3 → T6, un nudo intermedio por lado, en el punto medio o en el punto
       medio del arco — RF-10, D4 — Hecho cuando: unicidad por lado, posición, y área = rectilíneo
-      ± 2/3·cuerda·flecha, probados sobre mallas T3 que ya existen.
+      ± 2/3·cuerda·flecha, probados sobre mallas T3 que ya existen. (Hecho el 2026-11-22: 6 tests en
+      `test_mesh_quadratic_v008.py`, sobre el rectángulo de la spec 002, el cuarto de corona de la
+      001 y el generador del núcleo; 8 mutaciones, 8 cazadas.)
 - [ ] T6. `checks.py`: jacobiano del T6 en los seis nudos y en los puntos de integración (Z&T §9.2,
       §9.5), conformidad, Euler (V − E + T = 1 − H), conexión y regiones unidas por un nudo — RF-13,
       RF-14 — Hecho cuando: un nudo intermedio fuera de la mitad central se rechaza con su motivo y

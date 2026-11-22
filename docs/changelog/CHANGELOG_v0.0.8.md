@@ -105,9 +105,30 @@ sobrevivían cuatro:
 
 Al final, 18 de 18 cazadas.
 
+## T5 — de T3 a T6 (2026-11-22)
+
+`ogr_fem2d/mesh/quadratic.py`: un nudo intermedio por lado, compartido por sus dos elementos; en el
+centro de un lado recto y en el punto medio del arco en un lado que es un trozo de arco (D4), con el
+orden de nudos de `element_t6` (Zienkiewicz y Taylor 2000, pág. 182, fig. 8.15b). Probado sobre
+mallas T3 que ya existían: el rectángulo estructurado de la spec 002, el cuarto de corona de la spec
+001 partido en T3 y el generador del núcleo en el cuadrado con hueco.
+
+- **El área, por Arquímedes**: la malla T6, integrada con el propio elemento del motor
+  (`element_t6.area`, exacta porque det J es de grado 2), es la malla recta más 2/3·cuerda·flecha
+  por cada lado de contorno sobre un arco (sumado en el arco exterior, que se abomba hacia fuera, y
+  restado en el del hueco, que se abomba hacia dentro), a 10⁻¹³. Y queda más cerca del cuarto de
+  corona verdadero que la malla recta, más de diez veces.
+- **Una cita sin comprobar en mi primer borrador del módulo** («§8.8.2») se cambió por la que usa
+  `element_t6.py`, comprobada en la spec 001 (pág. 182, fig. 8.15b).
+
+**Los tests**: `tests/test_mesh_quadratic_v008.py`, 6. **Dientes**: 8 mutaciones (radio, punto medio
+de la cuerda en vez del arco, arco mayor, punto fuera del centro en un lado recto, nudos sin
+compartir, orden de los intermedios y de las esquinas, lado con sentido): 8 de 8 cazadas.
+
 ## Pruebas
 
 | Corrida | Resultado |
 |---|---|
 | T3, suite entera contra la etiqueta instalada (`shared: ogr_core 0.2.3 … (installed, no git tree)`) | **224 de 224** (205 de antes y 19 nuevos), código 0, ninguna fuga |
 | T4, la misma | **239 de 239** (15 nuevos), código 0, ninguna fuga |
+| T5, la misma | **245 de 245** (6 nuevos), código 0, ninguna fuga |
