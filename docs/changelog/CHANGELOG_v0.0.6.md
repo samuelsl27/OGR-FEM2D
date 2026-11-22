@@ -42,3 +42,44 @@ Windows, Python del `.venv`.
 
 - La corrida con `--dev-core`: no cambia nada que dependa del núcleo. La corre la CI de OGR-Core
   sobre este `main`.
+
+## Después de la versión: la sección «Desarrollo» del `README.md` (2026-11-21)
+
+Solo documentación: ni la versión ni una línea de código cambian. Sale de escribir la guía para
+montar la suite en un PC nuevo (`DESARROLLO.md`, en la carpeta de trabajo `OGR_Suite`) y de
+ensayarla.
+
+- `README.md`, «Desarrollo»: dice qué hace falta antes de la receta (Python 3.11 o posterior, git,
+  Rust estable y, en Windows, las Build Tools de Visual Studio con C++), da la misma receta en
+  PowerShell además de en Git Bash, dice que el programa no se instala en su entorno, cómo se
+  instala PyInstaller para el congelado (`pyinstaller==6.22.3`, la versión de la CI) y dónde está
+  la guía de la suite entera.
+
+### Lo que se encontró
+
+- **La receta del README funciona en un clon nuevo.** Ensayo del 2026-11-21 en una carpeta
+  temporal: clon de GitHub (`487b4f5`), `.venv` nuevo de Python 3.14.7, las cuatro órdenes
+  tecleadas en PowerShell. maturin compila el motor en 45 s y deja `ogr_fem2d/_engine.pyd` en el
+  árbol.
+- **maturin 1.16.0 no necesita `VIRTUAL_ENV`** cuando se lanza con el Python del entorno
+  (`.venv/Scripts/python -m maturin develop …`): sin la variable hace lo mismo. La receta la
+  conserva, porque no estorba y otras versiones de maturin la piden.
+- **El congelado no estaba en el README**: PyInstaller solo se nombraba en la spec 001 y en la CI.
+
+### Pruebas
+
+Windows, clon nuevo, `.venv` nuevo de Python 3.14.7, dependencias de hoy (numpy 2.5.5, scipy
+1.18.1, maturin 1.16.0).
+
+| Corrida | Resultado |
+|---|---|
+| Suite entera, entorno montado por el script de la suite | **205 de 205**, código 0 |
+| Suite entera, entorno montado tecleando la receta del README en PowerShell | **205 de 205**, código 0 |
+| `poc/freeze/build.py` | `ALL 4 CASES PASS`, `FROZEN PROGRAM OK`, código 0 |
+
+En las dos, `shared: ogr_core 0.2.2 … (installed, no git tree)`.
+
+### Sin probar
+
+- La receta en Linux y macOS (`.venv/bin/python`): la cubre la CI, con la rueda.
+- Instalar Rust y las Build Tools desde cero: el ensayo se hizo en un PC que ya las tenía.

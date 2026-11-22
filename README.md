@@ -29,6 +29,16 @@ y validado contra soluciones analíticas y casos publicados.
 
 ## Desarrollo
 
+Hace falta:
+
+- **Python 3.11 o posterior** (la CI corre 3.11, 3.12 y 3.13 en Linux, Windows y macOS) y **git**:
+  pip trae `ogr-core` de su etiqueta.
+- **Rust**, la cadena estable (`rustup`). En Windows, la de MSVC
+  (`stable-x86_64-pc-windows-msvc`), que necesita las Build Tools de Visual Studio con la carga
+  «Desarrollo para el escritorio con C++».
+
+En Windows, con Git Bash:
+
 ```bash
 python -m venv .venv
 .venv/Scripts/pip install numpy scipy maturin "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.2.2"
@@ -36,9 +46,35 @@ VIRTUAL_ENV=.venv .venv/Scripts/python -m maturin develop --release --skip-insta
 .venv/Scripts/python tests/_runner.py
 ```
 
+Lo mismo en PowerShell:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python -m pip install numpy scipy maturin "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.2.2"
+$env:VIRTUAL_ENV = "$PWD\.venv"
+.venv\Scripts\python -m maturin develop --release --skip-install
+.venv\Scripts\python tests\_runner.py
+```
+
+En Linux y macOS el intérprete del entorno es `.venv/bin/python`.
+
 El tercer paso compila el motor en Rust (`rust/`, hace falta `cargo`) y deja el módulo
 `ogr_fem2d._engine` dentro del árbol, sin reinstalar nada; hay que repetirlo cada vez que cambia
-`rust/`, y un test avisa si el módulo es más viejo que sus fuentes.
+`rust/`, y un test avisa si el módulo es más viejo que sus fuentes. El programa no se instala en
+su entorno: corre desde el árbol.
+
+El congelado de los casos de validación necesita además PyInstaller, que es solo una herramienta
+del entorno, en la versión que fija la CI:
+
+```bash
+.venv/Scripts/pip install "pyinstaller==6.22.3"
+.venv/Scripts/python poc/freeze/build.py
+```
+
+Para trabajar en la suite entera (este programa, OGR-Core y OGR Slip2D a la vez, cada uno con su
+entorno), este repositorio vive dentro de la carpeta de trabajo `OGR_Suite`, y el `DESARROLLO.md`
+de su raíz dice qué instalar en un PC con Windows y cómo se monta todo (desde esta carpeta,
+`../../DESARROLLO.md`).
 
 El núcleo (`ogr-core`) va fijado a una etiqueta e instalado desde ella, y el runner de tests se
 niega a medir contra cualquier otra versión
