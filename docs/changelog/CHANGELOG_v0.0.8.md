@@ -248,6 +248,46 @@ como `_sphere.py`.
 por κ − 1, sin restar el campo sin hueco, σ2 girado 45°, 8G por 4G, un coeficiente de la 8.113, el
 convenio del motor de dos maneras): 8 de 8 cazadas.
 
+## T11, T12 y T15, la parte que no espera al núcleo (2026-11-22)
+
+Lo que queda de la spec usa el mallador de calidad pedido a OGR-Core (D2), que no existe todavía. Se
+hizo lo que es de FEM2D y no depende de la API que decida su sesión:
+
+- `ogr_fem2d/mesh/sizing.py` (T11): la cota de tamaño según la posición (Shewchuk 2002a, pág. 11), la
+  menor de las que cubren el punto: la global (h de la uniforme, la cota máxima de la graduada o
+  ninguna) y la de cada ventana o polígono que lo contiene, borde incluido. Probada como función;
+  comprobarla sobre la malla espera al núcleo.
+- `ogr_fem2d/mesh/pslg.py` (T12; un archivo que el plan no tenía, separado de `mesher.py`): el PSLG
+  que recibirá el núcleo (los nudos del paso 1, las piezas entre nudos consecutivos etiquetadas con su
+  segmento, una semilla estrictamente dentro de cada región con su material, un punto en cada vacío)
+  y la proyección de D13.
+  - **Las semillas, sin dependencias nuevas**: Shapely está en el `.venv` solo como dependencia de
+    `ogr-core`, y usarla aquí sería añadir una. A lo largo de líneas horizontales a media altura entre
+    vértices, el tramo interior más ancho (cortes par-impar), su punto medio, comprobado después con el
+    número de vueltas exacto. Probado en la roca, la excavación, dos capas, un cuadrado mordido por un
+    arco y una lámina mil veces más larga que gruesa.
+  - **Hallazgo (D14, abierta en la spec)**: llevar al arco los vértices que el mallador deja sobre una
+    cuerda puede **invertir elementos**. Medido con el generador actual del núcleo (que también pone
+    nudos sobre las cuerdas) en un cuadrado con un hueco de 8 a 32 cuerdas y h de 0.05 a 0.2: hay
+    elementos invertidos, T3 y T6, cuando la flecha de la cuerda pasa de unas 0.7 veces h (8 cuerdas
+    con h = 0.1: 16 elementos; con h = 0.05: 152), y ninguno hasta 0.38. RF-13 rechaza esa malla con
+    su motivo, así que no hay malla mala silenciosa; qué hacer para que no pase lo decide la
+    propietaria (D14). El plan lo tenía en «Riesgos» («si pasa, es un hallazgo y se para»).
+  - Dos errores de mis datos de prueba por el camino: los vértices del octógono redondeados a 15
+    decimales se apartaban del círculo 5·10⁻¹⁶ (se construyen con los ceros de los ejes exactos y sin
+    redondear lo demás).
+- `validacion/casos/005-kirsch-malla-general/` (T15): `caso.md` y `esperado.json` con las tolerancias
+  de D12 **escritas antes de medir** y la malla a `null`, como el caso 001. El caso queda en `PENDING`
+  de `test_validation_cases_v001.py`, con su motivo, como pide ese test para que ningún caso falte
+  sin decirlo.
+
+**Los tests**: `tests/test_mesh_pslg_v008.py`, 8 (PSLG, semillas, vacíos, D13 y la cota). **Dientes**:
+13 mutaciones (8 de `pslg.py`, 5 de `sizing.py`). Sobrevivían dos: el sentido de la cadena de un
+anillo, que las semillas no notaban porque la regla par-impar no depende del orden (test nuevo: la
+cadena cerrada son piezas del PSLG y tiene el signo de área del anillo), y el borde de una ventana,
+que el punto de prueba no veía por estar en el lado que la regla de cruces ya cuenta (puntos en los
+cuatro lados). Al final, 13 de 13.
+
 ## Pruebas
 
 | Corrida | Resultado |
@@ -260,3 +300,4 @@ convenio del motor de dos maneras): 8 de 8 cazadas.
 | T9, la misma | **266 de 266** (5 nuevos), código 0, ninguna fuga |
 | T8, la misma | **274 de 274** (8 nuevos), código 0, ninguna fuga |
 | T10, la misma | **279 de 279** (5 nuevos), código 0, ninguna fuga |
+| T11, T12 y T15 (parte sin el núcleo), la misma | **287 de 287** (8 nuevos), código 0, ninguna fuga |

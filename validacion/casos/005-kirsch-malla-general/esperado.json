@@ -1,0 +1,29 @@
+{
+  "id": "005-kirsch-malla-general",
+  "ficha": "VER-STR-01",
+  "fuente": "Kirsch (1898), en Jaeger, Cook y Zimmerman (2007), Fundamentals of Rock Mechanics, 4.ª ed., §8.4, ecs. (8.90)-(8.92), págs. 216-218; identidad no hidrostática, §8.5, ecs. (8.113)-(8.125), págs. 219-221",
+  "tipo_referencia": "analitica",
+  "tolerancia_relativa": 0.005,
+  "comparaciones": [
+    {"magnitud": "sigma_theta", "donde": {"tipo": "puntos_de_integracion", "r": 1.0},
+     "valor": 60.0, "unidad": "MPa", "convenio": "compresion positiva",
+     "como": "el mayor error de todos los puntos de integración sobre r = a"},
+    {"magnitud": "u_r", "donde": {"tipo": "nudos", "r": 1.0},
+     "valor": 0.0036, "unidad": "m", "convenio": "hacia el centro positivo",
+     "como": "el mayor error de todos los nudos sobre r = a, esquinas e intermedios"}
+  ],
+  "identidad": {
+    "que": "el desplazamiento que causa la excavación en el medio infinito, impuesto en el contorno exterior, en la misma malla",
+    "campos": [{"sigma_1": 30.0, "sigma_2": 30.0}, {"sigma_1": 30.0, "sigma_2": 15.0}],
+    "tolerancia_relativa": 0.005,
+    "como": "sigma_theta en los puntos de integración y u_r en los nudos sobre r = a, punto a punto contra Kirsch (8.113)-(8.116) y kirsch_induced_displacement"
+  },
+  "modelo": {
+    "geometria": {"a": 1.0, "semilado_exterior": 100.0, "contorno_exterior": "cuadrado", "unidad": "m"},
+    "material": {"ley": "elastica", "E": 10000.0, "nu": 0.2, "unidad": "MPa"},
+    "tension_inicial": {"p0": 30.0, "unidad": "MPa", "convenio": "compresion positiva, hidrostatica en las tres direcciones"},
+    "fase": {"escalones": 1, "excavacion": "la región del hueco desactivada"},
+    "malla": null
+  },
+  "notas": "Tolerancias de la spec 003, D12 (las de la spec 001, D3), escritas antes de medir, con la malla a null. La malla la fijará el estudio de 16, 32, 64 y 128 divisiones del hueco (regla 9), cuando exista el mallador de calidad pedido a OGR-Core (D2)."
+}

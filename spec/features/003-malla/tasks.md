@@ -76,11 +76,14 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
 
 - [ ] T11. `sizing.py`: cotas uniforme (h o N), graduada (cota máxima opcional) y de ventanas y
       polígonos — RF-5 a RF-7, D5, D9 — Hecho cuando: cada cota cumplida en la malla resultante y
-      cada opción mueve la malla (regla 7).
+      cada opción mueve la malla (regla 7). (2026-11-22, parte hecha: `sizing.py` y sus tests como
+      función; falta comprobarla sobre la malla, con el núcleo.)
 - [ ] T12. `mesher.py`: los dos pasos de principio a fin; los vértices añadidos sobre cuerdas llevados
       al arco (D13); las notas con cada valor por defecto (regla 12); determinismo — RF-3, RF-11,
       RF-15 — Hecho cuando: cada segmento es unión de lados, D13 comprobado con el jacobiano, y dos
-      mallados iguales bit a bit.
+      mallados iguales bit a bit. (2026-11-22, parte hecha: `pslg.py`, el PSLG para el núcleo con
+      semillas y vacíos, y la proyección de D13. **Hallazgo: D13 puede invertir elementos; D14
+      abierta en la spec.** Falta el mallador de dos pasos, con el núcleo.)
 - [ ] T13. Las garantías vistas desde FEM2D y el resumen de calidad: cota B (teorema 4), cota de
       tamaño, Delaunay final, teorema 8 con B = 1.93, teorema 12 y terminación con un ángulo de
       entrada de 5°; medidas de calidad (1, 0, < 0, invariantes) — RF-4, RF-9, RF-12 — Hecho cuando:
@@ -95,6 +98,8 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       (malla a `null`), estudio con 16, 32, 64 y 128 divisiones del hueco, la malla que fija la
       tolerancia, y la identidad de Kirsch (hidrostática y p2 = p1/2) sobre la misma malla — D12 —
       Hecho cuando: el caso cumple el 0.5 % en σθ(a) y ur(a) con la malla del estudio.
+      (2026-11-22, parte hecha: `caso.md` y `esperado.json` con las tolerancias antes de medir y la
+      malla a `null`; el caso, en `PENDING` de `test_validation_cases_v001.py`.)
 - [ ] T16. Rendimiento: tiempo de mallado del caso 005 y del mayor caso de la fase 1, medido con la
       máquina sola — Hecho cuando: anotado en el changelog, y si pide Rust, propuesto (no hecho).
 - [ ] T17. Cierre: cada fórmula de «Formulación» citada en el código; casos 001 a 004 bit a bit;
