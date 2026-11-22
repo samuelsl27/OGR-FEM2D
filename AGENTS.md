@@ -36,10 +36,11 @@ Autor y titular del copyright: Samuel Sáez López (UPCT). Licencia AGPL-3.0-or-
 - **Núcleo**: `ogr_core`, del paquete `ogr-core` (repositorio OGR-Core, etiqueta `v0.2.2` desde la
   v0.0.4), con la malla y la filtración (`ADR-0002`). El paquete de este programa es `ogr_fem2d`.
   **El núcleo se cambia solo en OGR-Core** (abajo, «Un núcleo y varios programas»). El `.venv`
-  tiene el núcleo **instalado desde la etiqueta fijada**, como la CI, y no en editable desde
-  `C:\Samuel\OGR_Suite\Core\OGR-Core`: ese árbol sigue al `main` del núcleo. OGR Slip2D adoptó el
-  núcleo en su v0.1.473 (ya no lleva `ogr_core/` ni ningún paquete `ogr_fem2d`), fija su propia
-  etiqueta y tiene su propio `.venv`; los dos programas pueden fijar versiones distintas.
+  tiene el núcleo **instalado desde la etiqueta fijada**, como la CI, y no en editable desde el
+  árbol de OGR-Core (`../../Core/OGR-Core` desde este repositorio): ese árbol sigue al `main` del
+  núcleo. OGR Slip2D adoptó el núcleo en su v0.1.473 (ya no lleva `ogr_core/` ni ningún paquete
+  `ogr_fem2d`), fija su propia etiqueta y tiene su propio `.venv`; los dos programas pueden fijar
+  versiones distintas.
 - **Formato de proyecto**: `.ogr` (JSON), compatible con OGR Slip2D en la parte geométrica. Los
   resultados van aparte en `modelo.h5` con la huella del modelo (`ADR-0003`).
 - **Tests**: el runner de la suite (`ogr_core.testing.runner`), a través de `tests/_runner.py`.

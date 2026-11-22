@@ -104,3 +104,26 @@ Solo documentación: ni la versión ni una línea de código cambian.
 - **`CONTRIBUTING.md` pide rama `dev/…` y *pull request***, pero para quien contribuye desde
   fuera, que no escribe en `main` y firma el CLA en su PR: no es la regla vieja del propietario y
   se deja como está.
+
+## Después de la versión: la ruta del árbol del núcleo en `AGENTS.md` (2026-11-22)
+
+Solo documentación: ni la versión ni una línea de código cambian. Es un fleco de la mudanza de la
+suite del 2026-11-22, de `C:\Samuel\OGR_Suite` a `C:\Desarrollo\OGR_Suite`.
+
+- `AGENTS.md`, «Stack», nombraba el árbol de OGR-Core con su ruta absoluta de antes de la mudanza.
+  Ahora lo nombra sin depender de dónde esté la suite: `../../Core/OGR-Core` desde este
+  repositorio.
+
+### Lo que se encontró
+
+- **Los changelogs v0.0.3 y v0.0.4 y el `ADR-0002` también nombran `C:\Samuel\OGR_Suite\…`**, pero
+  cuentan lo que era verdad entonces y no se tocan.
+- **`.claude/settings.local.json.example` sigue con las rutas de antes** (`C:/Samuel/OGR_Suite/…`
+  en los directorios adicionales y en los permisos de edición). No es documentación y queda fuera
+  de esta tarea: se reporta y no se corrige.
+
+### Pruebas
+
+| Corrida | Resultado |
+|---|---|
+| Suite entera, contra la etiqueta instalada (`shared: ogr_core 0.2.2 … (installed, no git tree)`) | **205 de 205** |
