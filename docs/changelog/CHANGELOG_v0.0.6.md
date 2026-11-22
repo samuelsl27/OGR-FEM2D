@@ -83,3 +83,24 @@ En las dos, `shared: ogr_core 0.2.2 … (installed, no git tree)`.
 
 - La receta en Linux y macOS (`.venv/bin/python`): la cubre la CI, con la rueda.
 - Instalar Rust y las Build Tools desde cero: el ensayo se hizo en un PC que ya las tenía.
+
+## Después de la versión: commits directos en `main` (2026-11-22)
+
+Solo documentación: ni la versión ni una línea de código cambian.
+
+- `AGENTS.md`, «Un núcleo y varios programas»: por decisión de la propietaria del 2026-11-22, el
+  trabajo normal va en commits directos en `main`, como en OGR Slip2D, con la suite entera en
+  verde antes de cada commit; sustituye a «cada cambio en una rama corta con su PR». Una rama corta
+  `dev/…` queda solo para cuando la propietaria la elige (cambios en `rust/` o en la CI); al estar
+  en verde se fusiona, se sube y se borra; una sin fusionar no se borra sin su OK, y si lleva
+  algo que `main` no tiene, antes se archiva en `archivo/<nombre>`. El commit de una tarea terminada no espera; el push,
+  solo cuando ella lo pide, y después se mira la CI en los tres sistemas. El `main` tiene que
+  estar verde porque la CI de OGR-Core corre esta suite en cada commit del núcleo. En OGR-Core
+  no cambia nada. La fijación, `--dev-core` y `docs/consumidores.md` siguen igual.
+
+### Lo que se encontró
+
+- **El `README.md` no repite la regla**: solo remite a `AGENTS.md` para `--dev-core`.
+- **`CONTRIBUTING.md` pide rama `dev/…` y *pull request***, pero para quien contribuye desde
+  fuera, que no escribe en `main` y firma el CLA en su PR: no es la regla vieja del propietario y
+  se deja como está.

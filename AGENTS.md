@@ -65,10 +65,19 @@ entera.
 OGR Core es la biblioteca común de la suite y la usan varios programas a la vez. Desde el lado de
 este programa (las reglas del núcleo, en el `AGENTS.md` de OGR-Core y en su `docs/consumidores.md`):
 
-- **Un solo `main`** y cada cambio en una **rama corta con su PR**. Sin ramas largas.
-- **Una rama se borra cuando su PR se fusiona**, en GitHub y en local. Una rama sin fusionar no
-  se borra sin el OK de la propietaria; si lleva algo que `main` no tiene y hay que conservarlo,
-  antes se archiva con una etiqueta `archivo/<nombre>`.
+- **Solo vive `main`, y el trabajo normal va en commits directos en `main`** (decisión de la
+  propietaria del 2026-11-22, con la misma lógica que OGR Slip2D), con **la suite entera en verde
+  antes de cada commit**. El commit de cada tarea terminada se hace sin esperar; el push, solo
+  cuando la propietaria lo pide.
+- **Una rama corta `dev/…` solo cuando la propietaria la elige**; lo típico, cambios en `rust/` o
+  en la CI, donde la suite local de Windows no predice Linux ni macOS. Cuando está en verde se
+  fusiona en `main`, se sube y se borra, en GitHub y en local. Una rama sin fusionar no se borra
+  sin el OK de la propietaria, y si lleva algo que `main` no tiene, antes se archiva con una
+  etiqueta `archivo/<nombre>`.
+- **El `main` de este repositorio tiene que estar verde**: la CI de OGR-Core lo coge y corre esta
+  suite en cada commit del núcleo. Después de cada push se mira la CI (Linux, Windows y macOS), y
+  un rojo se arregla antes de seguir.
+- **En OGR-Core no cambia nada**: allí cada cambio sigue en una rama corta con su PR.
 - **El código de `ogr_core` solo se cambia en OGR-Core, y aquí no se copia.** Lo que este programa
   necesite del núcleo se pide a la sesión de OGR-Core, con lo que se encontró y la evidencia; aquí
   no se rodea.
