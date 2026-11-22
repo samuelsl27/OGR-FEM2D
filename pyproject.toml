@@ -7,7 +7,7 @@ build-backend = "maturin"
 
 [project]
 name = "ogr-fem2d"
-version = "0.0.6"
+version = "0.0.7"
 description = "OGR FEM2D — open-source 2D geotechnical finite-element analysis (OpenGeoRock Suite)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -30,7 +30,7 @@ classifiers = [
 dependencies = [
     # The core, pinned to a tag (ADR-0002). The test runner refuses to run
     # against any other version of it.
-    "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.2.2",
+    "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.2.3",
     "numpy>=1.26",
     "scipy>=1.14",
 ]

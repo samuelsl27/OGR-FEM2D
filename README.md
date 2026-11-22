@@ -41,7 +41,7 @@ En Windows, con Git Bash:
 
 ```bash
 python -m venv .venv
-.venv/Scripts/pip install numpy scipy maturin "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.2.2"
+.venv/Scripts/pip install numpy scipy maturin "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.2.3"
 VIRTUAL_ENV=.venv .venv/Scripts/python -m maturin develop --release --skip-install
 .venv/Scripts/python tests/_runner.py
 ```
@@ -50,7 +50,7 @@ Lo mismo en PowerShell:
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\python -m pip install numpy scipy maturin "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.2.2"
+.venv\Scripts\python -m pip install numpy scipy maturin "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.2.3"
 $env:VIRTUAL_ENV = "$PWD\.venv"
 .venv\Scripts\python -m maturin develop --release --skip-install
 .venv\Scripts\python tests\_runner.py
