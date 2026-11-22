@@ -37,9 +37,11 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       exactamente; 19 tests en `test_mesh_input_v008.py`; 36 mutaciones, dos sobrevivían al
       principio: una era una comprobación redundante, que se quitó, y la otra llevó a
       `test_a_region_given_twice`; al final, 35 de 35 cazadas. Suite entera 224 de 224.)
-- [ ] T4. `discretize.py`: paso 1, con número de divisiones repartido o forzado por segmento y los
+- [x] T4. `discretize.py`: paso 1, con número de divisiones repartido o forzado por segmento y los
       arcos con sus nudos sobre la circunferencia — RF-2, D5, D10 — Hecho cuando: los nudos por
-      segmento, los extremos compartidos y \|x − c\| = R a redondeo tienen su test.
+      segmento, los extremos compartidos y \|x − c\| = R a redondeo tienen su test. (Hecho el
+      2026-11-22: 15 tests en `test_mesh_discretize_v008.py`; 18 mutaciones, cuatro sobrevivían al
+      principio y llevaron a tres tests y a un caso de desempate; al final, 18 de 18.)
 - [ ] T5. `quadratic.py`: T3 → T6, un nudo intermedio por lado, en el punto medio o en el punto
       medio del arco — RF-10, D4 — Hecho cuando: unicidad por lado, posición, y área = rectilíneo
       ± 2/3·cuerda·flecha, probados sobre mallas T3 que ya existen.

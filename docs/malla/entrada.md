@@ -55,6 +55,26 @@ para el tipo de malla elegido se rechaza, no se ignora (regla 7).
 - `graded_targets(segmentos)`: los segmentos que reciben `boundary_nodes`.
 - `region_area(m, r)`: el área exacta de una región, con sus arcos y sus huecos.
 
+## El paso 1: la discretización
+
+`discretize(m)` (`ogr_fem2d/mesh/discretize.py`) valida la entrada y devuelve los nudos de cada
+segmento, que se pueden ver antes de mallar (RF-2). El refinado los conserva todos y puede añadir
+más en un segmento cuando lo necesita (RF-3, D10).
+
+| Caso | Divisiones de un segmento |
+|---|---|
+| Divisiones forzadas (`SegmentSpec.divisions`) | esas (D10) |
+| Malla graduada, segmentos de excavación (o del contorno exterior si no hay excavación) | `boundary_nodes` repartidas en proporción a la longitud (la del arco en los arcos): cada uno recibe la parte entera de lo suyo, al menos una, y las que quedan van a los mayores restos, con los empates al primero; la suma es exacta (D5) |
+| Malla graduada, los demás segmentos | una: entran con sus extremos y el refinado gradúa |
+| Malla uniforme | ⌈L/h⌉, la menor con la que ningún trozo pasa de h; con `elements` = N, h² = 4A/(√3 N), el área A del dominio cubierta por N triángulos equiláteros (D5) |
+
+Los nudos de un segmento recto están a distancias iguales; los de un arco, a ángulos iguales del
+arco menor, sobre la circunferencia. Los extremos son los puntos de la entrada, compartidos con los
+segmentos que llegan a ellos, y los nudos nuevos se numeran después de los puntos de la entrada,
+segmento a segmento en el orden de `segments(m)`: la misma entrada da los mismos nudos (D11). Las
+ventanas no se miran aquí: son cotas del refinado. La h de una malla uniforme va con el resultado
+(`Discretization.size`, regla 12).
+
 ## Reglas de validación
 
 `validate()` lanza `MeshInputError` con **todos** los problemas a la vez; cada uno (`Problem`, el

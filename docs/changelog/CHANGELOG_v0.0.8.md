@@ -65,8 +65,49 @@ sobrevivían dos:
 
 Con eso, 35 de 35 cazadas.
 
+- **Error propio de herramienta, después del commit `da29d0d`**: el guion de las mutaciones restauraba
+  el archivo con `Path.write_text`, que en Windows escribe CRLF, y `geometry.py` quedó en CRLF en la
+  copia de trabajo (el commit va en LF, por `.gitattributes`). Se rehízo la copia desde git y el
+  guion pasa a leer y escribir bytes. Es lo mismo que la v0.0.4 vio con otros guiones.
+
+## T4 — el paso 1, la discretización de los contornos (2026-11-22)
+
+`ogr_fem2d/mesh/discretize.py`: los nudos de cada segmento. Divisiones forzadas, las que son; en la
+graduada, `boundary_nodes` repartidas por longitud con al menos una por segmento y suma exacta (el
+método del mayor resto, empates al primero), y los demás segmentos con sus extremos; en la uniforme,
+⌈L/h⌉, con h dada o la de N triángulos equiláteros. Los arcos, a ángulos iguales del arco menor y
+sobre la circunferencia; los nudos nuevos, después de los de la entrada, en orden estable.
+
+Lo que se encontró:
+
+- **Una expectativa mía equivocada en un test**: pedía que el reparto quedara a menos de una división
+  del ideal en todos los segmentos. Con pocas divisiones y segmentos diminutos el mínimo de una por
+  segmento lo impide (8 divisiones dejan 3 a los dos segmentos largos, cuyo ideal suma 6). El test
+  pide ahora suma exacta, al menos una, más divisiones al más largo, y la cota de una solo donde el
+  mínimo no pesa. **Y esa rama no se ejecutaba nunca** con las longitudes del test (un segmento de
+  0.01 la deja fuera hasta un total de 1651): se añadió otra lista de longitudes y un recuento que
+  falla si la comprobación no corre.
+- **Un test circular**: la cota «ningún trozo pasa de h» se comprobaba con la propia
+  `segment_length`. Ahora las longitudes salen de la geometría (π/2 para el cuarto de circunferencia
+  de radio 1), y un test comprueba que el arco se mide por el arco y no por la cuerda (con h = 1.5,
+  π/2 da dos divisiones y la cuerda √2, una).
+
+**Los tests**: `tests/test_mesh_discretize_v008.py`, 15. **Dientes**: 18 mutaciones. Al principio
+sobrevivían cuatro:
+
+- tomar el techo o redondear L/h no se distinguían en el túnel: se añadió el talud con h = 3
+  (40/3 = 13.3: 14 divisiones, no 13);
+- olvidar las divisiones forzadas en la uniforme: no había test;
+- medir el arco por la cuerda: el test era circular (arriba);
+- redondear en vez de truncar en el reparto: se comparó por fuerza bruta (120 000 repartos) y solo
+  difiere en los desempates, que la variante da al último; se añadió el caso [5, 5, 1, 4] con 5 y 8
+  divisiones.
+
+Al final, 18 de 18 cazadas.
+
 ## Pruebas
 
 | Corrida | Resultado |
 |---|---|
 | T3, suite entera contra la etiqueta instalada (`shared: ogr_core 0.2.3 … (installed, no git tree)`) | **224 de 224** (205 de antes y 19 nuevos), código 0, ninguna fuga |
+| T4, la misma | **239 de 239** (15 nuevos), código 0, ninguna fuga |
