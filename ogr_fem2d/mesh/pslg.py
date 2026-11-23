@@ -12,8 +12,10 @@ The planar straight line graph (PSLG; Shewchuk 2002a, §1):
   segment, labelled with the index of its segment in ``geometry.segments``,
   so the pieces of an arc keep the arc;
 * a seed per region, a point strictly inside it with its material, and a
-  point inside every void (a hole of a region that no region fills), so the
-  triangulation knows what to mesh;
+  point inside every void (a hole of a region that no region fills: one
+  that holds no seed; until v0.0.9, one whose ring was no region's outline,
+  which took for a void a hole filled by two regions), so the triangulation
+  knows what to mesh;
 * the corners of every window (D9) that fall strictly inside the meshed
   domain, as loose vertices, after the nodes of step 1, window by window. The
   core evaluates the size bound at the three vertices and the centroid of
@@ -194,13 +196,16 @@ def build(m: g.MeshInput, disc: Discretization) -> PSLG:
             raise SeedError(f"region {r}: no point strictly inside it and out of the caps "
                             "of its arcs") from None
         seeds.append((p, r, region.material))
-    filled = {frozenset(g._key(i, j) for i, j in g._ring_edges(region.outline))
-              for region in m.regions}
+    # a hole is a void when no region is inside it: the seed of every
+    # region is strictly inside its outline, so a hole filled by one region
+    # or by several holds their seeds (spec 004, T5: a hole filled by two
+    # regions, an excavation split in two by a stage boundary, was taken
+    # for a void because no single outline was the hole's ring)
     voids = []
     for region in m.regions:
         for hole in region.holes:
-            if frozenset(g._key(i, j) for i, j in g._ring_edges(hole)) not in filled:
-                ring = _ring_chain(m, disc, hole)
+            ring = _ring_chain(m, disc, hole)
+            if not any(_inside(p, [ring], pts) for p, _r, _mat in seeds):
                 voids.append(interior_point([ring], pts, _caps(m, disc, (hole,))))
     arcs = {k: s.arc.centre for k, s in enumerate(segs) if s.arc is not None}
     vertices = list(pts) + window_corners(m, disc, pieces)
