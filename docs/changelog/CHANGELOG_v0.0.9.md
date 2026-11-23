@@ -42,3 +42,25 @@ la traducción y las reglas.
   (`tests/test_model_input_v009.py`, 17 tests). 27 mutaciones: tres sobrevivían (el índice de un
   segmento fuera de rango, un modelo sin externo y una malla con un nudo que no existe) y llevaron a
   tres tests; al final, 27 de 27.
+
+## T2 — de los contornos a las regiones (2026-11-23)
+
+`model/regions.py`: puntos y segmentos sin repetir (el mismo lado en dos contornos es uno), los
+cruces con los predicados exactos del mallador, las caras del grafo plano recorriendo los medios
+lados, los recorridos que pasan dos veces por un vértice partidos en anillos simples, los huecos por
+anidamiento y una asignación por región. Orden canónico.
+
+- **Hallazgo y corrección (regla 6, ya corregido): el cero negativo.** En el vértice donde una
+  circunferencia toca una recta, el arco que sale hacia la izquierda tiene la tangente (−1, −0.0), y
+  `atan2(−0.0, −1)` da −π en vez de π: ese lado se ordenaba el primero alrededor del vértice en vez
+  del último, y las caras salían mal (las seis caras del modelo de la tangente, como lados sueltos).
+  Lo cazó el test de la tangente, escrito para el desempate por curvatura. Se suma 0.0 a las
+  componentes antes del `atan2`.
+- **El desempate por curvatura y la tangente no son adornos**: el modelo `touching` (un triángulo
+  dentro de un círculo que toca una recta en el punto de tangencia, seis lados en un vértice) da las
+  caras mal si se ordena por la cuerda.
+- 15 tests en `tests/test_model_regions_v009.py`: área y Euler en seis modelos (túnel con arcos,
+  estratos, excavación partida por un contorno de fase abierto, lente con otra lente dentro,
+  circunferencia tangente, y la de seis lados), orden canónico, y cada regla de `regions.RULES` con su
+  caso. 18 mutaciones; cinco sobrevivían al principio y llevaron a dos modelos y tres comprobaciones; al
+  final, 18 de 18.

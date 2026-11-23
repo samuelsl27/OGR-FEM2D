@@ -35,7 +35,7 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   (Hecho el 2026-11-23: 17 reglas, `tests/test_model_input_v009.py`, 17 tests; 27 mutaciones, 27
   cazadas tras añadir tres tests. Hallazgo de D10: la asignación lleva un material por región y una
   bandera de excavada por fase, changelog.)
-- [ ] T2. `model/regions.py`: de los contornos a las regiones (D15) — RF-1.
+- [x] T2. `model/regions.py`: de los contornos a las regiones (D15) — RF-1.
   - Puntos y segmentos sin repetir, con las reglas de cruce de `mesh/geometry`.
   - Las caras del grafo plano, con los arcos por su tangente, y los huecos por anidamiento.
   - El orden canónico del plan.
@@ -44,6 +44,8 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
   *Hecho cuando:* Σ áreas = área del externo y Euler cuadra en los modelos de prueba (estratos, túnel
   con arcos, fase abierta, hueco suelto, dos arcos tangentes), y cada error nombra su contorno.
+  (Hecho el 2026-11-23: 15 tests, seis modelos; 18 mutaciones, 18 cazadas. **Hallazgo corregido**:
+  el cero negativo de una tangente ordenaba mal los lados en un vértice, changelog.)
 - [ ] T3. `model/stages.py`: fases con id estable (D10) — RF-3 y RF-4.
   - Insertar, que copia la fase anterior, o la primera si se inserta delante de ella; borrar;
     renombrar.

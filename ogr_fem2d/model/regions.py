@@ -215,14 +215,16 @@ def _departure(points, s: Seg, forward: bool) -> tuple[float, float]:
     forward, else b): for an arc, the tangent there, and +1/R when it bends
     to the left of that direction, -1/R to the right."""
     u, v = (points[s.a], points[s.b]) if forward else (points[s.b], points[s.a])
+    # + 0.0 turns a -0.0 into 0.0: atan2(-0.0, -1) is -pi, and a side going
+    # left would sort first instead of last
     if s.arc is None:
-        return math.atan2(v[1] - u[1], v[0] - u[0]), 0.0
+        return math.atan2(v[1] - u[1] + 0.0, v[0] - u[0] + 0.0), 0.0
     c = s.arc
     rx, ry = u[0] - c[0], u[1] - c[1]
     ccw = g._cross(c, u, v) > 0.0          # the minor arc from u to v goes anticlockwise
     tx, ty = (-ry, rx) if ccw else (ry, -rx)
     r = math.hypot(rx, ry)
-    return math.atan2(ty, tx), (1.0 / r if ccw else -1.0 / r)
+    return math.atan2(ty + 0.0, tx + 0.0), (1.0 / r if ccw else -1.0 / r)
 
 
 def _walks(points, segs):
