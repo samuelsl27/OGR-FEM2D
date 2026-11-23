@@ -13,7 +13,15 @@ The planar straight line graph (PSLG; Shewchuk 2002a, §1):
   so the pieces of an arc keep the arc;
 * a seed per region, a point strictly inside it with its material, and a
   point inside every void (a hole of a region that no region fills), so the
-  triangulation knows what to mesh.
+  triangulation knows what to mesh;
+* the corners of every window (D9) that fall strictly inside the meshed
+  domain, as loose vertices, after the nodes of step 1, window by window. The
+  core evaluates the size bound at the three vertices and the centroid of
+  each triangle (its reply of 2026-11-23), so a window smaller than the
+  triangle over it could fall between those four points and not be seen
+  (measured: a window of 0.4 m with size 0.05 left the mesh unchanged). With
+  its corners as vertices, the triangles that touch them see the bound, and
+  the refinement carries it inwards. Decided by the owner on 2026-11-23.
 
 The domain the triangulation sees is that of the chords: the polygon of the
 discretized nodes. A seed is found without new dependencies: along a
@@ -137,7 +145,30 @@ def build(m: g.MeshInput, disc: Discretization) -> PSLG:
                 p = interior_point([ring], pts)
                 voids.append(p)
     arcs = {k: s.arc.centre for k, s in enumerate(segs) if s.arc is not None}
-    return PSLG(tuple(pts), tuple(pieces), tuple(seeds), tuple(voids), arcs)
+    vertices = list(pts) + window_corners(m, disc, pieces)
+    return PSLG(tuple(vertices), tuple(pieces), tuple(seeds), tuple(voids), arcs)
+
+
+def window_corners(m: g.MeshInput, disc: Discretization, pieces) -> list[Point]:
+    """The corners of the windows that are strictly inside a region of the
+    domain of chords, not on a piece and not already a vertex, in the order
+    of the windows and their corners, each once."""
+    pts = disc.points
+    rings_of = [[_ring_chain(m, disc, region.outline)]
+                + [_ring_chain(m, disc, h) for h in region.holes] for region in m.regions]
+    seen = set(pts)
+    out = []
+    for window in m.settings.windows:
+        for corner in window.polygon:
+            p = (float(corner[0]), float(corner[1]))
+            if p in seen:
+                continue
+            if any(g._on_closed_segment(p, pts[u], pts[v]) for u, v, _lab in pieces):
+                continue
+            if any(_inside(p, rings, pts) for rings in rings_of):
+                out.append(p)
+                seen.add(p)
+    return out
 
 
 def onto_arcs(points: Sequence[Point], chains: Mapping[int, Sequence[Sequence[int]]],

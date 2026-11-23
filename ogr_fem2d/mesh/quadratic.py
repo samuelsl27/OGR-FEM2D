@@ -34,6 +34,8 @@ import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
+from . import _trig
+
 Point = tuple[float, float]
 
 
@@ -53,10 +55,10 @@ class QuadraticMesh:
 
 def arc_middle(a: Point, b: Point, centre: Point) -> Point:
     """The middle of the minor arc from a to b about ``centre``."""
-    r = 0.5 * (math.dist(a, centre) + math.dist(b, centre))
+    r = 0.5 * (_trig.length(a, centre) + _trig.length(b, centre))
     mx, my = 0.5 * (a[0] + b[0]), 0.5 * (a[1] + b[1])
     dx, dy = mx - centre[0], my - centre[1]
-    d = math.hypot(dx, dy)
+    d = _trig.norm(dx, dy)
     return (centre[0] + r * dx / d, centre[1] + r * dy / d)
 
 

@@ -344,6 +344,50 @@ no con la función del código). **Dientes**: 8 mutaciones (giro máximo de 90°
 forzadas por debajo aceptadas, suma de mínimos olvidada, reparto sin mínimos, segmentos que no reciben
 nudos con una sola división, uniforme sin mínimo, devolver divisiones por debajo del mínimo): 8 de 8.
 
+## El mallador del núcleo, probado desde FEM2D (2026-11-23)
+
+La sesión de OGR-Core contestó a la petición D2 (`Promts_desarrollo/2026_11_23_respuesta_ogr_core_
+mallador_de_calidad.md`): `ogr_core.fem.refine.quality_triangulation`, en su `main` (`f2f7b99`,
+`0.2.5.dev0`), sin etiquetar todavía. Acepta el `PSLG` de FEM2D tal cual.
+
+**Lo que se vio al probarlo** (con `PYTHONPATH` al árbol del núcleo, sin cambiarle de rama):
+
+- **D14 no está en el núcleo**: `refine.py` no sabe de arcos, la respuesta no menciona la segunda
+  petición y, con malla uniforme de h ≤ 0.5 m, el refinado añade vértices sobre las cuerdas del hueco
+  (3 con h = 0.5; 9 con h = 0.25). La propietaria lleva la petición y la T12 espera; un test lo deja
+  escrito y fallará cuando el núcleo lo resuelva.
+- **Las ventanas pequeñas no se veían**: el núcleo mira la cota en los tres vértices y el centroide de
+  cada triángulo, y una ventana de 0.4 m con tamaño 0.05 dejaba la malla igual (234 triángulos,
+  ninguno dentro). **Decisión de la propietaria (2026-11-23)**: las esquinas de cada ventana que caen
+  dentro del dominio entran en el PSLG como nudos sueltos (`pslg.window_corners`). Con ellas la
+  ventana se llena de triángulos de 0.05 como mucho.
+- **Determinismo entre plataformas (aviso del núcleo, anomalía en este repositorio)**: los nudos de
+  los arcos salían de `math.cos`, `math.sin` y `math.atan2`, y los de la malla radial de `cos`, `sin` y
+  `**`, que vienen de la biblioteca de cada sistema y pueden redondear distinto la última cifra: el
+  mismo modelo podía dar otra malla en Linux que en Windows (RF-11). No se ha visto aquí fallar (no hay
+  Linux en esta máquina); lo midió el núcleo con su propio test. **Decisión de la propietaria
+  (2026-11-23)**: trigonometría propia, `ogr_fem2d/mesh/_trig.py`, con + − × ÷ y raíz cuadrada (las
+  series de Taylor y las identidades de siempre; seno y coseno por cuadrantes, a 3.3·10⁻¹⁶ de `math`),
+  usada en `discretize`, `geometry`, `quadratic` y `radial`; las distancias, con raíz cuadrada en vez
+  de `hypot` y `dist`; la progresión de la malla radial, con productos en vez de `**` (sin tocar
+  `engine/mesh_radial.py`, del que dependen los casos 001 y 002 bit a bit). Una huella SHA-256 de cuatro
+  discretizaciones y una malla radial, grabada en Windows, la comprobará la CI en Linux y macOS.
+  - Al cambiar `hypot` por la raíz, un test de la T5 pasó de 4.3·10⁻¹⁶ a fallar por su tolerancia de
+    4·10⁻¹⁶, que había puesto a ojo: el cálculo c + r·d/|d| encadena unos cuatro redondeos y medirlo
+    otro, así que la cota es de seis unidades de redondeo, 6·2⁻⁵³. Se cambió la tolerancia por esa
+    cota, con su cuenta en el test.
+
+**Los tests**: `tests/test_mesh_determinism_v008.py`, 4 (la trigonometría contra `math`, ningún
+módulo que decide la malla llama a la biblioteca del sistema ni usa `**`, leído en los tokens y no en
+los comentarios, y la huella); `tests/test_mesh_refine_v008.py`, 10, **pendientes hasta que la
+fijación llegue a la 0.2.5** (T14): con el núcleo fijado vuelven sin hacer nada, y uno falla si el
+núcleo es 0.2.5 o posterior sin `refine`. Con `--dev-core` comprueban la cota de tamaño (uniforme,
+cota máxima, ventanas), el teorema 4 (cociente ≤ √2), Delaunay en un dominio convexo, la graduación
+del teorema 8 con B = 1/(2 sen 15°) y lfs por fuerza bruta (una comprobación en estas mallas: el núcleo
+avisa de que sus capas quedan fuera de la prueba), la cuña de 5° del teorema 12, el mapa de piezas y
+D14 pendiente. Más dos en `test_mesh_pslg_v008.py` para las esquinas. **Dientes**: 6 mutaciones del
+determinismo y 4 de las ventanas y la cota contra el núcleo nuevo, todas cazadas.
+
 ## Pruebas
 
 | Corrida | Resultado |
@@ -358,3 +402,4 @@ nudos con una sola división, uniforme sin mínimo, devolver divisiones por deba
 | T10, la misma | **279 de 279** (5 nuevos), código 0, ninguna fuga |
 | T11, T12 y T15 (parte sin el núcleo), la misma | **287 de 287** (8 nuevos), código 0, ninguna fuga |
 | T4b (D14), la misma | **293 de 293** (6 nuevos), código 0, ninguna fuga |
+| Determinismo, ventanas y el mallador del núcleo, la misma | **309 de 309** (16 nuevos; los 10 de `test_mesh_refine_v008.py` vuelven sin hacer nada con el núcleo fijado), código 0, ninguna fuga. Con `PYTHONPATH` al árbol del núcleo (`0.2.5.dev0 @ f2f7b99`) y `--dev-core`, solo `test_mesh_refine_v008.py`: 10 de 10 |

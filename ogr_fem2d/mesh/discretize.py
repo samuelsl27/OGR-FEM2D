@@ -28,6 +28,10 @@ How many divisions a segment gets:
 
 The windows (D9) are not looked at here: they bound the refinement (T11).
 
+Every coordinate and every count here comes from +, -, *, / and sqrt (the
+trigonometry of ``_trig``), so the same input gives the same nodes on every
+platform (D11).
+
 An arc is divided into equal angles of its minor arc, so every node is on
 the circle; a straight segment, into equal lengths. The ends of a segment
 are its two input points, shared with the segments that meet there; the new
@@ -41,6 +45,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
+from . import _trig
 from . import geometry as g
 
 
@@ -70,7 +75,7 @@ def segment_length(m: g.MeshInput, s: g.Segment) -> float:
     """The length of a segment: its chord, or R theta for an arc."""
     a, b = m.points[s.a], m.points[s.b]
     if s.arc is None:
-        return math.dist(a, b)
+        return _trig.length(a, b)
     geo = g._ArcGeo(a, b, s.arc.centre)
     return geo.r * geo.theta
 
@@ -141,13 +146,16 @@ def divisions(m: g.MeshInput) -> tuple[tuple[g.Segment, int], ...]:
 def _arc_points(a: g.Point, b: g.Point, c: g.Point, n: int) -> list[g.Point]:
     """The n - 1 inner nodes of the minor arc from a to b about c, at equal
     angles."""
-    r = 0.5 * (math.dist(a, c) + math.dist(b, c))
+    r = 0.5 * (_trig.length(a, c) + _trig.length(b, c))
     ua = (a[0] - c[0], a[1] - c[1])
     ub = (b[0] - c[0], b[1] - c[1])
-    start = math.atan2(ua[1], ua[0])
-    sweep = math.atan2(ua[0] * ub[1] - ua[1] * ub[0], ua[0] * ub[0] + ua[1] * ub[1])
-    return [(c[0] + r * math.cos(start + k * sweep / n),
-             c[1] + r * math.sin(start + k * sweep / n)) for k in range(1, n)]
+    start = _trig.atan2(ua[1], ua[0])
+    sweep = _trig.atan2(ua[0] * ub[1] - ua[1] * ub[0], ua[0] * ub[0] + ua[1] * ub[1])
+    out = []
+    for k in range(1, n):
+        s, co = _trig.sin_cos(start + k * sweep / n)
+        out.append((c[0] + r * co, c[1] + r * s))
+    return out
 
 
 def _line_points(a: g.Point, b: g.Point, n: int) -> list[g.Point]:

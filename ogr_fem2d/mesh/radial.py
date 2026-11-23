@@ -9,7 +9,9 @@ circle is its own.
 
 How it is built. The polar grid r_0 = a < ... < r_n = b (the progression of
 ``engine/mesh_radial.graded_radii``: dr_(i+1) = growth dr_i, a geometric
-progression, growth = 1 uniform) by n_theta equal angles. Each cell is cut by
+progression, growth = 1 uniform; here with products, not powers, and the
+angles with ``_trig``, so it is the same on every platform, D11) by n_theta
+equal angles. Each cell is cut by
 the same diagonal into two triangles, anticlockwise in the (r, theta) plane
 and therefore in the plane (the polar map has det = r > 0). Corners at their
 exact polar images (the points on the axes x and y exactly there, as in
@@ -30,9 +32,8 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from ..engine.mesh_radial import graded_radii
 from ..engine.model import Problem
-from . import checks, quadratic
+from . import _trig, checks, quadratic
 from .geometry import MeshInputError, _finite
 from .mesher import Mesh, boundary_map
 
@@ -79,9 +80,26 @@ def _point(centre, r: float, j: int, n: int) -> tuple[float, float]:
     if quarter % n == 0:
         dx, dy = ((r, 0.0), (0.0, r), (-r, 0.0), (0.0, -r))[(quarter // n) % 4]
     else:
-        t = 2.0 * math.pi * j / n
-        dx, dy = r * math.cos(t), r * math.sin(t)
+        s, c = _trig.sin_cos(2.0 * math.pi * j / n)
+        dx, dy = r * c, r * s
     return (centre[0] + dx, centre[1] + dy)
+
+
+def graded_radii(a: float, b: float, n_radial: int, growth: float) -> list[float]:
+    """r_0 = a, ..., r_n = b with dr_(i+1) = growth dr_i: the progression of
+    ``engine/mesh_radial.graded_radii``, with the powers of growth made by
+    repeated products (``**`` calls the system's pow, which need not round
+    alike everywhere; D11)."""
+    sizes, size = [], 1.0
+    for _ in range(n_radial):
+        sizes.append(size)
+        size *= growth
+    total = sum(sizes)
+    radii = [a]
+    for size in sizes:
+        radii.append(radii[-1] + (b - a) * size / total)
+    radii[-1] = b
+    return radii
 
 
 def radial_mesh(s: RadialSettings) -> Mesh:

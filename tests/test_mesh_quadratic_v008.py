@@ -134,7 +134,9 @@ class TestWhereItGoes:
                 a, b = nodes[key[0]], nodes[key[1]]
                 m = mesh.nodes[mesh.mid_of[key]]
                 r = math.hypot(*a)
-                assert abs(math.hypot(*m) - r) <= 4e-16 * r, (key, m)
+                # c + r d/|d|: about four roundings, and one more to measure it:
+                # six units of roundoff, 6 x 2^-53
+                assert abs(math.hypot(*m) - r) <= 6 * 2.0 ** -53 * r, (key, m)
                 assert abs(math.dist(m, a) - math.dist(m, b)) <= 1e-14 * r
                 chord_mid = (0.5 * (a[0] + b[0]), 0.5 * (a[1] + b[1]))
                 assert math.hypot(*m) > math.hypot(*chord_mid)       # the minor arc

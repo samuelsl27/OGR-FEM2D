@@ -178,3 +178,28 @@ class TestSizeBound:
             TUNNEL.settings, kind="uniform", boundary_nodes=None, elements=500)))
         assert math.isclose(by_n(0.0, 0.0), math.sqrt(4 * 400.0 / (math.sqrt(3) * 500)),
                             rel_tol=1e-14)
+
+
+class TestWindowCorners:
+    """D9 with the core's evaluation of the size bound (2026-11-23): the
+    corners of a window inside the domain are loose vertices of the PSLG."""
+
+    def test_inside_in_outside_on_a_segment_or_repeated_out(self):
+        windows = (
+            g.Window(((5.0, 5.0), (5.4, 5.0), (5.4, 5.4), (5.0, 5.4)), 0.05),   # all inside
+            g.Window(((8.0, 8.0), (12.0, 8.0), (12.0, 12.0), (8.0, 12.0)), 0.5),  # half out
+            g.Window(((-10.0, 0.0), (-9.0, 0.0), (-9.0, 1.0)), 0.5),              # one on the side
+            g.Window(((5.0, 5.0), (5.4, 5.0), (5.2, 5.6)), 0.05),                 # repeats two
+            g.Window(((0.0, 0.0), (0.2, 0.0), (0.0, 0.2)), 0.05),                 # in the excavation
+        )
+        m = replace(TUNNEL, settings=replace(TUNNEL.settings, windows=windows))
+        disc = discretize.discretize(m)
+        p = pslg.build(m, disc)
+        extra = p.vertices[len(disc.points):]
+        assert extra == ((5.0, 5.0), (5.4, 5.0), (5.4, 5.4), (5.0, 5.4), (8.0, 8.0),
+                         (-9.0, 0.0), (-9.0, 1.0), (5.2, 5.6), (0.0, 0.0), (0.2, 0.0),
+                         (0.0, 0.2)), extra
+
+    def test_no_window_no_extra_vertex(self):
+        disc = discretize.discretize(TUNNEL)
+        assert pslg.build(TUNNEL, disc).vertices == disc.points

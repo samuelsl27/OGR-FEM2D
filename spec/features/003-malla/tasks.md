@@ -87,7 +87,9 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
 - [ ] T11. `sizing.py`: cotas uniforme (h o N), graduada (cota máxima opcional) y de ventanas y
       polígonos — RF-5 a RF-7, D5, D9 — Hecho cuando: cada cota cumplida en la malla resultante y
       cada opción mueve la malla (regla 7). (2026-11-22, parte hecha: `sizing.py` y sus tests como
-      función; falta comprobarla sobre la malla, con el núcleo.)
+      función; falta comprobarla sobre la malla, con el núcleo.) (2026-11-23: comprobada sobre la
+      malla del núcleo con `--dev-core`, en `test_mesh_refine_v008.py`, pendiente de la fijación;
+      las ventanas, con sus esquinas como nudos sueltos, decisión de la propietaria.)
 - [ ] T12. `mesher.py`: los dos pasos de principio a fin; los vértices añadidos sobre cuerdas llevados
       al arco (D13, sustituida por D14: el núcleo los pone ya sobre el arco; la red de seguridad (a),
       volver a mallar con el doble de divisiones en los arcos de elementos rechazados, con tope); las
@@ -99,7 +101,9 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
 - [ ] T13. Las garantías vistas desde FEM2D y el resumen de calidad: cota B (teorema 4), cota de
       tamaño, Delaunay final, teorema 8 con B = 1/(2 sen 15°), teorema 12 y terminación con un ángulo de
       entrada de 5°; medidas de calidad (1, 0, < 0, invariantes) — RF-4, RF-9, RF-12 — Hecho cuando:
-      en verde y con dientes.
+      en verde y con dientes. (2026-11-23: escritas en `test_mesh_refine_v008.py` y en verde con
+      `--dev-core`; se cierra con la T14. Las medidas de calidad las prueba el núcleo; el resumen de
+      calidad de la malla va en la T12.)
 - [ ] T14. La fijación sube a la versión del núcleo que trae la petición, en un commit propio — Hecho
       cuando: la suite entera la nombra en `shared:` y sale en verde, y la propietaria está avisada
       de la fila de `docs/consumidores.md`.

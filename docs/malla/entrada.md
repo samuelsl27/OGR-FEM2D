@@ -43,7 +43,7 @@ para el tipo de malla elegido se rechaza, no se ignora (regla 7).
 | `max_size` | sin cota | graduada: cota opcional de la longitud de cualquier lado |
 | `size` | — | uniforme: cota de la longitud de cualquier lado |
 | `elements` | — | uniforme: número aproximado de elementos, del que sale `size` (D5); uno de los dos |
-| `windows` | ninguna | `Window(polygon, size)`: zonas, de cualquier polígono, cuyos elementos no pasan de `size` (D9) |
+| `windows` | ninguna | `Window(polygon, size)`: zonas, de cualquier polígono, cuyos elementos no pasan de `size` (D9). Sus esquinas que caen dentro del dominio entran como nudos sueltos: el núcleo mira la cota en los vértices y el centroide de cada triángulo, y una ventana pequeña podría quedar entre esos puntos sin verse |
 
 ## Lo que se deriva de una entrada válida
 
@@ -92,6 +92,15 @@ ventanas no se miran aquí: son cotas del refinado. La h de una malla uniforme v
 lado de la malla (RF-3). `to_engine(malla, materiales, fases, tensiones_iniciales)` da el
 `EngineModel`, validado por las reglas del motor; los materiales, las fases y las tensiones los pone
 quien llama (spec 004).
+
+## La misma malla en todas las plataformas
+
+La misma entrada da la misma malla bit a bit también entre sistemas (RF-11, D11). Las coordenadas de
+los nudos de los arcos y de la malla radial, las longitudes y los ángulos que deciden cuántas
+divisiones lleva un segmento se calculan con `ogr_fem2d/mesh/_trig.py`, que solo usa + − × ÷ y raíz
+cuadrada, en lugar de las funciones trigonométricas de la biblioteca de cada sistema, que pueden
+redondear distinto la última cifra. La malla del núcleo depende además de la **unidad de longitud**
+(sus capas concéntricas son potencias de dos de la unidad; nota `length_unit`).
 
 ## Reglas de validación
 

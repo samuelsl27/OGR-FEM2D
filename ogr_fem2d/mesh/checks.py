@@ -134,8 +134,10 @@ def element_problems(nodes: Sequence[Point], elements: Sequence[tuple[int, ...]]
     for e, element in enumerate(elements):
         xy = [nodes[i] for i in element]
         corners = xy[:3]
-        longest = max(((corners[k][0] - corners[(k + 1) % 3][0]) ** 2
-                       + (corners[k][1] - corners[(k + 1) % 3][1]) ** 2) for k in range(3))
+        longest = max((corners[k][0] - corners[(k + 1) % 3][0])
+                      * (corners[k][0] - corners[(k + 1) % 3][0])
+                      + (corners[k][1] - corners[(k + 1) % 3][1])
+                      * (corners[k][1] - corners[(k + 1) % 3][1]) for k in range(3))
         floor = 2.0 * SLIVER * longest
         lowest, at = minimum_det(xy)
         checked = jacobian_dets(xy, analysis) + [(f"(xi, eta) = ({at[0]:.4g}, {at[1]:.4g}), "

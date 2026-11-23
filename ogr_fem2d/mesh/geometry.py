@@ -43,6 +43,7 @@ import math
 from dataclasses import dataclass
 from fractions import Fraction
 
+from . import _trig
 from ..engine.model import Problem
 from ..engine.reference.quadrature import AXISYMMETRIC, PLANE_STRAIN
 
@@ -243,15 +244,15 @@ class _ArcGeo:
 
     def __init__(self, a: Point, b: Point, centre: Point):
         self.a, self.b, self.c = a, b, centre
-        self.r = 0.5 * (math.dist(a, centre) + math.dist(b, centre))
+        self.r = 0.5 * (_trig.length(a, centre) + _trig.length(b, centre))
         mx, my = 0.5 * (a[0] + b[0]), 0.5 * (a[1] + b[1])
         dx, dy = mx - centre[0], my - centre[1]
-        d = math.hypot(dx, dy)
+        d = _trig.norm(dx, dy)
         self.mid = (centre[0] + self.r * dx / d, centre[1] + self.r * dy / d)
         #: +1 if the arc bulges to the left of a -> b, -1 to the right
         self.side = 1 if _cross(a, b, self.mid) > 0 else -1
-        self.chord = math.dist(a, b)
-        self.theta = 2.0 * math.asin(min(1.0, self.chord / (2.0 * self.r)))
+        self.chord = _trig.length(a, b)
+        self.theta = 2.0 * _trig.asin(min(1.0, self.chord / (2.0 * self.r)))
 
     def on_open_arc(self, x: Point, tol: float) -> bool:
         """A point of the circle lies on the arc, away from its ends: on the
@@ -261,11 +262,11 @@ class _ArcGeo:
 
     def segment_area(self) -> float:
         """The area between the arc and its chord, R^2/2 (theta - sin theta)."""
-        return 0.5 * self.r ** 2 * (self.theta - math.sin(self.theta))
+        return 0.5 * self.r * self.r * (self.theta - _trig.sin(self.theta))
 
     def inside_segment(self, p: Point) -> bool:
         """p lies between the arc and its chord."""
-        return (math.dist(p, self.c) < self.r
+        return (_trig.length(p, self.c) < self.r
                 and self.side * _cross(self.a, self.b, p) > 0.0)
 
     def min_x(self) -> float:
@@ -287,7 +288,7 @@ def _arc_meets_straight(arc: _ArcGeo, p: Point, q: Point, tol: float) -> bool:
     fx, fy = p[0] - arc.c[0], p[1] - arc.c[1]
     aa = dx * dx + dy * dy
     bb = dx * fx + dy * fy
-    cc = fx * fx + fy * fy - arc.r ** 2
+    cc = fx * fx + fy * fy - arc.r * arc.r
     disc = bb * bb - aa * cc
     if disc < -tol * arc.r * aa:
         return False
@@ -302,7 +303,7 @@ def _arc_meets_straight(arc: _ArcGeo, p: Point, q: Point, tol: float) -> bool:
 
 def _arc_meets_arc(u: _ArcGeo, v: _ArcGeo, tol: float) -> bool:
     """Two arcs meet away from their ends."""
-    d = math.dist(u.c, v.c)
+    d = _trig.length(u.c, v.c)
     if d <= tol and abs(u.r - v.r) <= tol:
         # the same circle: they overlap if an end of one is inside the other,
         # or if they are the same arc between different points
@@ -311,8 +312,8 @@ def _arc_meets_arc(u: _ArcGeo, v: _ArcGeo, tol: float) -> bool:
                 or u.on_open_arc(v.mid, tol))
     if d <= tol or d > u.r + v.r + tol or d < abs(u.r - v.r) - tol:
         return False
-    a = (u.r ** 2 - v.r ** 2 + d * d) / (2.0 * d)
-    h = math.sqrt(max(0.0, u.r ** 2 - a * a))
+    a = (u.r * u.r - v.r * v.r + d * d) / (2.0 * d)
+    h = math.sqrt(max(0.0, u.r * u.r - a * a))
     ex, ey = (v.c[0] - u.c[0]) / d, (v.c[1] - u.c[1]) / d
     bx, by = u.c[0] + a * ex, u.c[1] + a * ey
     for s in (-1.0, 1.0):
@@ -601,12 +602,12 @@ def _segment_problems(m: MeshInput, add, uses: dict) -> bool:
                 add("arc", where, f"centre {c!r} is not two finite numbers")
                 ok = False
                 continue
-            ra, rb = math.dist(a, c), math.dist(b, c)
+            ra, rb = _trig.length(a, c), _trig.length(b, c)
             if abs(ra - rb) > ARC_TOL * max(ra, rb, scale):
                 add("arc", where,
                     f"its points are at {ra!r} and {rb!r} from the centre: not on one circle")
                 ok = False
-            elif abs(_cross(a, b, c)) <= ARC_TOL * scale * math.dist(a, b):
+            elif abs(_cross(a, b, c)) <= ARC_TOL * scale * _trig.length(a, b):
                 add("arc", where,
                     "the centre is on the chord: a half circle or more must be split by a "
                     "point (spec 003, D4)")
@@ -625,7 +626,7 @@ def _scale(m: MeshInput) -> float:
     if not pts:
         return 1.0
     xs, ys = [p[0] for p in pts], [p[1] for p in pts]
-    return math.hypot(max(xs) - min(xs), max(ys) - min(ys)) or 1.0
+    return _trig.norm(max(xs) - min(xs), max(ys) - min(ys)) or 1.0
 
 
 def _geometry_problems(m: MeshInput, add, uses: dict) -> None:
@@ -674,7 +675,7 @@ def _geometry_problems(m: MeshInput, add, uses: dict) -> None:
         for key in keys:
             geo = arcs.get(key)
             on = (_on_closed_segment(pts[n], pts[key[0]], pts[key[1]]) if geo is None
-                  else abs(math.dist(pts[n], geo.c) - geo.r) <= tol and geo.on_open_arc(pts[n], tol))
+                  else abs(_trig.length(pts[n], geo.c) - geo.r) <= tol and geo.on_open_arc(pts[n], tol))
             if on:
                 add("loose_point", f"point {n}",
                     f"belongs to no ring but lies on segment {key[0]}-{key[1]}")
