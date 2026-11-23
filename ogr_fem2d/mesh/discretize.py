@@ -9,9 +9,10 @@ add more on a segment when it must (Shewchuk 2002a, §3.1).
 How many divisions a segment gets:
 
 * a forced number (``SegmentSpec.divisions``) is kept (D10);
-* an arc gets at least ceil(theta / 60 degrees) divisions in every case, so
-  that no piece of it turns more than 60 degrees (D14; Pav and Walkington,
-  def. 4); a forced number below that is refused by the input's validation;
+* an arc gets at least ceil(theta / 10 degrees) divisions in every case, so
+  that no piece of it turns more than 10 degrees (D14 and D15; Pav and
+  Walkington, def. 4 and corollary 3); a forced number below that is refused
+  by the input's validation;
 * graded mesh (D5): ``boundary_nodes`` is the total number of divisions of
   the segments that take it (the excavation, or the outer boundary when
   there is no excavation; on a closed boundary it is its number of nodes).

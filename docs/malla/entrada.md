@@ -62,7 +62,7 @@ más en un segmento cuando lo necesita (RF-3, D10).
 
 | Caso | Divisiones de un segmento |
 |---|---|
-| Arco, en todos los casos | al menos ⌈θ/60°⌉, para que ningún tramo gire más de 60° (D14; Pav y Walkington, def. 4, pág. 4); un arco de 60° justos es un tramo aunque sus coordenadas vengan redondeadas |
+| Arco, en todos los casos | al menos ⌈θ/10°⌉, para que ningún tramo gire más de 10° (D14 y D15; Pav y Walkington, def. 4, pág. 4, y corolario 3, pág. 13: con tramos de 10° la terminación del refinado está probada para B > 1.76); un arco de 10° justos es un tramo aunque sus coordenadas vengan redondeadas |
 | Divisiones forzadas (`SegmentSpec.divisions`) | esas (D10), si no bajan del mínimo del arco |
 | Malla graduada, segmentos de excavación (o del contorno exterior si no hay excavación) | `boundary_nodes` repartidas en proporción a la longitud (la del arco en los arcos): cada uno recibe la parte entera de lo suyo, al menos su mínimo, y las que quedan van a los mayores restos, con los empates al primero; la suma es exacta (D5) |
 | Malla graduada, los demás segmentos | su mínimo (una en un segmento recto): entran con sus extremos y el refinado gradúa |
@@ -124,7 +124,7 @@ no se corten.
 | `shared_edge` | un segmento en más de dos anillos, o en dos que lo recorren en el mismo sentido | dos regiones que se tocan lo recorren en sentidos opuestos; en el mismo, se solapan |
 | `unknown_segment` | atributos de un par de puntos que no es lado de ningún anillo | — |
 | `segment_twice` | atributos del mismo segmento dados dos veces | ¿cuál vale? |
-| `divisions` | un número de divisiones que no es un entero ≥ 1, o que en un arco no llega a ⌈θ/60°⌉ | D14: ningún tramo de arco gira más de 60° (Pav y Walkington, def. 4) |
+| `divisions` | un número de divisiones que no es un entero ≥ 1, o que en un arco no llega a ⌈θ/10°⌉ | D15: ningún tramo de arco gira más de 10° (Pav y Walkington, def. 4 y corolario 3) |
 | `arc` | un centro no finito, puntos a distinta distancia del centro, o el centro sobre la cuerda (medio círculo o más) | el arco es el menor; uno de 180° o más se parte con un punto (D4) |
 | `orientation` | un contorno que no va en sentido antihorario o un hueco que no va en sentido horario (por el área exacta, arcos incluidos) | el convenio de `ogr_core`; sin él no se sabe de qué lado está la región |
 | `crossing` | dos segmentos rectos que se cortan, se solapan, o un punto de uno en el interior de otro (una unión en T) | Shewchuk (2002a), §1 |

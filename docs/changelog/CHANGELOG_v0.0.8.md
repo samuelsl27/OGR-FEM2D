@@ -408,6 +408,35 @@ cambia.
 **Dientes**: `_PIN` de vuelta a 0.2.3 y la lista de la corrida normal cambiada, cazados; y el test del
 teorema 4 con una malla hecha con B = 3 en vez de √2, cazado (la comprobación no pasa en vacío).
 
+## D15 — los arcos, en tramos de 10° (2026-11-23)
+
+La sesión de OGR-Core contestó a la petición de D14 (`Promts_desarrollo/2026_11_23_respuesta_ogr_
+core_contornos_curvos.md`): variante (ii), partir los tramos de arco sobre el arco, en su **0.2.6**,
+con la API que FEM2D ya tiene (`PSLG.arcs`). Y trajo un hallazgo de la fuente que cambia lo que la spec
+promete: Pav y Walkington solo prueban que el refinado **termina con arcos** si el ángulo pedido es menor
+que una cota que depende de lo que gira cada tramo (corolario 3, pág. 13; η y μ, pág. 6; ζ, pág. 8). Se
+recalculó aquí con esas fórmulas y coincide con su tabla: tramos de 60° → B > 7.21; 15° → 1.97; 10° →
+1.76; 5° → 1.58. Con B = √2 no hay prueba con ningún troceo; en la práctica, si no terminara, el tope de
+elementos corta con un error, y si termina, cada triángulo cumple la cota.
+
+**Decisión de la propietaria (D15)**: tramos de 10° y B = √2 por defecto; la malla dirá con ella, cuando
+haya arcos, que la terminación solo está probada con B ≥ 1.77 (regla 12; se hace en la T12 con la nota
+del núcleo). Enmiendas de RF-2, RF-4, RF-9 y D3 en la spec; fila nueva en «Formulación».
+
+- `geometry.MAX_ARC_TURN` pasa de π/3 a π/18; un cuarto de círculo pide ahora 9 divisiones y un túnel
+  circular en cuatro arcos, 36 nudos en la malla graduada.
+- Los tests se ajustaron a los mínimos nuevos (datos con más nudos; el arco medido por el arco, ahora
+  con h = 0.17, donde el arco da 10 divisiones y la cuerda 9). La huella de determinismo cambia (la
+  discretización es otra) y se regrabó, con la vieja anotada en el test.
+- **El test de «D14 pendiente» dejó de ver vértices en las cuerdas** con h = 0.25: con tramos de 10° las
+  cuerdas (0.17 m) son más cortas que h. El problema sigue donde el arco va más grueso que la malla: el
+  test fuerza ahora 9 divisiones por cuarto con h = 0.05.
+- Las mutaciones de la T4 y la T5 se volvieron a pasar: dos «sobrevivían» porque su texto (con
+  `math.dist`) ya no existe desde el cambio a `_trig`; rehechas, 18 de 18 y 8 de 8. Las de la T4b, con
+  el giro máximo mutado a 15°, 8 de 8.
+
+## Pruebas
+
 ## Pruebas
 
 | Corrida | Resultado |
@@ -424,3 +453,4 @@ teorema 4 con una malla hecha con B = 3 en vez de √2, cazado (la comprobación
 | T4b (D14), la misma | **293 de 293** (6 nuevos), código 0, ninguna fuga |
 | Determinismo, ventanas y el mallador del núcleo, la misma | **309 de 309** (16 nuevos; los 10 de `test_mesh_refine_v008.py` vuelven sin hacer nada con el núcleo fijado), código 0, ninguna fuga. Con `PYTHONPATH` al árbol del núcleo (`0.2.5.dev0 @ f2f7b99`) y `--dev-core`, solo `test_mesh_refine_v008.py`: 10 de 10 |
 | T14, contra la `v0.2.5` instalada (`shared: ogr_core 0.2.5 … (installed, no git tree)`) | **308 de 308** (uno menos: el test de la guarda pendiente ya no tiene sentido), código 0, ninguna fuga; los 9 de `test_mesh_refine_v008.py` corren |
+| D15, la misma | **308 de 308**, código 0, ninguna fuga |

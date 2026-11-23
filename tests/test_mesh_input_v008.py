@@ -70,7 +70,7 @@ CAVITY = g.MeshInput(
 DENT = g.MeshInput(
     "plane_strain", ((0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0)),
     (g.Region((0, 1, 2, 3)),), (g.SegmentSpec(1, 2, arc=g.Arc((2.5, 1.0))),),
-    g.MeshSettings(boundary_nodes=8))       # the arc, of 127 degrees, needs 3 (D14)
+    g.MeshSettings(boundary_nodes=16))      # the arc, of 127 degrees, needs 13 (D15)
 
 
 def rules_of(m: g.MeshInput) -> set[str]:
@@ -107,7 +107,7 @@ def _arc_through_a_contact():
     return g.MeshInput("plane_strain", pts,
                        (g.Region((0, 4, 5, 3)), g.Region((4, 1, 2, 5), material=1)),
                        (g.SegmentSpec(1, 2, arc=g.Arc((2.5, 1.0))),),
-                       g.MeshSettings(boundary_nodes=8))
+                       g.MeshSettings(boundary_nodes=18))
 
 
 def _hole_outside():
@@ -236,7 +236,7 @@ class TestArcs:
             # right, away from the third point (with the third point on the
             # right, its sides would cut the arc: that is a crossing)
             return g.MeshInput("plane_strain", pts, (g.Region((0, 1, 2)),),
-                               (g.SegmentSpec(0, 1, arc=O),), g.MeshSettings(boundary_nodes=5))
+                               (g.SegmentSpec(0, 1, arc=O),), g.MeshSettings(boundary_nodes=20))
         assert "arc" in rules_of(lens(90.0))
         assert g.problems(lens(89.5)) == []
 
@@ -244,7 +244,7 @@ class TestArcs:
         pts = ((0.0, -1.0), (2.0, -1.0), (2.0, 1.0), (0.0, 1.0))
         m = g.MeshInput("axisymmetric", pts, (g.Region((0, 1, 2, 3)),),
                         (g.SegmentSpec(3, 0, arc=g.Arc((1.0, 0.0))),),
-                        g.MeshSettings(boundary_nodes=6))
+                        g.MeshSettings(boundary_nodes=12))
         assert where_of(m, "left_of_axis") == ["segment 0-3"], g.problems(m)
         assert g.problems(replace(m, analysis="plane_strain")) == []
 
@@ -260,15 +260,15 @@ class TestNoSettingDoesNothing:
                                                     boundary_nodes=None, max_size=2.0))
 
     def test_boundary_nodes_when_every_target_is_forced(self):
-        forced = replace(TUNNEL, segments=tuple(replace(s, divisions=8) for s in ARCS))
+        forced = replace(TUNNEL, segments=tuple(replace(s, divisions=9) for s in ARCS))
         assert "graded_nodes" in rules_of(forced)
         assert g.problems(with_settings(forced, boundary_nodes=None)) == []
 
     def test_boundary_nodes_are_needed_otherwise(self):
         assert "graded_nodes" in rules_of(with_settings(TUNNEL, boundary_nodes=None))
-        # four arcs of 90 degrees need two pieces each (D14): 8 nodes, not 7
-        assert "graded_nodes" in rules_of(with_settings(TUNNEL, boundary_nodes=7))
-        assert g.problems(with_settings(TUNNEL, boundary_nodes=8)) == []
+        # four arcs of 90 degrees need nine pieces each (D15): 36 nodes, not 35
+        assert "graded_nodes" in rules_of(with_settings(TUNNEL, boundary_nodes=35))
+        assert g.problems(with_settings(TUNNEL, boundary_nodes=36)) == []
 
 
 class TestSegments:

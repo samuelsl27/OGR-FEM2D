@@ -63,13 +63,19 @@ DEFAULT_QUALITY_BOUND = math.sqrt(2.0)
 #: the diagonal of the bounding box of the points.
 ARC_TOL = 1e-9
 
-#: The most a piece of an arc may turn (spec 003, D14): Delaunay refinement
-#: with curved input assumes that the tangent of every curve turns at most
-#: pi/3, "achieved by splitting curves in a preprocessing step" (Pav and
-#: Walkington, Delaunay refinement by corner lopping, def. 4, p. 4, after
-#: Boivin and Ollivier-Gooch 2002). An arc is therefore divided into at least
-#: ceil(theta / (pi/3)) pieces, theta the angle it subtends.
-MAX_ARC_TURN = math.pi / 3.0
+#: The most a piece of an arc may turn (spec 003, D14 and D15). Delaunay
+#: refinement with curved input assumes that the tangent of every curve turns
+#: at most pi/3, "achieved by splitting curves in a preprocessing step" (Pav
+#: and Walkington, Delaunay refinement by corner lopping, def. 4, p. 4, after
+#: Boivin and Ollivier-Gooch 2002); and it is proved to terminate only for an
+#: angle bound kappa < arcsin(1/(2 mu sqrt 2)) ^ arcsin(1/(2 zeta eta))
+#: (their corollary 3, p. 13; eta and mu, p. 6; zeta, p. 8), which depends on
+#: that turn tau: with tau = 60 degrees, B > 7.21; with tau = 10 degrees,
+#: B > 1.76; with the default B = sqrt(2), with no tau. The owner chose
+#: (2026-11-23, D15) pieces of 10 degrees and B = sqrt(2) by default, the mesh
+#: saying that with arcs the termination is proved only for B >= 1.77. An arc
+#: is divided into at least ceil(theta / 10 degrees) pieces.
+MAX_ARC_TURN = math.pi / 18.0
 
 Point = tuple[float, float]
 
@@ -428,7 +434,7 @@ def arc_angle(m: MeshInput, s) -> float:
 
 def minimum_divisions(m: MeshInput, s) -> int:
     """The fewest divisions of a segment: one, or, for an arc, enough for
-    every piece to turn at most MAX_ARC_TURN (D14). An arc of exactly 60
+    every piece to turn at most MAX_ARC_TURN (D14, D15). An arc of exactly 10
     degrees is one piece (the rounding of theta is not allowed to add one)."""
     theta = arc_angle(m, s)
     if theta == 0.0:
@@ -616,8 +622,9 @@ def _segment_problems(m: MeshInput, add, uses: dict) -> bool:
                 need = minimum_divisions(m, s)
                 add("divisions", where,
                     f"{s.divisions} divisions for an arc of {math.degrees(arc_angle(m, s)):.4g} "
-                    f"degrees: it needs at least {need}, so that no piece turns more than 60 "
-                    "degrees (spec 003, D14; Pav and Walkington, def. 4)")
+                    f"degrees: it needs at least {need}, so that no piece turns more than 10 "
+                    "degrees (spec 003, D14 and D15; Pav and Walkington, def. 4 and "
+                    "corollary 3)")
     return ok
 
 
@@ -753,7 +760,7 @@ def problems(m: MeshInput) -> list[Problem]:
             need = sum(minimum_divisions(m, s) for s in targets)
             add("graded_nodes", "settings",
                 f"{nodes} nodes for {len(targets)} segments that need at least {need} "
-                "divisions (one each, and an arc enough pieces of at most 60 degrees, D14)")
+                "divisions (one each, and an arc enough pieces of at most 10 degrees, D15)")
     if segments_ok:
         _geometry_problems(m, add, uses)
     return out

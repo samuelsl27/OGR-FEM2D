@@ -131,12 +131,12 @@ class TestGradedShare:
         assert by[(3, 6)].divisions == 1               # the contact between layers
 
     def test_forced_divisions_are_kept_and_left_out_of_the_share(self):
-        forced = replace(TUNNEL, segments=(replace(TUNNEL.segments[0], divisions=4),)
+        forced = replace(TUNNEL, segments=(replace(TUNNEL.segments[0], divisions=9),)
                          + TUNNEL.segments[1:] + (g.SegmentSpec(0, 1, divisions=6),))
         disc = d.discretize(replace(forced, settings=replace(forced.settings, boundary_nodes=30)))
         by = _by_ends(disc)
         assert by[(4, 7)].divisions + by[(7, 6)].divisions + by[(6, 5)].divisions == 30
-        assert by[(5, 4)].divisions == 4 and by[(0, 1)].divisions == 6
+        assert by[(5, 4)].divisions == 9 and by[(0, 1)].divisions == 6
 
 
 class TestUniformSize:
@@ -153,17 +153,18 @@ class TestUniformSize:
             for key, length in lengths.items():
                 n = got[key]
                 # the fewest that keep h, unless an arc needs more pieces of at
-                # most 60 degrees (D14): a quarter circle, two
-                least = 2 if key == (4, 7) else 1
+                # most 10 degrees (D15): a quarter circle, nine
+                least = 9 if key == (4, 7) else 1
                 assert length / n <= h and (n == least or length / (n - 1) > h), (key, n)
         assert {(s.a, s.b): n for s, n in d.divisions(slope)}[(0, 1)] == 14   # 40/3 = 13.3
 
     def test_an_arc_is_measured_along_the_arc(self):
         assert math.isclose(d.segment_length(TUNNEL, g.segments(TUNNEL)[4]), math.pi / 2,
                             rel_tol=1e-15)
-        # pi/2 = 1.571 > 1.5 > sqrt(2), its chord: two divisions, not one
-        got = {(s.a, s.b): n for s, n in d.divisions(_uniform(TUNNEL, size=1.5))}
-        assert got[(4, 7)] == 2
+        # with h = 0.17, pi/2 / h = 9.24 -> 10 divisions; the chord, sqrt(2) / h =
+        # 8.3 -> 9, which is also the minimum of a quarter circle (D15)
+        got = {(s.a, s.b): n for s, n in d.divisions(_uniform(TUNNEL, size=0.17))}
+        assert got[(4, 7)] == 10
 
     def test_forced_divisions_are_kept_in_a_uniform_mesh(self):
         forced = replace(TUNNEL, segments=TUNNEL.segments + (g.SegmentSpec(0, 1, divisions=3),))

@@ -48,8 +48,10 @@ _MESH = Path(__file__).resolve().parents[1] / "ogr_fem2d" / "mesh"
 FORBIDDEN = {"sin", "cos", "tan", "asin", "acos", "atan", "atan2", "hypot", "dist", "exp",
              "log", "log2", "log10", "pow", "sinh", "cosh", "tanh"}
 
-#: Recorded in Windows, Python 3.14.10, on 2026-11-23.
-FINGERPRINT = "0c87422a021afe5574de9456ad6880fffa6e8c9e30201a06c8f49de1ca943708"
+#: Recorded in Windows, Python 3.14.10, on 2026-11-23; recorded again the same
+#: day when the arcs went to pieces of 10 degrees (D15), which changes the
+#: discretizations (the first one, 0c87422a..., was of pieces of 60).
+FINGERPRINT = "4ff1ac051603f1f60d193dc119d2d7b0f999f4cb3d104b77337a9b20a56347e4"
 
 
 class TestTheTrigonometry:

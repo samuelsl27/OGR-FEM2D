@@ -93,7 +93,7 @@ class TestSizeBound:
             assert longest <= bound * (1.0 + 1e-12), (bound, longest)
 
     def test_a_window_is_seen_through_its_corners(self):
-        m = replace(TUNNEL, settings=replace(TUNNEL.settings, boundary_nodes=32, windows=(WINDOW,)))
+        m = replace(TUNNEL, settings=replace(TUNNEL.settings, boundary_nodes=36, windows=(WINDOW,)))
         for corners, seen in ((True, True), (False, False)):
             _p, r = _mesh(m, with_corners=corners)
             inside = [e for e in r.mesh.elements
@@ -104,7 +104,7 @@ class TestSizeBound:
                 assert max(max(_sides(r.mesh, e)) for e in inside) <= 0.05 * (1 + 1e-12)
 
     def test_every_option_moves_the_mesh(self):
-        base = replace(TUNNEL, settings=replace(TUNNEL.settings, boundary_nodes=32))
+        base = replace(TUNNEL, settings=replace(TUNNEL.settings, boundary_nodes=36))
         counts = [len(_mesh(m)[1].mesh.elements) for m in (
             base, replace(base, settings=replace(base.settings, max_size=2.0)),
             replace(base, settings=replace(base.settings, windows=(WINDOW,))))]
@@ -119,7 +119,7 @@ class TestQuality:
             assert worst <= math.sqrt(2.0) * (1 + 1e-12), worst
 
     def test_delaunay_in_a_convex_domain(self):
-        _p, r = _mesh(replace(TUNNEL, settings=replace(TUNNEL.settings, boundary_nodes=32)))
+        _p, r = _mesh(replace(TUNNEL, settings=replace(TUNNEL.settings, boundary_nodes=36)))
         pts = [_xy(r.mesh, i) for i in range(len(r.mesh.nodes))]
         for e in r.mesh.elements:
             a, b, c = (pts[i] for i in e.nodes)
@@ -137,7 +137,7 @@ class TestQuality:
         b = 1.0 / (2.0 * math.sin(math.radians(15.0)))
         d_s = (1.0 + math.sqrt(2.0)) * b / (b - math.sqrt(2.0))       # alpha_min = 90 deg here
         assert abs(d_s - 9.01) < 0.01
-        m = replace(TUNNEL, settings=replace(TUNNEL.settings, boundary_nodes=16))
+        m = replace(TUNNEL, settings=replace(TUNNEL.settings, boundary_nodes=36))
         p, r = _mesh(m, max_ratio=b)
         verts = list(p.vertices)
         segs = [(u, v) for u, v, _lab in p.segments]
@@ -200,7 +200,10 @@ class TestTheMap:
 
 class TestD14Pending:
     def test_the_core_still_adds_vertices_on_the_chords_of_an_arc(self):
-        m = _uniform(0.25)
+        # pieces of 10 degrees (0.17 m) against elements of 0.05 m: the core has
+        # to split the chords to keep the size bound
+        m = replace(_uniform(0.05), segments=tuple(replace(sp, divisions=9)
+                                                   for sp in TUNNEL.segments))
         p, r = _mesh(m)
         arcs = set(p.arcs)
         added = sum(n for lab, n in zip(r.segment_labels, r.notes["vertices_added"]) if lab in arcs)

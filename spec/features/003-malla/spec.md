@@ -60,7 +60,7 @@ condicionamiento; el elemento curvo, con el criterio del jacobiano de Zienkiewic
 - RF-2: EL SISTEMA discretiza los contornos en un paso aparte, que devuelve los nudos de cada
   segmento antes de mallar; CUANDO se fija el número de divisiones de un segmento, ese segmento se
   divide así (D10). Un arco se discretiza con sus nudos sobre la circunferencia, en tramos que giran
-  como mucho 60° (D14; Pav y Walkington, def. 4).
+  como mucho 10° (D14 y D15; Pav y Walkington, def. 4 y corolario 3).
 - RF-3: EL SISTEMA malla respetando cada nudo y cada segmento de la discretización: todo segmento es
   una unión de lados de la malla y ningún elemento cruza un contorno (Shewchuk 2002a, §1). SI el
   refinado tiene que añadir nudos sobre un segmento, ENTONCES el resultado dice cuántos y dónde
@@ -72,7 +72,9 @@ condicionamiento; el elemento curvo, con el criterio del jacobiano de Zienkiewic
   con una cota B del cociente circunradio / lado más corto; por defecto **B = √2**, con la que todo
   ángulo queda entre arcsin(1/2B) = 20.7° y 138.6° (Shewchuk 2002a, §2, pág. 5) cuando ningún ángulo
   entre segmentos de la entrada baja de 60° (teorema 4, pág. 16). La cota usada se muestra con la
-  malla (regla 12).
+  malla (regla 12). *Enmienda D15 (2026-11-23)*: con arcos, la terminación solo está probada para
+  B > 1.76 con tramos de 10° (Pav y Walkington, corolario 3, pág. 13); el B por defecto sigue siendo
+  √2, y la malla lo dice con ella cuando hay arcos.
 - RF-5: **Malla graduada**: el tamaño lo fija la discretización de los contornos y crece lejos de
   ellos por la graduación propia del refinado (tamaño local de rasgo, Shewchuk 2002a, §3.2, pág. 11),
   con una cota de tamaño máximo opcional (D5). La garantía de graduación (teorema 8, pág. 23) exige
@@ -89,7 +91,9 @@ condicionamiento; el elemento curvo, con el criterio del jacobiano de Zienkiewic
   el radio (D8).
 - RF-9: CUANDO la entrada tiene ángulos entre segmentos menores de 60°, EL SISTEMA termina siempre
   (Shewchuk 2002a, §5: el refinado de Ruppert puede no terminar), y el resultado dice dónde quedan
-  ángulos por debajo de la cota y por qué (D6).
+  ángulos por debajo de la cota y por qué (D6). *Enmienda D15 (2026-11-23)*: con arcos y B ≤ 1.76 la
+  terminación no está probada; si no terminara, el tope de elementos lo corta con un error (nunca una
+  malla mala), y la malla dice si tenía la garantía.
 
 **Elementos**
 
@@ -198,7 +202,7 @@ concretaron al leer las fuentes para el plan (ver sus filas), y D13 salió del p
 |---|---|---|---|
 | D1 | **Fijación del núcleo antes de empezar.** FEM2D fija `ogr-core` v0.2.2; la v0.2.3 está publicada y su subida pendiente (`Promts_desarrollo/2026_11_20_subir_a_ogr_core_0.2.3.md`) | Subirla primero, en una versión propia (v0.0.7), como la v0.0.3 y la v0.0.4; esta spec pasa a la v0.0.8 | Es compatible y no toca el cálculo (`ogr_core.fem` es igual), pero trae lo que la v0.0.5 dejó pendiente en el runner. Una subida de fijación va en un commit suyo, y mezclarla con la spec emborrona las dos |
 | D2 | **Dónde vive cada pieza.** El generador del núcleo lo usa la filtración de Slip2D (24 archivos): cambiar su comportamiento movería sus números | (a) **Petición a OGR-Core**: una función nueva que malla un grafo de segmentos (PSLG) por refinamiento de Ruppert con cota B y cota de tamaño función de la posición, más las medidas de calidad de RF-12. `generate_mesh` no se toca, y Slip2D sigue bit a bit. (b) **En FEM2D**: la discretización (con arcos), las ventanas convertidas en cota de tamaño, el T6, el jacobiano, la malla radial y la conversión al motor | Es mallado genérico, que Slip2D también necesita (el 4.9° de arriba es su malla de filtración); copiarlo aquí sería la «copia que diverge» que el ADR-0002 descarta. Inconveniente: la spec espera a una versión del núcleo; mientras, se prueba con `--dev-core`. Alternativa: escribirlo aquí y proponerlo al núcleo después, que contradice «aquí no se rodea» |
-| D3 | **Los arcos.** La geometría del núcleo solo tiene polilíneas: un círculo es un polígono | En esta spec, la entrada del mallador lleva un arco opcional (centro y radio) por segmento. *Enmienda por D14 (2026-11-22): cada arco se trocea en tramos que giran como mucho 60° (Pav y Walkington, def. 4, pág. 4); unas divisiones forzadas por debajo de ⌈θ/60°⌉ se rechazan.* Si el arco entra en la geometría y en el `.ogr` común con Slip2D se decide en la spec 004 | Sin el arco verdadero el nudo intermedio no puede ir sobre él. Reconocer círculos a partir de los vértices sería adivinar |
+| D3 | **Los arcos.** La geometría del núcleo solo tiene polilíneas: un círculo es un polígono | En esta spec, la entrada del mallador lleva un arco opcional (centro y radio) por segmento. *Enmienda por D14 (2026-11-22): cada arco se trocea en tramos que giran como mucho 60° (Pav y Walkington, def. 4, pág. 4); unas divisiones forzadas por debajo del mínimo se rechazan. Enmienda por D15 (2026-11-23): 10°, no 60°.* Si el arco entra en la geometría y en el `.ogr` común con Slip2D se decide en la spec 004 | Sin el arco verdadero el nudo intermedio no puede ir sobre él. Reconocer círculos a partir de los vértices sería adivinar |
 | D4 | **Qué punto del arco** recibe el nudo intermedio | El punto medio del arco (sobre la bisectriz del ángulo que abarca el lado): su proyección sobre la cuerda es el punto medio, dentro del «tercio central» de Zienkiewicz y Taylor (2000), fig. 9.6 | Es lo que hacía la malla radial de la spec 001, validada; la fig. 9.6 habla de la posición a lo largo del lado, y la flecha la juzga el jacobiano (RF-13) |
 | D5 | **Los controles de tamaño de la malla graduada y de la uniforme** | Graduada: el número de nudos de las excavaciones (o del contorno exterior, si no hay excavaciones) y una cota de tamaño máximo opcional; la graduación es la del refinado, sin factor de graduación. Uniforme: una cota constante h, o h a partir de un número de elementos N, con h² = 4A/(√3 N) (área del triángulo equilátero, la misma cuenta que `generate_mesh`) | El factor de graduación del programa de referencia es una ley de tamaño con la distancia que su documentación no da; inventarla sería inventar. La graduación por tamaño local de rasgo sí tiene fuente (Shewchuk 2002a, §3.2, pág. 11, que remite su cota a la §4.3: por leer en el plan) |
 | D6 | **Ángulos pequeños de la entrada** | El «Terminator» de Shewchuk (2002a, §6.3, págs. 33–35), con la división en capas concéntricas de §6.2: siempre termina (teorema 11) y ningún ángulo baja de arcsin(sin(φ/2)/√2), con φ el menor ángulo de la entrada (teorema 12). Los triángulos que quedan por debajo de la cota B se señalan en el resultado | En geotecnia son frecuentes (pie de talud, capa acuñada). La pág. 27 demuestra que no siempre existe una malla sin ángulos nuevos pequeños, y que el refinado puede no terminar |
@@ -222,6 +226,7 @@ después. Lo que se buscó y las opciones, en el changelog v0.0.8.
 
 | # | Pregunta | Propuesta | Por qué |
 |---|---|---|---|
+| D15 | **Arcos y garantía de terminación** (respuesta de OGR-Core, 2026-11-23). Pav y Walkington solo prueban que el refinado termina con arcos si B pasa de una cota que depende de lo que gira cada tramo (corolario 3, pág. 13): 60° → B > 7.21; 15° → 1.97; 10° → 1.76; 5° → 1.58 (recalculado aquí; coincide con el núcleo). Con B = √2 no hay prueba con ningún troceo | **Decidida por la propietaria (2026-11-23)**: tramos de 10° y B = √2 por defecto; la malla dice, cuando hay arcos, que la terminación solo está probada con B ≥ 1.77 (regla 12); si no terminara, el error del tope | 36 tramos por círculo es barato y deja la garantía a un paso (B ≥ 1.77, 16.4°); con √2 la calidad comprobada es la de 20.7°, y la falta de prueba se dice en vez de esconderse |
 | D14 | **Llevar al arco un vértice añadido en su cuerda (D13) puede invertir elementos** (hallazgo de la T12, 2026-11-22). Medido con el generador actual del núcleo: hay elementos invertidos cuando la flecha de la cuerda, R(1 − cos(φ/2)), pasa de unas 0.7 veces el tamaño de los elementos que la tocan, y ninguno hasta 0.38 (polígonos de 8 a 32 lados, h de 0.05 a 0.2). Hoy RF-13 rechaza esa malla con su motivo: no hay malla mala silenciosa | (a) **Repetir el mallado con el doble de divisiones en los arcos afectados** hasta que la malla sea válida, con un tope, y decir en las notas cuántas veces y con qué divisiones (regla 12); si se llega al tope, el error de RF-13. (b) Solo el error, con un mensaje que pida más divisiones en ese arco. (c) Pedir al núcleo que parta un segmento curvo por el punto medio del arco y no de la cuerda (la fuente no trata curvas: no hay garantía de terminación) | (a) da una malla válida sin que el usuario sepa de flechas, sin fórmula inventada (es la misma discretización, más fina) y con todo a la vista; (b) es lo mínimo y ya está; (c) sale de lo que la fuente garantiza |
 
 ## Otras cosas encontradas al escribir el borrador

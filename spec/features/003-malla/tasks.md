@@ -73,7 +73,7 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       mutaciones, 8 cazadas.)
 
 - [x] T4b. **D14 en FEM2D**: cada arco, en tramos que giran como mucho 60° (Pav y Walkington, def. 4):
-      mínimo de ⌈θ/60°⌉ divisiones en todos los modos, divisiones forzadas por debajo rechazadas,
+      mínimo de ⌈θ/60°⌉ divisiones (**10° desde D15**, 2026-11-23) en todos los modos, divisiones forzadas por debajo rechazadas,
       `boundary_nodes` al menos la suma de los mínimos — Hecho cuando: cada tramo de arco gira ≤ 60° y
       las dos reglas cazan su entrada mala. (Hecho el 2026-11-22: 6 tests en
       `test_mesh_arc_pieces_v008.py`; 8 mutaciones, 8 cazadas.)
@@ -93,7 +93,8 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
 - [ ] T12. `mesher.py`: los dos pasos de principio a fin; los vértices añadidos sobre cuerdas llevados
       al arco (D13, sustituida por D14: el núcleo los pone ya sobre el arco; la red de seguridad (a),
       volver a mallar con el doble de divisiones en los arcos de elementos rechazados, con tope); las
-      notas con cada valor por defecto (regla 12); determinismo — RF-3, RF-11,
+      notas con cada valor por defecto (regla 12), y con arcos si la terminación estaba probada
+      (D15: solo con B ≥ 1.77); determinismo — RF-3, RF-11,
       RF-15 — Hecho cuando: cada segmento es unión de lados, D13 comprobado con el jacobiano, y dos
       mallados iguales bit a bit. (2026-11-22, parte hecha: `pslg.py`, el PSLG para el núcleo con
       semillas y vacíos, y la proyección de D13. **Hallazgo: D13 puede invertir elementos; D14
