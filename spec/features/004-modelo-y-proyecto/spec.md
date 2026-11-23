@@ -1,71 +1,82 @@
-# Spec 004 — Modelo FEM y proyecto `.ogr`
+# Spec 004 — Modelo FEM y proyecto `.ogrfem2d`
 
-> **Borrador de alcance (2026-11-23), sin aprobar.** Fase 1 del plan de desarrollo
-> (`spec/constitution/plan_de_desarrollo.md`, «Spec 004 — Modelo FEM y proyecto `.ogr`»). Solo el
-> **qué** y el **porqué**, sin fórmulas ni decisiones tomadas. **Antes de abrirla hay que
-> reevaluarla** (sección siguiente); después, plan y tareas con el OK de la propietaria.
+> **Revisada (2026-11-23), para aprobar.** Fase 1 del plan de desarrollo
+> (`spec/constitution/plan_de_desarrollo.md`, «Spec 004 — Modelo FEM y proyecto `.ogr`»). Las
+> catorce dudas del borrador están convertidas en decisiones (D1–D16, abajo). Las marcadas ✔ las
+> eligió la propietaria el 2026-11-23; las demás son propuestas. Solo el **qué** y el **porqué**;
+> el cómo, en `plan.md`. Versión: **v0.0.9**.
 
-## Antes de abrirla: reevaluar esta spec
+## La revisión (2026-11-23)
 
-Este borrador se escribió antes de que existieran las specs que lo preceden; el código, el núcleo y
-OGR Slip2D habrán avanzado. Al abrirla, y antes de escribir el plan:
+- [x] Contrastada con el código y con las specs cerradas. Ya existen la entrada del motor
+      (`docs/motor/entrada.md`: `EngineModel`, `Stage`, cargas en totales, excavación por
+      desactivación) y la del mallador (`docs/malla/entrada.md`: `MeshInput`, regiones, arcos,
+      divisiones forzadas, ventanas, `Mesh.boundaries`, `to_engine`). Los campos de tensión inicial
+      están en `engine/initial_stress.py`: reciben compresión positiva y convierten. Ningún caso
+      tiene modelo; el 005 se construye a mano en `tests/_kirsch_mesh.py`.
+- [x] Mirados el núcleo en la etiqueta fijada (v0.2.6; su `main` no trae nada nuevo que importe
+      aquí) y Slip2D. El `Project` del núcleo es de equilibrio límite y no sirve como modelo FEM:
+      - no tiene E ni ν, ni contornos de excavación o de fase, ni arcos;
+      - al guardar pierde las secciones que no conoce;
+      - rechaza los tipos de contorno que no conoce;
+      - nunca lee `format_version`.
 
-- [ ] Contrastarla con el código de este programa y con las specs cerradas desde el 2026-11-23: qué
-      ya está hecho, qué cambió y qué se movió de sitio.
-- [ ] Mirar qué tienen ya OGR Slip2D y `ogr_core` en la etiqueta fijada. Lo genérico se pide a la
-      sesión de OGR-Core, no se copia (`AGENTS.md`, «Un núcleo y varios programas»). Puntos de
-      partida vistos al escribir el borrador (núcleo v0.2.6):
-      - `ogr_core/project/project.py`: el `Project` del núcleo es el de equilibrio límite (métodos,
-        búsquedas, grieta, soportes, sismo). Contornos como polilíneas (`geometry/boundary.py`,
-        `geometry/boundary_type.py`: externo, material, nivel freático…; sin excavación, fase ni
-        arco); material por punto semilla (`region_assignments`); guarda **dentro** del `.ogr` la
-        malla de filtración (`fem_mesh`) y sus resultados (`seepage_result`, `transient_results`).
-      - `project/file_shape.py` (forma de cada sección, comprobada al leer); `project/commands.py`
-        (deshacer con órdenes, atadas a ese `Project`); `units/unit_system.py` (guarda en kPa,
-        muestra en MPa, kPa, t/m² o imperiales); `project/rules.py`, `fe_model_signature` y
-        `mesh_mismatch_reason` (huella de lo que se malla, malla de otro modelo); `dxf/`.
-      - En Slip2D, `ogr_api/snapshot.py`: `model_hash` (lo que lee un análisis, sin anotaciones ni
-        modo de cálculo) y `document_hash` (todo). Genérico, y fuera del núcleo.
-      - Aquí: `docs/motor/entrada.md`, `docs/malla/entrada.md` (`MeshInput`, `Mesh.boundaries`,
-        `to_engine`) y `engine/initial_stress.py`.
-- [ ] Leer y comprobar las fuentes de «Validación numérica» y de «Fuentes por conseguir»; las fichas
-      de los casos no son fuente.
-- [ ] Releer las fichas de los casos que la cierran y su «Seguimiento».
-- [ ] Convertir las «Dudas abiertas» en decisiones propuestas (D1, D2…) con su porqué, para el OK de
-      la propietaria.
+      Sirve tal cual:
+      - `CommandStack`, que solo pide al objeto `execute` y `undo`;
+      - el sistema de unidades, que guarda en kPa;
+      - `LoadOrientation`;
+      - el lector DXF, que aplana los arcos;
+      - `Project.load`, para leer un `.ogr` de Slip2D;
+      - el mallador.
+
+      La huella de Slip2D (`ogr_api/snapshot.py`) está en Slip2D, no en el núcleo.
+- [x] Mirado cómo lo hace la referencia (`M02` §5.2 y §6.2, `F01`). Cada programa tiene su archivo.
+      El de elementos finitos guarda la malla y abre el archivo de equilibrio límite convirtiéndolo:
+      trae contornos, agua, cargas y materiales, pone restricciones y valores elásticos por defecto
+      y avisa de ellos. También exporta una fase al de equilibrio límite.
+- [x] Fuentes: ninguna fórmula nueva. Las que se usan ya están leídas en la spec 002 (`plan.md`,
+      «Formulación»).
+- [x] Fichas STR-01, STR-04 y STR-09 releídas con su «Seguimiento». Las tres piden la malla general
+      y los resultados por línea (`POST-LINEA`, que es de la 005).
+- [x] Dudas convertidas en decisiones (D1–D16).
 
 ## Depende de
 
 - Spec 002: la entrada del motor, las fases en totales, la tensión inicial por punto y la excavación
   por desactivación. El motor **no** admite que un elemento vuelva a activarse ni que cambie de
-  material entre fases (un material por elemento para todo el cálculo).
-- Spec 003: la entrada del mallador (regiones, arcos, divisiones forzadas, ventanas) y su salida
-  (mapa segmento → nudos y lados; notas con cada valor que decidió la malla).
-- Spec 001, D1 y D2 (signos y totales); ADR-0002 (núcleo común); ADR-0003 (huella).
+  material entre fases.
+- Spec 003: la entrada del mallador y su salida, con el mapa segmento → nudos y lados y las notas.
+- Spec 001, D1 y D2 (signos y totales); ADR-0002 (núcleo común); ADR-0003 (resultados aparte, con
+  la huella).
 
 ## Contexto y objetivo
 
-Hoy cada test escribe a mano la entrada del mallador y del motor. Falta el **modelo**: lo que define
-el ingeniero (geometría, materiales, fases, tensión de campo, condiciones y cargas sobre la
-geometría, ajustes de malla y de cálculo), guardado en un `.ogr`, y su traducción determinista a la
-entrada del mallador y del motor. Esta spec es esa capa, sin interfaz: la usarán la 005, que guarda
-los resultados con la huella que se calcula aquí, y la 006, que dibuja y edita el modelo. El plan
-pide `modelo.ogr` en los casos desde la fase 1, y hoy ninguno lo tiene.
+Hoy cada test escribe a mano la entrada del mallador y la del motor. Falta el **modelo**: lo que
+define el ingeniero, guardado en un archivo, y su traducción determinista a la entrada del mallador
+y a la del motor. Comprende la geometría, los materiales, las fases, la tensión de campo, las
+condiciones y cargas sobre la geometría, los ajustes de malla y la malla.
+
+Esta spec es esa capa, sin interfaz. La usarán la 005, que guarda los resultados con la huella que
+se calcula aquí, y la 006, que dibuja y edita el modelo. El plan pide un modelo en los casos desde la
+fase 1, y hoy ninguno lo tiene.
 
 ## Usuarios / actores
 
-- **El ingeniero**, por la interfaz (006) o por un script; **las operaciones, la línea de órdenes y
-  el servidor MCP** (006); **los resultados** (005), que necesitan la huella; **OGR Slip2D**, que
-  comparte la parte geométrica del `.ogr`; **los casos de validación**.
+- **El ingeniero**, por la interfaz (006) o por un script.
+- **Las operaciones, la línea de órdenes y el servidor MCP** (006).
+- **Los resultados** (005), que necesitan la huella.
+- **OGR Slip2D**: su `.ogr` se abre aquí convirtiéndolo.
+- **Los casos de validación**.
 
 ## Historias de usuario
 
-- H1: Como ingeniero quiero guardar un modelo y abrirlo otro día idéntico, para repetir el cálculo.
-- H2: Como ingeniero quiero insertar, borrar y renombrar fases y decir en cada una qué regiones están
+- H1: Como ingeniero quiero guardar un modelo y abrirlo otro día idéntico, malla incluida, para
+  repetir el cálculo.
+- H2: Como ingeniero quiero insertar, borrar y renombrar fases, y decir en cada una qué regiones están
   excavadas y qué cargas y condiciones actúan.
 - H3: Como ingeniero quiero poner cargas y condiciones sobre los contornos dibujados y no sobre
   nudos, para que sobrevivan a un nuevo mallado.
-- H4: Como ingeniero quiero traer la geometría de un modelo de OGR Slip2D o de un DXF.
+- H4: Como ingeniero quiero abrir un modelo de OGR Slip2D o un DXF y saber qué se ha traído y qué no.
 - H5: Como ingeniero quiero ver con el modelo cada valor por defecto que cambia el resultado, y
   saber por la huella si unos resultados son de este modelo.
 
@@ -73,161 +84,196 @@ pide `modelo.ogr` en los casos desde la fase 1, y hoy ninguno lo tiene.
 
 **Geometría, fases y ajustes**
 
-- RF-1: EL SISTEMA guarda contornos externo, de material, de excavación y de fase (el que parte una
-  región para excavarla por partes) y resuelve de ellos las regiones de material; una excavación es
-  una región que alguna fase desactiva. SI no forman regiones cerradas, ENTONCES lo dice con el
-  contorno culpable.
-- RF-2: EL SISTEMA conserva lo que el mallador necesita de cada segmento (arco, divisiones forzadas)
-  donde se decida (dudas 1 y 4).
-- RF-3: EL SISTEMA trata la fase como dimensión del modelo: lista ordenada con nombre, y por fase el
-  estado de cada región, las condiciones y las cargas, estas **en totales**; un factor por fase
-  multiplica la magnitud y da el total (como lo observado en la referencia, D08).
+- RF-1: EL SISTEMA guarda contornos de cuatro tipos y resuelve de ellos las regiones de material
+  (D15):
+  - externo, uno y cerrado;
+  - de material, abierto o cerrado;
+  - de excavación, cerrado;
+  - de fase, abierto o cerrado: el que parte una región para excavarla por partes.
+
+  Una excavación es una región que alguna fase desactiva. SI los contornos no forman regiones
+  cerradas, o se cortan fuera de sus vértices, ENTONCES lo dice nombrando el contorno culpable.
+- RF-2: EL SISTEMA guarda en cada segmento lo que el mallador necesita de él: el arco (su centro) y
+  el número de divisiones forzado (D2).
+- RF-3: EL SISTEMA trata la fase como dimensión del modelo (D10):
+  - es una lista ordenada de fases, cada una con id estable y nombre;
+  - por fase guarda el estado de cada región (material o excavada), qué condiciones están activas y
+    el factor de cada carga y de cada desplazamiento impuesto;
+  - el total es factor × magnitud, y un factor 0 quiere decir que no actúa.
 - RF-4: SI una región excavada vuelve a activarse, o una región cambia de material entre fases,
   ENTONCES EL SISTEMA lo rechaza con un error que lo explica, hasta que el motor lo admita (012).
 - RF-5: EL SISTEMA guarda el tipo de análisis (deformación plana o axisimetría), el sistema de
-  unidades, el resumen, las fases y los ajustes del cálculo; todo valor por defecto que cambia el
+  unidades que se muestra (D5), el resumen y las fases. Todo valor por defecto que cambia el
   resultado se escribe explícito y se puede listar (regla 12). SI el análisis es axisimétrico y un
-  punto tiene x < 0, ENTONCES error (spec 002, RF-4).
+  punto o un arco tiene x < 0, ENTONCES error (spec 002, RF-4).
 
 **Materiales, tensión de campo, condiciones y cargas**
 
-- RF-6: EL SISTEMA guarda materiales elásticos isótropos, con su peso específico y su modo de carga
-  inicial, y su asignación por región y fase.
-- RF-7: EL SISTEMA guarda la tensión de campo constante (σ1, σ3, σz y ángulo) o gravitatoria
-  (superficie y estratos horizontales, K y Kz por material) y la lleva a cada punto con los
-  preprocesos de la spec 002 (D3 y su enmienda en axisimetría).
+- RF-6: EL SISTEMA guarda materiales elásticos isótropos (E, ν) con su peso específico y su modo de
+  carga inicial (D11), y su asignación por región y fase. SI un material no tiene E o ν, ENTONCES el
+  modelo no se traduce al motor y el error lo nombra.
+- RF-7: EL SISTEMA guarda la tensión de campo, que puede ser:
+  - constante: σ1, σ3, σz y el ángulo;
+  - gravitatoria: con superficie y estratos horizontales, cada estrato con su cota inferior, γ, K y
+    Kz (D14).
+
+  La lleva a cada punto de integración con los preprocesos de la spec 002 (D3 y su enmienda en
+  axisimetría).
 - RF-8: EL SISTEMA convierte de compresión positiva (la costumbre geotécnica) a tracción positiva en
-  **un único sitio**, el mismo para la tensión de campo y para las cargas (regla 10).
-- RF-9: EL SISTEMA guarda restricciones en X, en Y o en las dos, desplazamientos impuestos y
-  liberaciones por segmento o vértice, y la condición por defecto del contorno externo, que se
-  muestra (regla 12).
-- RF-10: EL SISTEMA guarda cargas repartidas (uniformes y lineales, normales o en componentes) y
-  puntuales sobre la geometría y las lleva a la malla con el mapa de la 003; SI una cae sobre un
-  contorno que no es exterior en esa fase, ENTONCES error que nombra el contorno y la fase.
+  **un único sitio**, el mismo para la tensión de campo y para las cargas (D6, regla 10).
+- RF-9: EL SISTEMA guarda, por segmento o por vértice (D7):
+  - restricciones en X, en Y o en las dos;
+  - liberaciones;
+  - desplazamientos impuestos.
+
+  Guarda también la condición por defecto del contorno externo, escrita explícita y listada
+  (regla 12). La precedencia y la unión en los nudos compartidos son las de D16. SI dos condiciones
+  piden valores distintos para el mismo grado de libertad, ENTONCES error que nombra las dos.
+- RF-10: EL SISTEMA guarda:
+  - cargas repartidas, lineales entre sus extremos (la uniforme es un caso), sobre un tramo de
+    contorno entre dos vértices, normales o con una de las orientaciones de `LoadOrientation` del
+    núcleo;
+  - cargas puntuales en un vértice; en axisimetría, la del anillo entero, que es el convenio del
+    motor y se muestra.
+
+  Las lleva a la malla con el mapa de la 003. SI una carga cae, en una fase, sobre un segmento que no
+  es exterior al dominio activo, ENTONCES error que nombra la carga, el contorno y la fase.
 
 **Malla y traducción al motor**
 
-- RF-11: EL SISTEMA guarda los ajustes de malla (tipo, elemento, cota B, tamaños, ventanas,
-  divisiones por segmento) y la malla según la duda 4; SI la geometría, la asignación o los ajustes
-  cambian después de mallar, ENTONCES la malla es de otro modelo y no se calcula con ella.
-- RF-12: CUANDO se pide la entrada del motor, EL SISTEMA la construye de forma determinista (mismo
-  modelo, misma entrada bit a bit), y SI el mallador o el motor la rechazan, ENTONCES el error nombra
-  el objeto del modelo (contorno, región, material, fase), no solo el nudo o el elemento.
+- RF-11: EL SISTEMA guarda los ajustes de malla y **la malla entera** (D3), con la huella de la
+  entrada del mallador de la que salió. SI la geometría o los ajustes de malla cambian después de
+  mallar, ENTONCES la malla es de otro modelo y no se calcula con ella. Cambiar un material o una fase
+  no invalida la malla.
+- RF-12: CUANDO se pide la entrada del motor, EL SISTEMA la construye de forma determinista: el mismo
+  modelo da la misma entrada bit a bit. SI el mallador o el motor la rechazan, ENTONCES el error nombra
+  el objeto del modelo (contorno, región, material, fase, carga o condición), no solo el nudo o el
+  elemento.
 
-**Archivo, importación, deshacer y huella**
+**Archivo, apertura de otros formatos, deshacer y huella**
 
-- RF-13: EL SISTEMA guarda el modelo en un `.ogr` JSON con versión de formato y sin resultados
-  (ADR-0003); guardar y abrir es una identidad; SI una sección no tiene la forma esperada, ENTONCES
-  error que la nombra.
-- RF-14: EL SISTEMA importa la geometría de un `.ogr` de OGR Slip2D y de un DXF, y dice qué no ha
-  podido traer y por qué.
+- RF-13: EL SISTEMA guarda el modelo en un `.ogrfem2d` JSON (D1), con estas propiedades:
+  - lleva la versión de formato y el programa que lo escribió;
+  - lleva la malla y no lleva resultados (ADR-0003);
+  - guardar y abrir es una identidad, hasta los bytes del archivo;
+  - SI una sección no tiene la forma esperada, una clave no se conoce o la versión es posterior,
+    ENTONCES da un error que la nombra; nada se pierde en silencio.
+- RF-14: EL SISTEMA abre un `.ogr` de OGR Slip2D (D16) y un DXF (D13) convirtiéndolos, y dice qué ha
+  traído, qué no ha podido traer y por qué, y qué valores por defecto ha puesto.
 - RF-15: EL SISTEMA permite deshacer y rehacer cada edición del modelo.
-- RF-16: EL SISTEMA calcula la huella del modelo, que cambia con todo lo que cambia el resultado y con
-  nada más (no la vista ni las anotaciones, ADR-0003), y aparte la del documento entero.
+- RF-16: EL SISTEMA calcula dos huellas (D12):
+  - la **del modelo**, que cambia con todo lo que cambia el resultado, malla incluida, y con nada
+    más: ni la vista, ni el resumen, ni los nombres y colores, ni el sistema de unidades que se
+    muestra (ADR-0003);
+  - la **del documento**, que lo recoge todo.
 
 ## Validación numérica
 
-Esta spec no calcula nada nuevo: valida que el paso del modelo al motor no cambia nada.
+Esta spec no calcula nada nuevo: valida que el paso del modelo al motor no cambia nada, y añade dos
+casos con malla general (D4).
 
-| Caso | Fuente científica (por comprobar) | Qué se compararía |
+| Caso | Fuente científica | Qué se compara |
 |---|---|---|
-| `validacion/casos/005-kirsch-malla-general` (ficha `VER-STR-01`) con su `modelo.ogr` | Kirsch (1898), en Jaeger, Cook y Zimmerman (2007), §8.4, como el caso | El `.ogr` da al motor la misma entrada, bit a bit, que el caso escrito a mano; los números, idénticos |
-| Casos 001, 003 y 004 (fichas `VER-STR-01`, `-09` y `-04`) | Las de sus casos | Según la duda 5: usan mallas de prueba que el mallador de la 003 no hace |
-| Ida y vuelta del `.ogr` | — (identidad) | Guardar y abrir: mismo modelo, misma huella, misma entrada del motor |
-| Unidades | — (homogeneidad dimensional) | El mismo modelo en MPa y en kPa: desplazamientos iguales, tensiones en la proporción de las unidades, a redondeo |
-| Signos | Spec 001, D1 | Una compresión de campo llega al motor negativa; una presión hacia el terreno, con la normal hacia dentro |
-| Huella | — | Mutar cada dato que mueve el resultado cambia la huella; mover la vista, no |
-| Importación de Slip2D | — | La geometría importada da las mismas regiones y áreas, a redondeo |
+| `validacion/casos/005-kirsch-malla-general` (ficha `VER-STR-01`) con su `modelo.ogrfem2d` | Kirsch (1898), en Jaeger, Cook y Zimmerman (2007), §8.4, como el caso | El modelo da el mismo `MeshInput` que el caso escrito a mano, la malla guardada es la del mallador bit a bit, y la entrada del motor es la del caso escrito a mano en kPa. El caso cumple su 0.5 % |
+| `validacion/casos/006-carga-en-faja-malla-general` (nuevo, ficha `VER-STR-04`) | Michell (1902), en Timoshenko y Goodier (1951), §34, ec. (f), como el caso 004 | σ1 y σ3 bajo el centro de la faja, con la malla general, la carga sobre un tramo de contorno y las restricciones por segmento. Tolerancia fijada antes de medir; malla fijada por su estudio de convergencia |
+| `validacion/casos/007-cavidad-esferica-malla-general` (nuevo, ficha `VER-STR-09`) | Lamé (1852), en Timoshenko y Goodier (1951), §121, ecs. (197)–(198), como el caso 003 | σt y u_R(a) en axisimetría, con la malla general y los arcos de la cavidad. Tolerancia fijada antes de medir; malla fijada por su estudio |
+| Casos 001 a 004 | Los de sus casos | Sin cambio, bit a bit: siguen con sus mallas de prueba (D4) |
+| Ida y vuelta del `.ogrfem2d` | — (identidad) | Guardar y abrir da el mismo modelo, los mismos bytes, la misma huella y la misma entrada del motor |
+| Unidades | — (homogeneidad dimensional) | El mismo modelo con las tensiones ×1000 da los mismos desplazamientos y las tensiones en la misma proporción, a redondeo |
+| Signos | Spec 001, D1 | Una compresión de campo llega al motor negativa. Una presión normal positiva empuja hacia el terreno |
+| Campo gravitatorio con peso propio | JCZ (2007), ecs. (13.1) y (13.5) | Superficie horizontal, estratos horizontales y la carga inicial «tensión de campo y peso propio»: el campo está en equilibrio y el desplazamiento es nulo. Cada modo de carga inicial mueve el número |
+| Regiones | — (identidad) | La suma de las áreas de las regiones es el área del externo, y la característica de Euler cuadra |
+| Huella | — | Mutar cada dato que mueve el resultado cambia la huella; el nombre, el color, el resumen o las unidades mostradas, no |
+| Apertura de un `.ogr` de Slip2D | — | Las regiones y sus áreas son las que da el núcleo (`build_regions`) a redondeo, y el informe lista todo lo que no se trae |
 | Regla 7 | — | Cada ajuste nuevo, con el test que demuestra que mueve el número |
 
 ## Fuentes por conseguir
 
-- Ninguna fórmula nueva entra aquí. La superficie del terreno irregular y K variable con la
-  profundidad (la 002 los dejó para cuando hubiera geometría) no tienen fuente: la spec 002 (D3)
-  dejó escrito que K = a + b·zᶜ no la tiene y que la ec. (13.10) de Jaeger, Cook y Zimmerman (2007)
-  es otra forma. Sin fuente leída, se quedan fuera.
+- Ninguna para esta spec.
+- La superficie real del terreno y K variable con la profundidad no tienen fuente leída; van a la
+  009 (D14).
+- Las caras de un grafo plano (D15) son un algoritmo de geometría computacional (de Berg et al.
+  2008, cap. 2, que no está en la bibliografía). Se validan con identidades, no con la fuente.
 
 ## Requisitos no funcionales
 
 - Sin Qt: el modelo se usa desde scripts, tests, la línea de órdenes y el servidor MCP.
-- El `.ogr` sigue siendo legible y comparable con git (ADR-0003).
-- Lo genérico (formato común, huella, deshacer, unidades) se pide a OGR-Core; aquí no se rodea.
+- El `.ogrfem2d` es legible y comparable con git, con un nudo y un elemento por línea en la malla.
+- Lo genérico se toma del núcleo (unidades, orientaciones, deshacer, lector DXF, mallador); aquí no
+  se copia ni se rodea.
 - Sin dependencias nuevas. Los mensajes llevan una clave traducible para la interfaz (regla 2).
 
 ## Casos límite
 
-- Región sin material; dos contornos externos; contornos que se cortan fuera de sus vértices; dos
-  regiones que se tocan en un punto (spec 003, RF-14).
+- Región sin material o con dos asignaciones; ningún externo o dos externos; contornos que se cortan
+  fuera de sus vértices; un contorno abierto con un extremo suelto; dos regiones que se tocan en un
+  punto (spec 003, RF-14).
 - Fase sin cambios; fase que lo excava todo; nudo sin elementos activos (spec 002).
-- Un `.ogr` de Slip2D con contornos que aquí no tienen sentido (nivel freático, grieta, superficies).
-- Un `.ogr` de una versión de formato posterior; un campo de otro tipo.
-- Cambiar las unidades o el tipo de análisis con el modelo ya definido; malla de otra huella.
+- Una carga sobre un contacto entre dos regiones activas; una condición que libera el segmento de al
+  lado de una esquina fija.
+- Un `.ogr` de Slip2D con contornos que aquí no tienen sentido (nivel freático, grieta, superficies),
+  con cargas cuyos extremos no son vértices, o de una versión que el núcleo fijado no abre.
+- Un `.ogrfem2d` de una versión de formato posterior, con una clave desconocida o con un campo de
+  otro tipo.
+- Cambiar el sistema de unidades o el tipo de análisis con el modelo ya definido; la malla de otra
+  huella.
 
 ## Fuera de alcance
 
 - La interfaz, los menús y las traducciones (006); los resultados y el `.h5` (005).
-- Relleno, cambio de material por fase y relajación de la tensión de campo (spec 012).
-- Juntas, soportes, agua, SSR, muelles, elementos infinitos y cuadriláteros.
-- Propiedades por fase o dependientes de la cota; tensión de campo propia de cada material y
-  tensiones residuales, observadas en la referencia (D02, §3).
+- Exportar una fase a OGR Slip2D (spec posterior) y que Slip2D abra un `.ogrfem2d` (su sesión).
+- Mohr-Coulomb y las demás leyes, y los ajustes del cálculo (008, 007).
+- Condiciones y cargas por nudo (006, si las pide).
+- Relleno, cambio de material por fase, propiedades por fase y relajación de la tensión de campo
+  (012).
+- La tensión gravitatoria con la superficie real del terreno y K variable (009).
+- Juntas e interfaz estructural (015, 016); soportes, agua, SSR, muelles, elementos infinitos y
+  cuadriláteros.
+- Tensión de campo propia de cada material y tensiones residuales, observadas en la referencia (D02,
+  §3).
 
 ## Criterios de finalización
 
-- [ ] Dudas convertidas en decisiones y aprobadas por la propietaria
+- [ ] D1–D16 aprobadas por la propietaria y anotadas aquí
+- [ ] ADR-0004 escrito; AGENTS.md y ADR-0003 corregidos donde dicen `.ogr`
 - [ ] Todos los RF con su test en verde, y la regla 7 en cada ajuste nuevo
-- [ ] El caso 005 con su `modelo.ogr`, idéntico bit a bit al escrito a mano; los demás, según la
-      duda 5
+- [ ] El caso 005 con su `modelo.ogrfem2d`, idéntico bit a bit al escrito a mano; los casos 006 y
+      007 dentro de la tolerancia fijada antes de medir, con su estudio de convergencia
 - [ ] Las identidades de la tabla, en verde y con dientes
-- [ ] Lo pedido a OGR-Core, en una versión etiquetada y fijada aquí
-- [ ] Changelog con lo encontrado; fichas con su «Seguimiento»
+- [ ] Los casos 001 a 004 dan lo mismo bit a bit
+- [ ] La petición al núcleo de los arcos en DXF, escrita (D13; no bloquea)
+- [ ] Changelog con lo encontrado; fichas STR-01, STR-04 y STR-09 con su «Seguimiento»
 
-## Dudas abiertas
+## Decisiones (2026-11-23)
 
-- [NECESITA ACLARACIÓN] **1. El arco en la geometría y en el `.ogr` común** (spec 003, D3): (a) un
-  atributo del segmento en la geometría del núcleo, que Slip2D leería como su poligonal; (b) solo en
-  la parte FEM del `.ogr`, y Slip2D ve las cuerdas; (c) sin arco, reconocido por los vértices (la
-  003 lo descartó por adivinar). (a) cambia el formato común: petición a OGR-Core.
-- [NECESITA ACLARACIÓN] **2. Qué clase es el modelo**: (a) el `Project` del núcleo ampliado con
-  secciones FEM; (b) una clase propia que comparte geometría, materiales y formato; (c) una base
-  común en el núcleo con una especialización por programa. Decide si el deshacer del núcleo sirve, y
-  condiciona la 006: el lienzo de Slip2D importa ese `Project`.
-- [NECESITA ACLARACIÓN] **3. «Compatible en la parte geométrica»**: un mismo archivo que abren los
-  dos programas sin tocar las secciones del otro (por comprobar si `file_shape` acepta secciones que
-  no conoce), o importar y exportar entre dos formatos.
-- [NECESITA ACLARACIÓN] **4. Dónde se guardan la malla, la discretización personalizada y las
-  ventanas** (lo dejó la 003). Los ajustes, en el `.ogr`; la malla: (a) en el `.ogr`, como la de
-  filtración del núcleo; (b) en el `.h5`; (c) no se guarda y se rehace (bit a bit por la 003, D11,
-  pero una versión nueva del mallador cambiaría la malla de un caso: regla 9).
-- [NECESITA ACLARACIÓN] **5. Los casos con malla de prueba.** El 001 y el 003 (cuarto de corona) y el
-  004 (rectángulo con progresión geométrica) usan mallas que el mallador no hace (su malla radial es
-  un anillo completo). Opciones: (a) admitir en el `.ogr` una malla dada; (b) casos nuevos con malla
-  general y su estudio de convergencia (regla 9); (c) en la fase 1, `modelo.ogr` solo en el 005.
-- [NECESITA ACLARACIÓN] **6. Unidades**: el núcleo guarda en kPa; los casos de roca, en MPa; el motor
-  no sabe de unidades. ¿En cuáles recibe el motor? ¿Cambiar las unidades convierte los valores?
-- [NECESITA ACLARACIÓN] **7. Convenio dentro del `.ogr`** (S06, dudas 12 y 14): compresión positiva,
-  como lo escribe el usuario, o tracción positiva, como el motor.
-- [NECESITA ACLARACIÓN] **8. Condiciones por nudo** (el plan: «segmento, vértice o nudo»): un nudo es
-  de una malla y se pierde al rehacerla. ¿Solo geometría en la fase 1, o nudos ligados a una malla
-  guardada, que se invalidan si cambia?
-- [NECESITA ACLARACIÓN] **9. Contornos de junta e interfaz estructural** (en el plan): sin elemento en
-  el motor hasta las specs 015 y 016 serían ajustes que no hacen nada (regla 7). ¿Se guardan ya y se
-  rechaza calcular con ellos, o pasan a sus specs?
-- [NECESITA ACLARACIÓN] **10. Leyes y ajustes del cálculo**: el motor ya calcula Mohr-Coulomb con T6
-  en deformación plana (caso 002): ¿entra aquí, o solo elástico, como el plan? Tolerancia,
-  iteraciones y escalones: el motor tiene los suyos por fase; en elástico no mueven el número, y la
-  tolerancia por defecto la fija la 007 con STR-05 (S06, duda 8).
-- [NECESITA ACLARACIÓN] **11. Semántica de las fases**: qué hereda una fase insertada; si un cambio
-  vale solo para la fase visible o también para las siguientes (la referencia tiene «solo esta
-  fase», D03 §2); qué modos de carga inicial por material se ofrecen y cuál por defecto (la
-  referencia: «solo tensión de campo», con el peso inhabilitado).
-- [NECESITA ACLARACIÓN] **12. La huella**: dónde vive (la de Slip2D es genérica: ¿petición al
-  núcleo?) y qué entra además del modelo: la malla o solo sus ajustes, la versión del motor.
-- [NECESITA ACLARACIÓN] **13. Pendientes de S06** que tocan aquí: la importación DXF real y las
-  propiedades por fase con varias fases. ¿Aquí o en su spec?
-- [NECESITA ACLARACIÓN] **14. Tensión gravitatoria con la superficie real del terreno** (visto al
-  redactar la 009): la piden 118 casos de SSR (`TI-GRAV`); la spec 002 (D3) la mandó aquí y este
-  borrador la deja fuera por falta de fuente. Si no entra aquí, tiene que entrar en la 009 o antes;
-  si no, la fase 2 no desbloquea los casos que el plan le atribuye.
+Las marcadas ✔ las eligió la propietaria al revisar la spec; las demás son propuestas, para su OK.
+Las referencias D02, D03, D08, M04a, M05, M10, M23, P05, P11, P14 y P20 son del análisis de
+interfaz (`../Referencias/Doc_Guia/Analisis_interfaz_funcionamiento/`); `M02` y `F01`, de su
+documentación y de sus archivos.
 
-Las referencias D02, D03 y D08 son de la carpeta A del análisis de interfaz
-(`../Referencias/Doc_Guia/Analisis_interfaz_funcionamiento/`, `dialogos/`).
+| # | Duda del borrador | Decisión | Por qué |
+|---|---|---|---|
+| D1 ✔ | 2 y 3: qué clase es el modelo y qué quiere decir «compatible» | **Formato propio, `.ogrfem2d`** (JSON), con el modelo y la malla; los resultados, en el `.h5` aparte (ADR-0003). El modelo es una clase de FEM2D. Usa el código común del núcleo: unidades, orientaciones de carga, deshacer, lector DXF y mallador. FEM2D **abre el `.ogr` de Slip2D convirtiéndolo** (D16). Exportar una fase a Slip2D, en una spec posterior. Que Slip2D abra un `.ogrfem2d` es cosa de su sesión. ADR-0004 nuevo; AGENTS.md («Formato de proyecto») y ADR-0003 (`modelo.ogr`) se corrigen | Es lo que hace la referencia: dos archivos, y el programa FEM abre el de equilibrio límite (`M02` §5.2). Un archivo común pedía cambiar el `Project` del núcleo, que pierde al guardar lo que no conoce y rechaza los tipos de contorno que no conoce, y la spec habría esperado a una versión del núcleo. Lo que se comparte es el código, no el archivo |
+| D2 | 1: el arco en la geometría | **El arco es un atributo del segmento** (su centro) en la geometría del `.ogrfem2d`, como en el `MeshInput`. Las divisiones forzadas, también | Con formato propio no cambia nada común. Reconocer arcos por los vértices sería adivinar (spec 003, D3) |
+| D3 ✔ | 4: dónde viven la malla, la discretización y las ventanas | **Todo en el `.ogrfem2d`, la malla entera incluida**, con la huella del `MeshInput` del que salió. La malla lleva la región de cada elemento, no el material. Se rehace solo cuando se pide. Un nudo y un elemento por línea | Como la referencia, que guarda la malla (`F01`). La malla de un caso no cambia en silencio con una versión nueva del mallador (regla 9): lo dice la comparación con la guardada. Cambiar un material no obliga a rehacerla. El coste es que el archivo pesa (unos MB en el caso 005), y el ADR-0004 lo dice |
+| D4 ✔ | 5: los casos con malla de prueba | Llevan modelo el **005** y **dos casos nuevos con malla general**: el 006 (STR-04, faja) y el 007 (STR-09, cavidad esférica, axisimétrico). Los dos fijan la tolerancia antes de medir y tienen su estudio de convergencia. Los casos 001 a 004 no cambian | El 005 no tiene cargas, ni restricciones por segmento, ni axisimetría; el 006 y el 007 sí, y son los que pide la fase 1. Cambiar la malla de un caso es cambiar el caso (regla 9): por eso son casos nuevos |
+| D5 ✔ | 6: unidades | **Se guarda en m, kN, kPa y kN/m³**, como el núcleo. El sistema que se elige (de la lista del núcleo) solo cambia lo que se muestra; uno desconocido es un error, mientras que el núcleo lo sustituye en silencio. Cambiar de sistema no toca los valores. El motor recibe kPa | Es el patrón del núcleo y de Slip2D, y con él cambiar las unidades no puede romper un modelo. La comparación bit a bit del 005, escrito en MPa, se hace contra el mismo modelo escrito a mano en kPa: sus valores son enteros, así que ×1000 es exacto |
+| D6 | 7: convenio dentro del archivo | **El del usuario**: tensión de campo en compresión positiva; carga normal positiva cuando empuja hacia el terreno (D08); desplazamientos según +x y +y. Lo convierte un único módulo, `ogr_fem2d/model/conventions.py`, que para las tensiones llama a `initial_stress` (spec 002) | Lo que se lee en el archivo es lo que escribió el usuario, y lo que se escribe es lo que ve. Un solo sitio, el mismo para el campo y para las cargas (regla 10). El motor sigue con tracción positiva y normal hacia fuera del elemento |
+| D7 ✔ | 8: condiciones por nudo | **Solo sobre la geometría**, por segmento o por vértice. Por nudo, cuando lo pida la 006 | Sobreviven a un nuevo mallado, como en la referencia (P21). Un nudo es de una malla |
+| D8 | 9: juntas e interfaz estructural | **A sus specs** (015 y 016). El formato lleva versión para añadirlas | Sin elemento en el motor serían ajustes que no hacen nada (regla 7) |
+| D9 ✔ | 10: leyes y ajustes del cálculo | **Solo materiales elásticos.** Mohr-Coulomb, en la 008 con las demás leyes; la tolerancia, las iteraciones y los escalones, en la 007. La traducción usa los valores por defecto del motor | En elástico esos ajustes no mueven el número (regla 7), y la tolerancia por defecto la fija la 007 con STR-05 (S06, duda 8) |
+| D10 | 11: semántica de las fases | Las fases tienen **id estable** y nombre; todo lo que depende de la fase se refiere al id. El archivo guarda la **tabla región × fase entera**: material o excavada. La propagación es cosa de la operación, no del archivo: asignar en la fase k escribe de k a N; con «solo esta fase», escribe k. **Una fase insertada copia la anterior**, y la primera si se inserta delante de ella. Cada carga lleva un factor por fase, y total = factor × magnitud (0 = no actúa); lo mismo cada desplazamiento impuesto. Cada restricción lleva si está activa en cada fase | El id estable lo propone M04a: borrar una fase no corre las referencias de las demás. La tabla explícita es la de M10, y deja el archivo listo para la 012. La propagación y «solo esta fase» son las observadas (P20, D03 §2). Que la fase insertada copie la anterior es **propuesta propia**: la referencia no lo documenta (M04a:278). El factor es lo observado (D08) |
+| D11 | 11: modos de carga inicial | **Cuatro, por material**: solo tensión de campo, tensión de campo y peso propio, solo peso propio, o ninguna. Por defecto, el primero con campo constante y el segundo con gravitatorio. Se escribe explícito en cada material y se lista. En el motor, la tensión inicial es el campo o cero, y `Material.unit_weight` es γ o cero | Son los de la referencia, con su regla por defecto (D03, P05, M10). Cada modo mueve el número, y se prueba |
+| D12 | 12: la huella | **Aquí**: SHA-256 de un JSON canónico, con claves ordenadas y separadores fijos. La del modelo excluye el resumen, los nombres, los colores y el sistema de unidades que se muestra, e incluye la malla. La del documento lo incluye todo. Si la versión del motor entra en la de los resultados, lo decide la 005 (su duda 7) | Con formato propio, la huella es de este archivo. La receta es genérica y corta. La de Slip2D vive en su `ogr_api`, no en el núcleo, así que no se copia nada del núcleo |
+| D13 | 13: DXF y propiedades por fase | **DXF aquí**, con el lector del núcleo y un mapa de capas a los cuatro tipos de contorno (convenio de capas de `M02`). El lector aplana los arcos, y el informe lo dice. Se escribe la petición al núcleo de que los conserve, y no bloquea. Las propiedades por fase, a la 012 | El lector ya existe y es común. Un túnel aplanado da nudos intermedios fuera del arco, y eso se ve en el informe. La importación DXF real no se llegó a observar (S06) |
+| D14 ✔ | 14: gravitatorio con la superficie real | **A la 009** (TI-GRAV), que ya lo recoge. Aquí, el campo constante y el gravitatorio con superficie y **estratos horizontales**: cota inferior, γ, K y Kz por estrato, como `initial_stress.Stratum` | Solo eso tiene fuente leída (JCZ ecs. 13.1 y 13.5). Bajo un talud, el campo de la superficie real no está en equilibrio, y pide su fuente. «K y Kz por material», como decía el borrador, solo tiene sentido con la superficie real |
+| D15 | Nueva: de los contornos a las regiones | **Los contornos solo se tocan en vértices que comparten**; los cortes los pondrá la 006, como la referencia, que añade el vértice de intersección. Las regiones son las caras del grafo plano de los segmentos. El error nombra el contorno culpable: un corte fuera de los vértices, un extremo suelto de un contorno abierto, ningún externo o dos, o el mismo segmento en dos contornos con arcos distintos. **El material se asigna por un punto de la región**; una región sin asignar, o con dos asignaciones, es un error | La regla del mallador (spec 003: los segmentos solo se tocan en extremos compartidos) llevada a los contornos. Las regiones del núcleo (`build_regions`) no tienen arcos y fallan en silencio, y su asignación da el primer material a la región sin asignar. Aquí eso cambiaría el resultado sin decirlo (regla 12) |
+| D16 | Nueva: condiciones por defecto y apertura de Slip2D | **Por defecto, el externo entero fijo en X e Y**, escrito explícito. Precedencia: vértice, después segmento, después el defecto. Un nudo compartido por dos segmentos toma la unión de sus restricciones, así que liberar un segmento no suelta la esquina del vecino. **Abrir un `.ogr` de Slip2D** trae: el externo y los de material, las asignaciones, y los materiales con nombre, color y γ, **sin E ni ν**, que no se inventan (el modelo no calcula hasta tenerlos). Trae también las cargas repartidas y puntuales, insertando vértices en sus extremos. Restricciones: laterales y fondo fijos y superficie libre. Tensión de campo: ninguna. El informe dice lo que no se trae (agua, grietas, soportes, sismo, búsquedas, resistencia) y lo que se ha puesto | El defecto es el observado (P11, M23); P05 vio otro y queda anotado. La unión es la propuesta de P14:82. Las restricciones de la apertura son las de la referencia (`M02` §5.2), que además pone E y ν por defecto: aquí no, porque sería un número que nadie ha dado. La gravitatoria del talud es la de la superficie real (009) |
+
+### Consecuencias en el resto del proyecto
+
+- `AGENTS.md`, «Stack»: la línea del formato de proyecto pasa a decir `.ogrfem2d` propio y que abre
+  el `.ogr` de Slip2D (ADR-0004). Es un cambio del contrato, para el OK de la propietaria.
+- ADR-0003, `tech-stack.md` y `plan_de_desarrollo.md`: `modelo.ogr` pasa a `modelo.ogrfem2d`.
+- Los borradores de las specs 005, 006 y 012 nombran el `.ogr` y estas dudas. Se corrigen cuando se
+  abran (cada uno tiene su «reevaluar»).
