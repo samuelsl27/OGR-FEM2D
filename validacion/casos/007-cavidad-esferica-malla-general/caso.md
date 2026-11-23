@@ -12,7 +12,8 @@ El caso 003 con la **malla general** de la spec 003 y **por el modelo** de la sp
 de la cavidad y de la esfera exterior, la axisimetría, las condiciones por tramo y la excavación como
 región que la fase desactiva. El caso 003 no cambia (regla 9).
 
-> **Estado (2026-11-23): tolerancia escrita antes de medir, malla a `null`.** La fija su estudio.
+> **Estado (2026-11-23): la malla, fijada por su estudio; el caso, dentro de su tolerancia.** La
+> tolerancia se escribió antes de medir (commit 397305c) y no ha cambiado.
 
 ## Geometría, material, tensión inicial y condiciones
 
@@ -39,4 +40,15 @@ en u_R(a) y un 0.011 % en σt(a) (caso 003).
 
 ## Malla y elemento con que se fija la tolerancia
 
-Por fijar en su estudio (spec 004, T17).
+T6, malla graduada de la spec 003, B = √2, con una **ventana** 0 ≤ x, y ≤ 3 m de tamaño **h = 0.1 m**,
+**36 nudos** repartidos en el contorno de la excavación (sus dos radios y el arco, en piezas de unos
+h) y una **cota máxima de 5 m** (50 h). 5 009 elementos.
+
+| h (m) | Elementos | σt | u_R(a) |
+|---|---|---|---|
+| 0.2 | 1 377 | 1.268 % | 0.094 % |
+| **0.1** | **5 009** | **0.286 %** | **0.039 %** |
+| 0.05 | 19 209 | 0.084 % | 0.024 % |
+
+σt baja entre tres y cuatro veces por paso; u_R tiende al efecto de la esfera fija a 21 m, 0.022 %
+(caso 003). La de h = 0.1 es la primera que cumple el 0.5 % en las dos.

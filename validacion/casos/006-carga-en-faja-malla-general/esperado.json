@@ -21,7 +21,10 @@
     "material": {"ley": "elastica", "E": 20000.0, "nu": 0.2, "unidad": "MPa"},
     "carga": {"q": 1.0, "unidad": "MPa", "donde": "carga repartida normal sobre el tramo (b, 0) -> (0, 0) del contorno externo"},
     "contorno": "tramo x = 0: restricción en x; tramo x = W: restricción en x; superficie: libre; fondo: el defecto del externo, fijo en x e y",
-    "malla": null
+    "malla": {"generador": "ogr_fem2d.model.translate.mesh (spec 003, mesher.mesh)", "tipo": "graduada", "elemento": "T6", "B": 1.4142135623730951,
+              "ventana": {"semilado": 6.0, "h": 0.125, "zona": "0 <= x <= 6, -6 <= y <= 0"},
+              "cota_maxima": 6.25, "divisiones_faja": 8, "nudos_contorno": 4,
+              "estudio": "ventana de tamaño h y cota máxima 50 h, la faja en piezas de h: h = 0.25, 0.125 y 0.0625 m (4541, 17532 y 68945 elementos) dan sigma_1 0.00160, 0.00062 y 0.00016 q y sigma_3 0.00855, 0.00533 y 0.00466 q; sigma_1 baja x4 por paso y sigma_3 tiende al efecto del dominio de 200 m que midió el caso 004 (0.0045 q). h = 0.125 es la primera con margen (la de 0.25 cumple con un 15 %), como en el caso 004"}
   },
   "notas": "El caso 004 con la malla general de la spec 003 y por el modelo de la spec 004 (D4): carga y condiciones sobre la geometría. Tolerancia, dominio y zona de comparación del caso 004 (spec 002, D4), escritos antes de medir, con la malla a null. La primera columna de elementos del caso 004 no existe en una malla general: se comparan los puntos con x <= 0.25 m (dos veces el tamaño de elemento del caso 004 junto al eje). El efecto del dominio de 200 m, medido en el caso 004: 0.0045 q en sigma_3."
 }

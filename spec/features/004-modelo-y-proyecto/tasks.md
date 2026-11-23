@@ -178,7 +178,7 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
   *Hecho cuando:* las dos están en verde y tienen dientes.
   (Hecho el 2026-11-23: 4 tests; 4 mutaciones, 3 cazadas aquí y la cuarta en la T6.)
-- [ ] T15. **Caso 005 con `modelo.ogrfem2d`** (D4).
+- [x] T15. **Caso 005 con `modelo.ogrfem2d`** (D4).
   - El modelo del caso, con su malla guardada.
   - Un test que comprueba cuatro cosas:
     - el `MeshInput` es el de `tests/_kirsch_mesh.py`;
@@ -189,7 +189,9 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
   *Hecho cuando:* las cuatro se cumplen, el tamaño del archivo está anotado en el changelog, y la
   ficha STR-01 tiene su «Seguimiento».
-- [ ] T16. **Caso 006, STR-04 con malla general** (D4).
+  (Hecho el 2026-11-23: las cuatro, bit a bit; el caso, −0.086 % y −0.050 %, los números del caso
+  escrito a mano; el archivo, 4.2 MB.)
+- [x] T16. **Caso 006, STR-04 con malla general** (D4).
   - `caso.md` y `esperado.json` **con la tolerancia antes de medir** y la malla a `null`. La
     tolerancia es la del caso 004 (0.01 q, absoluta, desde z = 0.25 m), en el mismo dominio de 200 ×
     200 m del medio modelo.
@@ -198,7 +200,9 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   - El estudio de convergencia, y la malla que fija la tolerancia.
 
   *Hecho cuando:* el caso cumple con la malla del estudio, y la ficha STR-04 tiene su «Seguimiento».
-- [ ] T17. **Caso 007, STR-09 en axisimetría con malla general** (D4).
+  (Hecho el 2026-11-23: tolerancias antes de medir en 397305c; con h = 0.125, σ1 0.00062 q y σ3
+  0.00533 q.)
+- [x] T17. **Caso 007, STR-09 en axisimetría con malla general** (D4).
   - `caso.md` y `esperado.json` **con la tolerancia antes de medir**, la del caso 003 (0.5 %).
   - La cavidad de radio a en el eje, en dos arcos de 90°, y el contorno esférico fijo a 21 m.
   - El campo hidrostático de 10 MPa.
@@ -206,6 +210,7 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
   *Hecho cuando:* el caso cumple en σt y u_R(a) con la malla del estudio, y la ficha STR-09 tiene su
   «Seguimiento».
+  (Hecho el 2026-11-23: tolerancias antes de medir en 397305c; con h = 0.1, σt 0.286 % y u_R 0.039 %.)
 
 ## El cierre
 

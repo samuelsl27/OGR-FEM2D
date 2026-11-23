@@ -11,7 +11,8 @@
 El caso 004 con la **malla general** de la spec 003 y **por el modelo** de la spec 004 (D4): la carga
 y las condiciones se dan sobre la geometría, no sobre nudos. El caso 004 no cambia (regla 9).
 
-> **Estado (2026-11-23): tolerancia escrita antes de medir, malla a `null`.** La fija su estudio.
+> **Estado (2026-11-23): la malla, fijada por su estudio; el caso, dentro de su tolerancia.** La
+> tolerancia se escribió antes de medir (commit 397305c) y no ha cambiado.
 
 ## Geometría, material, condiciones y carga
 
@@ -39,4 +40,18 @@ El efecto del dominio de 200 m lo midió el caso 004: 0.0045 q en σ3, la mitad 
 
 ## Malla y elemento con que se fija la tolerancia
 
-Por fijar en su estudio (spec 004, T16).
+T6, malla graduada de la spec 003, B = √2, con una **ventana** 0 ≤ x ≤ 6, −6 ≤ y ≤ 0 m de tamaño
+**h = 0.125 m**, el tramo de la faja en 8 divisiones (piezas de h), una **cota máxima de 6.25 m**
+(50 h) y 4 nudos repartidos en los demás tramos del contorno (el mínimo: entran con sus extremos y el
+refinado gradúa). 17 532 elementos. `tests/_cases_model.py` construye el modelo;
+`spec/features/004-modelo-y-proyecto/comprobaciones/estudio_006_007.py` rehace el estudio.
+
+| h (m) | Elementos | σ1 | σ3 |
+|---|---|---|---|
+| 0.25 | 4 541 | 0.00160 q | 0.00855 q |
+| **0.125** | **17 532** | **0.00062 q** | **0.00533 q** |
+| 0.0625 | 68 945 | 0.00016 q | 0.00466 q |
+
+σ1 baja cuatro veces por paso. σ3 tiende al efecto del dominio de 200 m que midió el caso 004
+(0.0045 q): lo que queda de discretización con h = 0.125 es unas 0.0008 q. La malla de h = 0.25 ya
+cumple, con un margen del 15 %; la de 0.125 es la primera con margen, como en el caso 004.

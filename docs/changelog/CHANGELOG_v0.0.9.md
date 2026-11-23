@@ -206,3 +206,43 @@ excavación y fase); los arcos llegan aplanados y el informe dice cuántas entid
   pared hacia dentro y una presión en ella la empuja hacia fuera; las unidades mostradas no cambian
   nada. 4 mutaciones: 3 cazadas; la de la dirección vertical de una carga no la ven estos modelos (no
   tienen carga vertical) y la caza la T6.
+
+## T15 a T17 — los casos por el modelo (2026-11-23)
+
+`tests/_cases_model.py` construye los modelos de los casos 005, 006 y 007, en kPa (D5), y sus
+comparaciones; `spec/features/004-modelo-y-proyecto/comprobaciones/estudio_006_007.py` rehace los
+estudios y escribe los `modelo.ogrfem2d`; `tests/test_validation_cases_v009.py`, 7 tests.
+
+- **Caso 005 por el modelo, idéntico al escrito a mano.** El `MeshInput` es el de
+  `tests/_kirsch_mesh.py`, la malla guardada es la del mallador bit a bit, la entrada del motor es la
+  escrita a mano desde `caso.md` en kPa bit a bit, y resuelto da σθ(a) −0.086 % y ur(a) −0.050 %, los
+  números del caso. El archivo pesa **4.2 MB** (28 066 T6): el coste de D3, que el ADR-0004 anticipó.
+- **Caso 006 (STR-04, nuevo).** Tolerancias escritas antes de medir (commit 397305c). Estudio con la
+  ventana de tamaño h y la cota máxima 50 h:
+
+  | h (m) | Elementos | σ1 | σ3 |
+  |---|---|---|---|
+  | 0.25 | 4 541 | 0.00160 q | 0.00855 q |
+  | **0.125** | **17 532** | **0.00062 q** | **0.00533 q** |
+  | 0.0625 | 68 945 | 0.00016 q | 0.00466 q |
+
+  σ3 tiende al efecto del dominio que midió el caso 004 (0.0045 q). Malla del caso: h = 0.125. El
+  archivo, 2.6 MB.
+- **Caso 007 (STR-09, nuevo).** Tolerancias escritas antes de medir (el mismo commit):
+
+  | h (m) | Elementos | σt | u_R(a) |
+  |---|---|---|---|
+  | 0.2 | 1 377 | 1.268 % | 0.094 % |
+  | **0.1** | **5 009** | **0.286 %** | **0.039 %** |
+  | 0.05 | 19 209 | 0.084 % | 0.024 % |
+
+  u_R tiende al efecto de la esfera fija a 21 m (0.022 %, caso 003). Malla del caso: h = 0.1. El
+  archivo, 0.7 MB.
+- **Hallazgo menor, anotado**: un punto exactamente sobre la cuerda de un arco cuenta como fuera de la
+  región (el número de vueltas por las cuerdas no decide sobre la cuerda, y el casquete lo excluye).
+  Salió con la primera asignación del caso 007, en (10.5, 10.5), justo sobre la cuerda del arco
+  exterior; se movió a (6.3, 6.3). Un punto de asignación lo pone la interfaz con un clic; si la 006 lo
+  ve en la práctica, el arreglo es contar el casquete del lado del arco.
+- 3 mutaciones sobre la identidad del caso 005 y los archivos (el defecto del externo, el orden de
+  las regiones, las notas de la malla como tuplas), 3 cazadas.
+- Fichas STR-01, STR-04 y STR-09, con su «Seguimiento».

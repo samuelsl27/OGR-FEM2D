@@ -6,6 +6,7 @@
 | Fuente científica | Kirsch (1898), en Jaeger, Cook y Zimmerman (2007), *Fundamentals of Rock Mechanics*, 4.ª ed., §8.4, ecs. (8.90)–(8.92), págs. 216–218 (hidrostático); §8.5, ecs. (8.113)–(8.125), págs. 219–221 (identidad no hidrostática) |
 | Tipo de referencia | analítica (el caso) e identidad (con el desplazamiento exacto en el contorno) |
 | Tipo de análisis | deformación plana; elástico lineal; una fase de excavación |
+| Modelo | `modelo.ogrfem2d` (spec 004, T15), con su malla |
 
 El STR-01 del caso 001, pero con la **malla general** de la spec 003 (D5 de la spec 002, D12 de la
 spec 003): contorno exterior **cuadrado**, el modelo completo sin simetría, T6 con los nudos del hueco
@@ -89,3 +90,15 @@ del caso.
 −0.028), y en σθ en menos que el error de la malla (los dos peores, de signo opuesto, se acercan al
 afinar: 0.17 puntos con h = 0.1 y 0.07 con 0.05). El efecto del cuadrado a 100 m queda por debajo
 del 0.1 %.
+
+## Por el modelo (spec 004, T15, 2026-11-23)
+
+`modelo.ogrfem2d` es este caso como lo define el ingeniero, en kPa (E = 10⁷ kPa, p0 = 30 000 kPa),
+con su malla guardada (D3, ADR-0004; 4.2 MB). `tests/test_validation_cases_v009.py` comprueba que:
+
+- el modelo da exactamente el `MeshInput` que `tests/_kirsch_mesh.py` escribe a mano;
+- la malla guardada es la del mallador con esa entrada, bit a bit (si una versión nueva del mallador
+  la cambiara, el test lo diría: regla 9);
+- la entrada del motor es la que se escribe a mano desde esta descripción, en kPa, bit a bit;
+- resuelto, el caso cumple su 0.5 %: σθ(a) −0.086 % y ur(a) −0.050 %, los mismos números que el
+  caso escrito a mano.

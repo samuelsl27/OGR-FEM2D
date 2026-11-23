@@ -22,7 +22,10 @@
     "tension_inicial": {"p0": 10.0, "unidad": "MPa", "convenio": "compresion positiva, hidrostatica en las tres direcciones"},
     "contorno": "y = 0: restricción en y (simetría); eje x = 0: libre (el motor sujeta u_r = 0); esfera exterior: el defecto del externo, fija en x e y",
     "fase": "una, la excavación de la cavidad",
-    "malla": null
+    "malla": {"generador": "ogr_fem2d.model.translate.mesh (spec 003, mesher.mesh)", "tipo": "graduada", "elemento": "T6", "B": 1.4142135623730951,
+              "ventana": {"semilado": 3.0, "h": 0.1, "zona": "0 <= x <= 3, 0 <= y <= 3"},
+              "cota_maxima": 5.0, "nudos_excavacion": 36,
+              "estudio": "ventana de tamaño h y cota máxima 50 h, los nudos del contorno de la excavación en piezas de h: h = 0.2, 0.1 y 0.05 m (1377, 5009 y 19209 elementos) dan sigma_t 1.268, 0.286 y 0.084 % y u_R 0.094, 0.039 y 0.024 %; u_R tiende al efecto de la esfera fija a 21 m (0.022 %, caso 003). h = 0.1 es la primera que cumple"}
   },
   "notas": "El caso 003 con la malla general de la spec 003 y por el modelo de la spec 004 (D4): arcos, axisimetría, condiciones por tramo y excavación por fase. Tolerancia de la spec 002, D4 (la del caso 003), escrita antes de medir, con la malla a null. El primer anillo de elementos del caso 003 no existe en una malla general: se comparan los puntos de los elementos activos que tienen un lado sobre la cavidad. Con el exterior fijo a 21 m la solución exacta del modelo se aparta de la de medio infinito un 0.022 % en u_R(a) y un 0.011 % en sigma_t(a) (caso 003)."
 }
