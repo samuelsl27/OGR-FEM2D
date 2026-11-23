@@ -299,3 +299,14 @@ Lo que **no** mueve el número, por diseño, y su test: el sistema de unidades m
     clase del modelo (la 006, su duda 2: el lienzo de Slip2D importa el `Project` del núcleo, y este
     modelo es otro); y la semántica de las fases (la 012: hasta ella, una región tiene un material para
     todo el cálculo).
+
+## Después del cierre: la CI (2026-11-23)
+
+- **La primera CI de la v0.0.9 salió en rojo en las tres plataformas, con un solo test**:
+  `test_built_again_the_same_model` del caso 005. La malla y la entrada del motor eran las mismas bit a
+  bit (sus tests pasaron), pero el modelo rehecho en Python 3.11 no era `==` al leído del archivo,
+  escrito con Python 3.14. Lo que difiere son **las notas de la malla**: el resumen de calidad saca sus
+  ángulos de `math.acos`, y la biblioteca de otro sistema o de otro Python puede redondear distinta la
+  última cifra. Las notas son el registro de cómo se hizo la malla y no están en la huella del modelo
+  (D12). El test compara ahora el modelo y su malla bit a bit, y las notas a 10⁻¹². No hay que tocar
+  el código: los nudos y los elementos, que son lo que se calcula, salen iguales en todas partes.

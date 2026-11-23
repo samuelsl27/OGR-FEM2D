@@ -16,7 +16,8 @@ Invariants protected:
   solved, it meets the 0.5 % of the case (Kirsch 1898, in JCZ 2007, §8.4);
 * **every file is what this program writes**: read and written again, the
   same bytes; built again from tests/_cases_model.py and meshed, the same
-  model;
+  model, bit for bit, but the notes of its mesh, to rounding (their angles
+  come from the system's math.acos);
 * **case 006** (Michell 1902, in T&G 1951, §34), the strip load with the load
   and the conditions on the geometry, meets 0.01 q in sigma_1 and sigma_3 at
   every integration point of its band, on the mesh its study fixed;
@@ -26,6 +27,7 @@ Invariants protected:
 """
 from __future__ import annotations
 
+from dataclasses import replace
 from functools import lru_cache
 
 import _cases_model as cm
@@ -99,12 +101,38 @@ class TestTheFiles:
             assert ogr_file.dumps(_opened(name)).encode("utf-8") == cm.path(name).read_bytes(), name
 
     def test_built_again_the_same_model(self):
-        assert _opened(C005) == translate.mesh(cm.model_005())
+        """The model and its mesh, bit for bit; the notes of the mesh to
+        rounding: the quality summary takes its angles from math.acos, and
+        the library of another system or Python may round the last digit
+        another way (found in the CI of v0.0.9: Python 3.11 against the files
+        written with 3.14). The notes are a record of how the mesh was made,
+        out of the model's fingerprint (D12); the nodes and the elements are
+        not, and they are the same bit for bit everywhere (spec 003, D11)."""
+        built = {C005: translate.mesh(cm.model_005())}
         for name, builder in ((C006, cm.model_006), (C007, cm.model_007)):
             mesh = cm.case(name)["modelo"]["malla"]
-            built = builder(mesh["ventana"]["h"], mesh["ventana"]["semilado"],
-                            mesh["cota_maxima"] / mesh["ventana"]["h"])
-            assert _opened(name) == translate.mesh(built), name
+            built[name] = translate.mesh(builder(mesh["ventana"]["h"], mesh["ventana"]["semilado"],
+                                                 mesh["cota_maxima"] / mesh["ventana"]["h"]))
+        for name, m in built.items():
+            opened = _opened(name)
+            assert replace(opened, mesh=replace(opened.mesh, notes={})) ==                 replace(m, mesh=replace(m.mesh, notes={})), name
+            _close(opened.mesh.notes, m.mesh.notes, name)
+
+
+def _close(a, b, where):
+    """Two JSON values equal but for floats, which agree to 1e-12."""
+    if isinstance(a, dict):
+        assert isinstance(b, dict) and a.keys() == b.keys(), where
+        for k in a:
+            _close(a[k], b[k], f"{where}, {k}")
+    elif isinstance(a, list):
+        assert isinstance(b, list) and len(a) == len(b), where
+        for x, y in zip(a, b):
+            _close(x, y, where)
+    elif isinstance(a, float) and isinstance(b, float):
+        assert abs(a - b) <= 1e-12 * max(1.0, abs(a)), (where, a, b)
+    else:
+        assert a == b, (where, a, b)
 
 
 class TestCase006:
