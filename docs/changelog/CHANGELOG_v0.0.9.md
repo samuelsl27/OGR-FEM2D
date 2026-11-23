@@ -64,3 +64,35 @@ anidamiento y una asignación por región. Orden canónico.
   circunferencia tangente, y la de seis lados), orden canónico, y cada regla de `regions.RULES` con su
   caso. 18 mutaciones; cinco sobrevivían al principio y llevaron a dos modelos y tres comprobaciones; al
   final, 18 de 18.
+
+## T3 — las fases y las ediciones que dependen de ellas (2026-11-23)
+
+`model/stages.py`: insertar (copia la fase anterior, o la primera si va delante: propuesta propia de
+D10), borrar, renombrar, y excavar, asignar material, activar condiciones y poner factores desde la
+fase k en adelante o «solo esta fase». RF-4: una región excavada que vuelve, y un cambio de material
+entre fases, se rechazan.
+
+- 15 tests en `tests/test_model_stages_v009.py`. 13 mutaciones: sobrevivía la comprobación de un id de
+  fase repetido al insertar, que era redundante (la validación del modelo ya lo rechaza con la misma
+  regla) y se quitó; al final, 12 de 12.
+
+## T4 — el cambio de signo, el campo y los modos de carga inicial (2026-11-23)
+
+`model/conventions.py` (el único cambio de signo: el campo, por `engine/initial_stress.py`, y la
+carga normal) y `model/field.py` (la tensión inicial y el peso propio según el modo, D11).
+
+- **Hallazgo y corrección (regla 6, para revisar): el K de un punto sobre el fondo de un estrato.** El
+  preproceso de la spec 002 toma K y Kz del estrato en el que cae la cota del punto, y un punto
+  justo en el fondo de un estrato cae en el de arriba. Con los estratos sobre contornos de material la
+  malla tiene lados sobre el contacto, y el T6 tiene puntos de integración en el centro de sus lados:
+  el elemento de abajo recibía en ellos el K del estrato de arriba. El campo gravitatorio, que debía
+  estar en equilibrio con el peso, movía el modelo 1.6·10⁻⁶ m, 2·10⁻⁵ de su escala. Ahora σv es la
+  columna sobre el punto (continua, JCZ ec. 13.1) y K y Kz son los del estrato que contiene el
+  centroide del elemento (ec. 13.5 por estrato: σh salta en el contacto, y cada elemento tiene su lado
+  del salto). La corrección está en `model/field.py`; el preproceso del motor no se tocó. Con ella el
+  desplazamiento es redondeo.
+- 10 tests en `tests/test_model_field_v009.py`: los signos; el campo gravitatorio con su peso no
+  mueve el modelo (identidad); el campo en cada punto es la columna con el K de su elemento, también
+  en el contacto; los cuatro modos dan cuatro estados distintos (regla 7) y cada uno es lo que dice;
+  en axisimetría, un campo sin equilibrio radial es un error. 8 mutaciones: sobrevivía cambiar Kz por K
+  (los estratos de prueba tenían K = Kz), y los estratos pasaron a tener Kz distinto; al final, 8 de 8.

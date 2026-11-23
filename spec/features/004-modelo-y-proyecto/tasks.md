@@ -46,7 +46,7 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   con arcos, fase abierta, hueco suelto, dos arcos tangentes), y cada error nombra su contorno.
   (Hecho el 2026-11-23: 15 tests, seis modelos; 18 mutaciones, 18 cazadas. **Hallazgo corregido**:
   el cero negativo de una tangente ordenaba mal los lados en un vértice, changelog.)
-- [ ] T3. `model/stages.py`: fases con id estable (D10) — RF-3 y RF-4.
+- [x] T3. `model/stages.py`: fases con id estable (D10) — RF-3 y RF-4.
   - Insertar, que copia la fase anterior, o la primera si se inserta delante de ella; borrar;
     renombrar.
   - Asignar con propagación o con «solo esta fase».
@@ -54,7 +54,8 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
   *Hecho cuando:* cada operación tiene su test, y reactivar una excavada o cambiar el material entre
   fases se rechaza con su motivo.
-- [ ] T4. `model/conventions.py` y `model/field.py`: el único cambio de signo (D6), la tensión de
+  (Hecho el 2026-11-23: 15 tests; 12 mutaciones, 12 cazadas, y una comprobación redundante quitada.)
+- [x] T4. `model/conventions.py` y `model/field.py`: el único cambio de signo (D6), la tensión de
   campo constante y gravitatoria con estratos (D14), y los cuatro modos de carga inicial (D11) —
   RF-7 y RF-8.
 
@@ -63,6 +64,10 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   - con superficie horizontal y «tensión de campo y peso propio», el desplazamiento es nulo;
   - los cuatro modos dan cuatro resultados distintos (regla 7);
   - en axisimetría, K ≠ Kz y σr ≠ σθ dan el error de la spec 002.
+
+  (Hecho el 2026-11-23: 10 tests; 8 mutaciones, 8 cazadas. **Hallazgo corregido, para revisar**: un
+  punto sobre el fondo de un estrato tomaba el K del de arriba; ahora, el del estrato de su elemento,
+  changelog.)
 - [ ] T5. `model/conditions.py`: de las condiciones a nudos (D16) — RF-9.
   - El defecto del externo, explícito.
   - La precedencia vértice, segmento, defecto, y la unión en los nudos compartidos.
