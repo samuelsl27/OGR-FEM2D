@@ -8,7 +8,7 @@ los casos cuyo resultado correcto se conoce y reproduce.
 ```
 validacion/casos/NNN-nombre-corto/
 ├── caso.md          ← qué es, de dónde sale el valor esperado (fuente científica), ficha de origen
-├── modelo.ogr       ← el modelo, listo para abrir
+├── modelo.ogrfem2d  ← el modelo, con su malla, listo para abrir (ADR-0004)
 └── esperado.json    ← valores de referencia y tolerancia, legibles por el test
 ```
 
@@ -41,11 +41,11 @@ analítica, se cita por su fuente científica original.
 
 | Va aquí (se versiona) | Se queda fuera (no se versiona) |
 |---|---|
-| El modelo `.ogr` propio | Archivos de proyecto de programas comerciales |
+| El modelo `.ogrfem2d` propio | Archivos de proyecto de programas comerciales |
 | El valor esperado y **su fuente científica** | Capturas o informes de otros programas |
 | El test que lo comprueba | Los PDF de manuales de terceros |
 
-La distinción es de copyright: el `.ogr` es propio y el número esperado es un hecho citable; el
+La distinción es de copyright: el `.ogrfem2d` es propio y el número esperado es un hecho citable; el
 archivo nativo y el manual de otro programa son material de terceros.
 
 ## Reglas

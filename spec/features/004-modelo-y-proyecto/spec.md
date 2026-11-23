@@ -1,10 +1,9 @@
 # Spec 004 — Modelo FEM y proyecto `.ogrfem2d`
 
-> **Revisada (2026-11-23), para aprobar.** Fase 1 del plan de desarrollo
-> (`spec/constitution/plan_de_desarrollo.md`, «Spec 004 — Modelo FEM y proyecto `.ogr`»). Las
-> catorce dudas del borrador están convertidas en decisiones (D1–D16, abajo). Las marcadas ✔ las
-> eligió la propietaria el 2026-11-23; las demás son propuestas. Solo el **qué** y el **porqué**;
-> el cómo, en `plan.md`. Versión: **v0.0.9**.
+> **Aprobada (2026-11-23)**, con D1–D16 tal como están abajo: las marcadas ✔ las eligió la
+> propietaria al revisar la spec, y las demás se aprobaron como se propusieron. Fase 1 del plan de
+> desarrollo (`spec/constitution/plan_de_desarrollo.md`, «Spec 004 — Modelo FEM y proyecto
+> `.ogrfem2d`»). Solo el **qué** y el **porqué**; el cómo, en `plan.md`. Versión: **v0.0.9**.
 
 ## La revisión (2026-11-23)
 
@@ -234,8 +233,8 @@ casos con malla general (D4).
 
 ## Criterios de finalización
 
-- [ ] D1–D16 aprobadas por la propietaria y anotadas aquí
-- [ ] ADR-0004 escrito; AGENTS.md y ADR-0003 corregidos donde dicen `.ogr`
+- [x] D1–D16 aprobadas por la propietaria y anotadas aquí (2026-11-23)
+- [x] ADR-0004 escrito; AGENTS.md y ADR-0003 corregidos donde dicen `.ogr` (T0)
 - [ ] Todos los RF con su test en verde, y la regla 7 en cada ajuste nuevo
 - [ ] El caso 005 con su `modelo.ogrfem2d`, idéntico bit a bit al escrito a mano; los casos 006 y
       007 dentro de la tolerancia fijada antes de medir, con su estudio de convergencia
@@ -246,7 +245,8 @@ casos con malla general (D4).
 
 ## Decisiones (2026-11-23)
 
-Las marcadas ✔ las eligió la propietaria al revisar la spec; las demás son propuestas, para su OK.
+Aprobadas el 2026-11-23. Las marcadas ✔ las eligió la propietaria al revisar la spec; las demás,
+tal como se propusieron.
 Las referencias D02, D03, D08, M04a, M05, M10, M23, P05, P11, P14 y P20 son del análisis de
 interfaz (`../Referencias/Doc_Guia/Analisis_interfaz_funcionamiento/`); `M02` y `F01`, de su
 documentación y de sus archivos.
@@ -272,8 +272,9 @@ documentación y de sus archivos.
 
 ### Consecuencias en el resto del proyecto
 
-- `AGENTS.md`, «Stack»: la línea del formato de proyecto pasa a decir `.ogrfem2d` propio y que abre
-  el `.ogr` de Slip2D (ADR-0004). Es un cambio del contrato, para el OK de la propietaria.
-- ADR-0003, `tech-stack.md` y `plan_de_desarrollo.md`: `modelo.ogr` pasa a `modelo.ogrfem2d`.
+- `AGENTS.md`, «Stack»: la línea del formato de proyecto dice `.ogrfem2d` propio y que abre el
+  `.ogr` de Slip2D (ADR-0004). Hecho en la T0, con el OK de la propietaria.
+- ADR-0003, `tech-stack.md`, `plan_de_desarrollo.md` y `validacion/README.md`: `modelo.ogr` pasa a
+  `modelo.ogrfem2d` (T0).
 - Los borradores de las specs 005, 006 y 012 nombran el `.ogr` y estas dudas. Se corrigen cuando se
   abran (cada uno tiene su «reevaluar»).

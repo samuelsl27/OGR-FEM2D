@@ -1,8 +1,7 @@
 # Plan de implementación — Spec 004, modelo FEM y proyecto `.ogrfem2d`
 
-> **Para aprobar (2026-11-23)**, con D1–D16 de `spec.md`: las ✔ las eligió la propietaria, y las
-> demás son propuestas. Ninguna fórmula se programa antes de estar en la tabla «Formulación» como
-> leída.
+> **Aprobado (2026-11-23)**, con D1–D16 de `spec.md`. Ninguna fórmula se programa antes de estar
+> en la tabla «Formulación» como leída.
 
 ## Enfoque
 

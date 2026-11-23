@@ -10,7 +10,7 @@
 |---|---|---|
 | **Python 3.11+ para interfaz, modelo y orquestación** | heredada de Slip2D | Legibilidad, ecosistema científico y reutilización directa del código de Slip2D |
 | **PySide6** | heredada | Licencia LGPL compatible |
-| **Formato `.ogr` (JSON)** compartido con Slip2D | heredada | Un modelo debe poder pasar de un programa de la suite a otro |
+| **Formato `.ogrfem2d` (JSON)** propio, que abre el `.ogr` de Slip2D convirtiéndolo | ADR-0004 (2026-11-23; antes, `.ogr` compartido, heredada) | Un modelo debe poder pasar de un programa de la suite a otro; lo que se comparte es el código del núcleo, no el archivo, como en los programas de referencia |
 | **Motor numérico en Rust (PyO3 + maturin)** | ADR-0001, **aceptada** (2026-10-27, tras la prueba de concepto de la spec 001) | Rendimiento compilado para *return mapping*, SSR, probabilístico y, a futuro, métodos explícitos y DEM; seguridad de memoria y de concurrencia comprobada por el compilador; una rueda por plataforma sin dependencias nativas. La prueba de concepto cumplió los criterios 1 a 4 y dio ≈ ×9.6 sobre NumPy vectorizado en el 5, que el propietario dio por suficiente |
 | **Implementación de referencia en Python de todos los elementos y leyes constitutivas** | ADR-0001 | Oráculo de los tests del núcleo compilado; código legible para auditar |
 | **Solver lineal inicial: SuperLU (SciPy)**; faer tras medir | ADR-0001 | Sin problemas de licencia ni de distribución; el solver disperso en Rust es el riesgo principal |
@@ -32,5 +32,5 @@
   usarlos en informes.
 - **Operaciones ↔ transporte**: como en Slip2D, `ogr_api` no sabe si le llama la interfaz, un script
   o un agente.
-- **Modelo ↔ resultados**: el `.ogr` es la única fuente de verdad; el `.h5` solo vale si su huella
+- **Modelo ↔ resultados**: el `.ogrfem2d` es la única fuente de verdad; el `.h5` solo vale si su huella
   coincide con la del modelo.

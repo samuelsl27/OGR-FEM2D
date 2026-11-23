@@ -5,7 +5,8 @@ reducción de resistencia al corte, agua, sostenimiento y juntas.
 
 **Dos niveles de nombre**: *OpenGeoRock* (u *OGR Suite*) es el paraguas de los programas de la
 suite; **OGR FEM2D** es este programa (el 03 de la hoja de ruta). Hermano de **OGR Slip2D**
-(equilibrio límite), con el que comparte filosofía, interfaz, formatos y reglas.
+(equilibrio límite), con el que comparte filosofía, interfaz, núcleo y reglas; cada uno tiene su
+formato de proyecto (ADR-0004).
 
 Autor y titular del copyright: Samuel Sáez López (UPCT). Licencia AGPL-3.0-or-later.
 
@@ -41,8 +42,9 @@ Autor y titular del copyright: Samuel Sáez López (UPCT). Licencia AGPL-3.0-or-
   núcleo. OGR Slip2D adoptó el núcleo en su v0.1.473 (ya no lleva `ogr_core/` ni ningún paquete
   `ogr_fem2d`), fija su propia etiqueta y tiene su propio `.venv`; los dos programas pueden fijar
   versiones distintas.
-- **Formato de proyecto**: `.ogr` (JSON), compatible con OGR Slip2D en la parte geométrica. Los
-  resultados van aparte en `modelo.h5` con la huella del modelo (`ADR-0003`).
+- **Formato de proyecto**: `.ogrfem2d` (JSON) propio, con el modelo y la malla; abre el `.ogr` de
+  OGR Slip2D convirtiéndolo (`ADR-0004`). Los resultados van aparte en `modelo.h5` con la huella
+  del modelo (`ADR-0003`).
 - **Tests**: el runner de la suite (`ogr_core.testing.runner`), a través de `tests/_runner.py`.
 
 ## Comandos

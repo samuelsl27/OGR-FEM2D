@@ -19,7 +19,7 @@
 - **Fase 0b cerrada**: `ogr-core` v0.1.0 con geometría, malla (Delaunay de SciPy, triángulos de 3
   nudos), filtración, materiales, cargas, proyecto `.ogr`, DXF, estadística e informes.
 - **Lo que no hay todavía**: modelo de proyecto FEM, mallado general, interfaz gráfica, `ogr_api`,
-  línea de órdenes, servidor MCP, resultados en `.h5`, casos con `modelo.ogr`. El motor solo resuelve
+  línea de órdenes, servidor MCP, resultados en `.h5`, casos con `modelo.ogrfem2d`. El motor solo resuelve
   el cuarto de corona de la spec 001.
 
 ## Borradores de las specs (2026-11-23)
@@ -112,7 +112,7 @@ pasa a Rust en la fase 2, tras medir.
 
 Una *spec* a la vez, con plan y OK antes de programar; fórmula sin fuente no entra; la referencia en
 Python va antes que Rust y es su oráculo; cada fase se cierra con sus casos de validación
-(`validacion/casos/`, con `modelo.ogr` desde la fase 1), su estudio de convergencia y su changelog;
+(`validacion/casos/`, con `modelo.ogrfem2d` desde la fase 1), su estudio de convergencia y su changelog;
 cada tarea terminada se sube con la suite en verde. Las fichas de trabajo de los casos
 (`Referencias/Ejemplos/Casos_por_problema/`) se van marcando en su «Seguimiento».
 
@@ -152,7 +152,7 @@ aplicarlo en la interfaz).
 - Rendimiento: el Delaunay de SciPy en Python; en Rust (`spade`, licencia por comprobar) solo si
   se mide que hace falta.
 
-### Spec 004 — Modelo FEM y proyecto `.ogr`
+### Spec 004 — Modelo FEM y proyecto `.ogrfem2d` (ADR-0004)
 - Tipos de contorno nuevos: excavación, fase, junta, interfaz estructural (los de equilibrio límite
   no aplican).
 - La **fase** como dimensión de todo el modelo (materiales, contornos, cargas, condiciones, más
@@ -161,7 +161,7 @@ aplicarlo en la interfaz).
   máximo de iteraciones, escalones), con los valores por defecto a la vista (regla 12).
 - Materiales elásticos (isótropo) con peso y modo de tensión inicial; asignación por región y fase.
 - Condiciones de contorno por segmento, vértice o nudo; condición por defecto del contorno externo.
-- Compatibilidad geométrica con `.ogr` de Slip2D (importar su geometría) y DXF; deshacer y rehacer.
+- Abrir el `.ogr` de Slip2D convirtiéndolo, y DXF; deshacer y rehacer (ADR-0004).
 - Huella del modelo (ADR-0003) calculada aquí.
 
 ### Spec 005 — Resultados (`.h5`) y su interpretación sin interfaz
@@ -188,7 +188,7 @@ aplicarlo en la interfaz).
 - **Interpretación**: selector de magnitud, contornos con leyenda, pestañas de fase, consultas y
   gráficos, *Info Viewer*, exportación de valores en nudos.
 - Traducción ES/EN de todo texto visible, todo alcanzable desde un menú, ayuda adaptada.
-- Los tres casos de la fase con su `modelo.ogr` y un test que los abre, calcula y compara.
+- Los tres casos de la fase con su `modelo.ogrfem2d` y un test que los abre, calcula y compara.
 
 ---
 

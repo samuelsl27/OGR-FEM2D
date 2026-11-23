@@ -10,14 +10,16 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
 ## Antes de programar
 
-- [ ] T0. **Spec, plan y tareas aprobados**, con D1–D16. Va en un commit propio.
+- [x] T0. **Spec, plan y tareas aprobados**, con D1–D16. Va en un commit propio.
   - El ADR-0004 (`docs/decisiones/ADR-0004-formato-ogrfem2d.md`): formato propio, apertura del `.ogr`
     de Slip2D, malla dentro del archivo, y su coste en tamaño.
   - `AGENTS.md` («Stack», la línea del formato), ADR-0003, `tech-stack.md` y `plan_de_desarrollo.md`,
     corregidos donde nombran el `.ogr` de este programa.
 
   *Hecho cuando:* la propietaria ha dado el OK, y las decisiones están anotadas como aprobadas en
-  `spec.md` y `plan.md`.
+  `spec.md` y `plan.md`. (Hecho el 2026-11-23: OK de la propietaria a D1–D16; ADR-0004 escrito;
+  corregidos `AGENTS.md`, que además dice en su presentación que cada programa tiene su formato,
+  ADR-0003, `tech-stack.md`, `plan_de_desarrollo.md` y `validacion/README.md`.)
 
 ## El modelo y sus piezas
 

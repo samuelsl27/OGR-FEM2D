@@ -15,7 +15,7 @@ formato de archivos, fuera del repositorio: `../Referencias/Doc_Guia/Analisis_in
 
 ## Decisión
 
-- **`modelo.ogr`** (JSON) sigue siendo la **única fuente de verdad** del modelo.
+- **`modelo.ogrfem2d`** (JSON; era `modelo.ogr` hasta el ADR-0004, 2026-11-23) sigue siendo la **única fuente de verdad** del modelo.
 - Los resultados van en **`modelo.h5`**, al lado y con la misma raíz, organizados por fase.
 - El `.h5` guarda la **huella** (hash) del contenido del modelo que los produjo. Al abrir, si la
   huella no coincide con la del modelo actual, los resultados se marcan **obsoletos** y no se
@@ -26,7 +26,7 @@ formato de archivos, fuera del repositorio: `../Referencias/Doc_Guia/Analisis_in
 ## Alternativas descartadas
 
 - **Recalcular siempre**: abrir un modelo podría costar minutos u horas.
-- **Resultados dentro del `.ogr`**: el JSON crecería mucho y dejaría de ser legible y comparable con
+- **Resultados dentro del `.ogrfem2d`**: el JSON crecería mucho y dejaría de ser legible y comparable con
   git.
 
 ## Consecuencias
