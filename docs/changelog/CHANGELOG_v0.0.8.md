@@ -435,7 +435,36 @@ del núcleo). Enmiendas de RF-2, RF-4, RF-9 y D3 en la spec; fila nueva en «For
   `math.dist`) ya no existe desde el cambio a `_trig`; rehechas, 18 de 18 y 8 de 8. Las de la T4b, con
   el giro máximo mutado a 15°, 8 de 8.
 
-## Pruebas
+## T14b — la fijación sube a `ogr-core` v0.2.6, los arcos sobre el arco (2026-11-23)
+
+La 0.2.6 del núcleo está etiquetada (`v0.2.6`): `quality_triangulation` lee `PSLG.arcs` (etiqueta →
+centro, la API que FEM2D ya tenía) y parte cada tramo de arco **sobre el arco**, donde el arco corta la
+mediatriz de la cuerda (Pav y Walkington, corolarios 1 y 2, pág. 7), con la invasión por el círculo
+diametral de la cuerda (pág. 6). Lo recto sigue bit a bit como en la 0.2.5. Su §2 no pide nada a los
+programas; avisa de que un PSLG con arcos da otra malla.
+
+Lo que trae y FEM2D usará en la T12 (regla 12): las notas `arc_pieces`, `arc_turn` (τ en grados),
+`arc_bound` (κ y B del corolario 3, y `met`, si el B pedido la cumple) y `arc_unproven` (mensaje con
+código: con arcos, que el refinado termine no lo prueba ninguna fuente, porque las capas concéntricas y el
+Terminator sobre arcos no vienen de ninguna). La API cerrada difiere de lo que se le propuso
+(`arc_guarantee`): se usa la suya.
+
+- Lo mismo que en la T14: `pyproject.toml`, `README.md`, `AGENTS.md`, `tech-stack.md`, la nota de
+  `roadmap.md`, `_PIN` y sus listas; el `.venv` reinstalado desde la etiqueta.
+- **El test «D14 pendiente» no falló con la 0.2.6**, como se esperaba: solo contaba los vértices
+  añadidos en los tramos de arco, y el núcleo los sigue añadiendo, ahora sobre el arco (lo vio también la
+  sesión del núcleo). Se sustituye por `TestArcsOnTheArc`: cada vértice añadido a un tramo de arco está
+  sobre su circunferencia (a 10⁻¹² del radio) y entre los extremos de su tramo (más de 100 en la malla
+  de h = 0.05); y las notas dicen si la terminación estaba probada, con la cota del corolario 3
+  **recalculada en el test con las fórmulas de la fuente** (B > 1.76 con tramos de 10°): con √2, no; con
+  1.77, sí; sin arcos, nada.
+- **La fila de este programa en `docs/consumidores.md` de OGR-Core** dice `v0.2.5`: se corrige allí.
+
+**Dientes**: el núcleo partiendo por el punto medio de la cuerda, `met` siempre cierto y tan(τ) por
+tan(τ/2) en la cota (las tres en el `refine.py` instalado, restaurado byte a byte, SHA-256 igual); las
+piezas de arco sin su etiqueta en el PSLG de FEM2D. Cuatro de cuatro cazadas. El giro máximo cambiado a
+11.25° no lo caza este test (fija 9 divisiones por cuarto con `boundary_nodes`); lo caza
+`test_mesh_arc_pieces_v008.py`.
 
 ## Pruebas
 
@@ -454,3 +483,4 @@ del núcleo). Enmiendas de RF-2, RF-4, RF-9 y D3 en la spec; fila nueva en «For
 | Determinismo, ventanas y el mallador del núcleo, la misma | **309 de 309** (16 nuevos; los 10 de `test_mesh_refine_v008.py` vuelven sin hacer nada con el núcleo fijado), código 0, ninguna fuga. Con `PYTHONPATH` al árbol del núcleo (`0.2.5.dev0 @ f2f7b99`) y `--dev-core`, solo `test_mesh_refine_v008.py`: 10 de 10 |
 | T14, contra la `v0.2.5` instalada (`shared: ogr_core 0.2.5 … (installed, no git tree)`) | **308 de 308** (uno menos: el test de la guarda pendiente ya no tiene sentido), código 0, ninguna fuga; los 9 de `test_mesh_refine_v008.py` corren |
 | D15, la misma | **308 de 308**, código 0, ninguna fuga |
+| T14b, contra la `v0.2.6` instalada (`shared: ogr_core 0.2.6 … (installed, no git tree)`) | **309 de 309** (D14 pendiente sustituido por dos), código 0, ninguna fuga |

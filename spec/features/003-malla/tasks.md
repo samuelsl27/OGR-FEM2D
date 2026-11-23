@@ -110,6 +110,9 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       cuando: la suite entera la nombra en `shared:` y sale en verde, y la propietaria está avisada
       de la fila de `docs/consumidores.md`. (Hecho el 2026-11-23 con la `v0.2.5`, el mallador sin
       arcos; los arcos llegan en la 0.2.6, que pedirá otra subida para la T12.)
+- [x] T14b. La fijación sube a `ogr-core` v0.2.6, los arcos partidos sobre el arco (D14) — Hecho
+      cuando: lo mismo que la T14, y el test de D14 pendiente cambiado a comprobar que cada vértice
+      añadido está sobre su arco. (Hecho el 2026-11-23: 309 de 309; 4 mutaciones, 4 cazadas.)
 
 ## El caso y el cierre
 

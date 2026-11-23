@@ -2,13 +2,13 @@
 # Copyright (C) 2026 Samuel Sáez López — Universidad Politécnica de Cartagena
 """
 v0.0.8 (spec 003, T11 and T13) — the core's quality triangulation
-(``ogr_core.fem.refine``, OGR-Core 0.2.5, asked for in D2) fed with FEM2D's
-PSLG, checked from FEM2D against the sources.
+(``ogr_core.fem.refine``, OGR-Core 0.2.5, asked for in D2; with arcs since
+0.2.6, D14) fed with FEM2D's PSLG, checked from FEM2D against the sources.
 
 Written while the pin was 0.2.3, against the core's tree with ``--dev-core``
 (they then returned at once, and a test made sure that could not outlive the
 pin); since the pin is 0.2.5 (v0.0.8, T14) they run in every run, and the
-guard is gone.
+guard is gone. The pin is 0.2.6 since the same day.
 
 Invariants protected (Shewchuk 2002a; pages of the preprint):
 
@@ -31,9 +31,16 @@ Invariants protected (Shewchuk 2002a; pages of the preprint):
   at most 1/(sqrt(2) sin(phi/2)); the notes give phi;
 * **the map**: the vertex i of the PSLG is the node i of the mesh, and each
   piece's vertex list runs from its u to its v along sides of the mesh;
-* **D14 is pending** in the core: on a fine uniform mesh it adds vertices on
-  the chords of the excavation's arcs. When the core splits arcs on the arc,
-  this test fails, to be updated with the new API.
+* **the arcs are split on the arc** (D14; Pav and Walkington, corollaries 1
+  and 2, p. 7): on a fine uniform mesh the core adds vertices to the pieces
+  of the excavation's arcs, and every one of them is on its circle (to 1e-12
+  of the radius) and between the ends of its piece. Until 0.2.6 they were on
+  the chords: the test that said so was written to fail then, and did not,
+  because it only counted them; it is this one now;
+* **the notes say whether the termination was proved** with arcs (D15, rule
+  12): the largest turn of a piece (10 degrees) and the bound of corollary 3
+  (p. 13), recomputed here from the source's formulas, B > 1.76; with the
+  default B = sqrt(2) not met, with B = 1.77 met; without arcs, nothing.
 """
 from __future__ import annotations
 
@@ -198,16 +205,61 @@ class TestTheMap:
             assert all(edge_key(a, b) in sides for a, b in zip(chain, chain[1:]))
 
 
-class TestD14Pending:
-    def test_the_core_still_adds_vertices_on_the_chords_of_an_arc(self):
-        # pieces of 10 degrees (0.17 m) against elements of 0.05 m: the core has
-        # to split the chords to keep the size bound
-        m = replace(_uniform(0.05), segments=tuple(replace(sp, divisions=9)
-                                                   for sp in TUNNEL.segments))
-        p, r = _mesh(m)
-        arcs = set(p.arcs)
-        added = sum(n for lab, n in zip(r.segment_labels, r.notes["vertices_added"]) if lab in arcs)
-        # spec 003, D14: asked of the core on 2026-11-22 (Promts_desarrollo/
-        # 2026_11_22_peticion_ogr_core_contornos_curvos.md). When it is done,
-        # this fails: update it to check that every such vertex is on its arc.
-        assert added > 0, added
+def _corollary_3(tau):
+    """B of Pav and Walkington's corollary 3 (p. 13), from the source: the
+    angle bound kappa < arcsin(1/(2 mu sqrt 2)) and arcsin(1/(2 zeta eta)),
+    eta = (1 + tan(tau/2)) / (1 - tan(tau/2)), mu = 1 / (1 - tan(tau/2))
+    (p. 6), zeta = sqrt 2 sin(tau/2) / (sqrt(1 + sin tau) - 1) (p. 8); B =
+    1 / (2 sin kappa) (Shewchuk 2002a, p. 5)."""
+    t = math.tan(tau / 2.0)
+    eta, mu = (1.0 + t) / (1.0 - t), 1.0 / (1.0 - t)
+    zeta = math.sqrt(2.0) * math.sin(tau / 2.0) / (math.sqrt(1.0 + math.sin(tau)) - 1.0)
+    kappa = min(math.asin(1.0 / (2.0 * mu * math.sqrt(2.0))),
+                math.asin(1.0 / (2.0 * zeta * eta)))
+    return 1.0 / (2.0 * math.sin(kappa))
+
+
+#: pieces of 10 degrees (0.17 m) against elements of 0.05 m: the core has to
+#: split the pieces of the arcs to keep the size bound
+FINE = replace(_uniform(0.05), segments=tuple(replace(sp, divisions=9) for sp in TUNNEL.segments))
+
+
+class TestArcsOnTheArc:
+    def test_every_vertex_added_on_an_arc_is_on_its_circle(self):
+        p, r = _mesh(FINE)
+        added = 0
+        for (u, v, label), chain in zip(p.segments, r.segment_vertices):
+            if label not in p.arcs:
+                continue
+            c = p.arcs[label]
+            a, b = p.vertices[u], p.vertices[v]
+            radius = math.dist(a, c)
+            ua = (a[0] - c[0], a[1] - c[1])
+            vb = (b[0] - c[0], b[1] - c[1])
+            turn = ua[0] * vb[1] - ua[1] * vb[0]
+            for i in chain[1:-1]:
+                x = _xy(r.mesh, i)
+                added += 1
+                assert abs(math.dist(x, c) - radius) <= 1e-12 * radius, (label, i)
+                w = (x[0] - c[0], x[1] - c[1])
+                # between the ends, seen from the centre
+                assert (ua[0] * w[1] - ua[1] * w[0]) * turn > 0, (label, i)
+                assert (w[0] * vb[1] - w[1] * vb[0]) * turn > 0, (label, i)
+        assert added > 100, added
+
+    def test_the_notes_say_whether_the_termination_was_proved(self):
+        bound = _corollary_3(math.radians(10.0))
+        assert abs(bound - 1.76) < 0.005, bound
+        tenths = replace(TUNNEL, settings=replace(TUNNEL.settings, boundary_nodes=36))
+        p, r = _mesh(tenths)
+        n = r.notes
+        assert n["arc_pieces"] == sum(1 for _u, _v, lab in p.segments if lab in p.arcs) == 36
+        assert abs(n["arc_turn"] - 10.0) < 1e-9, n["arc_turn"]
+        assert math.isclose(n["arc_bound"]["ratio"], bound, rel_tol=1e-9), n["arc_bound"]
+        assert n["arc_bound"]["met"] is False and n["arc_unproven"] is not None
+        _p, r = _mesh(tenths, max_ratio=1.77)
+        assert r.notes["arc_bound"]["met"] is True
+        square = g.MeshInput("plane_strain", ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)),
+                             (g.Region((0, 1, 2, 3)),), (), g.MeshSettings(kind="uniform", size=0.5))
+        _p, r = _mesh(square)
+        assert (r.notes["arc_pieces"], r.notes["arc_bound"], r.notes["arc_unproven"]) == (0, None, None)

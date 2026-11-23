@@ -30,7 +30,7 @@ classifiers = [
 dependencies = [
     # The core, pinned to a tag (ADR-0002). The test runner refuses to run
     # against any other version of it.
-    "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.2.5",
+    "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.2.6",
     "numpy>=1.26",
     "scipy>=1.14",
 ]
