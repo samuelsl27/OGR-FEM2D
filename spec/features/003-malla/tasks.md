@@ -98,15 +98,17 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       mallados iguales bit a bit. (2026-11-22, parte hecha: `pslg.py`, el PSLG para el núcleo con
       semillas y vacíos, y la proyección de D13. **Hallazgo: D13 puede invertir elementos; D14
       abierta en la spec.** Falta el mallador de dos pasos, con el núcleo.)
-- [ ] T13. Las garantías vistas desde FEM2D y el resumen de calidad: cota B (teorema 4), cota de
+- [x] T13. Las garantías vistas desde FEM2D y el resumen de calidad: cota B (teorema 4), cota de
       tamaño, Delaunay final, teorema 8 con B = 1/(2 sen 15°), teorema 12 y terminación con un ángulo de
       entrada de 5°; medidas de calidad (1, 0, < 0, invariantes) — RF-4, RF-9, RF-12 — Hecho cuando:
       en verde y con dientes. (2026-11-23: escritas en `test_mesh_refine_v008.py` y en verde con
       `--dev-core`; se cierra con la T14. Las medidas de calidad las prueba el núcleo; el resumen de
-      calidad de la malla va en la T12.)
-- [ ] T14. La fijación sube a la versión del núcleo que trae la petición, en un commit propio — Hecho
+      calidad de la malla va en la T12.) (Cerrada el 2026-11-23, con la fijación en la 0.2.5: corren en
+      la suite normal; el del teorema 4 caza una malla hecha con B = 3.)
+- [x] T14. La fijación sube a la versión del núcleo que trae la petición, en un commit propio — Hecho
       cuando: la suite entera la nombra en `shared:` y sale en verde, y la propietaria está avisada
-      de la fila de `docs/consumidores.md`.
+      de la fila de `docs/consumidores.md`. (Hecho el 2026-11-23 con la `v0.2.5`, el mallador sin
+      arcos; los arcos llegan en la 0.2.6, que pedirá otra subida para la T12.)
 
 ## El caso y el cierre
 

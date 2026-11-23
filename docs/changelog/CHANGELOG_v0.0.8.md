@@ -388,6 +388,26 @@ avisa de que sus capas quedan fuera de la prueba), la cuña de 5° del teorema 1
 D14 pendiente. Más dos en `test_mesh_pslg_v008.py` para las esquinas. **Dientes**: 6 mutaciones del
 determinismo y 4 de las ventanas y la cota contra el núcleo nuevo, todas cazadas.
 
+## T14 — la fijación sube a `ogr-core` v0.2.5 (2026-11-23)
+
+Decisión de la propietaria: subirla en cuanto la 0.2.5 estuviera etiquetada (`v0.2.5` → `8a1a52b`),
+sin esperar a los arcos de la 0.2.6. La 0.2.5 trae el mallador de calidad (`ogr_core.fem.refine`), las
+medidas de Shewchuk (2002b) en `ogr_core.fem.mesh` y sus mensajes; su §2 no pide nada a los programas y
+avisa de que la 0.2.6 leerá `PSLG.arcs` (el mismo PSLG con arcos dará otra malla). `generate_mesh` no
+cambia.
+
+- `pyproject.toml`, las dos recetas del `README.md`, `AGENTS.md`, `tech-stack.md` y una nota fechada en
+  `roadmap.md`; el `.venv` reinstalado desde la etiqueta (`--no-deps --force-reinstall`).
+- `tests/test_project_setup_v001.py`: `_PIN` y sus listas de versiones se mueven con la fijación.
+- `tests/test_mesh_refine_v008.py` corre ya en toda corrida: se quitó la guarda que lo dejaba pendiente
+  con la 0.2.3 (y el test que impedía que esa guarda sobreviviera a la subida).
+- **La fila de este programa en `docs/consumidores.md` de OGR-Core** dice `v0.2.3`: se corrige allí.
+- Para verlo, esta sesión hizo `git fetch --tags` en el repositorio de OGR-Core: actualiza sus
+  referencias remotas, no su rama ni sus archivos.
+
+**Dientes**: `_PIN` de vuelta a 0.2.3 y la lista de la corrida normal cambiada, cazados; y el test del
+teorema 4 con una malla hecha con B = 3 en vez de √2, cazado (la comprobación no pasa en vacío).
+
 ## Pruebas
 
 | Corrida | Resultado |
@@ -403,3 +423,4 @@ determinismo y 4 de las ventanas y la cota contra el núcleo nuevo, todas cazada
 | T11, T12 y T15 (parte sin el núcleo), la misma | **287 de 287** (8 nuevos), código 0, ninguna fuga |
 | T4b (D14), la misma | **293 de 293** (6 nuevos), código 0, ninguna fuga |
 | Determinismo, ventanas y el mallador del núcleo, la misma | **309 de 309** (16 nuevos; los 10 de `test_mesh_refine_v008.py` vuelven sin hacer nada con el núcleo fijado), código 0, ninguna fuga. Con `PYTHONPATH` al árbol del núcleo (`0.2.5.dev0 @ f2f7b99`) y `--dev-core`, solo `test_mesh_refine_v008.py`: 10 de 10 |
+| T14, contra la `v0.2.5` instalada (`shared: ogr_core 0.2.5 … (installed, no git tree)`) | **308 de 308** (uno menos: el test de la guarda pendiente ya no tiene sentido), código 0, ninguna fuga; los 9 de `test_mesh_refine_v008.py` corren |

@@ -5,11 +5,10 @@ v0.0.8 (spec 003, T11 and T13) — the core's quality triangulation
 (``ogr_core.fem.refine``, OGR-Core 0.2.5, asked for in D2) fed with FEM2D's
 PSLG, checked from FEM2D against the sources.
 
-**Pending until the pin reaches 0.2.5 (T14).** The pinned core (0.2.3) has no
-``refine``: in an ordinary run every test below returns at once, and
-``test_pending_only_while_the_core_is_older`` fails as soon as the core
-imported is 0.2.5 or later without it, so they cannot stay silent once the
-pin moves. They run with ``--dev-core`` and the core's tree.
+Written while the pin was 0.2.3, against the core's tree with ``--dev-core``
+(they then returned at once, and a test made sure that could not outlive the
+pin); since the pin is 0.2.5 (v0.0.8, T14) they run in every run, and the
+guard is gone.
 
 Invariants protected (Shewchuk 2002a; pages of the preprint):
 
@@ -41,20 +40,11 @@ from __future__ import annotations
 import math
 from dataclasses import replace
 
-import ogr_core
+from ogr_core.fem import refine
 
 from ogr_fem2d.mesh import discretize, geometry as g, pslg, sizing
 from ogr_fem2d.mesh.quadratic import edge_key
 from test_mesh_input_v008 import TUNNEL
-
-try:
-    from ogr_core.fem import refine
-except ImportError:                       # the pinned core, before 0.2.5
-    refine = None
-
-
-def _version(text: str) -> tuple[int, int, int]:
-    return tuple(int(x) for x in text.split(".")[:3])
 
 
 def _mesh(m: g.MeshInput, max_ratio=None, with_corners=True):
@@ -94,16 +84,8 @@ def _uniform(h):
 WINDOW = g.Window(((5.0, 5.0), (5.4, 5.0), (5.4, 5.4), (5.0, 5.4)), 0.05)
 
 
-class TestPending:
-    def test_pending_only_while_the_core_is_older(self):
-        if refine is None:
-            assert _version(ogr_core.__version__) < (0, 2, 5), ogr_core.__version__
-
-
 class TestSizeBound:
     def test_uniform_h_and_graded_max_size(self):
-        if refine is None:
-            return
         for m, bound in ((_uniform(0.5), 0.5),
                          (replace(TUNNEL, settings=replace(TUNNEL.settings, max_size=2.0)), 2.0)):
             _p, r = _mesh(m)
@@ -111,8 +93,6 @@ class TestSizeBound:
             assert longest <= bound * (1.0 + 1e-12), (bound, longest)
 
     def test_a_window_is_seen_through_its_corners(self):
-        if refine is None:
-            return
         m = replace(TUNNEL, settings=replace(TUNNEL.settings, boundary_nodes=32, windows=(WINDOW,)))
         for corners, seen in ((True, True), (False, False)):
             _p, r = _mesh(m, with_corners=corners)
@@ -124,8 +104,6 @@ class TestSizeBound:
                 assert max(max(_sides(r.mesh, e)) for e in inside) <= 0.05 * (1 + 1e-12)
 
     def test_every_option_moves_the_mesh(self):
-        if refine is None:
-            return
         base = replace(TUNNEL, settings=replace(TUNNEL.settings, boundary_nodes=32))
         counts = [len(_mesh(m)[1].mesh.elements) for m in (
             base, replace(base, settings=replace(base.settings, max_size=2.0)),
@@ -135,16 +113,12 @@ class TestSizeBound:
 
 class TestQuality:
     def test_theorem_4_every_ratio_at_most_b(self):
-        if refine is None:
-            return
         for m in (TUNNEL, _uniform(1.0)):
             _p, r = _mesh(m)
             worst = max(_ratio(r.mesh, e) for e in r.mesh.elements)
             assert worst <= math.sqrt(2.0) * (1 + 1e-12), worst
 
     def test_delaunay_in_a_convex_domain(self):
-        if refine is None:
-            return
         _p, r = _mesh(replace(TUNNEL, settings=replace(TUNNEL.settings, boundary_nodes=32)))
         pts = [_xy(r.mesh, i) for i in range(len(r.mesh.nodes))]
         for e in r.mesh.elements:
@@ -160,8 +134,6 @@ class TestQuality:
                     assert math.dist((ux, uy), q) >= rr * (1 - 1e-9), (e.nodes, k)
 
     def test_theorem_8_grading_checked_on_these_meshes(self):
-        if refine is None:
-            return
         b = 1.0 / (2.0 * math.sin(math.radians(15.0)))
         d_s = (1.0 + math.sqrt(2.0)) * b / (b - math.sqrt(2.0))       # alpha_min = 90 deg here
         assert abs(d_s - 9.01) < 0.01
@@ -202,8 +174,6 @@ class TestQuality:
             assert nearest >= lfs(x) / (d_s + 1.0) * (1 - 1e-12), (i, nearest, lfs(x))
 
     def test_theorem_12_a_wedge_of_5_degrees(self):
-        if refine is None:
-            return
         phi = math.radians(5.0)
         wedge = g.MeshInput("plane_strain", ((0.0, 0.0), (10.0, 0.0), (10.0, 10.0 * math.tan(phi))),
                             (g.Region((0, 1, 2)),), (), g.MeshSettings(kind="uniform", size=1.0))
@@ -217,8 +187,6 @@ class TestQuality:
 
 class TestTheMap:
     def test_vertex_i_is_node_i_and_pieces_run_along_sides(self):
-        if refine is None:
-            return
         p, r = _mesh(replace(TUNNEL, settings=replace(TUNNEL.settings, windows=(WINDOW,))))
         for i, v in enumerate(p.vertices):
             assert _xy(r.mesh, i) == v, i
@@ -232,8 +200,6 @@ class TestTheMap:
 
 class TestD14Pending:
     def test_the_core_still_adds_vertices_on_the_chords_of_an_arc(self):
-        if refine is None:
-            return
         m = _uniform(0.25)
         p, r = _mesh(m)
         arcs = set(p.arcs)
