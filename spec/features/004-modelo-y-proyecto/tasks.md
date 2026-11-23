@@ -23,7 +23,7 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
 ## El modelo y sus piezas
 
-- [ ] T1. **v0.0.9**, `model/model.py` y `docs/modelo/formato.md` — RF-1, 3, 5 y 6.
+- [x] T1. **v0.0.9**, `model/model.py` y `docs/modelo/formato.md` — RF-1, 3, 5 y 6.
   - Las dataclasses congeladas del modelo y `validate()`, con `Problem` (regla, sitio, por qué), que
     reúne todos los problemas a la vez, como el motor.
   - El sistema de unidades, de la lista del núcleo; uno desconocido, error (D5).
@@ -32,6 +32,9 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
     `CHANGELOG_v0.0.9.md`.
 
   *Hecho cuando:* cada regla tiene su test con un modelo que la incumple, y el error dice el sitio.
+  (Hecho el 2026-11-23: 17 reglas, `tests/test_model_input_v009.py`, 17 tests; 27 mutaciones, 27
+  cazadas tras añadir tres tests. Hallazgo de D10: la asignación lleva un material por región y una
+  bandera de excavada por fase, changelog.)
 - [ ] T2. `model/regions.py`: de los contornos a las regiones (D15) — RF-1.
   - Puntos y segmentos sin repetir, con las reglas de cruce de `mesh/geometry`.
   - Las caras del grafo plano, con los arcos por su tangente, y los huecos por anidamiento.
