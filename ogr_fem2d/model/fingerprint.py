@@ -9,10 +9,12 @@ writes them (the shortest text that reads back to the same number).
 
 * ``model_fingerprint``: what changes the result and nothing else. The
   file's content (``ogr_file.to_dict``) without the summary, the unit system
-  shown (D5: the values do not depend on it), the names and colours, and the
+  shown (D5: the values do not depend on it), the names and colours, the
   notes and warnings of the mesh (they say how the mesh was made; the mesh
-  itself, its nodes, elements and regions, is in). The results of spec 005
-  will carry it (ADR-0003).
+  itself, its nodes, elements and regions, is in), and the ids: a boundary,
+  a material and a stage are named by their place (their order is part of
+  the model), so renaming an id everywhere does not move it. The results of
+  spec 005 will carry it (ADR-0003).
 * ``document_fingerprint``: everything in the file but ``written_by``, which
   is who wrote it, not what it holds.
 * ``digest``: the fingerprint of any value made of dataclasses, tuples,
@@ -47,8 +49,38 @@ def digest(value) -> str:
 
 
 #: what the model's fingerprint leaves out, by section
-_NAMES = {"boundaries": ("name",), "materials": ("name", "color"), "stages": ("name",),
+_NAMES = {"boundaries": ("name",), "materials": ("name", "color"), "stages": (),
           "conditions": ("name",), "loads": ("name",)}
+
+
+def _by_place(d: dict) -> dict:
+    """The content of a file with its ids replaced by places."""
+    stages = [s["id"] for s in d["stages"]]
+    boundary = {b["id"]: k for k, b in enumerate(d["boundaries"])}
+    material = {x["id"]: k for k, x in enumerate(d["materials"])}
+
+    def per_stage(value):
+        return None if value is None else [value[s] for s in stages]
+
+    def span(s):
+        return None if s is None else {**s, "boundary": boundary.get(s["boundary"], s["boundary"])}
+
+    d["stages"] = len(stages)
+    for b in d["boundaries"]:
+        b.pop("id")
+    for x in d["materials"]:
+        x.pop("id")
+    for a in d["assignments"]:
+        a["material"] = material.get(a["material"], a["material"])
+        a["excavated"] = per_stage(a["excavated"])
+    for c in d["conditions"]:
+        c["span"] = span(c["span"])
+        c["active"], c["factors"] = per_stage(c["active"]), per_stage(c["factors"])
+    for ld in d["loads"]:
+        if "span" in ld:
+            ld["span"] = span(ld["span"])
+        ld["factors"] = per_stage(ld["factors"])
+    return d
 
 
 def model_fingerprint(m) -> str:
@@ -63,7 +95,7 @@ def model_fingerprint(m) -> str:
     if d["mesh"] is not None:
         d["mesh"].pop("notes")
         d["mesh"].pop("warnings")
-    return digest(d)
+    return digest(_by_place(d))
 
 
 def document_fingerprint(m) -> str:

@@ -178,8 +178,10 @@ componentes globales en cada esquina. Una carga puntual da un `NodalLoad` en el 
 SHA-256 de un JSON canónico (claves ordenadas, separadores fijos, ASCII, sin NaN ni infinitos).
 
 - **Del modelo**: el contenido del archivo sin `format`, `format_version`, `written_by`, `summary`,
-  `units`, los nombres, los colores, ni las notas y avisos de la malla. Cambia con todo lo que cambia
-  el resultado, malla incluida, y con nada más (RF-16, ADR-0003).
+  `units`, los nombres, los colores, ni las notas y avisos de la malla, y con los ids de contornos,
+  materiales y fases cambiados por su lugar (su orden es parte del modelo): renombrar un id en todas
+  partes no la mueve. Cambia con todo lo que cambia el resultado, malla incluida, y con nada más
+  (RF-16, ADR-0003).
 - **Del documento**: todo menos `written_by`.
 
 ## Abrir otros formatos
