@@ -214,12 +214,13 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
 ## El cierre
 
-- [ ] T18. El barrido de las reglas 7 y 12: una tabla de cada ajuste nuevo del modelo con el test que
+- [x] T18. El barrido de las reglas 7 y 12: una tabla de cada ajuste nuevo del modelo con el test que
   demuestra que mueve el número, y los valores por defecto que cambian el resultado, listables desde
   el modelo.
 
   *Hecho cuando:* la tabla está en el changelog y no le falta ningún ajuste.
-- [ ] T19. El cierre.
+  (Hecho el 2026-11-23: `translate.deciding_values` y 4 tests; la tabla, en el changelog.)
+- [x] T19. El cierre.
   - Cada fórmula de «Formulación», citada en el código.
   - Los casos 001 a 004, bit a bit.
   - `CHANGELOG_v0.0.9.md`, completo.
@@ -227,3 +228,4 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
     sesión) y lo que la 005, la 006 y la 012 tienen que reevaluar de esta spec.
 
   *Hecho cuando:* todos los criterios de finalización de `spec.md` están marcados.
+  (Hecho el 2026-11-23: los criterios, marcados; los casos 001 a 004 sin un cambio desde 7f6abd6.)

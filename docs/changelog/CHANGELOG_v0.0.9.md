@@ -246,3 +246,56 @@ estudios y escribe los `modelo.ogrfem2d`; `tests/test_validation_cases_v009.py`,
 - 3 mutaciones sobre la identidad del caso 005 y los archivos (el defecto del externo, el orden de
   las regiones, las notas de la malla como tuplas), 3 cazadas.
 - Fichas STR-01, STR-04 y STR-09, con su «Seguimiento».
+
+## T18 — las reglas 7 y 12 (2026-11-23)
+
+`translate.deciding_values`: la lista de cada valor que decide el resultado y no se dibujó (las
+unidades, el análisis, la condición por defecto, la carga inicial de cada material, los ajustes de la
+malla, los del solver que la traducción toma del motor, el anillo en axisimetría).
+`tests/test_model_settings_v009.py`, 4 tests.
+
+Cada ajuste nuevo del modelo y el test que demuestra que mueve el número (regla 7):
+
+| Ajuste | Test |
+|---|---|
+| `analysis` | `test_model_field_v009` (en axisimetría, el campo sin equilibrio radial es un error y con él no) y `test_model_loads_v009` (el anillo) |
+| `default_restraint` | `test_model_conditions_v009`, `test_another_default_another_set` |
+| condiciones `x`, `y`, `xy`, `free` | `test_model_conditions_v009`, `TestTheUnion`, `TestTheVertex` |
+| `active` por fase | `test_model_conditions_v009`, `test_a_restraint_off_in_a_stage_is_not_there` |
+| desplazamiento impuesto: `ux`, `uy`, `factors` (y `None`) | `test_model_conditions_v009`, `TestImposed` |
+| `initial_loading` (cuatro modos) | `test_model_field_v009`, `test_four_modes_four_states` |
+| `unit_weight` | `test_model_field_v009`, `test_each_mode_is_what_it_says`; `test_model_identities_v009` (estratos con su peso) |
+| campo constante (σ1, σ3, σz, ángulo) | `test_model_field_v009`, `test_a_compressive_field_reaches_the_engine_negative` |
+| campo gravitatorio (superficie, estratos, γ, K, Kz) | `test_model_field_v009`, `TestGravity` |
+| carga repartida: valores de inicio y fin | `test_model_loads_v009`, `test_resultant_and_moment_over_two_segments` |
+| orientación (cinco) y ángulo | `test_model_loads_v009`, `test_each_pushes_where_it_says` |
+| factores de carga por fase (y 0) | `test_model_loads_v009`, `test_the_factor_of_each_stage` |
+| carga puntual: magnitud, orientación, ángulo, factor | `test_model_loads_v009`, `test_a_point_load_at_a_vertex` |
+| `excavated` por fase | `test_model_translate_v009`, `test_the_active_elements_of_every_stage` |
+| arco y divisiones de un segmento | `test_model_translate_v009`, `test_the_attributes_of_the_segments` (y el mallador de la spec 003) |
+| `mesh_settings` | los de la spec 003 (`test_mesh_mesher_v008`: cada ajuste mueve la malla) y `test_another_geometry_or_mesh_setting_is_another_model` |
+| material: E y ν | `test_model_translate_v009`, `test_the_material_of_every_element_is_its_region_s`; `test_model_identities_v009` |
+
+Lo que **no** mueve el número, por diseño, y su test: el sistema de unidades mostrado (D5,
+`test_the_units_shown_change_nothing`), el resumen, los nombres y los colores
+(`test_model_fingerprint_v009`, `STILL`).
+
+## T19 — el cierre (2026-11-23)
+
+- Cada fórmula de «Formulación» de `plan.md`, citada en el código: JCZ ecs. 2.28–2.30, 13.1 y 13.5 y
+  T&G ec. 177 en `model/field.py` (y en `engine/initial_stress.py`, de la spec 002); Z&T §5.2.6 y la
+  interpolación lineal en `model/loads.py`; de Berg et al. (2008) en `model/regions.py`; FIPS 180-4 en
+  `model/fingerprint.py`; Michell y Lamé en los `caso.md` de los casos 006 y 007.
+- **Los casos 001 a 004, bit a bit**: `git diff 7f6abd6` (el commit de los borradores, antes de la
+  spec) sobre `ogr_fem2d/engine`, `rust/`, sus carpetas de caso y `tests/_hole.py`, `_sphere.py` y
+  `_strip.py`, vacío.
+- Para la propietaria:
+  - **OGR Slip2D**: que Slip2D abra un `.ogrfem2d` es cosa de su sesión (D1, ADR-0004).
+  - **OGR-Core**: la petición de los arcos en DXF
+    (`Promts_desarrollo/2026_11_23_peticion_ogr_core_arcos_en_dxf.md`), para llevarla cuando convenga;
+    no bloquea nada.
+  - **Las specs 005, 006 y 012** tienen que reevaluar lo que nombran de esta: el `.ogrfem2d` (antes
+    `.ogr`); la malla guardada en el modelo (la 005, su duda 6: el `.h5` no necesita guardarla); la
+    clase del modelo (la 006, su duda 2: el lienzo de Slip2D importa el `Project` del núcleo, y este
+    modelo es otro); y la semántica de las fases (la 012: hasta ella, una región tiene un material para
+    todo el cálculo).

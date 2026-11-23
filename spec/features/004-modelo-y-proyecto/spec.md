@@ -1,5 +1,6 @@
 # Spec 004 — Modelo FEM y proyecto `.ogrfem2d`
 
+> **Cerrada (2026-11-23)**: criterios de finalización cumplidos (changelog v0.0.9, T19).
 > **Aprobada (2026-11-23)**, con D1–D16 tal como están abajo: las marcadas ✔ las eligió la
 > propietaria al revisar la spec, y las demás se aprobaron como se propusieron. Fase 1 del plan de
 > desarrollo (`spec/constitution/plan_de_desarrollo.md`, «Spec 004 — Modelo FEM y proyecto
@@ -235,13 +236,13 @@ casos con malla general (D4).
 
 - [x] D1–D16 aprobadas por la propietaria y anotadas aquí (2026-11-23)
 - [x] ADR-0004 escrito; AGENTS.md y ADR-0003 corregidos donde dicen `.ogr` (T0)
-- [ ] Todos los RF con su test en verde, y la regla 7 en cada ajuste nuevo
-- [ ] El caso 005 con su `modelo.ogrfem2d`, idéntico bit a bit al escrito a mano; los casos 006 y
+- [x] Todos los RF con su test en verde, y la regla 7 en cada ajuste nuevo
+- [x] El caso 005 con su `modelo.ogrfem2d`, idéntico bit a bit al escrito a mano; los casos 006 y
       007 dentro de la tolerancia fijada antes de medir, con su estudio de convergencia
-- [ ] Las identidades de la tabla, en verde y con dientes
-- [ ] Los casos 001 a 004 dan lo mismo bit a bit
-- [ ] La petición al núcleo de los arcos en DXF, escrita (D13; no bloquea)
-- [ ] Changelog con lo encontrado; fichas STR-01, STR-04 y STR-09 con su «Seguimiento»
+- [x] Las identidades de la tabla, en verde y con dientes
+- [x] Los casos 001 a 004 dan lo mismo bit a bit
+- [x] La petición al núcleo de los arcos en DXF, escrita (D13; no bloquea)
+- [x] Changelog con lo encontrado; fichas STR-01, STR-04 y STR-09 con su «Seguimiento»
 
 ## Decisiones (2026-11-23)
 
@@ -278,3 +279,19 @@ documentación y de sus archivos.
   `modelo.ogrfem2d` (T0).
 - Los borradores de las specs 005, 006 y 012 nombran el `.ogr` y estas dudas. Se corrigen cuando se
   abran (cada uno tiene su «reevaluar»).
+
+### Lo que se encontró al hacerla (changelog v0.0.9)
+
+Reportado y corregido durante las tareas, para revisar por la propietaria:
+
+- **D10 precisada (T1)**: la asignación lleva un material por región, el del estado inicial
+  también, y una bandera de excavada por fase; el material por fase, con la spec 012.
+- **El cero negativo (T2)**: `atan2(−0.0, −1)` = −π ordenaba mal los lados en un vértice.
+- **El K de un punto sobre el fondo de un estrato (T4)**: tomaba el del estrato de arriba; ahora, el
+  del estrato de su elemento. El preproceso del motor no se tocó.
+- **Un hueco lleno de dos regiones (T5)**: el mallador de la spec 003 lo tomaba por un vacío; una
+  excavación partida por un contorno de fase no se podía mallar.
+- **D12 precisada (T10)**: la huella del modelo nombra contornos, materiales y fases por su lugar, no
+  por su id.
+- **Los vértices de la subdivisión del núcleo (T12)**: vuelven movidos ~10⁻⁹; se toman los dibujados.
+- **Un punto sobre la cuerda de un arco (T17)**: cuenta como fuera de la región; anotado, sin cambio.

@@ -1,6 +1,6 @@
 # Plan de implementación — Spec 004, modelo FEM y proyecto `.ogrfem2d`
 
-> **Aprobado (2026-11-23)**, con D1–D16 de `spec.md`. Ninguna fórmula se programa antes de estar
+> **Cerrado (2026-11-23).** **Aprobado (2026-11-23)**, con D1–D16 de `spec.md`. Ninguna fórmula se programa antes de estar
 > en la tabla «Formulación» como leída.
 
 ## Enfoque
@@ -163,10 +163,13 @@ motor, en tracción positiva (regla 10). La conversión va en `conventions.py` y
 
 ## Anomalías (regla 6)
 
-Ninguna todavía. Dos cosas a vigilar, que se reportarán si aparecen:
-- que el orden canónico no reproduzca el `MeshInput` hecho a mano del 005;
-- que la apertura de Slip2D dé áreas distintas de las de `build_regions` en algún modelo, porque
-  esa función repara los polígonos inválidos con `buffer(0)` sin decirlo.
+Las dos que se vigilaban no se dieron: el orden canónico reproduce el `MeshInput` hecho a mano del
+005, y las áreas de la apertura de Slip2D coinciden con las del núcleo (a 10⁻⁸, porque el núcleo
+devuelve sus vértices movidos ~10⁻⁹ del tamaño del modelo: se toman los dibujados). Las que aparecieron,
+cada una reportada y corregida en su tarea, están en `spec.md` («Lo que se encontró al hacerla») y en
+el changelog v0.0.9: la tabla región × fase con un material por región (T1), el cero negativo de una
+tangente (T2), el K de un punto sobre el fondo de un estrato (T4), un hueco lleno de dos regiones en el
+mallador (T5), los ids fuera de la huella (T10) y el punto sobre la cuerda de un arco (T17).
 
 ## Estrategia de pruebas
 

@@ -173,6 +173,14 @@ tramo, da un `EdgeLoad` por lado de la malla, sobre el **único** elemento activ
 fase (ninguno o dos, error). La normal va con `normal=True` y el signo cambiado; las demás, en
 componentes globales en cada esquina. Una carga puntual da un `NodalLoad` en el nudo del vértice.
 
+## Lo que decide el resultado (`translate.deciding_values`)
+
+La lista de cada valor que decide el resultado y no se dibujó (regla 12): las unidades (y que el
+sistema mostrado no cambia los valores), el tipo de análisis, la condición por defecto del externo, la
+carga inicial de cada material, cada ajuste de la malla, los ajustes del solver que la traducción toma
+del motor (D9) y, en axisimetría con cargas puntuales, que son las del anillo entero. Los resultados
+(spec 005) la llevarán con ellos.
+
 ## Huellas (`fingerprint.py`)
 
 SHA-256 de un JSON canónico (claves ordenadas, separadores fijos, ASCII, sin NaN ni infinitos).
