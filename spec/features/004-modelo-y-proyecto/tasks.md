@@ -68,7 +68,7 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   (Hecho el 2026-11-23: 10 tests; 8 mutaciones, 8 cazadas. **Hallazgo corregido, para revisar**: un
   punto sobre el fondo de un estrato tomaba el K del de arriba; ahora, el del estrato de su elemento,
   changelog.)
-- [ ] T5. `model/conditions.py`: de las condiciones a nudos (D16) — RF-9.
+- [x] T5. `model/conditions.py`: de las condiciones a nudos (D16) — RF-9.
   - El defecto del externo, explícito.
   - La precedencia vértice, segmento, defecto, y la unión en los nudos compartidos.
   - Las liberaciones.
@@ -77,7 +77,9 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
   *Hecho cuando:* liberar un segmento no suelta la esquina del vecino, el vértice manda, y dos
   impuestos en conflicto dan un error que los nombra a los dos.
-- [ ] T6. `model/loads.py`: de las cargas a `EdgeLoad` y `NodalLoad` — RF-10.
+  (Hecho el 2026-11-23: 13 tests; 14 mutaciones, 14 cazadas. **Hallazgo corregido en el mallador,
+  para revisar**: un hueco lleno de dos regiones se tomaba por un vacío, changelog.)
+- [x] T6. `model/loads.py`: de las cargas a `EdgeLoad` y `NodalLoad` — RF-10.
   - Cargas repartidas lineales sobre un tramo de varios segmentos, con cada orientación de
     `LoadOrientation`.
   - Cargas puntuales en un vértice.
@@ -89,6 +91,8 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   - cada orientación mueve el número;
   - una carga sobre un contacto entre dos regiones activas se rechaza, nombrando la carga, el
     contorno y la fase.
+
+  (Hecho el 2026-11-23: 12 tests; 14 mutaciones, 14 cazadas tras dos tests más.)
 
 ## La traducción, el archivo, la huella y el deshacer
 

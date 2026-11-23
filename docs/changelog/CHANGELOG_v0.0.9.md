@@ -96,3 +96,34 @@ carga normal) y `model/field.py` (la tensión inicial y el peso propio según el
   en el contacto; los cuatro modos dan cuatro estados distintos (regla 7) y cada uno es lo que dice;
   en axisimetría, un campo sin equilibrio radial es un error. 8 mutaciones: sobrevivía cambiar Kz por K
   (los estratos de prueba tenían K = Kz), y los estratos pasaron a tener Kz distinto; al final, 8 de 8.
+
+## T5 — las condiciones en los nudos (2026-11-23)
+
+`model/conditions.py`: por segmento, la unión de los tramos que actúan (o el defecto del externo);
+por nudo, la unión de sus segmentos; el vértice manda; los desplazamientos impuestos en totales, con
+su factor, que sustituyen a la restricción de su componente.
+
+- **Hallazgo y corrección en el mallador de la spec 003 (regla 6, para revisar): un hueco lleno de
+  dos regiones se tomaba por un vacío.** `mesh/pslg.py` ponía un punto de vacío (donde el núcleo no
+  malla) en todo hueco cuyo anillo no fuera el contorno de una región. Una excavación partida en dos por
+  un contorno de fase (avance y destroza) llena el hueco de la roca con dos regiones, y el núcleo
+  rechazaba la semilla de una de ellas, «en un vacío». Salió al escribir el test de un impuesto en un
+  nudo sin elementos activos. Ahora un hueco es un vacío cuando no contiene ninguna semilla. Con un
+  hueco lleno de una región o vacío, nada cambia (las mallas de la spec 003 y su huella, iguales).
+  `tests/test_mesh_split_hole_v009.py`, 4 tests.
+- 13 tests en `tests/test_model_conditions_v009.py`. 14 mutaciones (13 de las condiciones y la del
+  vacío), 14 cazadas.
+
+## T6 — las cargas en lados y nudos (2026-11-23)
+
+`model/loads.py`: la carga repartida, lineal en la longitud a lo largo del tramo, en un `EdgeLoad` por
+lado sobre su único elemento activo; la normal con el signo cambiado y las demás orientaciones en
+componentes; la puntual, en el nudo de su vértice.
+
+- 12 tests en `tests/test_model_loads_v009.py`: resultante y momento exactos de una carga lineal sobre
+  dos segmentos; cada orientación empuja donde dice, en una superficie inclinada donde todas difieren;
+  la misma carga con el contorno dibujado en los dos sentidos; una presión en la pared del túnel empuja
+  hacia la roca con la resultante 2πap; una carga lineal a lo largo de un arco va por su longitud; el
+  factor de cada fase; una carga sobre un contacto activo o sobre la pared antes de excavarla, error;
+  la puntual, también en axisimetría (el anillo entero). 14 mutaciones: dos sobrevivían (leer al revés
+  la cadena de un segmento y medir un arco por su cuerda) y llevaron a dos tests; al final, 14 de 14.
