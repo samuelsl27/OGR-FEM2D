@@ -96,7 +96,7 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
 ## La traducción, el archivo, la huella y el deshacer
 
-- [ ] T7. `model/translate.py`, `to_mesh_input` y `mesh` — RF-11 y RF-12.
+- [x] T7. `model/translate.py`, `to_mesh_input` y `mesh` — RF-11 y RF-12.
   - En el `MeshInput`, la región como etiqueta de material (D3).
   - La procedencia de cada punto, segmento y región.
   - Los errores del mallador, reescritos con el contorno o la región.
@@ -104,7 +104,9 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
   *Hecho cuando:* dos traducciones del mismo modelo dan lo mismo bit a bit, y cada error del mallador
   llega con el nombre del objeto del modelo.
-- [ ] T8. `translate.to_engine` — RF-11 y RF-12.
+  (Hecho el 2026-11-23 con la T8: 14 tests en `test_model_translate_v009.py`; 11 mutaciones, 11
+  cazadas. El túnel del caso 005 da el `MeshInput` escrito a mano.)
+- [x] T8. `translate.to_engine` — RF-11 y RF-12.
   - El material de cada elemento por fase, según la tabla.
   - Las tensiones iniciales, las condiciones y las cargas.
   - La malla de otro modelo, rechazada.
@@ -114,7 +116,9 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   - mover un vértice o cambiar un ajuste de malla deja la malla como de otro modelo, y se rechaza;
   - cambiar un material no la invalida;
   - el mismo modelo da la misma entrada del motor bit a bit.
-- [ ] T9. `model/ogr_file.py`: el `.ogrfem2d` — RF-13.
+
+  (Hecho el 2026-11-23, con la T7.)
+- [x] T9. `model/ogr_file.py`: el `.ogrfem2d` — RF-13.
   - Las secciones del plan, con la malla un nudo y un elemento por línea.
   - `format`, `format_version` y `written_by`.
   - La comprobación de la forma, sección a sección.
@@ -123,16 +127,20 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   - la ida y vuelta da el mismo modelo y los mismos bytes;
   - una versión posterior, una clave desconocida y un tipo erróneo dan su error, que los nombra;
   - `docs/modelo/formato.md` está completo.
-- [ ] T10. `model/fingerprint.py`: la huella del modelo y la del documento (D12) — RF-16.
+
+  (Hecho el 2026-11-23: 13 tests; 11 mutaciones, 11 cazadas tras dos comprobaciones más.)
+- [x] T10. `model/fingerprint.py`: la huella del modelo y la del documento (D12) — RF-16.
 
   *Hecho cuando:* la tabla de mutaciones pasa: cada dato que mueve el resultado, malla incluida,
   cambia la huella del modelo; el nombre, el color, el resumen y el sistema de unidades, no; la del
   documento cambia con todo.
-- [ ] T11. `model/history.py`: el documento y la orden «antes / después» sobre el `CommandStack` del
+  (Hecho el 2026-11-23: 8 tests. Precisión de D12: los ids se cambian por su lugar, changelog.)
+- [x] T11. `model/history.py`: el documento y la orden «antes / después» sobre el `CommandStack` del
   núcleo — RF-15.
 
   *Hecho cuando:* una secuencia de ediciones, deshecha entera y rehecha, da modelos idénticos (`==` y
   la misma huella), y deshacer sin nada que deshacer no hace nada.
+  (Hecho el 2026-11-23: 5 tests; 9 mutaciones de T10 y T11, 9 cazadas.)
 
 ## Abrir otros formatos
 

@@ -127,3 +127,46 @@ componentes; la puntual, en el nudo de su vértice.
   factor de cada fase; una carga sobre un contacto activo o sobre la pared antes de excavarla, error;
   la puntual, también en axisimetría (el anillo entero). 14 mutaciones: dos sobrevivían (leer al revés
   la cadena de un segmento y medir un arco por su cuerda) y llevaron a dos tests; al final, 14 de 14.
+
+## T7 y T8 — la traducción al mallador y al motor (2026-11-23)
+
+`model/translate.py`: el `MeshInput` canónico (la etiqueta de cada región es su índice, D3), la malla
+con la huella de su entrada, y el `EngineModel` con los materiales, las fases, las condiciones, las
+cargas y el estado inicial. La malla de otro modelo se rechaza (RF-11), y los errores del mallador y
+del motor vuelven con los nombres del modelo (RF-12).
+
+- **El túnel del caso 005 da exactamente el `MeshInput` escrito a mano** en `tests/_kirsch_mesh.py`
+  (el riesgo del plan no se dio).
+- 14 tests en `tests/test_model_translate_v009.py`. 11 mutaciones, 11 cazadas.
+
+## T9 — el archivo `.ogrfem2d` (2026-11-23)
+
+`model/ogr_file.py`: las secciones en su orden, todas las claves siempre, lo que depende de la fase
+como objeto con clave el id de la fase; escritura determinista (un nudo, un elemento y un vértice por
+línea); lectura estricta, todos los problemas a la vez.
+
+- 13 tests en `tests/test_model_file_v009.py`: la ida y vuelta da el mismo modelo y los mismos bytes,
+  en disco también, y la misma entrada del motor; la forma; nada se pierde en silencio (versión
+  posterior, otro formato, clave que falta o sobra, tipo erróneo, fases de otro modelo, texto que no es
+  JSON) y después las reglas del modelo. 11 mutaciones: dos sobrevivían (un `true` donde va un entero, y
+  los lados de un tramo de la malla en varias líneas) y llevaron a dos comprobaciones; al final, 11 de 11.
+
+## T10 — las huellas (2026-11-23)
+
+`model/fingerprint.py`: SHA-256 de un JSON canónico; la del modelo sin resumen, unidades mostradas,
+nombres, colores ni notas de la malla; la del documento, todo menos quién lo escribió.
+
+- **Precisión de D12 al escribir los tests: los ids tampoco cambian el resultado.** Con los ids en la
+  huella, renombrar una fase la movía sin que nada del cálculo cambiara. La huella del modelo nombra
+  los contornos, los materiales y las fases por su lugar (su orden sí es parte del modelo) y lo que
+  depende de la fase va en el orden de las fases.
+- 8 tests en `tests/test_model_fingerprint_v009.py`: 19 datos que mueven el resultado la mueven, 8 que
+  no, no (los ids renombrados en todas partes, entre ellos); la del documento cambia con todo; las dos
+  sobreviven al archivo; el texto canónico.
+
+## T11 — deshacer y rehacer (2026-11-23)
+
+`model/history.py`: un `Document` con el modelo actual y una orden «antes / después» sobre el
+`CommandStack` del núcleo, que solo pide `execute` y `undo` al objeto.
+
+- 5 tests en `tests/test_model_history_v009.py`. 9 mutaciones de T10 y T11, 9 cazadas.
