@@ -14,7 +14,9 @@ side:
   (the arc is the minor one: less than 180 degrees). That is the construction
   of the radial mesh of spec 001 (``engine/mesh_radial.py``), validated
   there: the isoparametric side then passes through three points of the
-  circle, and its distance from the chord at the middle is the sagitta.
+  circle, and its distance from the chord at the middle is the sagitta; the
+  area between the side, a parabola, and its chord is 2/3 chord x sagitta
+  (Archimedes), which the tests check.
 
 Node order of every element (Zienkiewicz and Taylor 2000, p. 182, fig.
 8.15(b), the order of ``engine/reference/element_t6.py``): the three corners

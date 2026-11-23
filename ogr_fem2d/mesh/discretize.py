@@ -21,7 +21,10 @@ How many divisions a segment gets:
   share (at least one), and the divisions left go to the largest fractions,
   ties to the segment met first (the largest remainder rule). Every other
   segment enters with its two end points only, and the refinement grades
-  from them (spec 003, plan, "Decisiones de diseño");
+  from them (spec 003, plan, "Decisiones de diseño"): by the local feature
+  size (Shewchuk 2002a, §3.2, p. 11), a grading that theorem 8 (p. 23)
+  guarantees only for B > sqrt(2); with the default B = sqrt(2) it is
+  measured, not guaranteed (RF-5);
 * uniform mesh (D5): the fewest divisions whose pieces are no longer than
   the size h, ceil(L / h); with an approximate number of elements N instead
   of h, h comes from the area of the equilateral triangle,

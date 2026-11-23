@@ -19,14 +19,14 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       y de `suite.toml` (OGR_Suite), que no se tocan desde aquí. (Hecho el 2026-11-22: 205 de 205
       en las dos corridas, sin fugas; dos mutaciones de los tests de la fijación, cazadas;
       `CHANGELOG_v0.0.7.md`.)
-- [ ] T2. **La petición a OGR-Core** (D2a) — un escrito en `Promts_desarrollo/` con lo de `plan.md`,
+- [x] T2. **La petición a OGR-Core** (D2a) — un escrito en `Promts_desarrollo/` con lo de `plan.md`,
       «Lo que se pide a OGR-Core»: entrada, algoritmo con sus fuentes y páginas, salida, medidas de
       calidad, determinismo, los tests que lo demostrarían y el hallazgo de `generate_mesh` como
       nota — Hecho cuando: el escrito está y la propietaria lo ha llevado a la sesión del núcleo.
       (Escrito el 2026-11-22: `Promts_desarrollo/2026_11_22_peticion_ogr_core_mallador_de_calidad.md`,
       que vale pegado tal cual, con el sondeo dentro y comprobado. La sesión del núcleo no puede leer
       `Promts_desarrollo` ni la bibliografía: los tres PDF hay que dárselos aparte. Falta que la
-      propietaria lo lleve.)
+      propietaria lo lleve.) (Llevado; el núcleo lo dio en su 0.2.5, fijada en la T14.)
 
 ## Lo que no espera al núcleo
 
@@ -77,19 +77,20 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       `boundary_nodes` al menos la suma de los mínimos — Hecho cuando: cada tramo de arco gira ≤ 60° y
       las dos reglas cazan su entrada mala. (Hecho el 2026-11-22: 6 tests en
       `test_mesh_arc_pieces_v008.py`; 8 mutaciones, 8 cazadas.)
-- [ ] T2b. **La petición de D14 al núcleo**: partir los tramos de arco por su punto medio durante el
+- [x] T2b. **La petición de D14 al núcleo**: partir los tramos de arco por su punto medio durante el
       refinamiento — Hecho cuando: el escrito está en `Promts_desarrollo/` y la propietaria lo ha
       llevado. (Escrito el 2026-11-22: `2026_11_22_peticion_ogr_core_contornos_curvos.md`; falta
-      llevarlo.)
+      llevarlo.) (Llevado; el núcleo lo dio en su 0.2.6, fijada en la T14b.)
 
 ## Con el generador del núcleo (`--dev-core` hasta que esté etiquetado)
 
-- [ ] T11. `sizing.py`: cotas uniforme (h o N), graduada (cota máxima opcional) y de ventanas y
+- [x] T11. `sizing.py`: cotas uniforme (h o N), graduada (cota máxima opcional) y de ventanas y
       polígonos — RF-5 a RF-7, D5, D9 — Hecho cuando: cada cota cumplida en la malla resultante y
       cada opción mueve la malla (regla 7). (2026-11-22, parte hecha: `sizing.py` y sus tests como
       función; falta comprobarla sobre la malla, con el núcleo.) (2026-11-23: comprobada sobre la
       malla del núcleo con `--dev-core`, en `test_mesh_refine_v008.py`, pendiente de la fijación;
-      las ventanas, con sus esquinas como nudos sueltos, decisión de la propietaria.)
+      las ventanas, con sus esquinas como nudos sueltos, decisión de la propietaria.) (Cerrada con la
+      T12: cada ajuste mueve la malla del mallador, `test_mesh_mesher_v008.py`.)
 - [x] T12. `mesher.py`: los dos pasos de principio a fin; los vértices añadidos sobre cuerdas llevados
       al arco (D13, sustituida por D14: el núcleo los pone ya sobre el arco; la red de seguridad (a),
       volver a mallar con el doble de divisiones en los arcos de elementos rechazados, con tope); las
@@ -122,14 +123,21 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
 
 ## El caso y el cierre
 
-- [ ] T15. Caso `005-kirsch-malla-general`: `esperado.json` con las tolerancias **antes de medir**
+- [x] T15. Caso `005-kirsch-malla-general`: `esperado.json` con las tolerancias **antes de medir**
       (malla a `null`), estudio con 16, 32, 64 y 128 divisiones del hueco, la malla que fija la
       tolerancia, y la identidad de Kirsch (hidrostática y p2 = p1/2) sobre la misma malla — D12 —
       Hecho cuando: el caso cumple el 0.5 % en σθ(a) y ur(a) con la malla del estudio.
       (2026-11-22, parte hecha: `caso.md` y `esperado.json` con las tolerancias antes de medir y la
-      malla a `null`; el caso, en `PENDING` de `test_validation_cases_v001.py`.)
-- [ ] T16. Rendimiento: tiempo de mallado del caso 005 y del mayor caso de la fase 1, medido con la
+      malla a `null`; el caso, en `PENDING` de `test_validation_cases_v001.py`.) (Hecha el
+      2026-11-23: el estudio de las divisiones del hueco no convergía; **decisión de la propietaria**,
+      una ventana alrededor del hueco; con la cota máxima, que el estudio mostró necesaria, la malla de
+      h = 0.1 m y cota 5 m cumple el caso y las dos identidades; el caso sale de `PENDING`.)
+- [x] T16. Rendimiento: tiempo de mallado del caso 005 y del mayor caso de la fase 1, medido con la
       máquina sola — Hecho cuando: anotado en el changelog, y si pide Rust, propuesto (no hecho).
-- [ ] T17. Cierre: cada fórmula de «Formulación» citada en el código; casos 001 a 004 bit a bit;
+      (Hecho el 2026-11-23: la malla del caso 005, 28 066 elementos, en 2.9 s; la de 108 403 en 16 s.
+      El mallado no pide Rust; lo que pesa es el motor de referencia, de la spec 002.)
+- [x] T17. Cierre: cada fórmula de «Formulación» citada en el código; casos 001 a 004 bit a bit;
       ficha STR-01 con su «Seguimiento»; changelog v0.0.8 completo — Hecho cuando: los criterios
-      de finalización de `spec.md`, todos marcados.
+      de finalización de `spec.md`, todos marcados. (Hecho el 2026-11-23: las dos citas que faltaban,
+      la graduación y Arquímedes, añadidas; el motor, `rust/` y los casos 001 a 004 sin un cambio desde
+      la v0.0.7; la ficha STR-01 con el caso 005.)

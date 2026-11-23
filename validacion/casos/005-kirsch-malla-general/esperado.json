@@ -23,7 +23,10 @@
     "material": {"ley": "elastica", "E": 10000.0, "nu": 0.2, "unidad": "MPa"},
     "tension_inicial": {"p0": 30.0, "unidad": "MPa", "convenio": "compresion positiva, hidrostatica en las tres direcciones"},
     "fase": {"escalones": 1, "excavacion": "la región del hueco desactivada"},
-    "malla": null
+    "malla": {"tipo": "graduada", "elemento": "T6", "B": 1.4142135623730951,
+              "nudos_hueco": 64, "cota_maxima": 5.0,
+              "ventana": {"semilado": 3.0, "h": 0.1},
+              "estudio": "h = 0.2, 0.1 y 0.05 m con cota máxima 50 h (changelog v0.0.8, T15)"}
   },
-  "notas": "Tolerancias de la spec 003, D12 (las de la spec 001, D3), escritas antes de medir, con la malla a null. La malla la fijará el estudio de 16, 32, 64 y 128 divisiones del hueco (regla 9), cuando exista el mallador de calidad pedido a OGR-Core (D2)."
+  "notas": "Tolerancias de la spec 003, D12 (las de la spec 001, D3), escritas antes de medir, con la malla a null. La malla la fijó el 2026-11-23 el estudio de la T15: la graduada sola, con las divisiones del hueco, no convergía al 0.5 %; la propietaria eligió una ventana alrededor del hueco, y el estudio, en su tamaño h con la cota máxima 50 h, dio la de h = 0.1 m, la primera que cumple en el caso y en las dos identidades."
 }

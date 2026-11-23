@@ -1,7 +1,10 @@
-# OGR FEM2D v0.0.8 (en curso)
+# OGR FEM2D v0.0.8
 
-**Fase 1, segunda parte: la malla** (spec 003). Este archivo cuenta lo que va entrando, tarea a
-tarea; se cierra con la T17.
+**Fase 1, segunda parte: la malla** (spec 003, cerrada el 2026-11-23). De una geometría de regiones
+con huecos y arcos a la entrada del motor: la discretización de los contornos, el refinado de
+Delaunay de calidad de OGR-Core (fijado en `v0.2.6`), el T6 con los nudos sobre los arcos, las
+comprobaciones, la malla radial y el caso 005, Kirsch con malla general dentro del 0.5 %. Este archivo
+cuenta lo que fue entrando, tarea a tarea.
 
 ## La spec, el plan y las tareas (2026-11-22)
 
@@ -516,6 +519,64 @@ el punto de un vacío: en un hueco circular sus casquetes están fuera de su pol
 y no se ha encontrado un hueco de los razonables donde cambie; la función es la misma de la semilla,
 que sí está probada. De la discretización, 2 de 2; de la calidad, 7 de 7.
 
+## T15 y T16 — el caso 005 y el tiempo de mallado (2026-11-23)
+
+**Hallazgo (regla 6, decidido por la propietaria): la malla graduada sola no converge al 0.5 %.** El
+estudio previsto en D12 variaba solo las divisiones del hueco (16 y 32 ya no caben con tramos de 10°,
+D15: se hizo con 36, 64, 128 y 256). Peores errores, en este PC con la máquina sola:
+
+| Nudos del hueco | Elementos | Caso σθ | Caso ur | Id. 30/30 σθ | Id. 30/30 ur | Id. 30/15 σθ | Id. 30/15 ur |
+|---|---|---|---|---|---|---|---|
+| 36 | 314 | −1.234 % | −0.863 % | −1.220 % | −0.841 % | 4.253 % | 7.565 % |
+| 64 | 494 | −0.906 % | −0.697 % | −0.892 % | −0.675 % | 3.775 % | 6.976 % |
+| 128 | 900 | −0.437 % | −0.560 % | −0.423 % | −0.538 % | 2.585 % | 5.781 % |
+| 256 | 1 722 | −0.382 % | −0.522 % | −0.368 % | −0.500 % | 3.193 % | 5.853 % |
+
+El error se para: los elementos de Ruppert crecen en proporción a la distancia al hueco, y las
+divisiones del hueco solo afinan junto a él. Para descartar un error de las fórmulas, la misma
+identidad en la malla radial (64 × 32, crecimiento 1.15) da 0.16 % / 0.008 % (hidrostática) y −0.52 % /
+0.11 % (anisótropa), y con 128 × 48 la mitad: las fórmulas y el montaje están bien. Una cota máxima
+sola tampoco basta (128 nudos, 5 m, 9 033 elementos: 1.44 % / 3.34 % en la anisótropa).
+
+**La propietaria eligió una ventana alrededor del hueco** (|x|, |y| ≤ 3 m). Con la ventana sola el
+error de ur en la anisótropa se paraba en el 0.77 % (h = 0.1 y 0.05); lo daban los elementos de decenas
+de metros junto al contorno exterior, que no siguen el término en cos 2θ (decae solo como 1/r). Con
+h = 0.1, la cota máxima de 20, 10 y 5 m lo baja a 0.70 %, 0.50 % y 0.24 %. El estudio final afina las
+dos a la vez (h y 50 h) y baja en cada paso en todas las columnas (`caso.md` tiene la tabla): **la
+malla del caso es la de h = 0.1 m y cota 5 m**, 28 066 elementos, la primera que cumple el 0.5 % en el
+caso (−0.086 % / −0.050 %) y en las dos identidades (0.084 % / −0.028 % y 0.344 % / 0.236 %). El
+efecto del contorno cuadrado a 100 m queda por debajo del 0.1 %. **No se ha aflojado la
+tolerancia.**
+
+- `tests/_kirsch_mesh.py`: el modelo del caso y sus comparaciones; `comprobaciones/estudio_005.py`
+  rehace los dos estudios (`--hole` el primero).
+- `test_validation_cases_v001.py`: `test_005_kirsch_with_the_general_mesh`, el caso y las dos
+  identidades con la malla de su `esperado.json`; `PENDING` queda vacío.
+- Enmiendas: D12 en la spec, la malla en `esperado.json` y en `caso.md`.
+
+**T16, el tiempo** (Windows, Python 3.14.10, la máquina sola): mallar el caso 005 lleva 2.9 s (28 066
+elementos); la malla de 108 403, 16 s; la del túnel de los tests, 0.03 s. Resolver una fase del caso con
+el motor de referencia, unos 20 s. **El mallado no pide Rust.**
+
+## T17 — el cierre (2026-11-23)
+
+- **Las fórmulas, citadas en el código**: cada fila de «Formulación» de `plan.md` tiene su fuente en el
+  módulo que la usa; faltaban la graduación por tamaño local de rasgo (§3.2 y teorema 8, en
+  `discretize.py`) y el área de Arquímedes (en `quadratic.py`), añadidas.
+- **Los casos 001 a 004, bit a bit**: `git diff 914bf0e HEAD` (la v0.0.7) sobre `ogr_fem2d/engine`,
+  `rust/` y sus casos sale vacío, y sus tests pasan.
+- **La ficha VER-STR-01** (`../Referencias/Ejemplos/Casos_por_problema/`), con el caso 005 en su
+  «Seguimiento» y el hallazgo de la graduada.
+- **Dientes del caso 005**: sin la cota máxima, lo esperado sin σ2 y el contorno de la identidad sin
+  su desplazamiento. Este último sobrevivía: a 100 m el contorno fijo y el exacto se diferencian en
+  menos que la tolerancia (es el hallazgo del contorno). Llevó a un test de la identidad en un cuadrado
+  de semilado 2.5 m, donde el contorno fijo se aparta un 20–30 % y el exacto deja los dos campos por
+  debajo del 1 %. Tres de tres cazadas.
+
+**Queda para la propietaria**: revisar la ampliación de la red de seguridad (T12, hallazgo 2; la
+mantuvo el 2026-11-23); pedir a la sesión de OGR-Core que la fila de FEM2D en su `docs/consumidores.md`
+pase a `v0.2.6`; el push.
+
 ## Pruebas
 
 | Corrida | Resultado |
@@ -535,3 +596,4 @@ que sí está probada. De la discretización, 2 de 2; de la calidad, 7 de 7.
 | D15, la misma | **308 de 308**, código 0, ninguna fuga |
 | T14b, contra la `v0.2.6` instalada (`shared: ogr_core 0.2.6 … (installed, no git tree)`) | **309 de 309** (D14 pendiente sustituido por dos), código 0, ninguna fuga |
 | T12, la misma | **338 de 338** (29 nuevos), código 0, ninguna fuga |
+| T15, T16 y T17, la misma | **340 de 340** (el caso 005 y la identidad de su contorno), código 0, ninguna fuga |

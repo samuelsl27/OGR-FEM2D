@@ -1,5 +1,6 @@
 # Spec 003 — Malla
 
+> **Cerrada (2026-11-23)**: criterios de finalización cumplidos (changelog v0.0.8, T17).
 > **Aprobada (2026-11-22)**, con D1–D13 tal como se propusieron y la enmienda de RF-5 (error
 > propio, visto al escribir el plan). Segunda spec de la fase 1 del plan de desarrollo
 > (`spec/constitution/plan_de_desarrollo.md`, «Spec 003 — Malla»). Solo el **qué** y el **porqué**;
@@ -184,14 +185,14 @@ compresión, excavación sin presión interior. Valores de control: σθ(a) = 60
 ## Criterios de finalización
 
 - [x] D1–D13 decididas por la propietaria y anotadas aquí (2026-11-22)
-- [ ] Cada fórmula y criterio comprobado contra su fuente (tabla «Formulación» de `plan.md`) y
+- [x] Cada fórmula y criterio comprobado contra su fuente (tabla «Formulación» de `plan.md`) y
       citado en el código
-- [ ] Caso 005 dentro de la tolerancia fijada antes de medir, con la malla y el estudio de
+- [x] Caso 005 dentro de la tolerancia fijada antes de medir, con la malla y el estudio de
       convergencia que la justifican
-- [ ] Las identidades de la tabla, en verde y con dientes
-- [ ] Los casos 001 a 004 dan lo mismo bit a bit
-- [ ] Lo que se pida a OGR-Core (D2), en una versión etiquetada y fijada aquí
-- [ ] Changelog con lo encontrado; ficha STR-01 con su «Seguimiento»
+- [x] Las identidades de la tabla, en verde y con dientes
+- [x] Los casos 001 a 004 dan lo mismo bit a bit
+- [x] Lo que se pida a OGR-Core (D2), en una versión etiquetada y fijada aquí
+- [x] Changelog con lo encontrado; ficha STR-01 con su «Seguimiento»
 
 ## Decisiones de la propietaria (2026-11-22)
 
@@ -211,7 +212,7 @@ concretaron al leer las fuentes para el plan (ver sus filas), y D13 salió del p
 | D9 | **La densificación por ventana o polígono** | Una cota de tamaño local (RF-7) y no la inserción de un nudo en el centroide de cada elemento | Shewchuk (2002b, §6.2, pág. 49): el refinamiento jerárquico no puede quitar un ángulo pequeño; la cota local la admite el refinado sin perder la terminación (Shewchuk 2002a, pág. 11) |
 | D10 | **Los dos pasos y la discretización personalizada** | La discretización es un resultado explícito (nudos por segmento), con número de divisiones forzable por segmento. El refinado conserva todos sus nudos, pero puede añadir más en un segmento invadido (§3.1), y lo dice | Sin partir segmentos, Ruppert no garantiza nada: prohibirlo dejaría elementos malos junto a los contornos. Guardar la discretización en el modelo es de la spec 004 |
 | D11 | **Determinismo** | Misma entrada, misma malla bit a bit (orden de inserción fijado, sin azar) | La huella del modelo (ADR-0003) y la regla 9: la malla que fija la tolerancia de un caso tiene que poder rehacerse |
-| D12 | **El caso 005 (STR-01 con malla general)** | Caso **nuevo**; el 001 no se toca. Contorno cuadrado de semilado 100 m, fijo; modelo completo, sin simetría; T6, malla graduada; **0.5 %** en σθ(a) y ur(a), como D3 de la spec 001, fijado antes de medir; malla fijada por estudio (16 a 128 divisiones del hueco); identidad con el desplazamiento exacto en el contorno, hidrostática y con p2 = p1/2 | Cambiar la malla de un caso es cambiar el caso (regla 9). Con 100 m el contorno circular apartaba la solución un 0.027 %; el cuadrado, sin solución cerrada, se mide con la identidad sobre la misma malla. El campo no hidrostático hace que la malla general no se beneficie de ninguna simetría |
+| D12 | **El caso 005 (STR-01 con malla general)**. *Enmienda (2026-11-23, decisión de la propietaria): la graduada sola no convergía con las divisiones del hueco; el caso lleva una ventana de 6 × 6 m alrededor del hueco y una cota máxima, y el estudio se hace en el tamaño h de la ventana con la cota 50 h (caso.md, T15)* | Caso **nuevo**; el 001 no se toca. Contorno cuadrado de semilado 100 m, fijo; modelo completo, sin simetría; T6, malla graduada; **0.5 %** en σθ(a) y ur(a), como D3 de la spec 001, fijado antes de medir; malla fijada por estudio (16 a 128 divisiones del hueco); identidad con el desplazamiento exacto en el contorno, hidrostática y con p2 = p1/2 | Cambiar la malla de un caso es cambiar el caso (regla 9). Con 100 m el contorno circular apartaba la solución un 0.027 %; el cuadrado, sin solución cerrada, se mide con la identidad sobre la misma malla. El campo no hidrostático hace que la malla general no se beneficie de ninguna simetría |
 | D13 | **Vértices que el refinado añade sobre las cuerdas de un arco** (salió al escribir el plan) | Después de mallar, se llevan al arco (radialmente desde el centro); se comprueba el jacobiano de los elementos afectados (RF-13) y el resultado dice cuántos se movieron (regla 12) | Un arco entra al refinado como cadena de cuerdas: el vértice nuevo caería sobre la cuerda y el T6 representaría mal el lado. Prohibir partir las cuerdas dejaría sin garantía de calidad los elementos junto al arco (D10) |
 
 ## Decisiones tomadas después de aprobar la spec

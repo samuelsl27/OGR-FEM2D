@@ -29,7 +29,16 @@ Invariants protected:
   rightly, does not satisfy;
 * **the cases are the shape the runner expects**: the conventions are the
   geotechnical ones of the sources (compression positive, u_r inward) and are
-  converted in tests/_hole.py, in one place.
+  converted in tests/_hole.py, in one place;
+* **case 005** (v0.0.8, spec 003, T15): the general mesh of spec 003 with
+  the parameters its esperado.json fixes, the case and its two identities,
+  sigma_theta at every integration point and u_r at every node on the hole,
+  each within the tolerance of the case (tests/_kirsch_mesh.py); and **the
+  identity is made by its boundary**: on a square of half-side 2.5 a (h =
+  0.2, not the case's mesh) the fixed boundary is 20 to 30 % from Kirsch and
+  the exact displacement imposed on it brings both fields within 1 % (at 100
+  m the two differ by less than the tolerance, so the case alone could not
+  tell).
 """
 from __future__ import annotations
 
@@ -46,10 +55,7 @@ from ogr_fem2d.engine.reference.elastic import Elastic
 CASES = Path(__file__).resolve().parents[1] / "validacion" / "casos"
 
 #: Cases written but not runnable yet, with the reason (tasks.md, T9).
-PENDING: dict[str, str] = {
-    "005-kirsch-malla-general": "spec 003, T15: its tolerances are written before measuring; its "
-                                "mesh waits for the quality refinement asked of OGR-Core (D2)",
-}
+PENDING: dict[str, str] = {}
 
 
 def _cases():
@@ -133,6 +139,54 @@ class TestValidationCases:
 
     def test_002_salencon_with_the_edge_zone(self):
         check_002(solver.REFERENCE)
+
+    def test_005_kirsch_with_the_general_mesh(self):
+        check_005()
+
+    def test_005_the_identity_is_made_by_its_boundary(self):
+        import _kirsch_mesh as km
+        from ogr_fem2d.mesh import mesher
+
+        mesh = mesher.mesh(km.geometry(0.2, None, 2.5))
+        model, out = km.run_case(mesh)
+        fixed = km.worst_errors(mesh, model, out, km.P0, km.P0)
+        assert abs(fixed["sigma_theta"]) > 0.1 and abs(fixed["u_r"]) > 0.1, fixed
+        for s2 in (30.0, 15.0):
+            model, out = km.run_identity(mesh, 30.0, s2)
+            worst = km.worst_errors(mesh, model, out, 30.0, s2)
+            assert abs(worst["sigma_theta"]) < 0.01 and abs(worst["u_r"]) < 0.01, (s2, worst)
+
+
+def check_005():
+    """Case 005 and its identities on the mesh its esperado.json fixes."""
+    import _kirsch_mesh as km
+    from ogr_fem2d.mesh import mesher
+
+    case = _cases()["005-kirsch-malla-general"]
+    model, spec = case["modelo"], case["modelo"]["malla"]
+    assert model["geometria"]["a"] == km.A and model["geometria"]["semilado_exterior"] == km.HALF
+    assert model["tension_inicial"]["p0"] == km.P0
+    assert (model["material"]["E"], model["material"]["nu"]) == (km.E, km.NU)
+    assert spec["ventana"]["semilado"] == km.WINDOW
+    geo = km.geometry(spec["ventana"]["h"], spec["cota_maxima"])
+    st = geo.settings
+    assert (st.nodes_per_element, st.boundary_nodes, st.quality_bound) == (
+        6, spec["nudos_hueco"], spec["B"])
+    mesh = mesher.mesh(geo)
+    tolerance = case["tolerancia_relativa"]
+    engine_model, outcome = km.run_case(mesh)
+    worst = km.worst_errors(mesh, engine_model, outcome, km.P0, km.P0)
+    for comparison in case["comparaciones"]:
+        # the values of the case are Kirsch's, which worst_errors computes
+        assert comparison["magnitud"] in ("sigma_theta", "u_r")
+        assert abs(worst[comparison["magnitud"]]) <= tolerance, (comparison["magnitud"], worst)
+    tolerance = case["identidad"]["tolerancia_relativa"]
+    for field in case["identidad"]["campos"]:
+        s1, s2 = field["sigma_1"], field["sigma_2"]
+        engine_model, outcome = km.run_identity(mesh, s1, s2)
+        worst = km.worst_errors(mesh, engine_model, outcome, s1, s2)
+        for key in ("sigma_theta", "u_r"):
+            assert abs(worst[key]) <= tolerance, (field, key, worst)
 
 
 def check_001(engine):
