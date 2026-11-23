@@ -144,7 +144,7 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
 ## Abrir otros formatos
 
-- [ ] T12. `model/import_slip2d.py`: un `.ogr` de Slip2D a modelo, por `Project.load` del núcleo
+- [x] T12. `model/import_slip2d.py`: un `.ogr` de Slip2D a modelo, por `Project.load` del núcleo
   fijado (D16) — RF-14.
   - Lo que se trae: el externo y los de material, las asignaciones, los materiales (nombre, color y
     γ, sin E ni ν), y las cargas repartidas y puntuales, con vértices insertados.
@@ -154,24 +154,30 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   *Hecho cuando:* sobre un `Project` creado en el test con la API del núcleo, las regiones y las
   áreas son las de `build_regions` a redondeo, el informe es completo y el modelo no se traduce al
   motor hasta tener E y ν.
-- [ ] T13. `model/import_dxf.py`: un DXF a contornos, con el lector del núcleo y el mapa de capas a
+  (Hecho el 2026-11-23: 9 tests; 8 mutaciones, 8 cazadas. Hallazgo anotado: el núcleo devuelve los
+  vértices de su subdivisión movidos ~10⁻⁹; se toman los dibujados.)
+- [x] T13. `model/import_dxf.py`: un DXF a contornos, con el lector del núcleo y el mapa de capas a
   los cuatro tipos (D13) — RF-14.
 
   *Hecho cuando:* un DXF escrito en el test con las cuatro capas y un arco da los contornos y el aviso
   del arco aplanado.
-- [ ] T13b. **La petición al núcleo**: que el lector DXF conserve los arcos (ARC, CIRCLE y bulge) como
+  (Hecho el 2026-11-23: 5 tests; 5 mutaciones, 5 cazadas.)
+- [x] T13b. **La petición al núcleo**: que el lector DXF conserve los arcos (ARC, CIRCLE y bulge) como
   arcos.
 
   *Hecho cuando:* el escrito está en `Promts_desarrollo/` y la propietaria sabe que no bloquea nada.
+  (Escrito el 2026-11-23: `Promts_desarrollo/2026_11_23_peticion_ogr_core_arcos_en_dxf.md`; falta
+  llevarlo.)
 
 ## Identidades y casos
 
-- [ ] T14. Las identidades de principio a fin.
+- [x] T14. Las identidades de principio a fin.
   - Unidades: tensiones ×1000 dan desplazamientos iguales y tensiones proporcionales.
   - Signos: una presión normal positiva sobre un contorno exterior y sobre uno de excavación, hacia el
     terreno.
 
   *Hecho cuando:* las dos están en verde y tienen dientes.
+  (Hecho el 2026-11-23: 4 tests; 4 mutaciones, 3 cazadas aquí y la cuarta en la T6.)
 - [ ] T15. **Caso 005 con `modelo.ogrfem2d`** (D4).
   - El modelo del caso, con su malla guardada.
   - Un test que comprueba cuatro cosas:

@@ -170,3 +170,39 @@ nombres, colores ni notas de la malla; la del documento, todo menos quién lo es
 `CommandStack` del núcleo, que solo pide `execute` y `undo` al objeto.
 
 - 5 tests en `tests/test_model_history_v009.py`. 9 mutaciones de T10 y T11, 9 cazadas.
+
+## T12 — abrir un `.ogr` de OGR Slip2D (2026-11-23)
+
+`model/import_slip2d.py`: las regiones que resuelve el núcleo (`Project.resolve_regions`, la
+subdivisión del propio Slip2D) convertidas en contornos que se tocan en vértices compartidos; los
+materiales sin E ni ν; las asignaciones; las cargas sobre el externo, con vértices insertados; las
+restricciones de la referencia (laterales y fondo fijos, superficie libre); y el informe.
+
+- **Hallazgo: la subdivisión del núcleo devuelve los vértices movidos en las últimas cifras** (40 sale
+  39.999999955, unas 10⁻⁹ veces el tamaño del modelo): el área de las regiones del núcleo es 400.0000036
+  donde la del dibujo es 400. Un vértice del núcleo a menos de 10⁻⁷ del tamaño del modelo de uno
+  dibujado se toma como el dibujado; los extremos de las cargas, igual. Las áreas del modelo son las del
+  dibujo, exactas, y las del núcleo coinciden a 10⁻⁸. No se pide nada al núcleo (es su forma de usar
+  shapely); queda anotado aquí.
+- 9 tests en `tests/test_model_slip2d_v009.py`, con un `Project` hecho en el test con la API del
+  núcleo fijado. 8 mutaciones, 8 cazadas.
+
+## T13 — abrir un DXF (2026-11-23)
+
+`model/import_dxf.py`: las polilíneas del lector del núcleo, por capa, a los cuatro tipos de
+contorno (los nombres del núcleo para el externo y el de material; los de este programa para
+excavación y fase); los arcos llegan aplanados y el informe dice cuántas entidades curvas había.
+
+- 5 tests en `tests/test_model_dxf_v009.py`, con un DXF escrito en el test con `ezdxf` (ya en el
+  entorno, por el núcleo). 5 mutaciones, 5 cazadas.
+- T13b: la petición al núcleo de que el lector conserve los arcos, escrita en
+  `Promts_desarrollo/2026_11_23_peticion_ogr_core_arcos_en_dxf.md`. No bloquea nada.
+
+## T14 — las identidades de principio a fin (2026-11-23)
+
+- 4 tests en `tests/test_model_identities_v009.py`: el mismo modelo con todo lo que es tensión ×1000
+  da los mismos desplazamientos y las tensiones ×1000 (franja, túnel con campo, y estratos con su peso
+  y una carga); una carga en faja hunde la superficie, la excavación con campo de compresión mete la
+  pared hacia dentro y una presión en ella la empuja hacia fuera; las unidades mostradas no cambian
+  nada. 4 mutaciones: 3 cazadas; la de la dirección vertical de una carga no la ven estos modelos (no
+  tienen carga vertical) y la caza la T6.
