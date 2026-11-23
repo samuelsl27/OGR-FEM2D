@@ -66,8 +66,6 @@ def insert_stage(m: md.Model, index: int, stage_id: str, name: str = "") -> md.M
     copying the stage before it, or the first one when it goes in front."""
     if not 0 <= index <= len(m.stages):
         raise IndexError(index)
-    if any(s.id == stage_id for s in m.stages):
-        raise md.ModelError([Problem("stage", f"stage {stage_id!r}", "the id is repeated")])
     source = index - 1 if index > 0 else 0
     out = _each_stage_table(m, lambda v: _insert(v, index, source))
     stages = m.stages[:index] + (md.Stage(stage_id, name),) + m.stages[index:]
