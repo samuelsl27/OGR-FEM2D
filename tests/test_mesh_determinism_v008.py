@@ -27,7 +27,13 @@ Invariants protected:
   radial mesh. It was recorded in Windows (2026-11-23) and the CI checks it in
   Linux and macOS. It is a fingerprint of reproducibility, not a validation:
   it says that the same input gives the same bits, not that they are right.
-  If it has to change, the changelog says why.
+  If it has to change, the changelog says why;
+* **the fingerprint of the mesher** (T12): the same, of the nodes, elements
+  and materials of ``mesher.mesh`` on the tunnel (six-node) and the cavity
+  (three-node), through the core's quality triangulation (OGR-Core 0.2.6,
+  which promises the same bits everywhere: exact predicates, new points
+  with + - * / and sqrt). Recorded in Windows (2026-11-23); the CI checks it
+  in Linux and macOS.
 """
 from __future__ import annotations
 
@@ -41,7 +47,7 @@ from pathlib import Path
 
 from ogr_fem2d.mesh import _trig
 from ogr_fem2d.mesh import discretize as d
-from ogr_fem2d.mesh import radial
+from ogr_fem2d.mesh import mesher, radial
 from test_mesh_input_v008 import CAVITY, DENT, TUNNEL
 
 _MESH = Path(__file__).resolve().parents[1] / "ogr_fem2d" / "mesh"
@@ -52,6 +58,9 @@ FORBIDDEN = {"sin", "cos", "tan", "asin", "acos", "atan", "atan2", "hypot", "dis
 #: day when the arcs went to pieces of 10 degrees (D15), which changes the
 #: discretizations (the first one, 0c87422a..., was of pieces of 60).
 FINGERPRINT = "4ff1ac051603f1f60d193dc119d2d7b0f999f4cb3d104b77337a9b20a56347e4"
+
+#: Recorded in Windows, Python 3.14.10, OGR-Core 0.2.6, on 2026-11-23.
+MESH_FINGERPRINT = "a673cd303037127bcc2182f8a9b75146d45bc82210d41bc4c94a397c03f0967d"
 
 
 class TestTheTrigonometry:
@@ -88,7 +97,7 @@ def _calls_of(path: Path):
 
 class TestNothingCallsTheSystemsLibrary:
     def test_the_modules_that_decide_the_mesh(self):
-        for name in ("_trig", "geometry", "discretize", "quadratic", "radial"):
+        for name in ("_trig", "geometry", "discretize", "quadratic", "radial", "sizing"):
             found = _calls_of(_MESH / f"{name}.py")
             assert found == [], (name, found)
 
@@ -111,6 +120,17 @@ def _fingerprint() -> str:
     return hashlib.sha256("\n".join(parts).encode()).hexdigest()
 
 
+def _mesh_fingerprint() -> str:
+    parts = []
+    for m in (TUNNEL, replace(CAVITY, settings=replace(CAVITY.settings, nodes_per_element=3))):
+        out = mesher.mesh(m)
+        parts += [repr(out.nodes), repr(out.elements), repr(out.element_material)]
+    return hashlib.sha256("\n".join(parts).encode()).hexdigest()
+
+
 class TestTheFingerprint:
     def test_the_same_bits_on_every_platform(self):
         assert _fingerprint() == FINGERPRINT
+
+    def test_the_mesher_gives_the_same_bits_on_every_platform(self):
+        assert _mesh_fingerprint() == MESH_FINGERPRINT

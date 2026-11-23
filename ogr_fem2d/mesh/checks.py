@@ -130,6 +130,12 @@ def element_problems(nodes: Sequence[Point], elements: Sequence[tuple[int, ...]]
     """RF-13: every element whose jacobian does not stay positive over the
     whole element (``minimum_det``), and, as the points the engine uses, at
     its nodes and integration points."""
+    return [p for _e, p in indexed_element_problems(nodes, elements, analysis)]
+
+
+def indexed_element_problems(nodes: Sequence[Point], elements: Sequence[tuple[int, ...]],
+                             analysis: str) -> list[tuple[int, Problem]]:
+    """``element_problems`` with the index of every element rejected."""
     out = []
     for e, element in enumerate(elements):
         xy = [nodes[i] for i in element]
@@ -144,11 +150,11 @@ def element_problems(nodes: Sequence[Point], elements: Sequence[tuple[int, ...]]
                                                   "its minimum", lowest)]
         for where, det in checked:
             if det <= floor:
-                out.append(Problem(
+                out.append((e, Problem(
                     "jacobian", f"element {e}, {where}",
                     f"det J = {det:.6g}: the map from the parent triangle is not one to one "
                     "(Zienkiewicz and Taylor 2000, §9.2); a mid-side node outside the middle "
-                    "half of its side, or an inverted or flat element"))
+                    "half of its side, or an inverted or flat element")))
                 break
     return out
 
@@ -244,11 +250,15 @@ class Report:
     warnings: tuple[str, ...]
 
 
-def check(nodes: Sequence[Point], elements: Sequence[tuple[int, ...]], analysis: str) -> Report:
+def check(nodes: Sequence[Point], elements: Sequence[tuple[int, ...]], analysis: str,
+          found: Sequence[tuple[int, Problem]] | None = None) -> Report:
     """RF-13 and RF-14: raises MeshError with every element that is not one
     to one, every side of three elements and every hanging node; returns the
-    topology and the warnings (pieces, pinches)."""
-    problems = element_problems(nodes, elements, analysis)
+    topology and the warnings (pieces, pinches). ``found``: the result of
+    ``indexed_element_problems`` for these elements, if the caller has it."""
+    if found is None:
+        found = indexed_element_problems(nodes, elements, analysis)
+    problems = [p for _e, p in found]
     topo = topology(nodes, elements)
     for key in topo.over_shared:
         problems.append(Problem("over_shared", f"side {key[0]}-{key[1]}",

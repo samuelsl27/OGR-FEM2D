@@ -16,6 +16,12 @@ Invariants protected:
   checked with plain geometry (the circle, the layer heights), with its
   material; a hole nobody fills gets a point inside it, one that a region
   fills does not;
+* **no seed and no window corner in a cap** (T12, with OGR-Core 0.2.6): in a
+  ring 1 <= r <= 1.005 the caps of the hole's pieces (sagitta 0.0038) fill
+  most of the ring's polygon of chords; the seed is out of every cap
+  (checked with plain geometry: its distance from the centre between 1 and
+  1.005 cos 5 deg) and the core accepts it; a window corner in a cap of the
+  hole is left out, one just beside it kept;
 * **D13**: on a mesh whose generator put nodes on the chords of a circle
   (the core's generator does), the vertices strictly inside a chord go
   radially onto the circle, the chord ends stay, the moved ones are named,
@@ -121,6 +127,69 @@ def _polygon_hole_mesh(n: int = 8, h: float = 0.1):
         on.sort(key=lambda i: math.dist(nodes[i], a))
         chains.append(on)
     return nodes, tris, chains
+
+
+def _thin_ring(t):
+    from test_mesh_mesher_v008 import _ring as ring
+    return ring(t)
+
+
+class TestNothingInACap:
+    def test_the_seed_of_a_thin_ring(self):
+        from ogr_core.fem import refine
+        m = _thin_ring(0.005)
+        disc = discretize.discretize(m)
+        p = pslg.build(m, disc)
+        (seed, _r, _mat), = p.seeds
+        # out of the hole's circle, and inside the outer chord of its piece
+        # of 10 degrees (the outer arc starts at angle 0)
+        r, phi = math.hypot(*seed), math.degrees(math.atan2(seed[1], seed[0])) % 360.0
+        bisector = math.radians(10.0 * math.floor(phi / 10.0) + 5.0)
+        assert r > 1.0, r
+        assert r * math.cos(math.radians(phi) - bisector) < 1.005 * math.cos(math.radians(5.0))
+        caps = pslg._caps(m, disc, (m.regions[0].outline, *m.regions[0].holes))
+        assert len(caps) == 72 and not any(pslg.in_cap(seed, c) for c in caps)
+        refine.quality_triangulation(p)                    # accepted
+        # the cap: strictly on the arc's side of the chord (the chord is the
+        # segment's), up to the arc, as in the core
+        a, b, c = caps[0]
+        mid = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+        k = math.dist(a, c) / math.dist(mid, c)
+        top = (c[0] + k * (mid[0] - c[0]), c[1] + k * (mid[1] - c[1]))
+        between = ((mid[0] + top[0]) / 2, (mid[1] + top[1]) / 2)
+        near_top = (mid[0] + 0.99 * (top[0] - mid[0]), mid[1] + 0.99 * (top[1] - mid[1]))
+        assert pslg.in_cap(between, caps[0]) and pslg.in_cap(near_top, caps[0])
+        assert not pslg.in_cap(mid, caps[0]) and not pslg.in_cap(a, caps[0])
+        beyond = (c[0] + 1.01 * k * (mid[0] - c[0]), c[1] + 1.01 * k * (mid[1] - c[1]))
+        assert not pslg.in_cap(beyond, caps[0])
+
+    def test_the_widest_interval_in_a_cap_is_passed_over(self):
+        # a 4 x 1 rectangle whose bottom side is the chord of a cap reaching
+        # y = 0.8 (centre (2, -2.1), radius 2.9): along y = 0.5 the cap takes
+        # 0.715 < x < 3.285, the widest stretch; the seed is beside it
+        pts = ((0.0, 0.0), (4.0, 0.0), (4.0, 1.0), (0.0, 1.0))
+        cap = ((0.0, 0.0), (4.0, 0.0), (2.0, -2.1))
+        x, y = pslg.interior_point([(0, 1, 2, 3)], pts, [cap])
+        assert y == 0.5 and not pslg.in_cap((x, y), cap)
+        assert abs(x - (2.0 - math.sqrt(2.9 ** 2 - 2.6 ** 2)) / 2.0) < 1e-12, x
+        assert pslg.interior_point([(0, 1, 2, 3)], pts) == (2.0, 0.5)    # no cap: the middle
+
+    def test_a_window_corner_in_a_cap_is_left_out(self):
+        m = _thin_ring(0.01)
+        disc = discretize.discretize(m)
+        # the middle of the first piece of the hole, at r = cos 5 deg: in its
+        # cap; the same point at r = 1.005, in the ring: kept
+        hole = next(ds for ds in disc.segments if ds.segment.excavation)
+        a, b = (disc.points[n] for n in hole.nodes[:2])
+        assert math.hypot(*a) == 1.0
+        mid = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+        k = 1.005 / math.hypot(*mid)
+        inside = (mid[0] * 1.0001, mid[1] * 1.0001)
+        ring = (mid[0] * k, mid[1] * k)
+        w = g.Window((inside, ring, (ring[0] + 0.3, ring[1] + 0.3)), 0.01)
+        m2 = replace(m, settings=replace(m.settings, windows=(w,)))
+        corners = pslg.window_corners(m2, disc, pslg.build(m, disc).segments)
+        assert corners == [ring], corners
 
 
 class TestD13:

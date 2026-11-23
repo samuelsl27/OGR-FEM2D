@@ -23,7 +23,10 @@ Invariants protected:
   from N elements is that of N equilateral triangles over the area;
 * **every option moves the nodes** (rule 7): boundary_nodes, a forced
   division, the size and the number of elements;
-* **the same input gives the same points** (D11).
+* **the same input gives the same points** (D11);
+* **more divisions on a segment** (T12, the mesher's safety net, D14 (a)): a
+  segment gets what is asked, at equal angles on its circle, the others are
+  untouched, and fewer than the settings give is refused.
 """
 from __future__ import annotations
 
@@ -207,3 +210,29 @@ class TestOnlyAValidInput:
             assert [p.rule for p in e.problems] == ["quality_bound"]
         else:
             raise AssertionError("not refused")
+
+
+class TestMoreDivisions:
+    def test_more_on_one_arc(self):
+        base = d.discretize(TUNNEL)
+        k = next(i for i, ds in enumerate(base.segments) if ds.segment.arc is not None)
+        more = d.discretize(TUNNEL, {k: 2 * base.segments[k].divisions})
+        assert more.segments[k].divisions == 2 * base.segments[k].divisions
+        for i, (x, y) in enumerate(zip(base.segments, more.segments)):
+            if i != k:
+                assert x.divisions == y.divisions
+        c = more.segments[k].segment.arc.centre
+        pts = [more.points[n] for n in more.segments[k].nodes]
+        for p in pts:
+            assert abs(math.dist(p, c) - 1.0) <= 4e-16
+        turns = [abs(math.atan2((p[0] - c[0]) * (q[1] - c[1]) - (p[1] - c[1]) * (q[0] - c[0]),
+                                (p[0] - c[0]) * (q[0] - c[0]) + (p[1] - c[1]) * (q[1] - c[1])))
+                 for p, q in zip(pts, pts[1:])]
+        assert max(turns) - min(turns) < 1e-12
+
+    def test_fewer_is_refused(self):
+        try:
+            d.discretize(TUNNEL, {4: 3})
+            raise AssertionError("taken")
+        except ValueError as err:
+            assert "fewer" in str(err)

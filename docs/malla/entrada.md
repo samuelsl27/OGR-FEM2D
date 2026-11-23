@@ -75,9 +75,36 @@ segmento a segmento en el orden de `segments(m)`: la misma entrada da los mismos
 ventanas no se miran aquí: son cotas del refinado. La h de una malla uniforme va con el resultado
 (`Discretization.size`, regla 12).
 
+## El paso 2: `mesher.mesh(entrada)`
+
+`ogr_fem2d/mesh/mesher.py` (RF-3, RF-11, RF-15), de principio a fin:
+
+1. el paso 1 (`discretize`), con los arcos en tramos de 10° como mucho;
+2. el grafo para el núcleo (`pslg.build`): los tramos, cada uno con la etiqueta de su segmento, y el
+   centro de cada arco; una semilla por región y un punto en cada vacío, **fuera de todo casquete**
+   (la zona entre un tramo de arco y su cuerda, que el núcleo no admite); las esquinas de las
+   ventanas que caen dentro, salvo las que caen en un casquete;
+3. el refinado de calidad del núcleo (`ogr_core.fem.refine.quality_triangulation`, OGR-Core 0.2.6),
+   con la B de los ajustes y la cota de tamaño de `sizing`; conserva todos los nudos del paso 1, puede
+   añadir más en un segmento (D10) y parte los tramos de arco **sobre el arco** (D14);
+4. con T6, los nudos intermedios (sobre el arco en los lados de un arco);
+5. las comprobaciones (RF-13, RF-14) y **la red de seguridad de D14 (a)**: si todos los elementos que
+   rechaza el jacobiano tienen un lado en un arco, o si el núcleo rechaza la entrada porque un tramo o
+   un vértice cae entre la cuerda de un tramo de arco y el arco (`refine.segment_in_arc`,
+   `refine.vertex_in_arc`: una capa más delgada que la flecha de un tramo, R(1 − cos 5°) = 0.0038 R),
+   se vuelve a mallar con el doble de divisiones en esos arcos y en los demás de su circunferencia,
+   hasta `MAX_ARC_RETRIES` = 3 veces; después, el error. Un elemento rechazado sin lado en un arco es
+   el error enseguida.
+
+Los errores: `MeshInputError` (la entrada), `refine.QualityMeshError` del núcleo (demasiados
+triángulos, `MAX_TRIANGLES` = 10⁶; lados demasiado cortos para la coma flotante) y `MeshError` (una
+malla que no se puede entregar). Nunca una malla mala en silencio.
+
 ## La salida: `Mesh`
 
-`ogr_fem2d/mesh/mesher.py` (RF-15).
+`ogr_fem2d/mesh/mesher.py` (RF-15). La numeración: las esquinas en el orden del núcleo, cuyos primeros
+nudos son los puntos del paso 1 en su orden (el punto i del paso 1 es el nudo i); después, los nudos
+intermedios.
 
 | Campo | Qué es |
 |---|---|
@@ -85,8 +112,27 @@ ventanas no se miran aquí: son cotas del refinado. La h de una malla uniforme v
 | `nodes`, `elements` | como en el motor: esquinas en sentido antihorario y, en el T6, los nudos intermedios de los lados 0-1, 1-2 y 2-0 |
 | `element_region`, `element_material` | la región de cada elemento y el índice de su material |
 | `boundaries` | `Boundary(name, nodes, sides, mids)`: para cada contorno («segment a-b», o el nombre que le dé el mallador), sus nudos de esquina en orden y, por tramo, los (elemento, lado) que lo tienen (uno en el contorno exterior, dos en un contacto) y su nudo intermedio con T6. El lado k va de la esquina k a la k + 1, como `EdgeLoad.side` |
-| `notes` | cada valor que decidió la malla (regla 12) |
+| `notes` | cada valor que decidió la malla (regla 12): abajo |
 | `warnings` | los avisos de las comprobaciones: piezas sin lados comunes, nudos que unen abanicos (RF-14) |
+
+Las notas de `mesher.mesh`:
+
+| Nota | Qué dice |
+|---|---|
+| `kind`, `nodes_per_element`, `quality_bound`, `boundary_nodes`, `max_size`, `size`, `elements_asked`, `windows` | los ajustes con que se hizo (los que no aplican, `None`); `size` es la h de la uniforme, dada o sacada de N |
+| `angle_guaranteed` | arcsin(1/2B), el ángulo que garantiza B (Shewchuk 2002a, pág. 5) |
+| `window_corners` | cuántas esquinas de ventanas entraron como vértices |
+| `max_arc_turn` | 10°, lo más que gira un tramo de arco (D15) |
+| `divisions` | las divisiones de cada segmento en el paso 1 |
+| `added_on_segments` | por segmento, los nudos que añadió el refinado y dónde (RF-3, D10) |
+| `min_input_angle`, `theorem_12_bound`, `above_ratio`, `declined_splits` | los ángulos pequeños de la entrada: el menor, la cota del teorema 12 y los triángulos que quedan por encima de B (D6) |
+| `length_unit` | la malla depende de la unidad de longitud (las capas son potencias de dos) |
+| `arc_pieces`, `arc_turn`, `arc_bound` | con arcos: cuántos tramos, cuánto gira el mayor y la cota del corolario 3 de Pav y Walkington (κ y B) |
+| `arc_termination_proven` | si la B pedida cumple esa cota (con tramos de 10°, B > 1.76): con √2, `False`; sin arcos, `None` (D15) |
+| `arc_unproven` | el mensaje del núcleo: con arcos, que este refinado termine no lo prueba ninguna fuente |
+| `arc_retries` | cada vuelta de la red de seguridad: el motivo, los elementos y las divisiones nuevas |
+| `max_triangles` | el tope de triángulos |
+| `quality` | el resumen de calidad (RF-12, D7; `quality.py`): de cada medida (ángulo mínimo y máximo, las dos de Shewchuk 2002b), el peor valor, la media y la distribución por intervalos; los elementos por encima de B, con su cociente; los invertidos. Sobre las esquinas: lo curvo lo juzga el jacobiano |
 
 `boundary_map(elementos, cadenas)` hace los `Boundary` y rechaza una cadena con un tramo que no es
 lado de la malla (RF-3). `to_engine(malla, materiales, fases, tensiones_iniciales)` da el
@@ -94,6 +140,9 @@ lado de la malla (RF-3). `to_engine(malla, materiales, fases, tensiones_iniciale
 quien llama (spec 004).
 
 ## La misma malla en todas las plataformas
+
+La huella de `mesher.mesh` (túnel en T6 y cavidad en T3) se comprueba en las tres plataformas en la
+CI, como la de la discretización.
 
 La misma entrada da la misma malla bit a bit también entre sistemas (RF-11, D11). Las coordenadas de
 los nudos de los arcos y de la malla radial, las longitudes y los ángulos que deciden cuántas

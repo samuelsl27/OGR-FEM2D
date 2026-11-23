@@ -67,6 +67,7 @@ Una función **nueva** en `ogr_core.fem`; `generate_mesh` no se toca y Slip2D si
 | `ogr_fem2d/mesh/checks.py` (nuevo) | jacobiano del T6, conformidad, Euler, conexión, regiones unidas por un nudo | RF-13, RF-14 |
 | `ogr_fem2d/mesh/radial.py` (nuevo) | malla radial del anillo completo (no es `engine/mesh_radial.py`, que se queda para los casos 001 y 002) | RF-8, D8 |
 | `ogr_fem2d/mesh/pslg.py` (nuevo; no estaba en el plan aprobado, se separó de `mesher.py` en la T12) | el PSLG que recibe el núcleo (vértices, piezas etiquetadas, semillas, vacíos) y D13 | RF-3, D13 |
+| `ogr_fem2d/mesh/quality.py` (nuevo; no estaba en el plan aprobado, se separó en la T12) | el resumen de calidad: por elemento, ángulos, cociente y las dos medidas de Shewchuk (2002b) del núcleo; de la malla, peor, media y distribución | RF-12, D7 |
 | `ogr_fem2d/mesh/mesher.py` (nuevo) | los dos pasos de principio a fin y la salida: nudos, elementos, material, mapa segmento → nudos y lados, notas | RF-3, RF-11, RF-15 |
 | `docs/malla/entrada.md` (nuevo) | la entrada y la salida documentadas, como `docs/motor/entrada.md` | RF-1, RF-15 |
 | `spec/features/003-malla/comprobaciones/soluciones_cerradas.py` (nuevo) | Kirsch con campo no hidrostático: el desplazamiento que causa la excavación | caso 005 |

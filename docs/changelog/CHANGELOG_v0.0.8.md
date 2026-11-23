@@ -466,6 +466,56 @@ piezas de arco sin su etiqueta en el PSLG de FEM2D. Cuatro de cuatro cazadas. El
 11.25° no lo caza este test (fija 9 divisiones por cuarto con `boundary_nodes`); lo caza
 `test_mesh_arc_pieces_v008.py`.
 
+## T12 — el mallador de dos pasos (2026-11-23)
+
+`mesher.mesh(entrada)` hace de principio a fin lo que dice la spec: paso 1, el grafo para el núcleo,
+su refinado de calidad (0.2.6, los arcos sobre el arco), el T6, las comprobaciones y la salida con el
+mapa de cada segmento y las notas (`docs/malla/entrada.md`, «El paso 2» y «La salida»). Medido en este
+PC: el túnel de los tests (40 nudos en el hueco) en 0.03 s, 278 elementos, ángulo mínimo 20.79°.
+
+- `quality.py` (nuevo, RF-12, D7): por elemento, los ángulos, el cociente circunradio / lado más corto y
+  las dos medidas de Shewchuk (2002b), las del núcleo; de la malla, peor, media, distribución y los
+  elementos por encima de B. **Encontrado**: el acos del triángulo equilátero da 60.00000000000001 y lo
+  sacaba del último intervalo; el menor ángulo se acota a 60° y el mayor a 60° por abajo (suman 180°).
+- `checks.indexed_element_problems`: los problemas del jacobiano con su elemento, para la red de
+  seguridad; `check()` los acepta ya calculados.
+- `discretize.discretize(m, more)`: más divisiones en un segmento (la red de seguridad); menos de las
+  que dan los ajustes se rechaza.
+- **La red de seguridad de D14 (a)**: si todos los elementos que rechaza el jacobiano tienen un lado en
+  un arco, se malla otra vez con el doble de divisiones en esos arcos **y en los demás de su
+  circunferencia** (el núcleo nombra el primer tramo que encuentra, y un círculo dividido igual guarda
+  su simetría), hasta tres veces; un elemento rechazado sin lado en un arco es el error enseguida.
+  **Ninguna malla de las probadas la dispara** por el jacobiano, ni con B = 1000 (ángulo mínimo
+  0.11°): con los vértices sobre el arco, la flecha de un tramo de 10° (0.022 veces su cuerda) no
+  llega a plegar un elemento. Se prueba forzando el rechazo a mano.
+
+**Hallazgos (regla 6), corregidos y para revisar:**
+
+1. **La semilla podía caer en un casquete** (la zona entre un tramo de arco y su cuerda). En un anillo
+   1 ≤ r ≤ 1.005 el núcleo la rechazó (`refine.seed_in_arc`): la semilla se buscaba en el polígono de
+   las cuerdas, y los casquetes de un hueco circular están dentro de él. Ahora se corta cada línea
+   también por las circunferencias de los casquetes y se elige el tramo más ancho que está dentro y
+   fuera de todo casquete, comprobado exacto como lo hace el núcleo (`pslg.in_cap`). Lo mismo para el
+   punto de un vacío y para las esquinas de las ventanas (una en un casquete se deja fuera).
+2. **Una geometría válida que el núcleo rechaza**: un anillo 1 ≤ r ≤ 1.003 (o cualquier capa más fina
+   que la flecha de un tramo de 10°, 0.0038 R) pasa la validación de FEM2D, porque sus arcos no se
+   tocan, pero las cuerdas de fuera entran en los casquetes de dentro (`refine.segment_in_arc`). **La
+   red de seguridad se extendió a ese rechazo**, con el mismo argumento de D14 (a) (la misma
+   discretización, más fina): con 18 divisiones por cuarto, 5° por tramo, se malla, y las notas lo
+   dicen. Es una ampliación de lo que decidió la propietaria en D14 (a), que hablaba solo del
+   jacobiano: **queda para que la revise**.
+
+**Dientes**: 31 mutaciones. Del mallador, 13 de 13 (la red sin reintentos, sin el resto del círculo,
+con el triple, para cualquier elemento, sin los códigos del núcleo; el T6 recto en los arcos; la cadena
+sin su primer tramo; material = región, que sobrevivía con los datos de los tests y llevó a probar con
+materiales que no son el índice de su región; la B y la cota de tamaño ignoradas; los añadidos sin
+listar; la terminación siempre probada; las comprobaciones saltadas). Del PSLG, 4 de 5: la semilla en
+un casquete y sin cortar por las circunferencias sobrevivían al principio y llevaron a un test directo
+(un rectángulo cuyo tramo más ancho está en un casquete); **sobrevive** quitar los casquetes al buscar
+el punto de un vacío: en un hueco circular sus casquetes están fuera de su polígono y no cambia nada,
+y no se ha encontrado un hueco de los razonables donde cambie; la función es la misma de la semilla,
+que sí está probada. De la discretización, 2 de 2; de la calidad, 7 de 7.
+
 ## Pruebas
 
 | Corrida | Resultado |
@@ -484,3 +534,4 @@ piezas de arco sin su etiqueta en el PSLG de FEM2D. Cuatro de cuatro cazadas. El
 | T14, contra la `v0.2.5` instalada (`shared: ogr_core 0.2.5 … (installed, no git tree)`) | **308 de 308** (uno menos: el test de la guarda pendiente ya no tiene sentido), código 0, ninguna fuga; los 9 de `test_mesh_refine_v008.py` corren |
 | D15, la misma | **308 de 308**, código 0, ninguna fuga |
 | T14b, contra la `v0.2.6` instalada (`shared: ogr_core 0.2.6 … (installed, no git tree)`) | **309 de 309** (D14 pendiente sustituido por dos), código 0, ninguna fuga |
+| T12, la misma | **338 de 338** (29 nuevos), código 0, ninguna fuga |

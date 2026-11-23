@@ -44,6 +44,7 @@ Author: Samuel Sáez López (UPCT)
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 from . import _trig
@@ -164,13 +165,21 @@ def _line_points(a: g.Point, b: g.Point, n: int) -> list[g.Point]:
             for k in range(1, n)]
 
 
-def discretize(m: g.MeshInput) -> Discretization:
+def discretize(m: g.MeshInput, more: Mapping[int, int] | None = None) -> Discretization:
     """Step 1 (spec 003, RF-2): validates the input and returns the nodes of
-    every segment."""
+    every segment. ``more`` maps the index of a segment (in the order of
+    ``geometry.segments``) to a larger number of divisions: the mesher's
+    safety net for arcs (D14 (a)) uses it; a number below what the settings
+    give is refused."""
     g.validate(m)
+    more = more or {}
     points = list(m.points)
     out = []
-    for s, n in divisions(m):
+    for k, (s, n) in enumerate(divisions(m)):
+        if k in more:
+            if more[k] < n:
+                raise ValueError(f"segment {s.a}-{s.b}: {more[k]} divisions, fewer than {n}")
+            n = more[k]
         a, b = m.points[s.a], m.points[s.b]
         inner = (_line_points(a, b, n) if s.arc is None
                  else _arc_points(a, b, s.arc.centre, n))

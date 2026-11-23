@@ -90,7 +90,7 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       función; falta comprobarla sobre la malla, con el núcleo.) (2026-11-23: comprobada sobre la
       malla del núcleo con `--dev-core`, en `test_mesh_refine_v008.py`, pendiente de la fijación;
       las ventanas, con sus esquinas como nudos sueltos, decisión de la propietaria.)
-- [ ] T12. `mesher.py`: los dos pasos de principio a fin; los vértices añadidos sobre cuerdas llevados
+- [x] T12. `mesher.py`: los dos pasos de principio a fin; los vértices añadidos sobre cuerdas llevados
       al arco (D13, sustituida por D14: el núcleo los pone ya sobre el arco; la red de seguridad (a),
       volver a mallar con el doble de divisiones en los arcos de elementos rechazados, con tope); las
       notas con cada valor por defecto (regla 12), y con arcos si la terminación estaba probada
@@ -98,7 +98,13 @@ propietaria lo pida). Cada test con su cabecera y con dientes: mutaciones sistem
       RF-15 — Hecho cuando: cada segmento es unión de lados, D13 comprobado con el jacobiano, y dos
       mallados iguales bit a bit. (2026-11-22, parte hecha: `pslg.py`, el PSLG para el núcleo con
       semillas y vacíos, y la proyección de D13. **Hallazgo: D13 puede invertir elementos; D14
-      abierta en la spec.** Falta el mallador de dos pasos, con el núcleo.)
+      abierta en la spec.** Falta el mallador de dos pasos, con el núcleo.) (Hecha el 2026-11-23
+      con la 0.2.6: `mesher.mesh`, `quality.py`, la red de seguridad; 17 tests en
+      `test_mesh_mesher_v008.py`, 6 en `test_mesh_quality_v008.py`, 4 más en el PSLG y 2 en la
+      discretización, y la huella del mallador; 31 mutaciones, 30 cazadas, la que sobrevive anotada en
+      el changelog. **Dos hallazgos corregidos, para revisar**: la semilla podía caer en un casquete, y
+      una capa más fina que la flecha de un tramo hacía que el núcleo rechazara una geometría válida:
+      la red de seguridad se extendió a ese rechazo.)
 - [x] T13. Las garantías vistas desde FEM2D y el resumen de calidad: cota B (teorema 4), cota de
       tamaño, Delaunay final, teorema 8 con B = 1/(2 sen 15°), teorema 12 y terminación con un ángulo de
       entrada de 5°; medidas de calidad (1, 0, < 0, invariantes) — RF-4, RF-9, RF-12 — Hecho cuando:
