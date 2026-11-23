@@ -22,6 +22,76 @@
   línea de órdenes, servidor MCP, resultados en `.h5`, casos con `modelo.ogr`. El motor solo resuelve
   el cuarto de corona de la spec 001.
 
+## Borradores de las specs (2026-11-23)
+
+Con el OK de la propietaria del 2026-11-23, cada spec pendiente tiene ya un **borrador de alcance**
+en `spec/features/NNN-nombre/spec.md`: solo el qué y el porqué, sin fórmulas ni decisiones tomadas,
+con los casos que la cerrarían, las fuentes por conseguir y las dudas abiertas. **Ninguno está
+aprobado.** Cada uno empieza por «Antes de abrirla: reevaluar esta spec»: al abrirla se contrasta
+con el código, con OGR Slip2D y con el núcleo de ese momento, se leen sus fuentes, las dudas pasan a
+decisiones con el OK de la propietaria y solo entonces se escriben `plan.md` y `tasks.md`. La
+numeración 004–019 es la de este plan; desde la 020 son specs nuevas.
+
+| Spec | Carpeta | Fase | Nota |
+|---|---|---|---|
+| 004 | `004-modelo-y-proyecto` | 1 | |
+| 005 | `005-resultados` | 1 | |
+| 006 | `006-interfaz-y-calculo` | 1 | El borrador propone partirla en cuatro (operaciones y transporte, P1, modelador, cálculo e interpretación) |
+| 007 | `007-convergencia-y-colapso` | 2 | |
+| 008 | `008-leyes-plasticas` | 2 | Con el contrato común de ley constitutiva y el del modelo de usuario |
+| 009 | `009-reduccion-de-resistencia` | 2 | Con el área de búsqueda y exclusión y la curva del SRF |
+| 010 | `010-presiones-hidrostaticas` | 2 | Con el peso sobre y bajo el nivel freático |
+| 011 | `011-rendimiento-bucle-global` | 2 | |
+| 012 | `012-fases-de-construccion` | 3 | |
+| 013 | `013-revestimientos` | 3 | |
+| 014 | `014-bulones` | 3 | Con clavos y puntales |
+| 015 | `015-juntas` | 3 | Con STR-06, que es una junta discreta |
+| 016 | `016-interfaz-estructural-y-contornos-infinitos` | 3 | Con pilotes |
+| 017 | `017-flujo-estacionario` | 4 | |
+| 018 | `018-flujo-no-saturado-y-transitorio` | 4 | Con la tensión efectiva no saturada |
+| 019 | `019-no-drenado-y-consolidacion` | 4 | |
+| **020** | `020-complementos-ssr` | 2 | **Nueva**: grieta de tracción, sismo pseudoestático, criterio de potencia, propiedades variables con la profundidad |
+| **021** | `021-cuadrilateros-y-malla-mapeada` | — | **Nueva** (P2): solo se abre si un caso lo exige |
+| **022** | `022-elasticidad-anisotropa-y-no-lineal` | 5 | Elasticidad anisótropa y Duncan-Chang; ensayos de laboratorio de un elemento |
+| **023** | `023-cam-clay` | 5 | |
+| **024** | `024-endurecimiento-y-ablandamiento` | 5 | Con los subcasos de CNS-01 |
+| **025** | `025-roca-diaclasada` | 5 | Ningún caso la cierra |
+| **026** | `026-hardening-soil-y-suelos-blandos` | 5 | Los modelos sin publicación original no entran |
+| **027** | `027-probabilistico` | 6 | |
+| **028** | `028-dinamico` | 7 | El borrador propone partirla en tres |
+| **029** | `029-termico-conduccion` | 7 | |
+| **030** | `030-termico-acoplado` | 7 | |
+| **031** | `031-xfem` | 7 | |
+| **032** | `032-distribucion-y-ayuda` | transversal | Instalador, ayuda, tutoriales y páginas de los casos |
+
+Las diferencias finitas y los elementos discretos («Después del FEM») no tienen borrador.
+
+**Hallazgos al redactar los borradores que mueven este plan** (regla 6: se anotan aquí y en el
+borrador correspondiente; se deciden al abrir la spec):
+
+- La **tensión gravitatoria con la superficie real del terreno** la piden 118 casos de SSR y no
+  tenía sitio: la spec 002 (D3) la mandó a la 004, que no tiene fuente para ella (004, duda 14; 009).
+- Los **geosintéticos** (010) necesitan un elemento de tracción y su interfaz, de la fase 3: sin
+  ellos la fase 2 desbloquea unos 34 casos, no 41 (P3).
+- **SLP-01 y SLP-12** solo tienen un factor de seguridad de equilibrio límite como referencia:
+  serían comparaciones. Las referencias analíticas del SSR son SLP-20, -21, -86 y -87 (009).
+- La rejilla de presiones del núcleo tiene dos interpoladores, no siete (010).
+- Los **escalones automáticos** (007) se apoyan en una regla del catálogo teórico que no tiene
+  fuente.
+- **STR-06** es una junta discreta (015), no roca diaclasada; la 025 se queda sin caso.
+- Ningún caso necesita los **elementos infinitos** para validarse; los **esfuerzos de soporte**
+  hacen falta en la 013–015, no solo en la 016; la 012 trae la instalación de soportes que llegan
+  después.
+- Las **cargas función del tiempo** (`C-TIEMPO`) hacen falta en la 019 (CON-01, -04, -05, -06), no
+  solo en el dinámico.
+- El caudal impuesto estacionario es de la 017 (GW-15); la superficie libre del núcleo necesita la
+  permeabilidad no saturada, así que GW-04 y GW-16 dependen de la 018.
+- Sin spec: drenes, licuefacción (DYN-18) y amortiguamiento histerético (DYN-12).
+- **Faltan en `Referencias/Bibliografia` casi todas las fuentes de las fases 2 a 7**: solo sirven
+  ya de Souza Neto, Perić y Owen (2008), Zienkiewicz y Taylor (2000) y Jaeger, Cook y Zimmerman
+  (2007) en partes concretas. Cada borrador dice cuáles faltan; ninguna del agua, del dinámico, del
+  probabilístico ni de XFEM está.
+
 ## Decisiones previas a la fase 1
 
 **Tomadas por el propietario el 2026-10-27: las cuatro propuestas.** P1, opción (b): la parte
