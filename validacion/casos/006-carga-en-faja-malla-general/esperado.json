@@ -1,0 +1,27 @@
+{
+  "id": "006-carga-en-faja-malla-general",
+  "ficha": "VER-STR-04",
+  "fuente": "J. H. Michell (1902), en Timoshenko y Goodier (1951), Theory of Elasticity, 2.ª ed., §34, ec. (f), págs. 92-95 (la del caso 004)",
+  "tipo_referencia": "analitica",
+  "tolerancia_absoluta": 0.01,
+  "tolerancia_unidad": "q",
+  "comparaciones": [
+    {"magnitud": "sigma_1", "donde": {"tipo": "puntos_de_integracion", "x_max": 0.25, "z_min": 0.25, "z_max": 5.0},
+     "valor": "q/pi (alpha + sin alpha) en el (x, z) de cada punto", "unidad": "MPa", "convenio": "compresion positiva",
+     "como": "el mayor error absoluto, relativo a q, de todos los puntos de integración con x <= 0.25 m y 0.25 <= z <= 5 m, cada uno contra Michell en su posición"},
+    {"magnitud": "sigma_3", "donde": {"tipo": "puntos_de_integracion", "x_max": 0.25, "z_min": 0.25, "z_max": 5.0},
+     "valor": "q/pi (alpha - sin alpha) en el (x, z) de cada punto", "unidad": "MPa", "convenio": "compresion positiva",
+     "como": "lo mismo para sigma_3"}
+  ],
+  "modelo": {
+    "archivo": "modelo.ogrfem2d",
+    "analisis": "deformacion_plana",
+    "geometria": {"b": 1.0, "W": 200.0, "D": 200.0, "unidad": "m",
+                  "seccion": "medio dominio por simetría, 0 <= x <= W, -D <= y <= 0, con un vértice en (b, 0)"},
+    "material": {"ley": "elastica", "E": 20000.0, "nu": 0.2, "unidad": "MPa"},
+    "carga": {"q": 1.0, "unidad": "MPa", "donde": "carga repartida normal sobre el tramo (b, 0) -> (0, 0) del contorno externo"},
+    "contorno": "tramo x = 0: restricción en x; tramo x = W: restricción en x; superficie: libre; fondo: el defecto del externo, fijo en x e y",
+    "malla": null
+  },
+  "notas": "El caso 004 con la malla general de la spec 003 y por el modelo de la spec 004 (D4): carga y condiciones sobre la geometría. Tolerancia, dominio y zona de comparación del caso 004 (spec 002, D4), escritos antes de medir, con la malla a null. La primera columna de elementos del caso 004 no existe en una malla general: se comparan los puntos con x <= 0.25 m (dos veces el tamaño de elemento del caso 004 junto al eje). El efecto del dominio de 200 m, medido en el caso 004: 0.0045 q en sigma_3."
+}

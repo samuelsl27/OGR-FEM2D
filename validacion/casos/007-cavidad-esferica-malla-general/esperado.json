@@ -1,0 +1,28 @@
+{
+  "id": "007-cavidad-esferica-malla-general",
+  "ficha": "VER-STR-09",
+  "fuente": "Lamé (1852), en Timoshenko y Goodier (1951), Theory of Elasticity, 2.ª ed., §121, ecs. (197)-(198), págs. 358-359; u_R por la ley de Hooke (§6) (la del caso 003)",
+  "tipo_referencia": "analitica",
+  "tolerancia_relativa": 0.005,
+  "comparaciones": [
+    {"magnitud": "sigma_t", "donde": {"tipo": "puntos_de_integracion", "elementos": "los activos con un lado sobre la cavidad"},
+     "valor": "P0 (1 + a^3 / (2 R^3)) en el radio R de cada punto; 15.0 MPa en R = a",
+     "unidad": "MPa", "convenio": "compresion positiva",
+     "como": "el mayor error relativo de todos los puntos de integración de los elementos activos con un lado sobre la cavidad, cada uno contra la solución en su radio; las dos tensiones tangenciales, la meridiana y la circunferencial"},
+    {"magnitud": "u_R", "donde": {"tipo": "nudos", "R": 1.0},
+     "valor": 0.0003, "unidad": "m", "convenio": "hacia el centro positivo",
+     "como": "el mayor error de todos los nudos sobre R = a, esquinas e intermedios"}
+  ],
+  "modelo": {
+    "archivo": "modelo.ogrfem2d",
+    "analisis": "axisimetria",
+    "geometria": {"a": 1.0, "b": 21.0, "unidad": "m",
+                  "seccion": "cuarto de corona en el plano meridiano, x = r >= 0, y = z >= 0, con la cavidad (el cuarto de disco de radio a) como región excavada"},
+    "material": {"ley": "elastica", "E": 20000.0, "nu": 0.2, "unidad": "MPa"},
+    "tension_inicial": {"p0": 10.0, "unidad": "MPa", "convenio": "compresion positiva, hidrostatica en las tres direcciones"},
+    "contorno": "y = 0: restricción en y (simetría); eje x = 0: libre (el motor sujeta u_r = 0); esfera exterior: el defecto del externo, fija en x e y",
+    "fase": "una, la excavación de la cavidad",
+    "malla": null
+  },
+  "notas": "El caso 003 con la malla general de la spec 003 y por el modelo de la spec 004 (D4): arcos, axisimetría, condiciones por tramo y excavación por fase. Tolerancia de la spec 002, D4 (la del caso 003), escrita antes de medir, con la malla a null. El primer anillo de elementos del caso 003 no existe en una malla general: se comparan los puntos de los elementos activos que tienen un lado sobre la cavidad. Con el exterior fijo a 21 m la solución exacta del modelo se aparta de la de medio infinito un 0.022 % en u_R(a) y un 0.011 % en sigma_t(a) (caso 003)."
+}
