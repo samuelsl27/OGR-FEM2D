@@ -47,6 +47,7 @@ Author: Samuel Sáez López (UPCT)
 """
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -215,6 +216,16 @@ def run(m: EngineModel, variant: interface.Variant = solver.REFERENCE) -> list[S
     """Every stage of ``m``, in order. The input is validated first
     (model.InputError with every problem); then each stage is solved, on its
     active elements, from the end of the previous one."""
+    return list(stages(m, variant))
+
+
+def stages(m: EngineModel, variant: interface.Variant = solver.REFERENCE
+           ) -> Iterator[StageOutcome]:
+    """The stages of ``run``, one at a time, as each is solved (spec 005,
+    D7): the caller keeps the stages already solved when a later one fails
+    (its error comes out of the generator after them) or when it stops
+    asking. The same code as ``run``, which is this list: the numbers are
+    the same, bit for bit."""
     validate(m)
     _not_yet(m)
     laws = [m.materials[k].law for k in m.element_material]
@@ -223,7 +234,6 @@ def run(m: EngineModel, variant: interface.Variant = solver.REFERENCE) -> list[S
     stresses: list[Stress | None] = (list(m.initial_stresses) if m.initial_stresses is not None
                                      else [(0.0, 0.0, 0.0, 0.0)] * m.n_points)
     displacement = np.zeros(2 * len(m.nodes))
-    outcomes = []
     for i, stage in enumerate(m.stages):
         # the stage's system: its active elements and their nodes, renumbered
         active = [e for e in range(len(m.elements)) if stage.active[e]]
@@ -262,11 +272,12 @@ def run(m: EngineModel, variant: interface.Variant = solver.REFERENCE) -> list[S
             reactions = {d: f_int[d] - load[d] for d in sorted(constrained)}
             stresses = [stresses[g] if stage.active[g // per_element] else None
                         for g in range(m.n_points)]
-            outcomes.append(StageOutcome(
+            outcome = StageOutcome(
                 [float(u) for u in displacement], list(stresses), _reactions(reactions, used),
                 [False] * m.n_points, tuple(sorted(axis & set(used))), False,
                 steps=stage.steps, tolerance=stage.tolerance,
-                active=tuple(stage.active), removed_nodes=removed))
+                active=tuple(stage.active), removed_nodes=removed)
+            yield outcome
             continue
         displacement[dofs] += np.array(result.displacement)
         new: list[Stress | None] = [None] * m.n_points
@@ -274,9 +285,9 @@ def run(m: EngineModel, variant: interface.Variant = solver.REFERENCE) -> list[S
         for g, s, yielded in zip(points, result.stresses, result.plastic):
             new[g], plastic[g] = s, yielded
         stresses = new
-        outcomes.append(StageOutcome(
+        outcome = StageOutcome(
             [float(u) for u in displacement], list(stresses),
             _reactions(result.reactions, used), plastic, tuple(sorted(axis & set(used))),
             True, result.history, result.steps, result.tolerance, result.cuts,
-            tuple(stage.active), removed))
-    return outcomes
+            tuple(stage.active), removed)
+        yield outcome

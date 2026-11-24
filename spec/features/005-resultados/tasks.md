@@ -43,12 +43,16 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   *Hecho cuando:* la prueba de la parcela (desplazamiento lineal impuesto) da la deformación exacta
   en todos los puntos con T3 y T6, en deformación plana y en axisimetría, y γmax tiene su factor 2.
   (Hecho el 2026-11-24: 7 tests; 7 mutaciones, 7 cazadas.)
-- [ ] T3. `engine/analysis.py`: `stages()`, el generador de fases (D7).
+- [x] T3. `engine/analysis.py`: `stages()`, el generador de fases (D7).
 
   *Hecho cuando:*
   - `run` y `list(stages())` dan lo mismo bit a bit en los casos 001 a 007;
   - una fase que falla entrega antes las anteriores y después lanza su error;
   - los tests del motor siguen sin un cambio.
+
+  (Hecho el 2026-11-24: los casos 003 a 007 y un túnel de tres fases dan la misma huella de todos
+  sus campos antes y después; los 001 y 002 no pasan por `analysis`. 3 tests; 4 mutaciones, 4
+  cazadas.)
 
 ## El `.h5`
 

@@ -64,3 +64,17 @@ signo del motor (alargamiento positivo); el del usuario lo pone `conventions.py`
   `IntegrationPoint.strain` del motor punto a punto; los inactivos sin deformación; γmax es la
   ingenieril (un corte puro γ da γmax = γ). 7 mutaciones, 7 cazadas tras completar un test (εv sin
   εθ sobrevivía en deformación plana, donde εz = 0).
+
+## T3 — el motor fase a fase (2026-11-24)
+
+`engine/analysis.py`: `stages(m, variant)`, el cuerpo de `run` con `yield` en lugar de acumular, y
+`run` = `list(stages(...))`. Una fase que falla lanza su error después de haber entregado las
+anteriores (D7). `docs/motor/entrada.md` lo dice.
+
+- **Bit a bit**: una huella (SHA-256 del `repr` de desplazamientos, tensiones, reacciones, plástico,
+  eje, `solved`, historia, ajustes, activos y retirados) de los casos 003 a 007 y de un túnel de tres
+  fases, antes y después del cambio, idéntica en los seis. Los casos 001 y 002 llaman a
+  `solver.solve_stage` directamente y no pasan por aquí.
+- `tests/test_analysis_stages_v0011.py`, 3 tests: `run` es la lista de las fases; una fase sin
+  restricciones suficientes deja entregada la anterior y lanza su error con su índice; la entrada se
+  comprueba antes de la primera fase. 4 mutaciones, 4 cazadas.

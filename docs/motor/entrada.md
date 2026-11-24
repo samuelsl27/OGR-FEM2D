@@ -92,7 +92,9 @@ kN/m³), y la conversión desde las unidades del usuario se hace en un solo siti
 `analysis.run` (`ogr_fem2d/engine/analysis.py`) valida la entrada y resuelve las fases en orden.
 Por fase devuelve los desplazamientos y las tensiones **totales**, las **reacciones** por nudo
 (R = f_int − f_ext en cada componente restringida o impuesta), la historia de convergencia y los
-ajustes que cambian el resultado. Además:
+ajustes que cambian el resultado. `analysis.stages` es lo mismo fase a fase (un generador, spec
+005, D7): quien lo recorre se queda con las fases resueltas aunque una posterior falle, cuyo error sale
+después de ellas; `run` es su lista. Además:
 
 - en axisimetría sujeta u_r = 0 en todos los nudos con x = 0 aunque no se pida, y devuelve la
   lista (`axis_held`; spec 002, D1 bis);
