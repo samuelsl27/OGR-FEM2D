@@ -1,8 +1,9 @@
 # Plan de implementación — Spec 006, interfaz, operaciones y cálculo
 
 > **Aprobado (2026-11-24)**, con D1–D18 de `spec.md`. Ninguna fórmula nueva: lo numérico es la
-> vía completa dando los números de la 005. Las partes C y D se precisan (archivos y nombres) cuando
-> estén etiquetadas las piezas comunes de D1: hasta entonces, su lista de archivos es la prevista.
+> vía completa dando los números de la 005. Las partes C y D, precisadas en la T19 sobre `ogr-gui`
+> v0.1.0 y `ogr-core` v0.2.9. La parte C va en la rama corta `dev/modelador` (toca la CI), elegida por
+> la propietaria el 2026-11-24.
 
 ## Enfoque
 
@@ -76,29 +77,45 @@ se propone una rama corta `dev/…`, que elige la propietaria (`AGENTS.md`).
 | `ogr_fem2d/mcp/server.py`, `mcp/__main__.py` (nuevos) | una herramienta por operación, generada del catálogo | RF-6 |
 | `docs/operaciones/catalogo.md` (nuevo) | cada operación, sus argumentos y sus errores | RF-6, RF-7 |
 
-**Parte C (v0.0.14)**, prevista
+**Parte C (v0.0.14)**, precisada en la T19 sobre `ogr-gui` v0.1.0 (paquete `ogr_ui`)
 
-| Archivo | Qué es | RF |
-|---|---|---|
-| `pyproject.toml` | `ogr-gui` fijado; PySide6, qtawesome, matplotlib (D14) | — |
-| `ogr_fem2d/__main__.py`, `gui/app.py` | arrancar la interfaz | — |
-| `ogr_fem2d/gui/main_window.py`, `gui/actions.py`, `gui/menus.py` | la ventana, el registro de acciones y los menús en su orden; los de fases futuras (D4) | RF-13 |
-| `ogr_fem2d/gui/i18n/` | el diccionario por áreas (D3) | RF-21 |
-| `ogr_fem2d/gui/inventory.py` | cada acción con su operación o su motivo (D13) | RF-6 |
-| `ogr_fem2d/gui/canvas/` | la vista, los objetos dibujados (contornos por tipo, regiones, malla, bloque del campo, condiciones, cargas), las herramientas de dibujo y de selección | RF-15, D10 |
-| `ogr_fem2d/gui/dialogs/` | ajustes del proyecto, fases, campo, malla, materiales, panel de asignación, condiciones, cargas, informe de la importación | RF-14, RF-16, RF-17 |
+| Archivo | Qué es | Piezas de `ogr_ui` que usa | RF |
+|---|---|---|---|
+| `pyproject.toml`, `tests/_runner.py`, `.github/workflows/wheels.yml` | `ogr-gui` fijado y PySide6, qtawesome y matplotlib declarados (D14); la lista blanca de fugas y los ganchos del recolector de OGR-GUI; la CI con las bibliotecas de Qt en Linux, `QT_QPA_PLATFORM=offscreen` y el extra `[mcp]` | `gc_guard` | — |
+| `ogr_fem2d/__main__.py`, `gui/app.py` | arrancar la interfaz: la aplicación, el tema, el idioma, las preferencias | `themes.apply_theme`, `user_prefs.Preferences("OGR FEM2D", "ogr-fem2d")`, `i18n.set_language`, `qt_catalog`, `wheel_guard`, `button_floor` | — |
+| `gui/actions.py`, `gui/menus.py`, `gui/main_window.py` | el registro de acciones (menú, `tr()`, operación, icono, atajo), los menús en su orden y los de fases futuras con su motivo (D4); la ventana con su barra de herramientas y de estado | `resources.icons.icon` y `register`, `disabled_reasons.install` y `gate`, `widgets.status_bar.OgrStatusBar` | RF-13 |
+| `gui/i18n/` (`es_menus.py`, `es_dialogs.py`, `es_canvas.py`, `es_messages.py`) | el diccionario de este programa por áreas (D3); los mensajes codificados de las operaciones y los problemas del modelo por su regla | `i18n.add_translations`, `ogr_core.messages.render` con `FEM_MESSAGES` y `API_MESSAGES` | RF-21 |
+| `gui/inventory.py` | cada acción con su operación, o su motivo de no tenerla (D13) | — | RF-6 |
+| `gui/session.py` | la ventana sobre un espacio de trabajo de `ogr_fem2d.api`: toda edición es una operación (un paso de deshacer), y el modelo se vuelve a dibujar después | — | RF-6, RF-8 |
+| `gui/canvas/view.py` | el lienzo (`QGraphicsView` con y hacia arriba, ampliar en el cursor, mover, rejilla, regla) | `themes.theme_color` (`canvas_bg`, `grid_minor`, `grid_major`) | RF-15 |
+| `gui/canvas/items.py` | los objetos dibujados: contornos por tipo, regiones con el color de su material, vértices, la malla en un solo objeto, el bloque del campo, condiciones y cargas | — | RF-15 |
+| `gui/canvas/tools.py` | las herramientas de dibujo y de selección (máquina de estados por modo), la entrada por X, Y absolutos, relativos y polares, tabla, círculo y arco (D10) | `canvas.snap_engine.SnapEngine`, `SnapShape` (las cuerdas de los arcos como segmentos, no como vértices), `SnapSettings` | D10 |
+| `gui/dialogs/` | ajustes del proyecto, fases, campo, malla, materiales, panel de asignación, condiciones, cargas, informe de la importación, tabla de coordenadas | `dialog_size`, `file_folders`, `dialogs.preferences_dialog` | RF-14, RF-16, RF-17 |
 
-**Parte D (v0.0.15)**, prevista
+**Parte D (v0.0.15)**, precisada en la T19
 
-| Archivo | Qué es | RF |
-|---|---|---|
-| `ogr_fem2d/gui/compute_window.py` | la cola, el progreso, Cancelar, el registro, el resumen | RF-18 |
-| `ogr_fem2d/gui/interpret/` | la ventana, el campo dibujado, el selector, las pestañas, las opciones del contorno y de la vista, el valor bajo el cursor, las consultas y sus gráficos | RF-19, RF-20 |
-| `ogr_fem2d/gui/info_window.py` | el informe, guardable en HTML y en texto | RF-4 |
-| `ogr_fem2d/gui/agent_bridge.py` | el puente, si llega (D8) | — |
-| `ogr_fem2d/gui/help/` | la ayuda adaptada, con los casos | RF-21 |
-| `poc/freeze/` y `.github/workflows/` | el congelado con la interfaz; Qt sin pantalla en la CI | — |
-| `docs/changelog/CHANGELOG_v0.0.12.md` … `v0.0.15.md` | uno por parte | — |
+| Archivo | Qué es | Piezas de `ogr_ui` que usa | RF |
+|---|---|---|---|
+| `gui/compute_window.py` | la cola (los trabajos de `job_list`), el progreso por fase, escalón e iteración, Cancelar, el registro y el resumen | el aspecto de `dialogs.progress_dialog.ComputeProgressDialog` (el trabajo es un subproceso de la parte B, no un hilo de `background`) | RF-18 |
+| `gui/interpret/window.py`, `field_item.py` | la ventana de interpretación, el campo dibujado de `results_field` en un solo objeto, las pestañas de fase, el selector del catálogo | `contours.ContourSettings` y `ContourField` (las bandas, la paleta), `widgets.legend.ColourScaleLegend`, `dialogs.contour_options_dialog.ContourOptionsDialog` con `RangePreset` | RF-19, RF-20 |
+| `gui/interpret/queries.py`, `charts.py` | las consultas (línea, contorno, nudos), el valor bajo el cursor, sus gráficos y su exportación | `xy_chart.show_xy_chart`, `data_tip_mode.DataTipMode` | RF-19 |
+| `gui/info_window.py` | el informe (`results_report`), guardable en HTML y en texto | — | RF-4 |
+| `gui/agent_bridge.py` | el puente con el servidor MCP (D8), con el protocolo de `ogr_core.api.bridge` | — | — |
+| `gui/help/` | la ayuda adaptada, con los casos, sin red | — | RF-21 |
+| `poc/freeze/` y `.github/workflows/` | el congelado con la interfaz | — | — |
+
+**Lo que no trae `ogr-gui` v0.1.0**, y por eso escribe este programa: el lienzo, sus objetos y sus
+herramientas, la tabla de coordenadas y el valor bajo el cursor (en Slip2D están dentro de
+`canvas_view.py`, que mezcla el equilibrio límite, ADR-0005). **Dos piezas que no se usan tal cual**, por
+las reglas:
+
+- **El diálogo de enganche** (`dialogs.snap_dialog`) tiene un control que no hace nada
+  (`SnapSettings.ortho_snap_angle_deg`, pendiente en OGR-GUI): no se pone en un menú hasta que OGR-GUI lo
+  arregle o lo quite (regla 7). Las palancas del enganche siguen en la barra de estado.
+- **«Ajustar a los resultados»** de `ContourOptionsDialog` recorta el rango al percentil 98 (lo de Slip2D
+  para sus factores de seguridad); aquí el rango es el entero (T8), así que el diálogo se usa con los
+  `RangePreset` de este programa y sin ese botón, o con el percentil como argumento si OGR-GUI lo
+  admite. Se pide a OGR-GUI.
 
 ## Decisiones de diseño
 

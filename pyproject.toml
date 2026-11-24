@@ -7,7 +7,7 @@ build-backend = "maturin"
 
 [project]
 name = "ogr-fem2d"
-version = "0.0.13"
+version = "0.0.14"
 description = "OGR FEM2D — open-source 2D geotechnical finite-element analysis (OpenGeoRock Suite)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -36,6 +36,18 @@ dependencies = [
     # The results file, modelo.h5 (ADR-0003; spec 005, D8). BSD-3-Clause,
     # compatible with AGPL-3.0; ogr-core asks for it too (>= 3.10).
     "h5py>=3.10",
+    # The interface pieces of the suite (ADR-0005), pinned to a tag, a pin
+    # of its own: ogr-gui does not depend on ogr-core. Imported as ogr_ui.
+    "ogr-gui @ git+https://github.com/samuelsl27/OGR-GUI@v0.1.0",
+    # What this program's interface imports itself (spec 006, D14), as
+    # ogr-gui and OGR Slip2D ask for them. PySide6: LGPL-3.0 (6.12.0 on
+    # Python 3.11 aborts on Linux, Slip2D D395). qtawesome: MIT, with the
+    # Font Awesome Free icons, CC BY 4.0 and SIL OFL 1.1 (attribution in
+    # About). matplotlib: its own PSF-like licence.
+    "PySide6>=6.6,!=6.12.0; python_version < '3.12'",
+    "PySide6>=6.6; python_version >= '3.12'",
+    "qtawesome>=1.3",
+    "matplotlib>=3.8",
 ]
 
 [project.optional-dependencies]

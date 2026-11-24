@@ -192,13 +192,16 @@ Empieza cuando la versión de OGR-Core de D1 (i) está etiquetada.
 
 Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
 
-- [ ] T19. **v0.0.14: precisar las partes C y D** sobre `ogr-gui` v0.1.0 (sus nombres, sus piezas, lo
+- [x] T19. **v0.0.14: precisar las partes C y D** sobre `ogr-gui` v0.1.0 (sus nombres, sus piezas, lo
   que no llegó), en `plan.md` y aquí. Con el OK: la fijación de `ogr-gui`, PySide6, qtawesome y
   matplotlib declarados con su licencia e instalados con `--no-deps`; la rama corta, si la elige la
   propietaria.
 
   *Hecho cuando:* el plan de C y D nombra archivos reales, la suite está en verde con las
   dependencias nuevas, y PySide6 funciona con el Python del `.venv`.
+  (Hecho el 2026-11-24, en la rama `dev/modelador`: `ogr-gui` v0.1.0, PySide6 6.12.0, qtawesome 1.4.2,
+  matplotlib 3.11.2; la CI con Qt sin pantalla y el extra `[mcp]`. El diálogo de enganche y «Fit to
+  results», sin usar tal cual; la petición a OGR-GUI, escrita.)
 - [ ] T20. `gui/main_window.py`, `gui/actions.py`, `gui/menus.py`, `gui/i18n/` y `gui/inventory.py`:
   la ventana con los menús en su orden, los de fases futuras con su motivo (D4), el tema y los iconos
   de `ogr-gui` (RF-13, RF-21). La CI con Qt sin pantalla.
