@@ -115,11 +115,13 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
 
 Empieza cuando la versión de OGR-Core de D1 (i) está etiquetada.
 
-- [ ] T10. **v0.0.13**: la fijación del núcleo nuevo, en su propio commit (`pyproject.toml`, el
+- [x] T10. **v0.0.13**: la fijación del núcleo nuevo, en su propio commit (`pyproject.toml`, el
   `.venv` con `--no-deps --force-reinstall`, lo que pida su changelog). Se avisa a la propietaria de
   la fila de `docs/consumidores.md`.
 
   *Hecho cuando:* la cabecera del runner nombra la versión nueva y la suite entera está en verde.
+  (Hecho el 2026-11-24: OGR-Core v0.2.9, `23bc41a`, con `ogr_core.api`; 660 de 660 con
+  `shared: ogr_core 0.2.9`.)
 - [ ] T11. `api/workspace.py`, `api/ops/project.py` y `api/ops/history.py`: abrir, nuevo, guardar,
   cerrar, abrir un `.ogr` de Slip2D o un DXF, deshacer y rehacer (RF-6–8).
 

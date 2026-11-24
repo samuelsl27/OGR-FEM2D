@@ -37,8 +37,8 @@ Autor y titular del copyright: Samuel Sáez López (UPCT). Licencia AGPL-3.0-or-
 - **Motor numérico**: Rust + PyO3 + maturin, **aceptado con condición** de que la prueba de concepto
   cumpla sus criterios (`docs/decisiones/ADR-0001-lenguaje-motor.md`). **Cada elemento y cada ley
   constitutiva tiene su implementación de referencia en Python**, que es el oráculo de los tests.
-- **Núcleo**: `ogr_core`, del paquete `ogr-core` (repositorio OGR-Core, etiqueta `v0.2.8` desde la
-  v0.0.12), con la malla y la filtración (`ADR-0002`). El paquete de este programa es `ogr_fem2d`.
+- **Núcleo**: `ogr_core`, del paquete `ogr-core` (repositorio OGR-Core, etiqueta `v0.2.9` desde la
+  v0.0.13), con la malla y la filtración (`ADR-0002`). El paquete de este programa es `ogr_fem2d`.
   **El núcleo se cambia solo en OGR-Core** (abajo, «Un núcleo y varios programas»). El `.venv`
   tiene el núcleo **instalado desde la etiqueta fijada**, como la CI, y no en editable desde el
   árbol de OGR-Core (`../../Core/OGR-Core` desde este repositorio): ese árbol sigue al `main` del
@@ -66,7 +66,7 @@ Autor y titular del copyright: Samuel Sáez López (UPCT). Licencia AGPL-3.0-or-
 **Siempre con el `.venv` del proyecto.** Otro Python puede no tener el núcleo (el del sistema no lo
 tiene, 2026-11-20) o tener otra versión, y el runner se niega («WRONG SHARED TREE»). La línea
 `shared:` de la cabecera dice qué núcleo se mide, de dónde sale y qué versión es: en una corrida
-normal, `shared: ogr_core 0.2.8 …\.venv\Lib\site-packages\ogr_core (installed, no git tree)`. Para
+normal, `shared: ogr_core 0.2.9 …\.venv\Lib\site-packages\ogr_core (installed, no git tree)`. Para
 instalar algo más en el `.venv`, `--no-deps`: con sus dependencias, pip volvería a resolver el
 núcleo por su cuenta. Una ejecución filtrada no es evidencia para cerrar una tarea: antes, la suite
 entera.

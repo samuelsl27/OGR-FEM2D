@@ -11,7 +11,7 @@ Invariants protected:
   Slip2D's old one (ADR-0002); and a Python where nothing answers for
   ``ogr_core`` is refused with the reason, not with a traceback (v0.0.3);
 * **the run measures the core its runner was held to** (v0.0.4): in an
-  ordinary run that is exactly the pinned version (``v0.2.8`` since v0.0.12),
+  ordinary run that is exactly the pinned version (``v0.2.9`` since v0.0.13),
   and anything else fails, a ``.devN`` too; in a run with ``--dev-core``
   (which says so in ``OGR_DEV_CORE=1``, ``runner.dev_core_run()``) it is
   the development version of a later release that the run accepted, and
@@ -53,7 +53,7 @@ _SPDX = "SPDX-License-Identifier: AGPL-3.0-or-later"
 #: ``TestWhatTheRunIsHeldTo`` are written for it: raising the pin is a
 #: commit of its own (AGENTS.md, «Un núcleo y varios programas»), and these
 #: lists move with it.
-_PIN = "0.2.8"
+_PIN = "0.2.9"
 
 
 def _problems(origins: dict, dev: bool) -> list:
@@ -172,17 +172,17 @@ class TestWhatTheRunIsHeldTo:
         assert _runner.pinned() == {"ogr_core": _PIN}
 
     def test_an_ordinary_run_takes_the_pin_and_nothing_else(self):
-        got = self._verdicts(["0.2.8", "0.2.9", "0.2.9.dev0", "0.2.8.dev0", "0.2.7"],
+        got = self._verdicts(["0.2.9", "0.2.10", "0.2.10.dev0", "0.2.9.dev0", "0.2.8"],
                              dev=False)
-        assert got == {"0.2.8": True, "0.2.9": False, "0.2.9.dev0": False,
-                       "0.2.8.dev0": False, "0.2.7": False}, got
+        assert got == {"0.2.9": True, "0.2.10": False, "0.2.10.dev0": False,
+                       "0.2.9.dev0": False, "0.2.8": False}, got
 
     def test_a_development_run_takes_a_later_dev_and_the_pin_only(self):
-        got = self._verdicts(["0.2.9.dev0", "0.2.8", "0.2.7", "0.2.8.dev0", "0.2.9rc1",
-                              "0.2.9+local", "0.2.9"], dev=True)
-        assert got == {"0.2.9.dev0": True, "0.2.8": True, "0.2.7": False,
-                       "0.2.8.dev0": False, "0.2.9rc1": False, "0.2.9+local": False,
-                       "0.2.9": False}, got
+        got = self._verdicts(["0.2.10.dev0", "0.2.9", "0.2.8", "0.2.9.dev0", "0.2.10rc1",
+                              "0.2.10+local", "0.2.10"], dev=True)
+        assert got == {"0.2.10.dev0": True, "0.2.9": True, "0.2.8": False,
+                       "0.2.9.dev0": False, "0.2.10rc1": False, "0.2.10+local": False,
+                       "0.2.10": False}, got
 
     def test_a_core_that_does_not_resolve_fails_in_both(self):
         for dev in (False, True):
