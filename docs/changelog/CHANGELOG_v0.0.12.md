@@ -252,3 +252,28 @@ había test que dibujara con ellos; ahora los triángulos tienen que cubrir el m
 6. Un tramo en común entre dos contornos se rechaza; la alternativa del lado compartido queda propuesta
    (T3).
 7. Una malla graduada no tiene número de nudos por defecto (T9).
+
+## La fijación sube a OGR-Core v0.2.8 (2026-11-24)
+
+En su propio commit (`AGENTS.md`, «Un núcleo y varios programas»): `pyproject.toml` a `@v0.2.8`, el
+`.venv` reinstalado desde la etiqueta con `--no-deps --force-reinstall`, y los tests de la fijación
+(`test_project_setup_v001.py`) con sus listas de versiones movidas. La suite entera, sin `--dev-core`:
+657 de 657, con `shared: ogr_core 0.2.8`. **No es la versión que pide la parte B** (el armazón de
+operaciones, T1); es la del lector DXF.
+
+Lo que cambia (su §2 no pide nada en el código): `ARC`, `CIRCLE`, `LWPOLYLINE` y `POLYLINE` 2-D se leen
+en sus propias coordenadas (OCS). Con extrusión (0, 0, −1) antes llegaban reflejadas en x; ahora llegan
+donde están. Una inclinada, fuera del plano XY, no se lee y el núcleo la cuenta en `skipped` como
+`"<TIPO> (not in the XY plane)"`.
+
+### Anomalía encontrada, sin corregir (regla 6): el informe del DXF no dice lo inclinado
+
+La sesión del núcleo dijo que `import_dxf` ya contaba esas entidades, porque suma `skipped` por el
+prefijo del tipo. **No es así**: solo lo suma para los tipos de `UNREAD`, que hoy es `("ELLIPSE",)`. Un
+DXF con un `CIRCLE` inclinado en la capa de excavación da `skipped = {'CIRCLE (not in the XY plane)':
+1}` en el núcleo, y el informe de la importación **no dice nada**: el hueco desaparece del modelo sin
+avisar. Pasa también con lo que el núcleo cuenta como `(unreadable)` o `degenerate`.
+
+Se propone: que el informe nombre **cada** clave de `skipped`, con lo que significa (inclinada, ilegible,
+degenerada, tipo que no se lee), y un test con un DXF de un círculo inclinado y otro con extrusión −Z.
+Espera el OK de la propietaria.
