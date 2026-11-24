@@ -5,4 +5,4 @@ The operations, by toolset; importing this registers them all.
 
 Author: Samuel Sáez López (UPCT)
 """
-from . import history, mesh, model, project  # noqa: F401
+from . import analysis, history, mesh, model, project  # noqa: F401

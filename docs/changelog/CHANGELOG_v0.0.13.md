@@ -94,3 +94,29 @@ mismo; 31 operaciones en total.
 6 tests; 14 mutaciones, 14 cazadas (tres se escapaban al principio: la huella del modelo no mira los
 nombres, cambiar un material no se probaba, y una carga puntual con contorno y vértice a la vez no se
 pedía).
+
+## T13 — calcular como trabajo en subproceso (2026-11-24)
+
+`ogr_fem2d/api/worker.py` y `api/ops/analysis.py`: `analysis_run`, `job_get`, `job_cancel` y `job_list`,
+sobre los trabajos del núcleo (`ogr_core.api.jobs`), con los nombres de Slip2D (RF-9 a RF-12; D9).
+
+- **El destino del trabajo** (`worker.run_calculation`) llama a `calculate` con el aviso de progreso de
+  la T6 convertido en el progreso del trabajo (fase a fase, con el evento, la fase, sus escalones y su
+  iteración), y con `should_stop` leyendo el archivo de parada del núcleo.
+- **Cancelar es en dos tiempos** (D9): con el plazo (`CANCEL_GRACE_S`, 5 s, que no mueve ningún número),
+  el cálculo para entre dos fases y el `.h5` dice `cancelled` con las fases resueltas; si no para a
+  tiempo, o sin plazo, se mata el árbol del proceso y queda el `.h5` anterior, intacto, sin temporal.
+- **Lo que fallaría enseguida se rechaza antes de lanzar un proceso**, diciendo por qué: un modelo sin
+  archivo, o con cambios que no están en el archivo (los resultados van junto a él, con su huella, y
+  nacerían obsoletos), sin malla, con malla de otra geometría o con un material sin E o ν. Un segundo
+  trabajo mientras corre uno, también.
+- **Una fase que no se resuelve se dice**: el trabajo acaba `done`, con los resultados `incomplete`, la
+  fase y el error del motor.
+- **Los resultados del proceso hijo son los del motor, bit a bit**, y cancelar y volver a calcular es
+  calcular una vez. Un trabajo de tres fases del túnel tarda 1,2 s, casi todo el arranque del proceso.
+- **Cambia lo previsto**: el plan pedía probar el estado `queued`. El gestor del núcleo no encola, sino
+  que rechaza un trabajo de más (`Busy`), y es lo que se prueba.
+
+8 tests; 11 mutaciones, 11 cazadas (tres se escapaban al principio: el plazo por defecto, la limpieza
+del temporal y el progreso de cada fase; ahora el destino y su limpieza se prueban también en el
+proceso del test).

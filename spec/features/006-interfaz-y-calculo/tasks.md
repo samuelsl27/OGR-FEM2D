@@ -140,7 +140,7 @@ Empieza cuando la versión de OGR-Core de D1 (i) está etiquetada.
 
   (Hecho el 2026-11-24: el caso 006, construido desde cero por las operaciones, tiene la huella de
   su archivo. 6 tests; 14 mutaciones, 14 cazadas.)
-- [ ] T13. `api/worker.py` y `api/ops/analysis.py`: calcular como trabajo en subproceso (RF-9–12).
+- [x] T13. `api/worker.py` y `api/ops/analysis.py`: calcular como trabajo en subproceso (RF-9–12).
 
   *Hecho cuando:*
   - tienen su test los estados `queued`, `running`, `done`, `failed` y `cancelled`;
@@ -150,6 +150,9 @@ Empieza cuando la versión de OGR-Core de D1 (i) está etiquetada.
   - un fallo nombra el objeto del modelo y conserva el registro;
   - sin malla, con la malla de otra geometría o con resultados obsoletos, se niega y dice por qué;
   - cancelar y volver a calcular da lo mismo que calcular una vez.
+
+  (Hecho el 2026-11-24: el gestor del núcleo no encola, rechaza (`Busy`): eso es lo que se prueba en
+  lugar de `queued`. 8 tests; 11 mutaciones, 11 cazadas.)
 - [ ] T14. `api/ops/results.py`: abrir con su estado, las consultas, el resumen, la tabla, el informe
   y los triángulos de un campo (RF-6).
 

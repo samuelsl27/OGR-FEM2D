@@ -84,8 +84,21 @@ def document_hash(held: Held) -> str:
 NAMES = WorkspaceNames(new_op="project_new", open_op="project_open")
 
 
+def jobs_options() -> dict:
+    """The core's jobs, with this program's target, its tree for the
+    child, its provenance, its clean-up and its grace (D9)."""
+    from ogr_core.api.jobs import JobHooks
+    from pathlib import Path
+    from . import worker
+    root = Path(__file__).resolve().parents[2]
+    return {"target": worker.run_calculation, "pythonpath": [str(root)],
+            "hooks": JobHooks(on_end=worker.on_end, provenance=worker.provenance),
+            "cancel_grace_s": worker.CANCEL_GRACE_S}
+
+
 def make(workdir=None, **kwargs) -> Workspace:
     """A workspace for the operations of this program."""
+    kwargs.setdefault("jobs_options", jobs_options())
     return Workspace(workdir=workdir, undo_step=Step, document_hash=document_hash, names=NAMES,
                      **kwargs)
 

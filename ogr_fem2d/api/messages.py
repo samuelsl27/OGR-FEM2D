@@ -59,6 +59,11 @@ _ENTRIES = [
                                        "boundary (and start, end), not vertex."),
     _spec("fem.mesh.clear_and_set", "{name} is both given and cleared."),
     _spec("fem.windows.shape", "windows[{index}] must be {{\"polygon\": [[x, y], ...], \"size\": h}}."),
+    _spec("fem.run.no_file", "Model {model} has no file: the results are written beside it."),
+    _spec("fem.run.no_file.hint", "Save it first (project_save)."),
+    _spec("fem.run.unsaved", "Model {model} has changes that are not in its file."),
+    _spec("fem.run.unsaved.hint", "Save it first (project_save): the results carry the file's "
+                                  "fingerprint, and would be stale at once."),
     # -- the names of the undo steps (the Edit menu, project_history) -------
     _spec("fem.step.project_settings", "Project settings"),
     _spec("fem.step.boundary_add", "Add boundary"),
