@@ -240,3 +240,22 @@ distancia sin lado es un error.
   - en el hueco excavado no hay valor, fuera sí, y fuera del externo tampoco.
 
   7 mutaciones, 7 cazadas.
+
+## T11 — la evolución por fase y el resumen (2026-11-24)
+
+`queries.history`: el valor en un punto en cada fase, con si la fase se resolvió. `queries.summary`:
+
+- por magnitud, el máximo y el mínimo en los puntos y en los nudos, con dónde;
+- el desplazamiento total máximo y su nudo;
+- las reacciones, totales y, con el modelo, por contorno del modelo (D14). Las de cada nudo cuentan
+  para el primer contorno del modelo que lo tiene, por el mapa segmento → nudos de la 003; las de un
+  nudo de ningún contorno, bajo «-».
+
+- `tests/test_results_summary_v0011.py`, 3 tests:
+  - un punto del hueco tiene valor mientras el hueco está y ninguno después;
+  - los extremos de σ1 en los puntos son los de todos los puntos, en su sitio;
+  - **equilibrio**: las reacciones suman menos las fuerzas exteriores de la fase (`stage_load`), y en
+    dos estratos de 20 m bajo 100 kPa, 2000 + 18 × 4 × 20 + 24 × 6 × 20 = 6320 kN/m hacia arriba;
+  - las reacciones por contorno suman el total, y las esquinas del contacto cuentan para el externo.
+
+  6 mutaciones, 6 cazadas.

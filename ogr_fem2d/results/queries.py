@@ -383,3 +383,124 @@ def on_boundary(view: View, quantity: str, m, boundary_id: str, n_per_segment: i
     points, distances = boundary_points(b, n_per_segment, distance, side)
     return Query(quantity, view.stage, view.info["id"],
                  tuple(_rows_at(view, quantity, points, distances)), "boundary", method_of(quantity))
+
+
+# ---------------------------------------------------- through the stages
+@dataclass(frozen=True)
+class StageValue:
+    stage: int
+    stage_id: str
+    name: str
+    solved: bool
+    rows: tuple[Row, ...]            # one per material on a contact; one without value otherwise
+
+
+@dataclass(frozen=True)
+class History:
+    quantity: str
+    x: float
+    y: float
+    stages: tuple[StageValue, ...]
+
+
+def history(results: store.Results, quantity: str, x: float, y: float) -> History:
+    """The quantity at (x, y) in every stage of ``results`` (RF-15), each
+    with whether the stage was solved."""
+    out = []
+    for k in range(results.n_stages):
+        view = View(results, k)
+        rows = tuple(_rows_at(view, quantity, [(x, y)], [None]))
+        out.append(StageValue(k, view.info["id"], view.info["name"], view.info["solved"], rows))
+    return History(quantity, float(x), float(y), tuple(out))
+
+
+# ---------------------------------------------------------- the summary
+@dataclass(frozen=True)
+class Extreme:
+    quantity: str
+    at: str                          # "points" or "nodes"
+    maximum: float
+    max_where: tuple[float, float]
+    minimum: float
+    min_where: tuple[float, float]
+
+
+@dataclass(frozen=True)
+class Summary:
+    stage: int
+    stage_id: str
+    extremes: tuple[Extreme, ...]
+    max_displacement: float
+    max_displacement_node: int
+    reactions: tuple[float, float]                       # the total
+    reactions_by_boundary: tuple[tuple[str, float, float], ...]
+
+
+def _extreme(quantity, at, values, where) -> Extreme | None:
+    values = np.asarray(values, dtype=float)
+    ok = np.flatnonzero(~np.isnan(values))
+    if not len(ok):
+        return None
+    hi, lo = ok[np.argmax(values[ok])], ok[np.argmin(values[ok])]
+    return Extreme(quantity, at, float(values[hi]), tuple(map(float, where[hi])),
+                   float(values[lo]), tuple(map(float, where[lo])))
+
+
+def boundary_of_nodes(m) -> dict[int, str]:
+    """node -> the id of the first boundary of the model (in its order) that
+    has it, through the map segment -> nodes of the mesh (spec 003)."""
+    from ..model import translate
+    ctx = translate.context(m)
+    owner: dict[int, str] = {}
+    for b in m.boundaries:
+        for k in range(b.n_segments):
+            seg = ctx.segment_of.get((b.id, k))
+            if seg is None:
+                continue
+            mb = ctx.mesh_boundary[seg]
+            for node in tuple(mb.nodes) + tuple(mb.mids):
+                owner.setdefault(int(node), b.id)
+    return owner
+
+
+def summary(view: View, m=None, quantities=None) -> Summary:
+    """The extremes of each quantity at the points and at the nodes, where
+    they are; the greatest displacement and its node; the reactions, in
+    total and, with the model ``m``, by boundary of the model (a node on
+    two boundaries counts for the first in the model's order; those on none,
+    under "-") (RF-15, D14)."""
+    mesh = view.mesh
+    ids = [q.id for q in qt.CATALOGUE] if quantities is None else list(quantities)
+    extremes = []
+    for qid in ids:
+        kind = qt.get(qid).kind
+        if kind == qt.DISPLACEMENT:
+            got = _extreme(qid, "nodes", qt.of(qid, view.displacement()), mesh.nodes)
+            extremes += [got] if got else []
+            continue
+        points = qt.of(qid, view.tensor(kind))
+        got = _extreme(qid, "points", points, mesh.points)
+        extremes += [got] if got else []
+        rec = view.recovered(kind)
+        at_nodes = qt.of(qid, rec.values).reshape(-1)
+        where = mesh.nodes[mesh.elements].reshape(-1, 2)
+        got = _extreme(qid, "nodes", at_nodes, where)
+        extremes += [got] if got else []
+    u = qt.of("u", view.displacement())
+    node = int(np.argmax(u))
+    nodes = view.results.field(view.stage, "reaction_nodes")
+    forces = view.results.field(view.stage, "reactions").reshape(-1, 2)
+    total = (float(forces[:, 0].sum()), float(forces[:, 1].sum())) if len(forces) else (0.0, 0.0)
+    by: list = []
+    if m is not None:
+        owner = boundary_of_nodes(m)
+        sums: dict[str, list[float]] = {}
+        for n, (rx, ry) in zip(nodes, forces):
+            key = owner.get(int(n), "-")
+            s = sums.setdefault(key, [0.0, 0.0])
+            s[0] += float(rx)
+            s[1] += float(ry)
+        order = [b.id for b in m.boundaries] + ["-"]
+        by = [(k, sums[k][0], sums[k][1]) for k in order if k in sums]
+    return Summary(view.stage, view.info["id"], tuple(extremes), float(u[node]), node, total,
+                   tuple(by))

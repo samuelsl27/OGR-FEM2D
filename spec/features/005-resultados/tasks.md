@@ -133,13 +133,15 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   - la distancia por defecto es 0.
 
   (Hecho el 2026-11-24: 5 tests; 7 mutaciones, 7 cazadas.)
-- [ ] T11. El punto frente a la fase y el resumen por fase (D14) — RF-15.
+- [x] T11. El punto frente a la fase y el resumen por fase (D14) — RF-15.
 
   *Hecho cuando:*
   - la evolución de un punto da una fila por fase, con el estado `solved` de cada una;
   - los extremos dicen dónde y de qué tipo son;
   - las reacciones por contorno suman la total, y la total equilibra las cargas y el peso de la
     fase.
+
+  (Hecho el 2026-11-24: 3 tests; 6 mutaciones, 6 cazadas.)
 - [ ] T12. `results/table.py`: la tabla CSV (D15) — RF-14.
 
   *Hecho cuando:* la cabecera lo declara todo, la tabla en MPa es la de kPa entre 1000, las columnas
