@@ -171,13 +171,14 @@ usuario (D1). La conversión va en `model/conventions.py` y en ningún otro siti
 
 ## Anomalías que se vigilan (regla 6)
 
-- Que los puntos óptimos del T6 en la fig. 14.6 no sean los tres medios de los lados. La
-  recuperación funciona igual como ajuste, pero cambia lo que se espera de ella. Se reporta, sin
-  tocar la regla de integración.
+- **Se dio (T7)**: los puntos óptimos del T6 en la fig. 14.6 no son los tres medios de los lados; esos
+  son los de la cuadratura mínima, de un orden menos (O(h³) frente a O(h⁴)). La recuperación se hace
+  igual, como ajuste sobre los puntos de integración, sin tocar la regla del motor (spec 002, D1): lo
+  que se pierde es la superconvergencia que el texto promete, no la exactitud con un campo que la
+  malla representa. Reportado para la propietaria.
 - Que la regla de 7 puntos de la axisimetría, que no es de puntos óptimos, recupere peor. Se ve en la
   línea del 007; si no cumple, es un hallazgo.
-- Que el generador de fases cambie un número de los casos 001 a 007. No debería: es el mismo código
-  con `yield`.
+- **No se dio (T3)**: el generador de fases no cambió ningún número de los casos 003 a 007.
 - Que una de las erratas de JCZ sea del libro, no de la extracción. Se anota y se programa la
   correcta, comprobada con la identidad.
 

@@ -88,11 +88,14 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   contacto (sus dos elementos), uno entre la cuerda y el arco de un T6 curvo, uno en una excavación
   y uno fuera del modelo.
   (Hecho el 2026-11-24: 4 tests; 5 mutaciones, 5 cazadas.)
-- [ ] T7. **Las figuras de Z&T, sobre la página**: la 14.6 (qué puntos óptimos da para el T6) y las
+- [x] T7. **Las figuras de Z&T, sobre la página**: la 14.6 (qué puntos óptimos da para el T6) y las
   14.8 y 14.9 (los parches y los bordes). Lo que se vea, al plan («Formulación») y, si no es lo
   esperado, reportado antes de seguir (regla 6).
 
   *Hecho cuando:* las tres figuras están descritas en el changelog, con su página.
+  (Hecho el 2026-11-24. **Hallazgo**: para el T6 los puntos óptimos no son los medios de los lados,
+  que son los de la cuadratura mínima; y la fig. 14.8 precisa D5: un parche determina su nudo central
+  y los intermedios de sus radios, no todos los nudos que contiene. Changelog.)
 - [ ] T8. `results/recovery.py`: SPR material a material (D5) — RF-8 y RF-9.
   - Los parches de los nudos interiores del material, en coordenadas locales escaladas.
   - Los bordes del material desde los parches interiores.
