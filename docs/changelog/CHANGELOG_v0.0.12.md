@@ -49,3 +49,26 @@ pura, y por `Document.edit` es un paso de deshacer.
 
 21 tests; 17 mutaciones, 17 cazadas (una, que aceptaba un punto de la recta fuera del segmento, se
 escapaba al principio: el test lo pedía solo en un extremo, y ahora también más allá).
+
+## T3 — los cortes entre contornos (2026-11-24)
+
+`ogr_fem2d/model/cuts.py`: `cut(modelo, contorno)` pone un vértice donde el contorno se encuentra con
+otro lejos de un vértice que compartan, en los dos, y devuelve cuáles ha puesto (RF-2; spec 004, D15).
+Recto con recto, recto con arco y arco con arco; un arco cortado queda en dos arcos con el mismo
+centro.
+
+- **Un punto de encuentro junto a un vértice es ese vértice** (dentro de la tolerancia del mallador):
+  en una T, el extremo exacto entra en el otro contorno; un cruce por un vértice que los dos ya tienen
+  no pone nada. Así un corte nunca deja dos vértices casi juntos.
+- **Un tramo en común se rechaza** nombrando los dos segmentos, como decía el plan; el mismo lado en
+  dos contornos no es un tramo en común. **Propuesta para más adelante**: se podría resolver metiendo
+  los extremos de cada uno en el otro, y quedaría un lado compartido, que el modelo ya admite. No se ha
+  hecho sin preguntarlo.
+- **Un lado con divisiones forzadas no se corta**: el error es el de `insert_vertex`, que nombra el
+  contorno y sus divisiones.
+- La aritmética es geometría analítica elemental (recta con recta, con circunferencia; dos
+  circunferencias), sin fuente que citar: los tests la comprueban con la identidad de que cada punto
+  está en los dos segmentos, también con dos circunferencias de radios distintos (con radios iguales
+  un error de signo en la cuerda común no se veía).
+
+9 tests; 10 mutaciones, 10 cazadas.

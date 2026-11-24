@@ -45,7 +45,7 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   (Hecho el 2026-11-24: también renombrar, trasladar, insertar y borrar vértices y el arco y las
   divisiones de un segmento; la geometría compartida sigue compartida. 21 tests; 17 mutaciones, 17
   cazadas.)
-- [ ] T3. `model/cuts.py`: los cortes (RF-2).
+- [x] T3. `model/cuts.py`: los cortes (RF-2).
 
   *Hecho cuando:*
   - recto con recto, recto con arco y arco con arco añaden el vértice en los dos contornos y sobre
@@ -54,6 +54,9 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   - dos segmentos solapados dan un error que nombra los dos contornos;
   - un arco partido conserva su centro en las dos mitades;
   - las regiones del resultado son las del dibujo, y la respuesta lista los vértices añadidos.
+
+  (Hecho el 2026-11-24: 9 tests; 10 mutaciones, 10 cazadas. Un tramo en común se rechaza, como dice
+  el plan; la alternativa, dejarlo como lado compartido, queda propuesta en el changelog.)
 - [ ] T4. `model/shapes.py`: arcos y círculos (RF-3, D10).
 
   *Hecho cuando:* tres puntos de una circunferencia conocida dan su centro; tres colineales, error;
