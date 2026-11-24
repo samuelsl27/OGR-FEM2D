@@ -83,7 +83,7 @@ class MeshData:
 # ----------------------------------------------------------------- writing
 def _big(group, name, data, level):
     data = np.asarray(data)
-    if data.size == 0:
+    if data.size == 0 or level is None:
         return group.create_dataset(name, data=data)
     return group.create_dataset(name, data=data, compression="gzip", compression_opts=level,
                                 shuffle=True)

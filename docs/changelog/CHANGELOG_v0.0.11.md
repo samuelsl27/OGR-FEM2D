@@ -93,3 +93,35 @@ vuelven como `None`; los grandes, con gzip y *shuffle*.
   solo; un archivo que no es HDF5, de otro programa, de un formato posterior, sin un campo o con un
   campo de otro tamaño dan `ResultsError` con lo que falla; un error a mitad o un escritor sin
   `finish` dejan el anterior y ningún temporal; el estado es coherente. 9 mutaciones, 9 cazadas.
+
+## T5 — calcular y abrir (2026-11-24)
+
+`results/calculate.py`. `calculate(modelo, ruta)` traduce, resuelve fase a fase y escribe
+`<raíz>.h5` junto a `<raíz>.ogrfem2d`:
+
+- **completo**;
+- **incompleto**, si una fase no se resuelve: no converge, un punto no se actualiza, las
+  restricciones dejan libre el modelo o una carga cae fuera de su elemento. Las fases anteriores
+  quedan escritas, con el error del motor;
+- **cancelado**, si `should_stop()`, consultado entre fases, lo pide.
+
+Un modelo que no se traduce, o un error de entrada, no escribe nada y deja el `.h5` anterior.
+`open_results` da el estado: `valid`, `stale`, `incomplete`, `cancelled`, `missing` o `damaged`.
+Solo los válidos se dan tal cual; los demás, con `read_anyway`. Otra versión del programa o del
+núcleo no los hace obsoletos, pero se dice (D7).
+
+- **La medida del caso 005** (56 367 nudos, 28 066 T6, 84 198 puntos, una fase):
+
+  | gzip | tamaño | la copia de la malla | escribir |
+  |---|---|---|---|
+  | sin comprimir | 10.50 MB | 4.72 MB | 0.05 s |
+  | 1 | 6.49 MB | 2.15 MB | 0.22 s |
+  | **4** | **6.45 MB** | **2.13 MB** | **0.24 s** |
+  | 9 | 6.42 MB | 2.13 MB | 0.37 s |
+
+  Abrir y leer las tensiones de la fase, 0.02 s. La B de todos los puntos, 0.84 s, y B u, 0.02 s;
+  resolver la fase con el motor de referencia, 26 s. **Se queda gzip 4**: más nivel no gana nada. La
+  copia de la malla es un tercio del archivo con una fase, menos con más fases; se queda (D6).
+- `tests/test_results_calculate_v0011.py`, 6 tests: los resultados son los del motor; cada estado,
+  con el incompleto (una liberación de todo el externo en la fase 2) y el cancelado; otra versión,
+  válida y dicha; un modelo sin malla no escribe nada. 7 mutaciones, 7 cazadas.

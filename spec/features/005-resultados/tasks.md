@@ -68,13 +68,17 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   - un fallo a mitad de la escritura deja el `.h5` anterior intacto y ningún temporal.
 
   (Hecho el 2026-11-24: 10 tests; 9 mutaciones, 9 cazadas.)
-- [ ] T5. `results/calculate.py`: `calculate` y `open_results` (D7, D13) — RF-1, RF-2 y RF-3.
+- [x] T5. `results/calculate.py`: `calculate` y `open_results` (D7, D13) — RF-1, RF-2 y RF-3.
 
   *Hecho cuando:*
   - cada estado (`valid`, `stale`, `incomplete`, `cancelled`, `missing`, `damaged`) tiene su test;
   - un `.h5` de otra versión del programa es válido, y lo dice;
   - en el caso 005 están medidos el tamaño (con y sin gzip, con y sin la copia de la malla), el
     tiempo de escritura y el de B u, y el nivel de gzip está decidido y anotado en el changelog.
+
+  (Hecho el 2026-11-24: 6 tests; 7 mutaciones, 7 cazadas. Caso 005, una fase: 6.45 MB con gzip 4, de
+  ellos 2.13 MB la copia de la malla; 10.50 MB sin comprimir; escribir, 0.24 s; la B de los 84 198
+  puntos, 0.84 s, y B u, 0.02 s. Se queda gzip 4.)
 
 ## Los nudos y las consultas
 
