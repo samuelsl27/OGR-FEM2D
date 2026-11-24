@@ -202,12 +202,15 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   (Hecho el 2026-11-24, en la rama `dev/modelador`: `ogr-gui` v0.1.0, PySide6 6.12.0, qtawesome 1.4.2,
   matplotlib 3.11.2; la CI con Qt sin pantalla y el extra `[mcp]`. El diálogo de enganche y «Fit to
   results», sin usar tal cual; la petición a OGR-GUI, escrita.)
-- [ ] T20. `gui/main_window.py`, `gui/actions.py`, `gui/menus.py`, `gui/i18n/` y `gui/inventory.py`:
+- [x] T20. `gui/main_window.py`, `gui/actions.py`, `gui/menus.py`, `gui/i18n/` y `gui/inventory.py`:
   la ventana con los menús en su orden, los de fases futuras con su motivo (D4), el tema y los iconos
   de `ogr-gui` (RF-13, RF-21). La CI con Qt sin pantalla.
 
   *Hecho cuando:* pasan los censos (todo texto por `tr()` y traducido; toda acción en un menú; toda
   acción con su operación o su motivo; toda entrada deshabilitada con su motivo) y el test de capas.
+  (Hecho el 2026-11-25: el registro de acciones va en `main_window.py` (`_mk`), sin `actions.py`
+  aparte; y `session.py`, la ventana sobre las operaciones. Los mensajes del núcleo, sin español
+  todavía: pedido a OGR-GUI. 9 tests; 12 mutaciones, 12 cazadas.)
 - [ ] T21. `gui/canvas/`: el dibujo del modelo (contornos por tipo, regiones con el color de su
   material, la fase visible) y la navegación (ampliar, mover, rejilla, regla, enganche) — RF-15.
 

@@ -46,3 +46,13 @@ class TestLayers:
         got = _loaded("ogr_fem2d.engine.analysis")
         assert not got & {"ogr_fem2d.model", "ogr_fem2d.results", "ogr_fem2d.api",
                           "ogr_fem2d.gui", "ogr_fem2d.mcp", "PySide6"}, got
+
+    def test_only_the_interface_imports_qt(self):
+        """In the code text too: outside ``ogr_fem2d/gui`` no module names
+        PySide6 or ogr_ui (spec 006, T20)."""
+        pkg = ROOT / "ogr_fem2d"
+        bad = [str(p.relative_to(ROOT)) for p in pkg.rglob("*.py")
+               if "gui" not in p.relative_to(pkg).parts[:1]
+               and any(w in p.read_text(encoding="utf-8") for w in ("import PySide6", "from PySide6",
+                                                                    "import ogr_ui", "from ogr_ui"))]
+        assert bad == [], bad

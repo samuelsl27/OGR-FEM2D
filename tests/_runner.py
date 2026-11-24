@@ -91,16 +91,18 @@ ALLOWED = (
 
 def _install_gc_guard() -> None:
     # cyclic garbage found on a worker thread is held for the main thread
-    # (ogr_ui/gc_guard.py, OGR Slip2D D310); only when Qt is in the run
-    if "PySide6" in sys.modules:
-        from ogr_ui import gc_guard
-        gc_guard.install()
+    # (ogr_ui/gc_guard.py, OGR Slip2D D310). Installed at the start of every
+    # run (it imports no Qt, and installing it twice does nothing): installed
+    # only when Qt was already loaded, a run inside a test (test_project_setup
+    # drives one) put it in after the outer run had looked, and the outer one
+    # counted it as a leak of that file.
+    from ogr_ui import gc_guard
+    gc_guard.install()
 
 
 def _release_garbage() -> None:
-    if "ogr_ui.gc_guard" in sys.modules:
-        from ogr_ui import gc_guard
-        gc_guard.release()
+    from ogr_ui import gc_guard
+    gc_guard.release()
 
 
 def _release_windows() -> int:

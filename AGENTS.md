@@ -54,13 +54,15 @@ Autor y titular del copyright: Samuel Sáez López (UPCT). Licencia AGPL-3.0-or-
   OGR Slip2D convirtiéndolo (`ADR-0004`). Los resultados van aparte en `modelo.h5` con la huella
   del modelo (`ADR-0003`).
 - **Tests**: el runner de la suite (`ogr_core.testing.runner`), a través de `tests/_runner.py`.
+  **Siempre sin pantalla** (`QT_QPA_PLATFORM=offscreen`) desde la spec 006, parte C: los tests de la
+  interfaz construyen ventanas de verdad, y sin la variable se abrirían en el escritorio.
 
 ## Comandos
 
 ```bash
-.venv/Scripts/python tests/_runner.py          # toda la suite (lo que corre la CI)
-.venv/Scripts/python tests/_runner.py t6       # archivos que contengan eso
-.venv/Scripts/python tests/_runner.py -k patch # tests con ese nombre
+QT_QPA_PLATFORM=offscreen .venv/Scripts/python tests/_runner.py          # toda la suite (lo que corre la CI)
+QT_QPA_PLATFORM=offscreen .venv/Scripts/python tests/_runner.py t6       # archivos que contengan eso
+QT_QPA_PLATFORM=offscreen .venv/Scripts/python tests/_runner.py -k patch # tests con ese nombre
 ```
 
 **Siempre con el `.venv` del proyecto.** Otro Python puede no tener el núcleo (el del sistema no lo

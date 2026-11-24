@@ -24,3 +24,39 @@ cuenta lo que fue entrando, tarea a tarea.
   (T8): se usa sin ese botón, y se pide a OGR-GUI que el percentil sea un argumento
   (`../Promts_desarrollo/2026_11_24_peticion_ogr_gui_rango_entero.md`).
 - La versión pasa a 0.0.14.
+
+## T20 — la ventana, sus menús, sus acciones y sus textos (2026-11-25)
+
+`ogr_fem2d/gui/`: `main_window.py`, `menus.py`, `inventory.py`, `session.py`, `app.py` y el diccionario
+por áreas (`i18n/es_menus.py`, `i18n/es_messages.py`); `python -m ogr_fem2d` abre la ventana (RF-13,
+RF-21; D3, D4, D13).
+
+- **La ventana no edita el modelo**: llama a las operaciones de la parte B por una sesión
+  (`session.Session`), como la línea de órdenes y un agente, y vuelve a dibujar cuando la sesión dice que
+  algo cambió. Así H5 se cumple por construcción, y cada edición es un paso de la misma historia.
+- **Los menús, en el orden del trabajo** (RF-13); los de fases futuras (Soporte, Agua, Estadística y
+  Herramientas), con una sola entrada deshabilitada que dice cuándo llegan (D4). Los de esta fase que aún
+  no tienen entradas son los que dice `menus.PENDING`, con la tarea que los llena; un test lo vigila.
+- **Las reglas 2 y 3, con las comprobaciones comunes de `ogr_ui.testing`**: todo texto por `tr()` (dos
+  excepciones con su porqué: el título de la ventana y la línea de la versión), todo con su español
+  (también cada acción, cada menú, cada motivo y cada mensaje de las operaciones, en sus dos formas
+  cuando lleva una cuenta), ninguno del español de la suite cambiado; toda acción en un menú y toda
+  entrada deshabilitada con su motivo. **Cada acción tiene su operación o su porqué** (D13).
+- **Los mensajes de las operaciones salen en el idioma del lector**: van codificados, y la interfaz los
+  vuelve a componer desde su código (`i18n.say`), también el nombre de cada paso de deshacer. **Los del
+  núcleo (`API_MESSAGES`) aún salen en inglés**: su español es común a la suite, y se pide a OGR-GUI que
+  lo lleve (añadido a `../Promts_desarrollo/2026_11_24_peticion_ogr_gui_rango_entero.md`).
+- El título dice el modelo, si tiene cambios sin guardar y el tipo de análisis (la referencia dejaba
+  olvidarlo, P17). Lo que pregunta (un archivo, descartar cambios) es un método propio, para que los
+  tests manejen la ventana sin un diálogo modal.
+- `AGENTS.md`: la suite se corre siempre con `QT_QPA_PLATFORM=offscreen`. Para la CI de OGR-Core, la
+  nota `../Promts_desarrollo/2026_11_25_nota_ogr_core_fem2d_sin_pantalla.md`, para cuando esta rama se
+  fusione.
+
+9 tests (8 de la ventana y 1 de capas: fuera de `gui/` nada importa Qt); 12 mutaciones, 12 cazadas (el
+orden de los menús se comparaba con la propia constante; ahora con la lista de RF-13).
+
+Una fuga que vio el vigilante en la suite entera: el guardián del recolector de `ogr_ui` se instalaba solo
+si Qt ya estaba cargado, y una corrida del runner dentro de un test (`test_project_setup_v001`) lo
+instalaba después de que la corrida de fuera hubiera mirado. Ahora se instala al empezar cada corrida,
+como en OGR-GUI: no importa Qt, e instalarlo dos veces no hace nada.
