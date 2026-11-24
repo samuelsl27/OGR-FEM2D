@@ -97,8 +97,18 @@ class TestCase005:
 
 class TestTheFiles:
     def test_read_and_written_again_the_same_bytes(self):
+        """The same bytes but the line of ``written_by``: the files were written
+        by the version of their spec, and a later version writes its own name
+        (found when v0.0.10 raised the pin: the content is the identity, not
+        who wrote it, D12)."""
+        def body(text):
+            return [line for line in text.splitlines() if not line.startswith('  "written_by": ')]
+
         for name in (C005, C006, C007):
-            assert ogr_file.dumps(_opened(name)).encode("utf-8") == cm.path(name).read_bytes(), name
+            written = cm.path(name).read_bytes().decode("utf-8")
+            again = ogr_file.dumps(_opened(name))
+            assert body(again) == body(written), name
+            assert sum(line.startswith('  "written_by": "OGR FEM2D ') for line in written.splitlines()) == 1
 
     def test_built_again_the_same_model(self):
         """The model and its mesh, bit for bit; the notes of the mesh to
