@@ -242,3 +242,11 @@ Añadida una que hace calcular al hijo otro modelo (ν = 0,31): cazada en los cu
    decide la propietaria (T16).
 6. El caso 006 construido desde cero por las operaciones tiene la huella de su archivo, y los casos 005 a
    007 por las operaciones dan bit a bit los números de la spec 005 (T12, T17).
+
+## Después del cierre: la línea de órdenes, en UTF-8 (2026-11-25)
+
+**La CI se puso en rojo en Windows** (Python 3.11, 3.12 y 3.13) con el push del cierre: dos tests de la
+línea de órdenes leían su salida como UTF-8, y en Windows la salida de un proceso por una tubería va en la
+codificación de la consola (cp1252). Una «ó» del informe la rompía. En este equipo no se veía porque los
+tests la heredaban en el modo UTF-8. Ahora la línea de órdenes escribe siempre en UTF-8, y su test le da
+un modelo con acentos y la codificación de la consola, como la CI. 1 mutación (sin el arreglo), cazada.

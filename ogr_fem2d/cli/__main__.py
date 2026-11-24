@@ -20,7 +20,7 @@ The command line of OGR FEM2D (spec 006, T15; RF-6): the operations of
 * ``calculate FILE``: open, calculate in a child process, wait, and the
   job's state.
 
-The answers are JSON on the standard output. An error of an operation is
+The answers are JSON on the standard output, in UTF-8. An error of an operation is
 JSON on the standard error, ``{"error": {"code": …, "message": …}}``, with
 exit status 2; any other failure, status 1. Relative paths mean
 ``--workdir`` (the current folder by default).
@@ -148,7 +148,17 @@ def parser() -> argparse.ArgumentParser:
     return p
 
 
+def _utf8() -> None:
+    """The answers are UTF-8 whatever the console's code page: on Windows a
+    pipe takes the locale's (cp1252), and an accent of a model's name or of
+    the report came out in it (found by the CI, v0.0.13)."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
+
+
 def main(argv=None) -> int:
+    _utf8()
     ns = parser().parse_args(argv)
     try:
         return ns.fn(ns)

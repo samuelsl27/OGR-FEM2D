@@ -11,7 +11,9 @@ Invariants protected:
 * **its commands do what they say**: ``calculate`` writes the results and
   says the job's state; ``info`` writes the report the operation gives;
   ``call`` takes its arguments as JSON and as name=value;
-* **an error says its code, and its exit status is 2**.
+* **an error says its code, and its exit status is 2**;
+* **the answers are UTF-8** whatever the console's code page (a model named
+  with accents, the locale's encoding on Windows: found by the CI).
 """
 from __future__ import annotations
 
@@ -35,14 +37,21 @@ LINE = {"quantity": "sigma_1", "kind": "line", "points_xy": [[2.0, 0.0], [2.0, -
 def _cli(*args, cwd):
     env = dict(os.environ)
     env["PYTHONPATH"] = str(ROOT) + os.pathsep + env.get("PYTHONPATH", "")
+    # the locale's code page, as on the CI's Windows: the answers are UTF-8
+    # all the same (v0.0.13, found there)
+    env.pop("PYTHONUTF8", None)
+    env.pop("PYTHONIOENCODING", None)
     return subprocess.run([sys.executable, "-m", "ogr_fem2d.cli", "--workdir", str(cwd), *args],
                           capture_output=True, text=True, encoding="utf-8", cwd=cwd, env=env,
                           timeout=300)
 
 
 def _saved(d) -> Path:
+    from dataclasses import replace
+    from ogr_fem2d.model import model as md
     path = Path(d) / "modelo.ogrfem2d"
-    ogr_file.write(_results.loaded_layers(), path)
+    m = _results.loaded_layers()
+    ogr_file.write(replace(m, summary=md.Summary(title="Túnel en arcilla, sección ÿ")), path)
     return path
 
 
