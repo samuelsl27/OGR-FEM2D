@@ -168,3 +168,28 @@ subproceso de la parte B escribirá en su archivo de progreso.
 - Iteración a iteración, mientras una fase avanza, llega con la spec 007, cuando haya escalones.
 
 6 tests; 8 mutaciones, 8 cazadas.
+
+## T7 — el informe del modelo y de sus resultados (2026-11-24)
+
+`ogr_fem2d/report/info.py`: `report(modelo, abiertos)` da sus secciones, y `to_text` y `to_html` las
+escriben (RF-4, D17). Lo usarán la ventana del informe (parte D), la línea de órdenes y el servidor MCP
+(parte B).
+
+- Las secciones: el resumen, el análisis y las fases, el campo, los contornos, los materiales y sus
+  asignaciones, las condiciones y las cargas fase a fase, la malla, **lo que decide el resultado** (todos
+  los `deciding_values`, con su porqué, regla 12) y los resultados.
+- **Dice el estado de lo que cuenta**: sin malla, malla de otra geometría o de otros ajustes, resultados
+  que faltan, obsoletos o incompletos. Con resultados que no son válidos no da las reacciones por
+  contorno: la malla puede ser otra.
+- De la malla, además de sus ajustes: los nudos y los elementos, la cota B y el ángulo que garantiza, los
+  peores ángulos, los nudos que el mallador añadió en cada segmento, si su terminación con arcos está
+  probada y sus avisos. De cada fase: si se resolvió, el mayor desplazamiento, los extremos de σ1 y σ3 en
+  los puntos y en los nudos, y las reacciones, en total y por contorno (spec 005, D14).
+- Los valores, en las unidades que se muestran; los títulos, las etiquetas y las palabras fijas son el
+  texto inglés que la interfaz pasará por `tr()` (regla 2).
+- **Sus números se comprueban contra algo externo** (regla 1): en una columna de dos estratos con los
+  lados en rodillos y una carga uniforme, la mayor tensión vertical es q + Σγh = 100 + 18·4 + 24·6 = 316
+  kPa, en los puntos y en los nudos (el campo es lineal en cada estrato, y el T6 lo representa exacto); y
+  las reacciones por contorno suman la total, 6320 kN por metro, que es el peso más la carga.
+
+7 tests; 9 mutaciones, 9 cazadas.

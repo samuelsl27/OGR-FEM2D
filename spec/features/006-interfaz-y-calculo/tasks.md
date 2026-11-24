@@ -83,10 +83,12 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   (Hecho el 2026-11-24: bit a bit en un túnel de tres fases y en el caso 007 desde su archivo; el
   005 y el 006 pasan por el mismo bucle en sus tests de la 005; el 003 y el 004 no pasan por
   `calculate`. El aviso dice si la fase se resolvió. 6 tests; 8 mutaciones, 8 cazadas.)
-- [ ] T7. `report/info.py`: el informe (RF-4, D17).
+- [x] T7. `report/info.py`: el informe (RF-4, D17).
 
   *Hecho cuando:* cada sección aparece; están todos los `deciding_values`; sin resultados, con
   resultados obsoletos o incompletos, lo dice; el texto y el HTML dicen lo mismo.
+  (Hecho el 2026-11-24: con la columna de dos estratos como comprobación externa, 316 kPa y las
+  reacciones. 7 tests; 9 mutaciones, 9 cazadas.)
 - [ ] T8. `results/drawing.py`: los triángulos y los niveles de un campo (RF-5, D11).
 
   *Hecho cuando:*
