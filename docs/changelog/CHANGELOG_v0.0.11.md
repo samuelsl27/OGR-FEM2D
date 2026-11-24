@@ -165,3 +165,37 @@ Leídas sobre las páginas renderizadas, porque el texto extraído pierde los di
   lo que decía D5.
 
 El plan («Decisiones de diseño» y «Formulación») está corregido con las tres.
+
+## T8 — la recuperación por parches, material a material (2026-11-24)
+
+`results/recovery.py`. Por fase y por material, con los elementos activos:
+
+- en cada nudo de esquina interior, el polinomio de grado p (1 en T3, 2 en T6) ajustado por mínimos
+  cuadrados a los puntos de integración del parche (Z&T ecs. 14.28–14.31), en coordenadas centradas
+  en el nudo y escaladas por el tamaño del parche;
+- cada parche determina su nudo, los intermedios de sus radios en T6 (fig. 14.8) y los nudos de su
+  parche que están en el borde del material (fig. 14.9). Un nudo que determinan varios parches toma
+  la media;
+- un nudo que no alcanza ningún parche toma el campo de sus propios elementos, de grado p − 1, y su
+  procedencia lo dice (`ELEMENT`).
+
+El resultado va por (elemento, nudo local), con un valor por material en los contactos y NaN en los
+inactivos.
+
+- **Lo que no alcanza ningún parche** no es solo un material de un elemento de espesor. También es un
+  elemento con sus tres esquinas en el contorno, como la esquina de un cuadrado, y los nudos que
+  comparte con sus vecinos. Ahí el valor es el del propio elemento: exacto con un campo de grado
+  p − 1, no con uno de grado p. Es la salida de D5, sin cambio.
+- **El caso 005** (84 198 puntos): 2.2 s, 13 089 parches, ninguno rechazado por el número de
+  condición, y 16 nudos por el campo del elemento.
+- `tests/test_results_recovery_v0011.py`, 6 tests:
+  - un campo cuadrático con T6 en la malla curva de un túnel, exacto en todos los nudos que alcanza
+    un parche, contornos y hueco incluidos;
+  - el campo gravitatorio de dos estratos, exacto a cada lado del contacto, con el salto de la
+    tensión horizontal;
+  - un campo constante con T3;
+  - la regla de la fig. 14.8, con datos al azar;
+  - un material de un elemento de espesor, con su procedencia;
+  - un elemento inactivo con basura en sus puntos, que no entra.
+
+  8 mutaciones, 8 cazadas, entre ellas mezclar los materiales en un parche.

@@ -96,7 +96,7 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   (Hecho el 2026-11-24. **Hallazgo**: para el T6 los puntos óptimos no son los medios de los lados,
   que son los de la cuadratura mínima; y la fig. 14.8 precisa D5: un parche determina su nudo central
   y los intermedios de sus radios, no todos los nudos que contiene. Changelog.)
-- [ ] T8. `results/recovery.py`: SPR material a material (D5) — RF-8 y RF-9.
+- [x] T8. `results/recovery.py`: SPR material a material (D5) — RF-8 y RF-9.
   - Los parches de los nudos interiores del material, en coordenadas locales escaladas.
   - Los bordes del material desde los parches interiores.
   - Los nudos intermedios del T6.
@@ -110,6 +110,9 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
     los mezcla, no;
   - un material de un elemento de espesor da la salida extrapolada, y la procedencia lo dice;
   - el tiempo en el caso 005 está medido y anotado.
+
+  (Hecho el 2026-11-24: 6 tests; 8 mutaciones, 8 cazadas. Caso 005: 2.2 s, 13 089 parches, ninguno
+  rechazado, 16 nudos por el campo del elemento.)
 - [ ] T9. `results/queries.py`: la línea y la polilínea, todos los nudos y todos los puntos (D9) —
   RF-11 y RF-13.
 
