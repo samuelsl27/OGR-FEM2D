@@ -36,12 +36,15 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
 
 ## Parte A — v0.0.12: lo que falta sin Qt
 
-- [ ] T2. **v0.0.12**, `model/edit.py`: contornos y vértices (añadir, mover, borrar, cerrar, cambiar
+- [x] T2. **v0.0.12**, `model/edit.py`: contornos y vértices (añadir, mover, borrar, cerrar, cambiar
   de tipo) — RF-1, RF-7. Empieza `CHANGELOG_v0.0.12.md`.
 
   *Hecho cuando:* cada edición da un modelo válido o un error que nombra el argumento; aplicada por
   `Document.edit`, deshacer la devuelve; en axisimetría, un vértice con x < 0 se rechaza al
   añadirlo.
+  (Hecho el 2026-11-24: también renombrar, trasladar, insertar y borrar vértices y el arco y las
+  divisiones de un segmento; la geometría compartida sigue compartida. 21 tests; 17 mutaciones, 17
+  cazadas.)
 - [ ] T3. `model/cuts.py`: los cortes (RF-2).
 
   *Hecho cuando:*
