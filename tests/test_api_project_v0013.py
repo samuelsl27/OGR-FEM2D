@@ -137,10 +137,11 @@ class TestFiles:
                      "unsaved changes")
             api.call(ws, "project_save", project_id=again)          # its own file
             assert not ws.get(again).unsaved()
-            # a model being drawn is not saved (ogr_file.write asks it valid): said
+            # a model being drawn is saved, and opened again says what is unfinished
             empty = api.call(ws, "project_new", name="Vacío")["project_id"]
-            _refused(lambda: api.call(ws, "project_save", project_id=empty, path="vacio"),
-                     InvalidArgument, "[external]")
+            api.call(ws, "project_save", project_id=empty, path="vacio")
+            got = api.call(ws, "project_open", path="vacio.ogrfem2d")
+            assert [p["rule"] for p in got["problems"]] == ["external"]
             other = ws.add(Held(replace(_models.tunnel(), summary=md.Summary("Otro")))).id
             _refused(lambda: api.call(ws, "project_save", project_id=other, path="copia"),
                      Conflict)

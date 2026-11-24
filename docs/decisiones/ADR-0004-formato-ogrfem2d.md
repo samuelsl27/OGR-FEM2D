@@ -29,7 +29,11 @@ del repositorio: `B_RS2_documentacion/modelo/M02_menu_file_e_import_export.md`, 
 
 - El modelo de OGR FEM2D se guarda en un archivo propio, **`modelo.ogrfem2d`**, en JSON. Lleva
   `format`, `format_version` y `written_by`. Una versión posterior, una clave desconocida o un tipo
-  erróneo dan un error que los nombra; nada se pierde en silencio.
+  erróneo dan un error que los nombra; nada se pierde en silencio. **Guarda un modelo válido como
+  documento**, también a medio dibujar (sin externo, con contornos que se cruzan, con una región sin
+  material), y lo dice al abrirlo; calcular exige el modelo entero válido (modificado el 2026-11-24,
+  spec 006, T11, con el OK de la propietaria: hasta entonces solo se guardaba un modelo listo para
+  calcular).
 - **Lleva la malla entera**, con la huella de la entrada del mallador de la que salió (spec 004, D3).
   Va un nudo y un elemento por línea, para que git pueda comparar el archivo.
 - Los resultados siguen aparte, en `modelo.h5`, con la huella del modelo (ADR-0003).

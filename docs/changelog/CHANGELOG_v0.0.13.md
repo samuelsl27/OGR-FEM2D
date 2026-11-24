@@ -58,3 +58,14 @@ Se propone: que el archivo admita un modelo **válido como estructura** (tipos, 
 referencias, una tabla por fase) aunque tenga problemas de geometría o de asignación (sin externo,
 cruces, regiones sin material), y que los diga al abrirlo; calcular sigue exigiendo el modelo entero
 válido. Toca la spec 004 (D1, ADR-0004): espera el OK de la propietaria.
+
+**Corregida con el OK de la propietaria (2026-11-24).** `model.validate_document` deja pasar lo que un
+modelo a medio dibujar todavía puede romper (`model.DRAWING_RULES`: sin externo o con dos, y las reglas
+geométricas de `regions`); lo demás sigue siendo obligatorio. `ogr_file` escribe y lee con ella; el motor
+sigue con `validate`. `project_open` devuelve los problemas del modelo abierto, para que la interfaz diga
+qué falta. Corregidos la spec 004 (RF-13 y «Lo que se encontró»), el ADR-0004 y `docs/modelo/formato.md`.
+Test nuevo (`test_model_file_drawing_v0013.py`): un modelo vacío, uno sin externo, uno con un cruce y uno
+con una región sin material van al archivo y vuelven iguales, con los mismos bytes; un material con
+ν = 0,7, una asignación a un material que no existe y una carga en un contorno que no existe se siguen
+rechazando al escribir y al leer; ninguno de los cuatro llega al motor. 3 tests; 5 mutaciones, 5
+cazadas.

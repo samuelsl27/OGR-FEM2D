@@ -13,8 +13,9 @@ knows the other.
   or a ``.dxf``, converting them (spec 004, D13 and D16): those come as a
   new model without a file, with the report of what was brought, what not,
   what was set by default and what was changed;
-* ``project_save`` writes a ``.ogrfem2d`` and never replaces another file
-  unless told to; ``project_close`` refuses to lose unsaved changes unless
+* ``project_save`` writes a ``.ogrfem2d``, also of a model being drawn (a
+  file holds a model valid as a document, spec 004 as modified in T11), and
+  never replaces another file unless told to; ``project_close`` refuses to lose unsaved changes unless
   told to;
 * ``project_settings`` edits the kind of analysis, the units shown and the
   summary, as one undo step.
@@ -103,8 +104,8 @@ def project_new(ws, name: str = "", analysis: str = md.ANALYSES[0],
 @OPERATIONS.operation("project_open", toolset="core")
 def project_open(ws, path: str) -> dict:
     """Open a .ogrfem2d file, or convert a .ogr of OGR Slip2D or a .dxf
-    into a new model; return its project_id and, for a conversion, the
-    report of what it did."""
+    into a new model; return its project_id, what is still unfinished in it
+    (its problems) and, for a conversion, the report of what it did."""
     p = ws.resolve_path(_text(path, "path"))
     suffix = p.suffix.lower()
     if suffix not in OPENS:
@@ -122,7 +123,9 @@ def project_open(ws, path: str) -> dict:
             report = _report(rep)
     handle = ws.add(Held(m), path=p if suffix == SUFFIX else None)
     out = {"project_id": handle.id, "name": m.summary.title,
-           "path": str(p) if suffix == SUFFIX else None, "converted_from": None}
+           "path": str(p) if suffix == SUFFIX else None, "converted_from": None,
+           "problems": [{"rule": x.rule, "where": x.where, "message": x.message}
+                        for x in md.problems(m)]}
     if report is not None:
         out["converted_from"] = str(p)
         out["report"] = report

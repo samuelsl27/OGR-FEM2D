@@ -128,8 +128,9 @@ Empieza cuando la versión de OGR-Core de D1 (i) está etiquetada.
   *Hecho cuando:* cada operación rechaza un argumento desconocido o inválido con su nombre; cada
   edición es un paso de deshacer; abrir una importación devuelve su informe.
   (Hecho el 2026-11-24: también `project_summary`, `project_validate` y `project_settings`; los
-  textos, codificados. 7 tests; 14 mutaciones, 14 cazadas. **Anomalía reportada**: un modelo a
-  medio dibujar no se puede guardar, porque `ogr_file.write` lo valida entero.)
+  textos, codificados. 7 tests; 14 mutaciones, 14 cazadas. **Anomalía**: un modelo a medio
+  dibujar no se podía guardar; corregida en la spec 004 con el OK de la propietaria: el archivo
+  guarda un modelo válido como documento. 3 tests más; 5 mutaciones, 5 cazadas.)
 - [ ] T12. `api/ops/model.py` y `api/ops/mesh.py`: las ediciones de la parte A, discretizar y mallar
   (RF-6, RF-12).
 

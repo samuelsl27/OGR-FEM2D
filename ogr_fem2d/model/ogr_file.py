@@ -16,7 +16,13 @@ Reading is strict: a key the file should have and does not, a key it should
 not have (a later version, or a mistake), a value of another type, or a
 later ``format_version`` is an error that names it (FileFormatError, every
 problem at once). Nothing is ever dropped in silence; then the model is
-validated by its own rules (ModelError).
+validated by its own rules AS A DOCUMENT (``model.validate_document``,
+ModelError): a model being drawn (no external yet, boundaries that still
+cross, a region without its material) is written and read back, and
+``model.problems`` says what is unfinished; calculating it is refused
+(spec 004, modified by spec 006, T11: until then a file had to hold a
+model ready to calculate, and the engineer could not save the work of an
+afternoon until the model was finished).
 
 Writing is deterministic and keeps the file readable and comparable with
 git: objects one key per line, a list of numbers on one line, and a list of
@@ -178,8 +184,8 @@ def _inline(value) -> str:
 
 
 def dumps(m: md.Model) -> str:
-    """The text of the file of a valid model."""
-    md.validate(m)
+    """The text of the file of a model valid as a document."""
+    md.validate_document(m)
     return _dump(to_dict(m), "") + "\n"
 
 
@@ -285,7 +291,7 @@ def from_dict(data) -> md.Model:
     model = _model(r, top)
     if r.problems:
         raise FileFormatError(r.problems)
-    return md.validate(model)
+    return md.validate_document(model)
 
 
 def _model(r: _Reader, d: dict) -> md.Model | None:

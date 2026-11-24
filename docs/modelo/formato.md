@@ -121,7 +121,13 @@ que escribir lo leído da los mismos bytes.
 
 **Lectura** estricta (`ogr_file.read`): una clave que falta, una que sobra (de una versión posterior
 o un error), un valor de otro tipo o un `format_version` posterior son un `FileFormatError` que los
-nombra, todos a la vez. Nada se pierde en silencio. Después, el modelo pasa sus propias reglas.
+nombra, todos a la vez. Nada se pierde en silencio. Después, el modelo pasa sus propias reglas **como
+documento** (`model.validate_document`): lo que un modelo a medio dibujar todavía puede romper
+(`model.DRAWING_RULES`: sin externo o con dos, y las reglas geométricas de `regions`, como contornos
+que se cruzan o una región sin material) no impide escribirlo ni leerlo, y `model.problems` lo dice;
+calcular sí lo exige todo. Lo demás (tipos, identificadores, referencias, un valor por fase, las
+reglas de cada material, carga y condición) sigue siendo obligatorio para escribir y para leer. Así
+desde la v0.0.13 (spec 006, T11); antes un archivo tenía que tener un modelo listo para calcular.
 
 ## La traducción
 

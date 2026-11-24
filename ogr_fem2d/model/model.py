@@ -659,6 +659,26 @@ def validate(m: Model) -> Model:
     return m
 
 
+#: The rules a model being drawn may still break (spec 004, modified by
+#: spec 006, T11): no external boundary yet or two, and the geometric rules
+#: of ``regions`` (boundaries that cross, a loose end, a region still
+#: without its material…). Such a model is a document: it is saved and
+#: opened, with these problems said; it is not calculated.
+DRAWING_RULES = ("external", "arc", "segment_conflict", "crossing", "dangling",
+                 "outside_external", "region_unassigned", "region_twice", "assignment_outside")
+
+
+def validate_document(m: Model) -> Model:
+    """The model itself when it is valid AS A DOCUMENT: every problem but
+    those of ``DRAWING_RULES`` raises ModelError. What a file needs to be
+    written and read back (types, ids, references, one value per stage);
+    calculating asks the whole model valid (``validate``)."""
+    found = [p for p in problems(m) if p.rule not in DRAWING_RULES]
+    if found:
+        raise ModelError(found)
+    return m
+
+
 def refuse_new_problems(before: Model, after: Model) -> Model:
     """``after`` when it has no problem that ``before`` did not have;
     ModelError with the new ones otherwise (spec 006, T5). An edit of a

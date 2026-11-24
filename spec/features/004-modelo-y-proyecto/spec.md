@@ -158,6 +158,10 @@ fase 1, y hoy ninguno lo tiene.
   - guardar y abrir es una identidad, hasta los bytes del archivo;
   - SI una sección no tiene la forma esperada, una clave no se conoce o la versión es posterior,
     ENTONCES da un error que la nombra; nada se pierde en silencio.
+  - *Modificado el 2026-11-24 (spec 006, T11, OK de la propietaria)*: guarda y abre un modelo
+    **válido como documento**, también a medio dibujar (sin externo, con contornos que se cruzan, con
+    una región sin material), y dice lo que le falta; calcular sigue exigiendo el modelo entero
+    válido.
 - RF-14: EL SISTEMA abre un `.ogr` de OGR Slip2D (D16) y un DXF (D13) convirtiéndolos, y dice qué ha
   traído, qué no ha podido traer y por qué, y qué valores por defecto ha puesto.
 - RF-15: EL SISTEMA permite deshacer y rehacer cada edición del modelo.
@@ -295,3 +299,7 @@ Reportado y corregido durante las tareas, para revisar por la propietaria:
   por su id.
 - **Los vértices de la subdivisión del núcleo (T12)**: vuelven movidos ~10⁻⁹; se toman los dibujados.
 - **Un punto sobre la cuerda de un arco (T17)**: cuenta como fuera de la región; anotado, sin cambio.
+- **Un modelo a medio dibujar no se podía guardar (spec 006, T11)**: `ogr_file.write` y `read`
+  validaban el modelo entero. Corregido con el OK de la propietaria (2026-11-24): el archivo guarda un
+  modelo válido como documento (`model.validate_document`, `model.DRAWING_RULES`), y calcular sigue
+  exigiéndolo entero. RF-13 y el ADR-0004 lo dicen.
