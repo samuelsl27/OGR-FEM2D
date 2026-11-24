@@ -279,6 +279,7 @@ def stage_delete(ws, stage: str, project_id: Optional[str] = None) -> dict:
 
 @OPERATIONS.operation("stage_rename", toolset="model", mutates=True)
 def stage_rename(ws, stage: str, name: str, project_id: Optional[str] = None) -> dict:
+    """Give a stage another name (its id stays)."""
     handle, _m = edit(ws, project_id, say("fem.step.stage_rename"),
                       lambda m: stages.rename_stage(m, _stage_id(m, stage), name))
     return {"project_id": handle.id, "stage": stage, "name": name}
@@ -346,6 +347,7 @@ def condition_set(ws, kind: str, project_id: Optional[str] = None,
 
 @OPERATIONS.operation("condition_delete", toolset="model", mutates=True)
 def condition_delete(ws, condition: int, project_id: Optional[str] = None) -> dict:
+    """Delete a condition, by its index (project_summary counts them)."""
     k = coerce_value(condition, int, "condition")
     handle, _m = edit(ws, project_id, say("fem.step.condition_delete"),
                       lambda m: ed.delete_condition(m, k))
@@ -437,6 +439,7 @@ def load_set(ws, kind: str, magnitude: float, project_id: Optional[str] = None,
 
 @OPERATIONS.operation("load_delete", toolset="loads", mutates=True)
 def load_delete(ws, load: int, project_id: Optional[str] = None) -> dict:
+    """Delete a load, by its index (project_summary counts them)."""
     k = coerce_value(load, int, "load")
     handle, _m = edit(ws, project_id, say("fem.step.load_delete"), lambda m: ed.delete_load(m, k))
     return {"project_id": handle.id, "deleted": k}

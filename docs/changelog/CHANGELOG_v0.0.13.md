@@ -157,3 +157,29 @@ JSON con su código en la salida de error y estado 2 (RF-6).
 
 3 tests; 6 mutaciones, 6 cazadas (la que leía `--arg` como texto se escapaba: un número como texto lo
 acepta la conversión del núcleo; ahora se pasa una lista).
+
+## T16 — el servidor MCP (2026-11-24)
+
+`ogr_fem2d/mcp/` (`python -m ogr_fem2d.mcp --workdir <carpeta>`, y `ogr-fem2d-mcp` para quien instale la
+rueda con el extra `[mcp]`): una herramienta por operación, por la entrada y la salida estándar, sobre los
+modelos de una carpeta, sin OAuth (RF-6; D1, D14). El SDK (`mcp` 2.3.0, MIT, el de Slip2D) se instaló en
+el `.venv` con el OK de la propietaria, con sus dependencias (no toca `ogr-core`, NumPy ni SciPy), y se
+declara como extra opcional.
+
+- **Las herramientas salen del registro**, no se escriben a mano como en Slip2D: cada una toma los
+  parámetros de su operación, con sus tipos, y su descripción es la de la operación. Un test comprueba que
+  son exactamente las operaciones, con sus parámetros y los obligatorios. Tres operaciones no tenían
+  descripción y ahora la tienen.
+- **Un agente sabe qué toca cada herramienta**: la que edita un modelo, escribe un archivo o para un
+  proceso no es de solo lectura; las demás, sí.
+- **El SDK descartaba en silencio un argumento que no conoce**: `project_new` con `nmae` creaba un modelo
+  sin nombre, sin avisar. Ahora el servidor lo rechaza por su nombre, con «Did you mean 'name'?», como
+  `api.call` (RF-7).
+- **Las capas, vigiladas**: un test en un intérprete limpio comprueba que las operaciones y la línea de
+  órdenes no cargan Qt ni el SDK de MCP, y que el motor no carga nada del modelo, de los resultados, de las
+  operaciones ni de la interfaz (regla 11).
+- **La CI todavía no instala el extra `[mcp]`**: sus tests dicen que no pueden correr allí (`skip`) en vez
+  de fallar. Para que corran hace falta una línea en `.github/workflows/wheels.yml`; queda para la
+  propietaria, que decide si va en una rama corta.
+
+4 tests; 8 mutaciones, 8 cazadas.

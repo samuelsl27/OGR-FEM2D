@@ -164,11 +164,14 @@ Empieza cuando la versión de OGR-Core de D1 (i) está etiquetada.
   *Hecho cuando:* abrir, mallar, calcular, consultar, exportar y el informe funcionan sobre un caso;
   un error sale con su código y la salida distinta de cero.
   (Hecho el 2026-11-24: también `run` con una lista de pasos. 3 tests; 6 mutaciones, 6 cazadas.)
-- [ ] T16. `mcp/`: el servidor MCP, con el SDK (`mcp>=2.1,<3`, MIT) en el extra `[mcp]`, con el OK de
+- [x] T16. `mcp/`: el servidor MCP, con el SDK (`mcp>=2.1,<3`, MIT) en el extra `[mcp]`, con el OK de
   la propietaria y `--no-deps` (D14).
 
   *Hecho cuando:* las herramientas son exactamente el catálogo (un test lo comprueba); un argumento
   inválido devuelve el error de la operación.
+  (Hecho el 2026-11-24: `mcp` 2.3.0 instalado con el OK de la propietaria. El SDK descartaba en
+  silencio un argumento desconocido; ahora se rechaza por su nombre. Test de capas nuevo. La CI no
+  instala el extra todavía: sus tests se saltan allí. 4 tests; 8 mutaciones, 8 cazadas.)
 - [ ] T17. **Las identidades de transporte y los casos por las operaciones** (RF-22).
 
   *Hecho cuando:*
