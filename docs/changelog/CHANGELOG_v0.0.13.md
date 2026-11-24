@@ -69,3 +69,28 @@ con una región sin material van al archivo y vuelven iguales, con los mismos by
 ν = 0,7, una asignación a un material que no existe y una carga en un contorno que no existe se siguen
 rechazando al escribir y al leer; ninguno de los cuatro llega al motor. 3 tests; 5 mutaciones, 5
 cazadas.
+
+## T12 — las operaciones que editan el modelo y su malla (2026-11-24)
+
+`ogr_fem2d/api/ops/model.py` y `mesh.py`: `boundary_add`, `boundary_circle`, `boundary_edit` (borrar,
+renombrar, cambiar de tipo, cerrar o abrir, trasladar, mover, insertar o borrar un vértice, el arco o las
+divisiones de un segmento), `material_set`, `material_delete`, `material_assign`, `region_excavate`,
+`stage_add`, `stage_delete`, `stage_rename`, `field_set`, `condition_set`, `condition_delete`,
+`condition_stage`, `condition_default`, `load_set`, `load_delete`, `load_stage`, `mesh_settings`,
+`mesh_discretize`, `mesh_generate` y `mesh_reset` (RF-6, RF-12). Con los nombres de Slip2D donde hacen lo
+mismo; 31 operaciones en total.
+
+- **El caso 006, construido desde cero por las operaciones**, dibujado, con su material, sus
+  condiciones, su carga y sus ajustes de malla, y mallado, es el modelo de su `modelo.ogrfem2d`: la misma
+  huella del modelo, que incluye la malla, y los mismos nombres. Es la identidad que la T29 pedirá a la
+  interfaz, ya cumplida por debajo de ella.
+- **Cada edición de `model/edit.py` y de `stages.py` tiene su operación**, y un test lo cuenta contra los
+  módulos: una edición nueva sin operación lo pone en rojo.
+- **Dibujar con sus cortes es un paso de deshacer**, y la respuesta lista los vértices puestos; deshacer
+  los quita de los dos contornos. `cut=false` dibuja sin cortar.
+- **La malla se queda y se dice vieja** tras una edición de la geometría o de los ajustes; el primer paso
+  (`mesh_discretize`) da los nudos de cada segmento sin tocar el modelo.
+
+6 tests; 14 mutaciones, 14 cazadas (tres se escapaban al principio: la huella del modelo no mira los
+nombres, cambiar un material no se probaba, y una carga puntual con contorno y vértice a la vez no se
+pedía).

@@ -131,12 +131,15 @@ Empieza cuando la versión de OGR-Core de D1 (i) está etiquetada.
   textos, codificados. 7 tests; 14 mutaciones, 14 cazadas. **Anomalía**: un modelo a medio
   dibujar no se podía guardar; corregida en la spec 004 con el OK de la propietaria: el archivo
   guarda un modelo válido como documento. 3 tests más; 5 mutaciones, 5 cazadas.)
-- [ ] T12. `api/ops/model.py` y `api/ops/mesh.py`: las ediciones de la parte A, discretizar y mallar
+- [x] T12. `api/ops/model.py` y `api/ops/mesh.py`: las ediciones de la parte A, discretizar y mallar
   (RF-6, RF-12).
 
   *Hecho cuando:* cada edición de `model/edit.py` tiene su operación (un test lo cuenta); mallar
   marca la malla vieja cuando cambia la geometría; los nombres coinciden con los de Slip2D donde
   hacen lo mismo.
+
+  (Hecho el 2026-11-24: el caso 006, construido desde cero por las operaciones, tiene la huella de
+  su archivo. 6 tests; 14 mutaciones, 14 cazadas.)
 - [ ] T13. `api/worker.py` y `api/ops/analysis.py`: calcular como trabajo en subproceso (RF-9–12).
 
   *Hecho cuando:*

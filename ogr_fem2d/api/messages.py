@@ -45,8 +45,42 @@ _ENTRIES = [
     _spec("fem.history.steps", "steps must be between 1 and 200."),
     _spec("fem.argument.text", "{where} must be text."),
     _spec("fem.argument.of", "argument of {op}"),
+    _spec("fem.span.both", "A stretch of a boundary needs both its start and its end, or neither "
+                           "(all of it)."),
+    _spec("fem.where.one", "Give a stretch of a boundary (boundary, start, end) or a vertex, "
+                           "one of the two."),
+    _spec("fem.arcs.shape", "arcs[{index}] must be {{\"segment\": k, \"centre\": [x, y]}}."),
+    _spec("fem.circle.one", "Give the radius or a point the circle goes through, one of the two."),
+    _spec("fem.stage.index", "There is no place {index} for a stage: there are {count} stages, "
+                             "from 0 to {count}."),
+    _spec("fem.strata.shape", "strata[{index}] must be {{\"bottom\", \"unit_weight\", \"k\", \"kz\"}}."),
+    _spec("fem.load.point_vertex", "A point load is at a vertex: give vertex, not boundary."),
+    _spec("fem.load.distributed_span", "A distributed load is on a stretch of a boundary: give "
+                                       "boundary (and start, end), not vertex."),
+    _spec("fem.mesh.clear_and_set", "{name} is both given and cleared."),
+    _spec("fem.windows.shape", "windows[{index}] must be {{\"polygon\": [[x, y], ...], \"size\": h}}."),
     # -- the names of the undo steps (the Edit menu, project_history) -------
     _spec("fem.step.project_settings", "Project settings"),
+    _spec("fem.step.boundary_add", "Add boundary"),
+    _spec("fem.step.boundary_edit", "Edit boundary ({op})"),
+    _spec("fem.step.material_set", "Material"),
+    _spec("fem.step.material_delete", "Delete material"),
+    _spec("fem.step.material_assign", "Assign material"),
+    _spec("fem.step.region_excavate", "Excavate"),
+    _spec("fem.step.stage_add", "Add stage"),
+    _spec("fem.step.stage_delete", "Delete stage"),
+    _spec("fem.step.stage_rename", "Rename stage"),
+    _spec("fem.step.field_set", "Field stress"),
+    _spec("fem.step.condition_set", "Condition"),
+    _spec("fem.step.condition_delete", "Delete condition"),
+    _spec("fem.step.condition_stage", "Condition in a stage"),
+    _spec("fem.step.condition_default", "Default condition of the external boundary"),
+    _spec("fem.step.load_set", "Load"),
+    _spec("fem.step.load_delete", "Delete load"),
+    _spec("fem.step.load_stage", "Load in a stage"),
+    _spec("fem.step.mesh_settings", "Mesh settings"),
+    _spec("fem.step.mesh_generate", "Mesh"),
+    _spec("fem.step.mesh_reset", "Remove mesh"),
 ]
 
 #: Every message of the operations of this program, by code.
