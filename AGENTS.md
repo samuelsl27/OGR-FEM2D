@@ -45,6 +45,11 @@ Autor y titular del copyright: Samuel Sáez López (UPCT). Licencia AGPL-3.0-or-
   núcleo. OGR Slip2D adoptó el núcleo en su v0.1.473 (ya no lleva `ogr_core/` ni ningún paquete
   `ogr_fem2d`), fija su propia etiqueta y tiene su propio `.venv`; los dos programas pueden fijar
   versiones distintas.
+- **Interfaz común** (`ADR-0005`): lo genérico sin Qt (operaciones, errores, trabajos en
+  subproceso, puente) viene de `ogr_core`; lo genérico con Qt, del paquete hermano `ogr-gui`
+  (repositorio OGR-GUI), fijado por etiqueta como el núcleo y con las mismas reglas: **se cambia
+  solo en su repositorio** y aquí no se copia. La ventana, el lienzo y la interpretación son de este
+  programa.
 - **Formato de proyecto**: `.ogrfem2d` (JSON) propio, con el modelo y la malla; abre el `.ogr` de
   OGR Slip2D convirtiéndolo (`ADR-0004`). Los resultados van aparte en `modelo.h5` con la huella
   del modelo (`ADR-0003`).

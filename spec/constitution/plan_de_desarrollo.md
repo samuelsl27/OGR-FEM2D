@@ -36,7 +36,7 @@ numeración 004–019 es la de este plan; desde la 020 son specs nuevas.
 |---|---|---|---|
 | 004 | `004-modelo-y-proyecto` | 1 | |
 | 005 | `005-resultados` | 1 | |
-| 006 | `006-interfaz-y-calculo` | 1 | El borrador propone partirla en cuatro (operaciones y transporte, P1, modelador, cálculo e interpretación) |
+| 006 | `006-interfaz-y-calculo` | 1 | En cuatro partes, una versión cada una (D2, 2026-11-24): A, lo que falta sin Qt; B, operaciones y transporte; C, modelador; D, cálculo e interpretación y el cierre de la fase |
 | 007 | `007-convergencia-y-colapso` | 2 | |
 | 008 | `008-leyes-plasticas` | 2 | Con el contrato común de ley constitutiva y el del modelo de usuario |
 | 009 | `009-reduccion-de-resistencia` | 2 | Con el área de búsqueda y exclusión y la curva del SRF |
@@ -97,13 +97,14 @@ borrador correspondiente; se deciden al abrir la spec):
 **Tomadas por el propietario el 2026-10-27: las cuatro propuestas.** P1, opción (b): la parte
 genérica de la interfaz se extrae, copiándola desde Slip2D sin tocarlo, a una versión nueva de
 OGR-Core o a un paquete hermano `ogr-gui`; cuál de los dos se decide en el ADR que abra la *spec* de
-la interfaz, y cada versión nueva de OGR-Core sigue necesitando su OK. P2: T6 y T3 en la fase 1. P3:
+la interfaz, y cada versión nueva de OGR-Core sigue necesitando su OK. **Decidido en el ADR-0005
+(2026-11-24): las dos**, lo de sin Qt al núcleo y lo de Qt a `ogr-gui`. P2: T6 y T3 en la fase 1. P3:
 las presiones hidrostáticas pasan a la fase 2 (la hoja de ruta se actualizó). P4: el bucle global
 pasa a Rust en la fase 2, tras medir.
 
 | # | Decisión | Opciones | Propuesta | Por qué importa |
 |---|---|---|---|---|
-| P1 | **Cómo reutilizar la interfaz de Slip2D.** `ogr_gui` (42 000 líneas), `ogr_api` (9 700), `ogr_mcp` (2 900) y `ogr_cli` viven en el repositorio de Slip2D, que no se toca | (a) copiarlos a OGR-FEM2D y adaptarlos; (b) extraer lo genérico (lienzo, herramientas, diálogos de proyecto, vista y preferencias, contornos, i18n, trabajos en subproceso, deshacer) a una versión nueva de OGR-Core o a un paquete hermano `ogr-gui`, copiándolo desde Slip2D sin tocarlo, como se hizo con el núcleo; (c) escribirla de nuevo | **(b)**: es la vía del ADR-0002 y evita una tercera copia divergente; pide un ADR y una versión nueva de OGR-Core con tu OK | Es la tarea más grande de la fase 1 y decide si FEM2D y Slip2D comparten aspecto y comportamiento |
+| P1 | **Cómo reutilizar la interfaz de Slip2D.** `ogr_gui` (42 000 líneas; 48 721 medidas en la v0.1.486 al abrir la spec 006), `ogr_api` (9 700; 10 158), `ogr_mcp` (2 900; 2 952) y `ogr_cli` viven en el repositorio de Slip2D, que no se toca | (a) copiarlos a OGR-FEM2D y adaptarlos; (b) extraer lo genérico (lienzo, herramientas, diálogos de proyecto, vista y preferencias, contornos, i18n, trabajos en subproceso, deshacer) a una versión nueva de OGR-Core o a un paquete hermano `ogr-gui`, copiándolo desde Slip2D sin tocarlo, como se hizo con el núcleo; (c) escribirla de nuevo | **(b)**: es la vía del ADR-0002 y evita una tercera copia divergente; pide un ADR y una versión nueva de OGR-Core con tu OK | Es la tarea más grande de la fase 1 y decide si FEM2D y Slip2D comparten aspecto y comportamiento |
 | P2 | **Elementos de la fase 1.** La hoja de ruta dice T3/T6/Q4/Q8 | T6 solo; T6 y T3; los cuatro | **T6 como elemento principal y T3 (que ya genera la malla de `ogr-core`)**; Q4 y Q8 cuando haya mallado mapeado (spec de malla) | La regla 9 deja que cada caso fije su elemento: no hace falta el Q8 de la ficha de STR-01 para validarlo |
 | P3 | **Agua para el SSR antes de la fase 4.** Los casos de SSR (123 de 274) piden nivel freático, Hu/Ru y agua embalsada, que no son flujo FEM | dejarlo en la fase 4; adelantarlo a la fase 2 | **Adelantar a la fase 2 las presiones hidrostáticas** (nivel freático, Hu, Ru, rejilla, agua embalsada; ya están en `ogr-core`) y dejar en la 4 el flujo FEM, el no drenado y la consolidación | Con eso la fase 2 desbloquea unos 41 casos en lugar de 21 (recuento del índice de casos) |
 | P4 | **Cuándo pasa el bucle global a Rust.** Hoy Python ensambla y factoriza: en la malla del caso 002 la factorización (75–94 ms) ya pesa más que la llamada de Rust (5–9 ms) | ahora; en la fase 2, con el SSR (cientos de análisis); más tarde | **En la fase 2**, con una medida A/B de SuperLU frente a `faer` como manda el ADR-0001 | El SSR multiplica el coste del bucle por el número de factores probados |
@@ -177,7 +178,14 @@ aplicarlo en la interfaz).
   evolución por fase.
 
 ### Spec 006 — Interfaz, operaciones y cálculo (depende de P1)
-- `ogr_api`: operaciones sin Qt para todo lo anterior (y la línea de órdenes y el servidor MCP
+- **P1 concretada en el ADR-0005** (2026-11-24): lo genérico sin Qt (registro de operaciones,
+  errores, trabajos en subproceso, puente) a una versión nueva de OGR-Core; lo genérico con Qt a un
+  paquete hermano `ogr-gui`; la ventana, el lienzo y la interpretación se escriben aquí sobre esas
+  piezas, con la estética de Slip2D (`guia-de-interfaz.md`). En cuatro partes, v0.0.12 a v0.0.15:
+  **A**, las ediciones del modelo, los cortes, los arcos, el informe y el dibujo de un campo, sin Qt;
+  **B**, operaciones, línea de órdenes, servidor MCP y cálculo en subproceso; **C**, el modelador;
+  **D**, cálculo e interpretación en la interfaz y el cierre de la fase.
+- Operaciones sin Qt para todo lo anterior (y la línea de órdenes y el servidor MCP
   encima, como en Slip2D).
 - **Modelador**: los menús en el orden del flujo de trabajo (Archivo, Edición, Vista, Análisis,
   Contornos, Malla, Cargas, Desplazamientos, Soporte, Agua, Estadística, Propiedades, Herramientas,

@@ -1,6 +1,6 @@
 # Guía de interfaz: buenas prácticas
 
-> **Propuesta (2026-11-24), para el OK de la propietaria.** Parte de la constitución: se consulta
+> **Aprobada por la propietaria (2026-11-24)**, spec 006, D16. Parte de la constitución: se consulta
 > antes de diseñar o revisar cualquier pantalla, diálogo, menú o mensaje. No sustituye a las reglas
 > de `AGENTS.md`: las concreta para la interfaz.
 

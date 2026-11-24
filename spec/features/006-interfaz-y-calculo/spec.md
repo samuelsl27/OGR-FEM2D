@@ -1,9 +1,9 @@
 # Spec 006 — Interfaz, operaciones y cálculo
 
-> **Revisada (2026-11-24), para aprobar.** Fase 1 del plan de desarrollo
+> **Aprobada (2026-11-24)**, con D1–D18 tal como se propusieron. Fase 1 del plan de desarrollo
 > (`spec/constitution/plan_de_desarrollo.md`, «Spec 006 — Interfaz, operaciones y cálculo (depende
 > de P1)»). Solo el **qué** y el **porqué**; el cómo, en `plan.md`. Las dudas del borrador son ahora
-> las decisiones propuestas D1–D18 (abajo), para el OK de la propietaria. Versiones: **v0.0.12 a
+> las decisiones D1–D18 (abajo). Versiones: **v0.0.12 a
 > v0.0.15**, una por parte (D2).
 
 ## La revisión (2026-11-24)
@@ -66,7 +66,7 @@
 - [x] Análisis de la interfaz de referencia releído (`../Referencias/Doc_Guia/Analisis_interfaz_funcionamiento/`,
   árbol de menús, D01–D04, D08, interpretación, cálculo, reproducciones). Lo que confundía a los
   usuarios está en «Lo que se evita» (abajo).
-- [x] Dudas convertidas en decisiones propuestas (D1–D18), para el OK de la propietaria.
+- [x] Dudas convertidas en decisiones (D1–D18), aprobadas el 2026-11-24.
 
 ## Depende de
 
@@ -240,7 +240,7 @@ defecto que lo cambia se ve con el resultado (regla 12).
 
 ## Criterios de finalización
 
-- [ ] D1–D18 aprobadas por la propietaria; ADR-0005 escrito
+- [x] D1–D18 aprobadas por la propietaria; ADR-0005 escrito (2026-11-24)
 - [ ] Lo genérico, en las versiones etiquetadas que fija D1, fijadas aquí
 - [ ] Todos los RF con su test en verde; todo texto nuevo traducido; toda acción en un menú y con su
       operación (o su motivo para no tenerla)
@@ -252,13 +252,13 @@ defecto que lo cambia se ve con el resultado (regla 12).
 - [ ] Un changelog por parte con lo encontrado; fichas con su «Seguimiento»; la fase 1 cerrada en la
       hoja de ruta
 
-## Decisiones propuestas (2026-11-24)
+## Decisiones (2026-11-24)
 
-Para el OK de la propietaria. Las referencias D01–D08, M02, P03–P22 e I01–I03 son del análisis de
+Aprobadas el 2026-11-24, tal como se propusieron. Las referencias D01–D08, M02, P03–P22 e I01–I03 son del análisis de
 interfaz (`../Referencias/Doc_Guia/Analisis_interfaz_funcionamiento/`). Los tamaños de Slip2D son de
 su v0.1.486.
 
-| # | Duda del borrador | Decisión propuesta | Por qué |
+| # | Duda del borrador | Decisión | Por qué |
 |---|---|---|---|
 | D1 | 1: P1, OGR-Core o `ogr-gui`, y qué entra | **Las dos cosas, cada una con lo suyo, sin cambiar la regla de capas del núcleo.** (i) **Lo genérico sin Qt** (el registro de operaciones, los errores con código, la conversión de argumentos, los trabajos en subproceso y el protocolo del puente), a una versión nueva de **OGR-Core**: no importa PySide6 ni `mcp`, así que cabe. (ii) **Lo genérico con Qt** (temas y colores por papel, iconos, leyenda, paletas y niveles, enganche, barra de estado, motivos de lo deshabilitado, tareas en hilo, preferencias, ayudas de diálogo, gráfico XY, el mecanismo de `tr()` con sus textos y las comprobaciones de la regla 2 y la 3), a un **paquete hermano `ogr-gui`** (repositorio `samuelsl27/OGR-GUI`), que depende de `ogr-core` y se fija por etiqueta como él. Las dos cosas se copian de Slip2D **sin tocarlo**, como se hizo con el núcleo; Slip2D las adopta cuando su sesión lo decida. **No entra**: la ventana principal, la de interpretación, el lienzo completo ni los diálogos de contenido, que mezclan el equilibrio límite y el `Project`: este programa escribe los suyos sobre las piezas comunes. El servidor MCP de este programa es propio y fino (sin OAuth en la fase 1). ADR-0005 | La regla de capas del núcleo es la que deja probar el núcleo sin pantalla y usarlo desde la línea de órdenes; cambiarla por la interfaz es caro y no hace falta. Un paquete aparte para lo de Qt es lo que ya preveía P1. Lo que no es genérico no se extrae: copiarlo a medias sería la tercera copia que diverge (OGR Data ya es la segunda). Extraer solo lo limpio (del orden de 3 500 a 4 500 líneas con Qt, según cuántas ayudas de diálogo entren, y unas 1 200 sin él) es posible copiando, sin reescribir Slip2D |
 | D2 | 9: cómo partirla | **Una sola spec, en cuatro partes**, cada una con su versión y su changelog: **A** (v0.0.12), lo que falta en el modelo y en la interpretación, sin Qt y sin esperar a nadie; **B** (v0.0.13), operaciones, línea de órdenes, servidor MCP y cálculo en subproceso, con la versión de OGR-Core de D1; **C** (v0.0.14), el modelador, con `ogr-gui`; **D** (v0.0.15), cálculo e interpretación en la interfaz y el cierre de la fase 1. Las peticiones de D1 salen en la T1, antes de programar, para que avancen en paralelo a la parte A | Partirla en specs nuevas correría la numeración del plan. Las partes dejan cada versión cerrada y en verde, y la A no depende de nadie. El orden (A → B → C → D) es el de las dependencias: cada parte usa la anterior |
@@ -282,9 +282,9 @@ su v0.1.486.
 ### Consecuencias en el resto del proyecto
 
 - `plan_de_desarrollo.md`: P1 con los tamaños medidos (48 721 y 10 158), y la «Spec 006» con sus
-  cuatro partes. En la T0, con el OK.
-- ADR-0005 nuevo (D1); `tech-stack.md`, la fila del núcleo y una de `ogr-gui`; `AGENTS.md`,
-  «Stack» y el enlace a la guía de interfaz (D16). En la T0.
+  cuatro partes. Hecho en la T0.
+- ADR-0005 nuevo (D1); `tech-stack.md`, una fila de la interfaz común y otra de las dependencias de
+  D14; `AGENTS.md`, «Stack» y el enlace a la guía de interfaz (D16). Hecho en la T0.
 - Peticiones escritas: a la sesión de OGR-Core (D1 i) y a la suite (D1 ii, el repositorio nuevo),
   en `../Promts_desarrollo/` (T1).
 - Para Slip2D, solo propuestas: la paleta por defecto (D5), los relativos y polares (D10). No

@@ -13,14 +13,15 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
 
 ## Antes de programar
 
-- [ ] T0. **Spec, plan y tareas aprobados**, con D1–D18. Va en un commit propio.
+- [x] T0. **Spec, plan y tareas aprobados**, con D1–D18. Va en un commit propio.
   - `docs/decisiones/ADR-0005-interfaz-comun.md` (D1).
   - `plan_de_desarrollo.md`: P1 con los tamaños medidos; la «Spec 006» en cuatro partes (D2).
   - `tech-stack.md`: `ogr-gui` y las dependencias de D14.
   - `guia-de-interfaz.md` aprobada, y enlazada desde `AGENTS.md` (D16).
 
   *Hecho cuando:* la propietaria ha dado el OK, y las decisiones están anotadas como aprobadas en
-  `spec.md` y `plan.md`.
+  `spec.md` y `plan.md`. (Hecho el 2026-11-24: OK de la propietaria a D1–D18; ADR-0005 escrito;
+  `plan_de_desarrollo.md`, `tech-stack.md` y `AGENTS.md` al día; la guía, aprobada y enlazada.)
 - [ ] T1. **Las dos peticiones de D1**, por escrito en `../Promts_desarrollo/`, con lo encontrado y
   la evidencia (archivos y tamaños de Slip2D, la copia de OGR Data, la regla de capas):
   - a la sesión de OGR-Core: el armazón sin Qt (registro, errores, conversión de argumentos,

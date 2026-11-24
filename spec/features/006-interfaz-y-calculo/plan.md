@@ -1,6 +1,6 @@
 # Plan de implementación — Spec 006, interfaz, operaciones y cálculo
 
-> **Para aprobar (2026-11-24)**, con D1–D18 de `spec.md`. Ninguna fórmula nueva: lo numérico es la
+> **Aprobado (2026-11-24)**, con D1–D18 de `spec.md`. Ninguna fórmula nueva: lo numérico es la
 > vía completa dando los números de la 005. Las partes C y D se precisan (archivos y nombres) cuando
 > estén etiquetadas las piezas comunes de D1: hasta entonces, su lista de archivos es la prevista.
 
