@@ -142,10 +142,11 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
     fase.
 
   (Hecho el 2026-11-24: 3 tests; 6 mutaciones, 6 cazadas.)
-- [ ] T12. `results/table.py`: la tabla CSV (D15) — RF-14.
+- [x] T12. `results/table.py`: la tabla CSV (D15) — RF-14.
 
   *Hecho cuando:* la cabecera lo declara todo, la tabla en MPa es la de kPa entre 1000, las columnas
   son las fijas y los números vuelven iguales al leerlos (`repr`).
+  (Hecho el 2026-11-24: 3 tests; 6 mutaciones, 6 cazadas.)
 
 ## Los casos
 

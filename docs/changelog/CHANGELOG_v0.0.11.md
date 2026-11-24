@@ -259,3 +259,18 @@ distancia sin lado es un error.
   - las reacciones por contorno suman el total, y las esquinas del contacto cuentan para el externo.
 
   6 mutaciones, 6 cazadas.
+
+## T12 — la tabla (2026-11-24)
+
+`results/table.py`: una consulta o una evolución por fase, a CSV (D15). Primero una cabecera de
+comentarios con el programa, la magnitud y su nombre, la unidad, el convenio, la fase, el método, el
+tipo de consulta y la huella. Después las columnas fijas `query_id, point, x, y, distance, value,
+element, material, source`. Valores y coordenadas van en las unidades del sistema que se muestra
+(`to_user` del núcleo), y los números, con `repr`, para que vuelvan iguales. Sin valor, `value` va
+vacío y `source` dice por qué.
+
+- **Un sistema de unidades desconocido es un error.** `get_system` del núcleo pone kPa en su lugar sin
+  decirlo, igual que vio la spec 004 (D5).
+- `tests/test_results_table_v0011.py`, 3 tests: la cabecera y las columnas; MPa = kPa / 1000, pies =
+  metros × 3.2808…, y los números que vuelven; una evolución con una fila por fase; el sistema
+  desconocido. 6 mutaciones, 6 cazadas.
