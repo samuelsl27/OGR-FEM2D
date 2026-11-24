@@ -22,7 +22,7 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   *Hecho cuando:* la propietaria ha dado el OK, y las decisiones están anotadas como aprobadas en
   `spec.md` y `plan.md`. (Hecho el 2026-11-24: OK de la propietaria a D1–D18; ADR-0005 escrito;
   `plan_de_desarrollo.md`, `tech-stack.md` y `AGENTS.md` al día; la guía, aprobada y enlazada.)
-- [ ] T1. **Las dos peticiones de D1**, por escrito en `../Promts_desarrollo/`, con lo encontrado y
+- [x] T1. **Las dos peticiones de D1**, por escrito en `../Promts_desarrollo/`, con lo encontrado y
   la evidencia (archivos y tamaños de Slip2D, la copia de OGR Data, la regla de capas):
   - a la sesión de OGR-Core: el armazón sin Qt (registro, errores, conversión de argumentos,
     trabajos en subproceso, protocolo del puente), en una versión etiquetada;
@@ -30,6 +30,9 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
     sin tocarlo, con sus tests y su CI.
 
   *Hecho cuando:* las dos están escritas y entregadas a la propietaria. No bloquea la parte A.
+  (Hecho el 2026-11-24: `2026_11_24_peticion_ogr_core_armazon_de_operaciones.md` y
+  `2026_11_24_peticion_suite_paquete_ogr_gui.md`, con los archivos, las líneas y lo que ata cada
+  pieza a Slip2D, comprobados en su v0.1.486.)
 
 ## Parte A — v0.0.12: lo que falta sin Qt
 
