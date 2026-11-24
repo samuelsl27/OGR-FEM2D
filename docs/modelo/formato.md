@@ -202,7 +202,10 @@ SHA-256 de un JSON canónico (claves ordenadas, separadores fijos, ASCII, sin Na
 - **DXF** (`import_dxf.boundaries_from_dxf`, D13): las polilíneas del lector del núcleo, por capa, en
   los cuatro tipos de contorno. Desde la v0.0.10 (OGR-Core 0.2.7, `keep_arcs`) los `ARC`, `CIRCLE` y
   *bulges* llegan como arcos, en tramos de 90° como mucho, cada uno con su centro; las `SPLINE` se
-  siguen aplanando y las `ELLIPSE` no se leen, y el informe lo dice.
+  siguen aplanando. Desde la v0.0.12 (OGR-Core 0.2.8) cada entidad se lee en sus propias coordenadas
+  (OCS): una reflejada (extrusión −Z) llega donde está dibujada, y una inclinada fuera del plano XY no
+  se lee. **El informe nombra todo lo que el lector deja fuera**, con por qué: fuera del plano,
+  ilegible, degenerada o de un tipo que no lee (`ELLIPSE`, `TEXT`…), contado en todo el dibujo.
 
 ## Reglas
 

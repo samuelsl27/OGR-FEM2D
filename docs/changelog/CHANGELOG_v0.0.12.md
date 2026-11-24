@@ -276,4 +276,12 @@ avisar. Pasa también con lo que el núcleo cuenta como `(unreadable)` o `degene
 
 Se propone: que el informe nombre **cada** clave de `skipped`, con lo que significa (inclinada, ilegible,
 degenerada, tipo que no se lee), y un test con un DXF de un círculo inclinado y otro con extrusión −Z.
-Espera el OK de la propietaria.
+
+**Corregida con el OK de la propietaria (2026-11-24).** `import_dxf` nombra ahora cada clave de
+`skipped` con su razón (`SKIPPED`, `skipped_reason`): fuera del plano del dibujo, ilegible, con menos de
+dos puntos distintos, o de un tipo que el lector no lee (un `TEXT` en una capa de contorno, una
+`ELLIPSE`). El núcleo los cuenta en todo el dibujo, no por capa, así que el informe no puede decir de qué
+capa eran. Test nuevo (`test_model_dxf_ocs_v0012.py`): el círculo reflejado con extrusión −Z llega en
+(−3, 0), donde está dibujado, como arcos sobre ese centro; el inclinado y el `TEXT` están en el informe
+con su razón, y nada más. 3 tests; 4 mutaciones, 4 cazadas. Se avisa a la sesión del núcleo de que su
+nota no era exacta (`../Promts_desarrollo/2026_11_24_nota_ogr_core_dxf_skipped.md`).

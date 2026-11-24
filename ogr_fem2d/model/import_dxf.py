@@ -16,8 +16,17 @@ The core's reader keeps the arcs (``read_dxf(..., keep_arcs=True)``, OGR-Core
 0.2.7, asked by D13): every ARC, CIRCLE and bulge of a polyline comes in
 pieces of at most 90 degrees, each the minor arc of its centre
 (``DxfPolyline.arcs``), which is the arc of a segment here (``SegmentAttr``,
-spec 003, D3). A SPLINE still comes flattened into straight pieces, and an
-ELLIPSE is not read: the report says how many there were.
+spec 003, D3). A SPLINE still comes flattened into straight pieces.
+
+Since OGR-Core 0.2.8 the reader takes ARC, CIRCLE, LWPOLYLINE and 2-D
+POLYLINE from their own coordinates (OCS) to the drawing's: one mirrored
+(extrusion -Z) comes where it is drawn, and one leaning out of the XY plane
+is not read. **Every entity the reader leaves out is in the report** (spec
+006; until then only an ELLIPSE was, and a circle out of the plane on the
+excavation layer went without a word): each key of its ``skipped``, with
+what it means (``SKIPPED``) - out of the plane, unreadable, degenerate, or
+of a type it does not read. The reader counts them for the whole drawing,
+not by layer.
 
 The boundaries come as they are drawn: a model needs them to meet only at
 shared vertices (D15), and its validation says where they do not. The
@@ -42,9 +51,24 @@ LAYERS = {
     md.STAGE: ("OGR_STAGE", "STAGE", "FASE", "FASES", "STAGEBOUNDARY", "CONTORNO_FASE"),
 }
 
-#: what the reader still flattens, or does not read
+#: what the reader still flattens
 FLATTENED = ("SPLINE",)
-UNREAD = ("ELLIPSE",)
+
+#: what each kind of key of the reader's ``skipped`` means (OGR-Core 0.2.8);
+#: any other key is an entity type it does not read
+SKIPPED = {
+    " (not in the XY plane)": "not in the plane of the drawing (its extrusion leans away from Z)",
+    " (unreadable)": "could not be read (a malformed entity)",
+    "degenerate": "fewer than two distinct points",
+}
+
+
+def skipped_reason(key: str) -> str:
+    """What a key of the reader's ``skipped`` means."""
+    for tail, reason in SKIPPED.items():
+        if key == tail or key.endswith(tail):
+            return reason
+    return "the core's reader does not read this type"
 
 
 def kind_of(layer: str) -> str | None:
@@ -91,10 +115,8 @@ def boundaries_from_dxf(path, unit: str = "m") -> tuple[tuple[md.Boundary, ...],
             report.changed.append(f"layer {layer.name!r}: {flattened} SPLINE came as straight "
                                   "pieces (the core's reader flattens them; the mid-side nodes "
                                   "will be on the chords)")
-    for etype in UNREAD:
-        n = sum(v for key, v in cat.skipped.items() if key.startswith(etype))
-        if n:
-            report.not_brought.append(f"{n} {etype}: the core's reader does not read them")
+    for key, n in sorted(cat.skipped.items()):
+        report.not_brought.append(f"{n} {key}: {skipped_reason(key)}; not read")
     report.brought.append(f"{len(out)} boundaries: " + ", ".join(
         f"{n} {kind}" for kind, n in sorted(count.items())) + f"; {arcs} pieces of arc")
     report.defaults.append("materials, assignments, stages, conditions and loads: none, the "
