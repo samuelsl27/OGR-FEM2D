@@ -199,3 +199,25 @@ inactivos.
   - un elemento inactivo con basura en sus puntos, que no entra.
 
   8 mutaciones, 8 cazadas, entre ellas mezclar los materiales en un parche.
+
+## T9 — la línea, todos los nudos y todos los puntos (2026-11-24)
+
+`results/queries.py`. `View(resultados, fase)` reúne lo que comparten las consultas de una fase: el
+localizador (guardado en el propio objeto de resultados, sin estado global, regla 5), los tensores
+del usuario y los valores recuperados.
+
+- `line`: n puntos a la misma distancia en toda la polilínea, o sus vértices, con la distancia
+  acumulada. Los desplazamientos salen del campo de elementos finitos. Las tensiones y las
+  deformaciones salen de los valores recuperados, interpolados **como tensor**: la magnitud (σ1, q…)
+  se calcula del tensor en el punto. Sobre un contacto hay una fila por material, y fuera o en una
+  excavación la fila va sin valor y con la razón.
+- `all_nodes`: un desplazamiento por nudo; una tensión por nudo y material, sin valor en un nudo
+  retirado.
+- `all_points`: el valor del motor en cada punto, sin valor en los excavados.
+- Cada fila dice su procedencia: `point`, `fe`, `spr`, `element` o `spr+element` (H6).
+
+`tests/_results.py` calcula los modelos de las pruebas: dos estratos con una sobrecarga y el túnel
+excavado. `tests/test_results_queries_v0011.py`, 7 tests: dónde caen los puntos; el salto en un
+contacto; sin valor fuera y en la excavación; el desplazamiento y la tensión en un nudo son el nodal y
+el recuperado; todos los nudos, con dos filas en el contacto y ninguna en los retirados; todos los
+puntos, los del motor. 8 mutaciones, 8 cazadas.

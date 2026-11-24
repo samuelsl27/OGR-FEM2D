@@ -113,7 +113,7 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
   (Hecho el 2026-11-24: 6 tests; 8 mutaciones, 8 cazadas. Caso 005: 2.2 s, 13 089 parches, ninguno
   rechazado, 16 nudos por el campo del elemento.)
-- [ ] T9. `results/queries.py`: la línea y la polilínea, todos los nudos y todos los puntos (D9) —
+- [x] T9. `results/queries.py`: la línea y la polilínea, todos los nudos y todos los puntos (D9) —
   RF-11 y RF-13.
 
   *Hecho cuando:*
@@ -121,6 +121,8 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   - un contacto da dos filas;
   - un punto fuera o excavado da su fila sin valor y con la razón;
   - el desplazamiento interpolado en un nudo es el nodal.
+
+  (Hecho el 2026-11-24: 7 tests; 8 mutaciones, 8 cazadas.)
 - [ ] T10. La consulta sobre un contorno, con distancia y lado (D12) — RF-12.
 
   *Hecho cuando:*
