@@ -394,7 +394,9 @@ def _seg_of(segs, i, j) -> int:
 
 
 # --------------------------------------------------------------- the build
-def _build(m: md.Model) -> Geometry:
+def _rings(m: md.Model):
+    """Steps 1 to 5: the points, the segments, the arcs and the rings of
+    every region (outline, holes), in the canonical order."""
     points, segs, problems = _points_and_segments(m)
     problems += _arc_problems(points, segs)
     if problems:
@@ -405,6 +407,59 @@ def _build(m: md.Model) -> Geometry:
     faces, arcs = _faces(m, points, segs)
     rings = sorted((_rotate(list(o)), tuple(sorted(_rotate(list(h)) for h in hs)))
                    for o, hs in faces)
+    return points, segs, arcs, rings
+
+
+def region_of(m: md.Model, point) -> int | None:
+    """The index of the assignment of the region that holds ``point``, or
+    None if that region has none yet (spec 006, T5): found from the
+    geometry alone, so that a model whose other regions are still without
+    their material is assigned one region at a time. ModelError if the
+    geometry does not let the regions be found (no external boundary, a
+    crossing…), if the point lies in no region or on a boundary, or if the
+    region holds two assignments already."""
+    found: list[Problem] = []
+    md._boundary_problems(m, lambda rule, where, message: found.append(Problem(rule, where, message)))
+    if found:
+        raise md.ModelError(found)
+    try:
+        points, segs, arcs, rings = _rings(m)
+    except _Fail as fail:
+        raise md.ModelError(fail.problems) from None
+    p = (float(point[0]), float(point[1]))
+    # on a boundary the point would belong to one side by the half-open rule
+    # of the winding number: a click there is ambiguous, and it is refused
+    tol = g.ARC_TOL * _scale(points)
+    for s in segs:
+        a, b = points[s.a], points[s.b]
+        if s.arc is None:
+            on = g._on_closed_segment(p, a, b)
+        else:
+            geo = g._ArcGeo(a, b, s.arc)
+            on = abs(_trig.length(p, geo.c) - geo.r) <= tol and (
+                geo.on_open_arc(p, tol) or min(_trig.length(p, a), _trig.length(p, b)) <= tol)
+        if on:
+            raise md.ModelError([Problem("assignment_outside", f"point {p}",
+                                         f"lies on {_seg_name(s)}: a point inside a region "
+                                         "is needed")])
+    for outline, holes in rings:
+        region = g.Region(outline, holes)
+        if not g._inside_region(p, region, points, arcs):
+            continue
+        inside = [k for k, a in enumerate(m.assignments)
+                  if g._inside_region((float(a.point[0]), float(a.point[1])), region, points, arcs)]
+        if len(inside) > 1:
+            raise md.ModelError([Problem(
+                "region_twice", f"the region with outline through {points[outline[0]]}",
+                f"holds the assignments at {[m.assignments[k].point for k in inside]}: "
+                "delete one first")])
+        return inside[0] if inside else None
+    raise md.ModelError([Problem("assignment_outside", f"point {p}",
+                                 "lies in no region (or on a boundary)")])
+
+
+def _build(m: md.Model) -> Geometry:
+    points, segs, arcs, rings = _rings(m)
     problems = []
     regions = []
     held: set[int] = set()

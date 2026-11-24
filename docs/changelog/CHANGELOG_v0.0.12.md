@@ -129,7 +129,26 @@ asigna regiones una a una.
 
 Se propone: buscar la región con las caras del grafo, sin el paso de las asignaciones (una función
 nueva de `regions`), y, si la geometría no deja encontrar las regiones (un cruce), rechazar la
-asignación diciendo por qué, en vez de añadirla a ciegas. Espera el OK de la propietaria.
+asignación diciendo por qué, en vez de añadirla a ciegas.
+
+**Corregida con el OK de la propietaria (2026-11-24).** Antes se miró si OGR Slip2D lo había
+resuelto, porque allí también se asignan regiones: **allí no es un fallo, por diseño**. El núcleo
+(`Project.assign_material_at`) añade cada clic a una historia, con la huella de la región en ese
+momento; gana el último clic que cae dentro de una región, y una región sin ninguno toma el primer
+material. Aquí la spec 004 (D15) decidió una asignación por región y ninguna por defecto, así que la
+corrección es propia:
+
+- `regions.region_of(modelo, punto)` busca la región con la geometría sola (los pasos 1 a 5 de
+  `regions`, sin el de las asignaciones). Reasignar una región cambia su asignación, aunque otra siga
+  sin material; una región sin asignación toma una nueva.
+- **Se rechaza, diciendo por qué**: un punto sobre un contorno (también sobre un arco), que por la
+  regla del número de vueltas caería de un lado sin que se vea; un punto fuera del modelo; una
+  geometría en la que no se pueden encontrar las regiones (sin externo, con un cruce); una región que
+  ya tiene dos asignaciones. Nunca una asignación a ciegas que cuente más tarde.
+- Lo que Slip2D hace al partir una región ya asignada (las dos partes heredan el material de la
+  huella) aquí no se hace: la parte nueva queda sin material y el modelo lo dice (D15).
+
+6 tests; 7 mutaciones, 7 cazadas.
 
 ## T6 — lo que `calculate` cuenta mientras calcula (2026-11-24)
 

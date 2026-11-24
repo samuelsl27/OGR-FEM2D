@@ -71,8 +71,10 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   documento y la traducción al motor lo dice (004, D16); cambiar de sistema de unidades no toca
   ningún valor (004, D5).
   (Hecho el 2026-11-24: 12 tests; 12 mutaciones, 12 cazadas. Las ediciones de fases de la 004 se
-  juzgan ahora por lo que rompen, como estas. **Anomalía reportada, sin corregir**: `assign_material`
-  con la geometría a medias añade una asignación duplicada; changelog.)
+  juzgan ahora por lo que rompen, como estas. **Anomalía**: `assign_material` con la geometría a
+  medias añadía una asignación duplicada; reportada y corregida con el OK de la propietaria
+  (`regions.region_of`; Slip2D no la tiene, por otro diseño). 6 tests más; 7 mutaciones, 7
+  cazadas.)
 - [x] T6. `results/calculate.py`: el aviso de progreso (D9).
 
   *Hecho cuando:* los eventos salen en orden, uno al empezar y otro al terminar cada fase, también

@@ -33,7 +33,6 @@ from __future__ import annotations
 from dataclasses import replace
 
 from ..engine.model import Problem
-from ..mesh import geometry as g
 from . import model as md
 from . import regions
 
@@ -91,14 +90,12 @@ def rename_stage(m: md.Model, stage_id: str, name: str) -> md.Model:
 
 
 def _assignment_at(m: md.Model, point) -> int | None:
-    """The assignment of the region that holds ``point``."""
-    geo = regions.build(m)
-    arcs = regions._arcs(geo.points, geo.segments)
-    for r in geo.regions:
-        if g._inside_region((float(point[0]), float(point[1])), g.Region(r.outline, r.holes),
-                            geo.points, arcs):
-            return r.assignment
-    return None
+    """The assignment of the region that holds ``point``, or None if the
+    region has none yet; found from the geometry alone
+    (``regions.region_of``: until spec 006, T5, it needed the whole model
+    valid, and a model with a region still without its material took a
+    second assignment in the region being assigned)."""
+    return regions.region_of(m, point)
 
 
 def set_excavated(m: md.Model, point, stage_id: str, excavated: bool,
@@ -127,10 +124,7 @@ def assign_material(m: md.Model, point, material_id: str, stage_id: str | None =
         raise md.ModelError([Problem("assignment", f"point {point}",
                                      f"material {material_id!r} does not exist")])
     k = 0 if stage_id is None else m.stage_index(stage_id)
-    try:
-        a = _assignment_at(m, point)
-    except md.ModelError:
-        a = None
+    a = _assignment_at(m, point)
     if a is None:
         if k > 0 or (this_stage_only and len(m.stages) > 1):
             raise md.ModelError([Problem("material_change", f"point {point}",
