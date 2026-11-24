@@ -183,3 +183,22 @@ declara como extra opcional.
   propietaria, que decide si va en una rama corta.
 
 4 tests; 8 mutaciones, 8 cazadas.
+
+## T17 — la identidad de transporte y los casos por las operaciones (2026-11-24)
+
+`tests/test_transport_v0013.py` (RF-6, RF-22; D13):
+
+- **Identidad de transporte**: una lista de pasos que dibuja un modelo desde cero (dos estratos partidos
+  por un contorno de material, gravedad, rodillos y una carga en la superficie), lo malla, lo guarda y lo
+  calcula, dada en Python (`api.call`), a la línea de órdenes en otro proceso y al servidor MCP, da el
+  mismo modelo (la huella del archivo) y los mismos resultados (todos los campos de todas las fases del
+  `.h5`, bit a bit).
+- **Los casos 005, 006 y 007 por las operaciones**: abiertos, calculados en el subproceso y consultados
+  como dice su `esperado.json`, dan bit a bit lo que da la spec 005 en el proceso del test: el mismo
+  archivo de resultados, campo a campo, y las mismas filas de cada consulta. Ese camino es el que
+  `test_validation_queries_v0011.py` compara con Kirsch, Michell y Lamé dentro de las tolerancias fijadas
+  antes de medir: así que estos cumplen las mismas, con los mismos números. 1 min 39 s los cuatro tests.
+
+4 tests; 4 mutaciones, 2 cazadas y 2 equivalentes, descartadas: el nivel de gzip del hijo no cambia los
+datos, y la distancia de una consulta sobre un contorno es 0 en los tres casos (ya la prueba la T14).
+Añadida una que hace calcular al hijo otro modelo (ν = 0,31): cazada en los cuatro tests.

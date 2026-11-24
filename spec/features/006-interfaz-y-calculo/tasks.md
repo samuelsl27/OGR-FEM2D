@@ -172,13 +172,16 @@ Empieza cuando la versión de OGR-Core de D1 (i) está etiquetada.
   (Hecho el 2026-11-24: `mcp` 2.3.0 instalado con el OK de la propietaria. El SDK descartaba en
   silencio un argumento desconocido; ahora se rechaza por su nombre. Test de capas nuevo. La CI no
   instala el extra todavía: sus tests se saltan allí. 4 tests; 8 mutaciones, 8 cazadas.)
-- [ ] T17. **Las identidades de transporte y los casos por las operaciones** (RF-22).
+- [x] T17. **Las identidades de transporte y los casos por las operaciones** (RF-22).
 
   *Hecho cuando:*
   - la misma secuencia por Python, la línea de órdenes y el servidor MCP da la misma huella y los
     mismos campos del `.h5`;
   - los casos 005, 006 y 007, abiertos, mallados, calculados en el subproceso y consultados por las
     operaciones, dan bit a bit lo de la 005 y cumplen su tolerancia.
+
+  (Hecho el 2026-11-24: la tolerancia, por los mismos números que la 005 ya compara con las
+  soluciones cerradas. 4 tests; las mutaciones, en el changelog.)
 - [ ] T18. **Cierre de la parte B**: el barrido de las reglas 7 y 12 sobre las operaciones;
   `docs/operaciones/catalogo.md`; `CHANGELOG_v0.0.13.md`.
 
