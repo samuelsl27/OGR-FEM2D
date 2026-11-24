@@ -103,11 +103,13 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   (Hecho el 2026-11-24: 10 tests; 11 mutaciones, 11 cazadas. **Cambia lo previsto**: los intervalos y
   los colores son de `ogr-gui`; aquí, el rango entero, sin percentil. Caso 005: 1,12 s la primera
   tensión de una fase, 0,06 s las siguientes.)
-- [ ] T9. **Cierre de la parte A**: `docs/interfaz/edicion.md`; los casos 001 a 007, bit a bit;
+- [x] T9. **Cierre de la parte A**: `docs/interfaz/edicion.md`; los casos 001 a 007, bit a bit;
   `CHANGELOG_v0.0.12.md` con lo encontrado.
 
   *Hecho cuando:* todo lo de la parte A está en verde, y la propietaria sabe en qué estado están las
   peticiones de la T1.
+  (Hecho el 2026-11-24: la página va en `docs/modelo/edicion.md`, con su ejemplo ejecutado por un
+  test; el motor y `rust/` sin cambios desde `9c366ff`; las peticiones, entregadas.)
 
 ## Parte B — v0.0.13: operaciones y transporte
 

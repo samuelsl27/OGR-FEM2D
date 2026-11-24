@@ -223,3 +223,32 @@ elemento (Z&T ec. 14.27, como las consultas de la 005); `value_range` da el rang
 
 10 tests; 11 mutaciones, 11 cazadas (una que desordenaba los índices de los triángulos se escapaba: no
 había test que dibujara con ellos; ahora los triángulos tienen que cubrir el modelo una vez, 200 m²).
+
+## T9 — el cierre de la parte A (2026-11-24)
+
+- `docs/modelo/edicion.md`: las ediciones, los cortes, los arcos y lo que se rechaza, con un ejemplo que
+  un test ejecuta para que la página no se aparte del código. (El plan la ponía en `docs/interfaz/`; va
+  junto al formato del modelo, que es lo que edita.) **Al escribir el ejemplo se vio que una malla
+  graduada no tiene número de nudos por defecto** (spec 003 no lo decidió, y la referencia usa 75): el
+  diálogo de la malla (T25) tendrá que pedirlo, sin inventarlo.
+- **Los casos 001 a 007, como estaban**: desde el cierre de la spec 005 (`9c366ff`) no ha cambiado nada
+  en `ogr_fem2d/engine/` ni en `rust/`. El único cambio en el camino del cálculo es el bucle de
+  `calculate` (T6), que da los números del motor bit a bit (túnel de tres fases y caso 007), y los casos
+  005 a 007 siguen dentro de su tolerancia en sus tests de la spec 005.
+- Las peticiones de la T1 (a OGR-Core y a la suite) están entregadas por la propietaria. La parte B
+  empieza cuando la versión de OGR-Core esté etiquetada.
+
+### Lo que se encontró en la parte A, en resumen
+
+1. Las ediciones de fases de la spec 004 pedían el modelo entero válido: ahora se juzgan por lo que
+   rompen (T5).
+2. **`assign_material` con la geometría a medias añadía una asignación duplicada** (spec 004): reportada
+   y corregida con el OK de la propietaria; Slip2D no la tiene, por otro diseño (T5).
+3. Una fase que no cambia nada no se resuelve, y el aviso de progreso lo dice (T6).
+4. Los intervalos y los colores de la leyenda son de `ogr-gui`; el rango, aquí y entero, sin el
+   percentil de Slip2D (T8).
+5. La primera tensión de cada fase del caso 005 tarda 1,1 s en dibujarse, casi todo la recuperación:
+   justo en el objetivo de D15 (T8).
+6. Un tramo en común entre dos contornos se rechaza; la alternativa del lado compartido queda propuesta
+   (T3).
+7. Una malla graduada no tiene número de nudos por defecto (T9).
