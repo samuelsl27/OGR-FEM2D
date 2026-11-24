@@ -1,60 +1,99 @@
 # Spec 005 — Resultados (`.h5`) y su interpretación sin interfaz
 
-> **Borrador de alcance (2026-11-23), sin aprobar.** Fase 1 del plan de desarrollo
+> **Revisada (2026-11-24), para aprobar.** Fase 1 del plan de desarrollo
 > (`spec/constitution/plan_de_desarrollo.md`, «Spec 005 — Resultados (`.h5`) y su interpretación
-> sin interfaz»). Solo el **qué** y el **porqué**, sin fórmulas ni decisiones tomadas. **Antes de
-> abrirla hay que reevaluarla** (sección siguiente); después, plan y tareas con el OK de la
+> sin interfaz»). Solo el **qué** y el **porqué**; el cómo, en `plan.md`. Versión: **v0.0.11**.
+> Las dudas del borrador son ahora las decisiones D1–D16 (abajo), propuestas para el OK de la
 > propietaria.
 
-## Antes de abrirla: reevaluar esta spec
+## La revisión (2026-11-24)
 
-Este borrador se escribió antes de que existieran las specs que lo preceden; el código, el núcleo y
-OGR Slip2D habrán avanzado. Al abrirla, y antes de escribir el plan:
-
-- [ ] Contrastarla con el código de este programa y con las specs cerradas desde el 2026-11-23: qué
-      ya está hecho, qué cambió y qué se movió de sitio.
-- [ ] Mirar qué tienen ya OGR Slip2D y `ogr_core` en la etiqueta fijada. Lo genérico se pide a la
-      sesión de OGR-Core, no se copia (`AGENTS.md`, «Un núcleo y varios programas»). Puntos de
-      partida vistos al escribir el borrador:
-      - `ogr_core/project/results_io.py` (v0.2.6, 284 líneas): escribe y lee en HDF5 el resultado
-        de una búsqueda de equilibrio límite (superficies, dovelas y un resumen), con
-        `format_version` y `project_id` como atributos y compresión gzip en el resumen. **No guarda
-        huella.** Ya no está «sin usar», como dice el ADR-0003: lo usan `ogr_gui/background.py`
-        (escribe a un temporal y lo mueve) y `ogr_cli` de Slip2D. La disposición por fase de un
-        cálculo FEM es nueva; lo reutilizable es la parte genérica.
-      - `h5py` llega como dependencia de `ogr-core` (≥ 3.10), no de este programa.
-      - En Slip2D: `ogr_gui/contours.py` (paletas, niveles y rango automático, sin Qt) y
-        `ogr_api/results.py` (resúmenes para un agente).
-      - En este programa: `engine/analysis.py`, `StageOutcome` (por fase: desplazamientos, tensiones
-        por punto, reacciones, estado plástico, historia de convergencia, elementos activos, nudos
-        retirados y del eje). **No da deformaciones.** Y `mesh/mesher.py`, `Mesh` con sus notas.
-- [ ] Leer y comprobar las fuentes de «Validación numérica» y de «Fuentes por conseguir»; las fichas
-      de los casos no son fuente.
-- [ ] Releer las fichas de los casos que la cierran y su «Seguimiento».
-- [ ] Convertir las «Dudas abiertas» en decisiones propuestas (D1, D2…) con su porqué, para el OK de
-      la propietaria.
+- [x] Contrastada con el código y con la spec 004, cerrada el 2026-11-23:
+  - `engine/analysis.py`, `StageOutcome`: por fase da los desplazamientos (totales), las tensiones
+    por punto (`None` en los elementos inactivos), las reacciones por nudo, el estado plástico, los
+    nudos del eje sujetos, `solved`, la historia de convergencia, los escalones, la tolerancia, los
+    cortes, los elementos activos y los nudos retirados. **No da deformaciones**, pero salen
+    exactas de los desplazamientos con la B del motor (`solver.IntegrationPoint.strain`).
+  - **`analysis.run` pierde las fases ya resueltas si una falla**: devuelve la lista al final, y
+    una excepción en la fase k se lleva las k − 1 anteriores. Guardar resultados parciales (D7)
+    pide un cambio pequeño en el motor, en Python.
+  - El T6 en deformación plana integra en los **tres puntos medios de los lados** (spec 002, D1):
+    los puntos están sobre los lados, también sobre los contornos y sobre el arco del hueco. En
+    axisimetría, la regla de 7 puntos interiores.
+  - El modelo ya guarda la malla entera (spec 004, D3) y su huella la incluye
+    (`fingerprint.model_fingerprint`). Ya existen `translate.deciding_values` (lo que decide el
+    resultado, regla 12), `initial_stress.integration_point_coordinates` y
+    `reference/loads.local_coordinates` (invierte la transformación isoparamétrica: sirve para
+    situar un punto en un T6 curvo).
+  - El archivo es el `.ogrfem2d` (ADR-0004), no el `.ogr` que dice el borrador.
+- [x] Mirados el núcleo en la etiqueta fijada (v0.2.7; su `main` solo cambia la versión) y Slip2D:
+  - `ogr_core/project/results_io.py` es de equilibrio límite de punta a punta: escribe un
+    `SearchResult` (superficies y dovelas) y lee su resumen. No guarda huella. Lo genérico que
+    tiene es usar `h5py` con gzip, y eso no es una pieza que reutilizar.
+  - La escritura segura (a un temporal, y después `os.replace`) está en Slip2D,
+    `ogr_gui/background.py`, no en el núcleo.
+  - `ogr_core.fem.mesh.Mesh` sitúa puntos, pero solo en T3 de lados rectos.
+  - `ogr_gui/contours.py` (paletas, niveles, rango automático) y `ogr_api/results.py` (resúmenes
+    para un agente) son del dibujo y de las operaciones: de la 006.
+  - `h5py` 3.16 está en el `.venv` porque lo pide `ogr-core` (≥ 3.10), pero este programa no lo
+    declara.
+- [x] Mirado cómo lo hace la referencia (`I02` §2, §3 y §7; `I03` §1–§8; `00_arbol_menus_interpret`;
+  P11 y P12):
+  - presenta las tensiones en compresión positiva y guarda tracción positiva;
+  - sus σ1 y σ3 son las del plano, y la diferencial es la 3D;
+  - **promedia en los nudos sin separar materiales**: en P12 la pared de la cavidad dio
+    σrr = 0.69 MPa en vez de 0;
+  - las consultas interpolan de verdad, no toman el nudo más cercano; exportan
+    `Material_Query_ID · Point_x · Point_y · Distance · Value`;
+  - la consulta de la excavación tiene «dentro / fuera» a 0.1 m por defecto.
+- [x] Fuentes leídas (detalle en `plan.md`, «Formulación»):
+  - **Zienkiewicz y Taylor (2000)**: el §14.2 que cita el borrador es el de los puntos de muestreo
+    óptimos. La recuperación es el **§14.3** (pág. 376: el promedio en los nudos «no es lo mejor
+    para triángulos» y es «inadecuado» con elementos de orden alto) y el **§14.4**, la
+    recuperación por parches (SPR): ecs. (14.27)–(14.31), figs. 14.8–14.10, págs. 375–380.
+  - **Jaeger, Cook y Zimmerman (2007)**, cap. 2, dan las tensiones principales, los invariantes,
+    la media, J2, las deformaciones, las principales de deformación y la volumétrica. No hace falta
+    Davis y Selvadurai. Su convenio es compresión y acortamiento positivos.
+  - **de Souza Neto, Perić y Owen (2008)** dan la tensión de von Mises, ec. (6.111). También dan
+    **Mohr-Coulomb en invariantes**, ec. (6.119), que es la forma publicada que el borrador echaba
+    en falta para el factor de resistencia (D4).
+  - Tres erratas posibles en el texto extraído de JCZ, (2.149), (2.162) y (2.195), se comprueban
+    sobre la página antes de programar (T1).
+- [x] Fichas STR-01, STR-04 y STR-09 releídas con su «Seguimiento»: las tres piden `POST-LINEA`. La
+  de STR-09 ya avisa de que, con la esfera fija a 21 m, la línea hasta 5 m se aparta de la solución
+  del medio infinito; aquí se compara con la de la esfera finita (D10).
+- [x] Dudas convertidas en decisiones (D1–D16), para el OK.
 
 ## Depende de
 
-- Spec 002 (lo que devuelve el motor por fase), spec 003 (la malla y su mapa de contornos), spec 004
-  (el modelo y su huella). ADR-0003 (resultados en `modelo.h5` con la huella).
+- Spec 002: lo que devuelve el motor por fase, la B de cada punto y la regla de cada elemento (D1).
+- Spec 003: la malla, sus lados y el mapa segmento → nudos y lados.
+- Spec 004: el modelo, su malla, su huella, `deciding_values` y el único cambio de signo
+  (`model/conventions.py`, D6).
+- ADR-0003: resultados en `modelo.h5`, aparte y con la huella.
 
 ## Contexto y objetivo
 
-El motor devuelve sus resultados en memoria y nadie los guarda; los tests comparan a mano, en los
-puntos de integración. Esta spec guarda cada cálculo en `modelo.h5`, junto al `.ogr` y con su
-huella, para que abrir un modelo no obligue a recalcular y para que unos resultados nunca se tomen
-por los de otro modelo. Encima, sin Qt, da lo que se interpreta: las magnitudes de campo, cada una
-con su definición y su fuente; el paso a los nudos para dibujar, sin perder los valores en los
-puntos, que son los que se validan; y las consultas por línea, por contorno y en todos los nudos,
-con su evolución por fase. Así lo usan igual la interfaz (006), la línea de órdenes, un agente, un
-informe y un test.
+El motor devuelve sus resultados en memoria y nadie los guarda; los tests los comparan a mano, en
+los puntos de integración. Esta spec hace dos cosas.
+
+La primera es guardar cada cálculo en `modelo.h5`, junto al `.ogrfem2d` y con su huella. Así abrir
+un modelo no obliga a recalcular, y unos resultados nunca se toman por los de otro modelo.
+
+La segunda, sin Qt, es dar lo que se interpreta:
+
+- las magnitudes de campo, cada una con su definición, su fuente y su convenio;
+- los valores en los nudos para dibujar, sin perder los de los puntos, que son los que se validan;
+- las consultas por línea, por contorno y en todos los nudos, con su evolución por fase.
+
+Lo usan igual la interfaz (006), la línea de órdenes, un agente, un informe y un test.
 
 ## Usuarios / actores
 
-- **El ingeniero**, que abre unos resultados, los consulta y los exporta; **la interfaz, las
-  operaciones, la línea de órdenes y el servidor MCP** (006); **el investigador**, que lee el `.h5`
-  con sus herramientas; **los tests y los casos**, que comparan con soluciones cerradas.
+- **El ingeniero**, que abre unos resultados, los consulta y los exporta.
+- **La interfaz, las operaciones, la línea de órdenes y el servidor MCP** (006).
+- **El investigador**, que lee el `.h5` con sus herramientas.
+- **Los tests y los casos**, que comparan con soluciones cerradas.
 
 ## Historias de usuario
 
@@ -72,137 +111,186 @@ informe y un test.
 
 **El archivo de resultados**
 
-- RF-1: CUANDO termina un cálculo, EL SISTEMA escribe `modelo.h5` junto al `.ogr` con la huella del
-  modelo, la versión del formato, del programa y del núcleo, la malla con la que se calculó (o lo que
-  se decida, duda 6) y, por fase, todo lo que devuelve el motor y los ajustes que decidieron el
-  cálculo (regla 12).
-- RF-2: EL SISTEMA escribe el archivo de forma que un cálculo interrumpido o cancelado no deje un
-  `.h5` que parezca completo.
-- RF-3: CUANDO se abre un modelo cuyo `.h5` tiene otra huella, EL SISTEMA marca los resultados
-  obsoletos y no los presenta como válidos; sin `.h5`, ofrece calcular (ADR-0003).
-- RF-4: SI el `.h5` está dañado o es de una versión de formato desconocida, ENTONCES EL SISTEMA lo
-  dice con un error y no lee nada a medias. EL SISTEMA lee una fase o una magnitud sola.
+- RF-1: CUANDO termina un cálculo, EL SISTEMA escribe `modelo.h5` junto al `.ogrfem2d`, con la misma
+  raíz (D13). El archivo lleva:
+  - la huella del modelo;
+  - las versiones del formato, del programa y del núcleo, y la variante del motor;
+  - lo que decidió el resultado (`deciding_values`, regla 12);
+  - una copia de la malla con las coordenadas de los puntos de integración (D6);
+  - por fase, todo lo que devuelve el motor y las deformaciones en los puntos (D6).
+- RF-2: EL SISTEMA escribe el archivo de forma que un corte a mitad de la escritura deje el `.h5`
+  anterior intacto. Un cálculo que falla o se cancela entre fases deja un `.h5` que **dice** que está
+  incompleto, con las fases resueltas, la que no se resolvió y por qué (D7).
+- RF-3: CUANDO se abren unos resultados, EL SISTEMA dice su estado:
+  - válidos;
+  - **obsoletos**, porque la huella no es la del modelo, y entonces no los presenta como válidos;
+  - incompletos o cancelados;
+  - sin resultados, y entonces ofrece calcular (ADR-0003);
+  - o sin modelo con el que comprobarlos.
+
+  Que los escribiera otra versión del programa o del núcleo no los hace obsoletos, pero se dice
+  (D7).
+- RF-4: SI el `.h5` está dañado, le falta algo o es de una versión de formato posterior, ENTONCES EL
+  SISTEMA da un error que lo nombra y no lee nada a medias. EL SISTEMA lee una fase o una magnitud
+  sola, sin leer el resto.
 
 **Magnitudes de campo**
 
-- RF-6: EL SISTEMA da, por fase, en los puntos de integración: tensiones cartesianas y la de fuera
-  del plano, tensiones principales y su orientación, tensión media, de von Mises y diferencial;
-  desplazamientos horizontal, vertical (con y sin valor absoluto) y total; deformaciones
-  volumétrica y de corte máxima. Cada una con su definición escrita y su fuente.
-- RF-7: EN axisimetría, EL SISTEMA nombra cada magnitud por su sentido (radial, axial,
-  circunferencial), y la tensión fuera del plano es la circunferencial (spec 002).
-- RF-8: EL SISTEMA da el factor de resistencia (T05) solo cuando el material tiene los parámetros
-  de resistencia que pide, y SI no los tiene, ENTONCES dice que no está disponible (duda 4).
-- RF-9: EL SISTEMA declara el convenio de signos de cada magnitud que entrega; la conversión de
-  tracción positiva a compresión positiva ocurre en un único sitio (regla 10; duda 1).
+- RF-5: EL SISTEMA da, por fase y en los puntos de integración, las magnitudes de D2 y D3:
+  - las tensiones cartesianas y la de fuera del plano;
+  - las principales en el plano y su orientación;
+  - las tres principales ordenadas;
+  - la media, la de von Mises y la diferencial;
+  - los desplazamientos horizontal, vertical y total;
+  - las deformaciones cartesianas, la volumétrica y la de corte máxima.
+
+  Cada una lleva su definición escrita y su fuente, y su unidad (tensión, longitud o
+  adimensional).
+- RF-6: EN axisimetría, EL SISTEMA nombra cada magnitud por su sentido (radial, axial,
+  circunferencial). La tensión y la deformación fuera del plano son las circunferenciales
+  (spec 002).
+- RF-7: EL SISTEMA entrega las magnitudes en el convenio del usuario: tensiones en compresión
+  positiva, deformaciones en acortamiento positivo, desplazamientos según +x y +y. El `.h5` guarda
+  el del motor. Cada magnitud declara su convenio, y la conversión ocurre en un único sitio, el de
+  la spec 004 (D1, regla 10).
 
 **De los puntos a los nudos**
 
-- RF-10: EL SISTEMA recupera valores en los nudos para dibujar contornos (Zienkiewicz y Taylor 2000,
-  §14.2, por comprobar), sin tocar los de los puntos de integración; cada valor dice de dónde sale.
-- RF-11: EL SISTEMA no usa los elementos inactivos de una fase, y un nudo retirado no tiene valor.
-- RF-12: CUANDO un nudo está en el contacto de dos materiales, EL SISTEMA trata el salto según la
-  duda 5, y lo dice.
+- RF-8: EL SISTEMA recupera las tensiones y las deformaciones en los nudos por parches (SPR,
+  Zienkiewicz y Taylor 2000, §14.4) **material a material**, sin tocar los valores en los puntos.
+  Un nudo en el contacto de dos materiales tiene un valor por material. Cada valor dice de dónde
+  sale: punto de integración, nudo recuperado con su método, o campo de los elementos
+  (desplazamientos) (D5).
+- RF-9: EL SISTEMA no usa los elementos inactivos de una fase; un nudo retirado no tiene valor de
+  tensión ni de deformación.
 
 **Consultas**
 
-- RF-13: EL SISTEMA consulta una magnitud a lo largo de una línea o polilínea, con su distancia, en
-  los puntos que se pidan; SI un punto cae fuera del dominio activo, ENTONCES lo dice y no inventa un
-  valor.
-- RF-14: EL SISTEMA consulta sobre el contorno de una excavación, o a una distancia dada dentro o
-  fuera de él (como lo observado en la referencia, carpeta A, `interpret/00_arbol_menus_interpret.md`).
-- RF-15: EL SISTEMA da el valor en todos los nudos y exporta cualquier consulta a una tabla con sus
-  columnas, unidades y convenio declarados.
-- RF-16: EL SISTEMA da la evolución por fase de una magnitud en un punto o a lo largo de una
-  consulta, y un resumen por fase (máximos y reacciones totales).
+- RF-10: EL SISTEMA sitúa un punto en el elemento activo que lo contiene, también junto a un arco;
+  SI el punto cae en una excavación o fuera del modelo, ENTONCES lo dice y no inventa un valor (D11).
+- RF-11: EL SISTEMA consulta una magnitud a lo largo de una línea o una polilínea, en N puntos
+  repartidos a lo largo de toda ella o en sus vértices, con la distancia acumulada desde el primero.
+  Dentro de un elemento interpola los desplazamientos con sus funciones de forma, y las tensiones y
+  las deformaciones con los valores recuperados (Z&T, ec. 14.27). Donde la línea cruza un contacto
+  entre materiales da el valor de cada lado (D9).
+- RF-12: EL SISTEMA consulta sobre un contorno del modelo, o a una distancia dada de él hacia un
+  lado, sobre la geometría (con sus arcos) y no sobre la malla. Con distancia 0, sobre el contorno
+  (D12).
+- RF-13: EL SISTEMA da el valor en todos los nudos (un valor por material en los nudos de un
+  contacto) y en todos los puntos de integración, con sus coordenadas.
+- RF-14: EL SISTEMA exporta cualquier consulta a una tabla CSV. La tabla declara la magnitud, la
+  unidad del sistema que se muestra, el convenio, la fase, el método y la huella, y lleva una fila
+  por punto: identificador, x, y, distancia, valor, elemento, material y procedencia (D15).
+- RF-15: EL SISTEMA da la evolución por fase de una magnitud en un punto o a lo largo de una
+  consulta, y un resumen por fase (D14):
+  - los extremos de cada magnitud, dónde se dan y si son de un punto o de un nudo;
+  - las reacciones totales y por contorno del modelo.
 
 ## Validación numérica
 
-| Caso | Fuente científica (por comprobar) | Qué se compararía |
+| Caso | Fuente científica | Qué se compara |
 |---|---|---|
-| `validacion/casos/005-kirsch-malla-general` (ficha `VER-STR-01`) | Kirsch (1898), en Jaeger, Cook y Zimmerman (2007), §8.4, ecs. (8.90)–(8.92) | σr, σθ y ur a lo largo de un radio desde r = a: la consulta por línea que pide la ficha (`POST-LINEA`), en puntos y en nudos por separado, con tolerancias fijadas antes de medir |
-| `validacion/casos/004-carga-en-faja-elastica` (ficha `VER-STR-04`), o el que la sustituya (spec 004, duda 5) | Michell (1902), en Timoshenko y Goodier (1951), §34, ec. (f) | σ1 y σ3 bajo el centro de la faja, de 0.25 a 5 m, por la consulta; en los puntos, ya validados en la spec 002 |
-| `validacion/casos/003-cavidad-esferica-elastica` (ficha `VER-STR-09`), o su sucesor | Lamé (1852), en Timoshenko y Goodier (1951), §121, ecs. (197)–(198) | σR, σt y ur a lo largo de un radio. Con la esfera fija a 21 m, la diferencia con el medio infinito crece como R³ (0.5 % hacia R = 3.6 m, spec 002): llegar a 5 m pide otro contorno, y otro caso |
-| Identidades de las magnitudes | — (propiedades exactas) | Las principales y los invariantes no cambian al girar los ejes; von Mises y la diferencial son nulas en un estado hidrostático; la suma de las principales en el plano es la de las cartesianas |
-| Deformaciones | Zienkiewicz y Taylor (2000), cap. 2 (spec 002) | Un desplazamiento lineal impuesto (prueba de la parcela) da la deformación exacta en todo punto |
-| Recuperación a nudos | Zienkiewicz y Taylor (2000), §14.2, por comprobar | Un campo que los elementos representan exacto se recupera exacto en los nudos |
-| Ida y vuelta del `.h5` | — (identidad) | Escribir y leer da los mismos números bit a bit; una mutación del modelo los marca obsoletos |
+| `validacion/casos/005-kirsch-malla-general` (ficha `VER-STR-01`) | Kirsch (1898), en Jaeger, Cook y Zimmerman (2007), §8.4, ecs. (8.90)–(8.92), como el caso | σr, σθ y ur por la **consulta por línea** a lo largo de un radio, de r = a a 5a; σθ por la **consulta sobre el contorno** del hueco. Tolerancias de D10, escritas antes de medir |
+| `validacion/casos/006-carga-en-faja-malla-general` (ficha `VER-STR-04`) | Michell (1902), en Timoshenko y Goodier (1951), §34, ec. (f), como el caso | σ1 y σ3 por la consulta por línea en x = 0 (un contorno del modelo), de z = 0.25 a 5 m, con la tolerancia del caso |
+| `validacion/casos/007-cavidad-esferica-malla-general` (ficha `VER-STR-09`) | Lamé (1852), en Timoshenko y Goodier (1951), §121, ecs. (197)–(198): la esfera hueca con u(b) = 0, que es el modelo (comprobaciones de la spec 002, `sphere_fixed_outer`) | σR, σt y uR por la consulta por línea a 45°, de R = a a 5 m; σt sobre el contorno de la cavidad. Tolerancias de D10 |
+| Invariantes | — (propiedades exactas; JCZ ecs. 2.137–2.146) | Las principales, la media, J2, von Mises y la diferencial no cambian al girar los ejes; von Mises y la diferencial son nulas en un estado hidrostático; σ1 + σ3 = σxx + σyy; z es dirección principal |
+| Convenio | Regla 10; spec 001, D1 | Una compresión uniaxial da σ1 > 0 y un acortamiento positivo; el `.h5` guarda el signo del motor; la conversión está en un solo sitio |
+| Deformaciones | Zienkiewicz y Taylor (2000), cap. 2 (spec 002); JCZ ecs. (2.181)–(2.186) | Un desplazamiento lineal impuesto (prueba de la parcela) da la deformación exacta en todo punto, en deformación plana y en axisimetría |
+| Recuperación | Zienkiewicz y Taylor (2000), §14.4, págs. 377–379 | Un campo que la malla representa exacto se recupera exacto en todos los nudos, contornos incluidos: la tensión gravitatoria (lineal) con T6, y un campo constante con T3. Con dos materiales de distinto peso, exacto a cada lado del contacto; mezclándolos, no |
+| Equilibrio | — (identidad; spec 002, RF-5) | Las reacciones por contorno suman la total, y la total equilibra las cargas y el peso de la fase |
+| Ida y vuelta del `.h5` | — (identidad) | Escribir y leer da los mismos números bit a bit; mutar el modelo marca los resultados obsoletos; un `.h5` dañado, incompleto o de un formato posterior lo dice |
+| Unidades | — (homogeneidad) | La tabla exportada en MPa es la de kPa entre 1000 |
+| Regla 7 | — | Cada opción de consulta y de exportación, con el test que demuestra que mueve el número |
 
-Las tablas de errores de las fichas son del programa de referencia: no son valor esperado. La de
+Las tablas de errores de las fichas son del programa de referencia y no son valor esperado. La de
 `VER-STR-01` (tabla 1.2) no dice si sus errores son absolutos o relativos.
 
 ## Fuentes por conseguir
 
-- **Definiciones de las magnitudes**: principales e invariantes, en Jaeger, Cook y Zimmerman (2007),
-  cap. 2, por comprobar; deformaciones, Davis y Selvadurai, que el catálogo teórico (T01) fecha en
-  2002 y en otro punto (T07a) en 2005, por conseguir.
-- **Factor de resistencia**: el catálogo (T00 y T05) no le da ninguna fuente científica; el manual
-  del programa de referencia no lo es. Hace falta una forma publicada del criterio en invariantes.
-- **Recuperación de tensiones**: Zienkiewicz y Taylor (2000), §14.2 (está en la bibliografía; el
-  apartado no se ha leído).
+- Ninguna imprescindible. Moan (1974), al que remite la fig. 14.6 de Z&T para los puntos óptimos de
+  los triángulos, no está en la bibliografía: se lee lo que dice la figura (T1) y basta.
+- La forma del factor de resistencia (el cociente) no tiene fuente leída: va a la 008 con
+  Mohr-Coulomb (D4).
 
 ## Requisitos no funcionales
 
-- Sin Qt (separación cálculo ↔ presentación, `tech-stack.md`).
-- Formato del `.h5` documentado campo a campo, para leerlo con otras herramientas.
-- Tamaño medido en el caso 005 (28 066 elementos); la compresión, decidida (ADR-0003).
-- Sin dependencias nuevas: `h5py` ya llega con el núcleo; usarlo directamente se pregunta.
+- Sin Qt: todo se usa desde scripts, tests, la línea de órdenes y el servidor MCP.
+- El formato del `.h5` está documentado campo a campo (`docs/resultados/formato.md`), para leerlo
+  con otras herramientas sin este programa.
+- El tamaño y el tiempo de escritura y de recuperación, medidos en el caso 005 (28 066 T6); la
+  compresión, decidida con esa medida (D6).
+- `h5py` se usa directamente y se declara en `pyproject.toml`. Ya está en el `.venv`, que lo trae el
+  núcleo; BSD-3, compatible con AGPL-3.0. No se instala nada (D8).
+- Los nombres de las magnitudes y los mensajes llevan una clave traducible para la interfaz
+  (regla 2). Las columnas de la tabla son identificadores fijos, no texto traducido (D15).
 
 ## Casos límite
 
-- Fase que no cambia nada (`solved` falso), que no converge, o cálculo cancelado a mitad.
-- Nudo sobre el eje en axisimetría; nudo retirado; elemento inactivo.
-- Punto de consulta en un contorno entre dos elementos o dos materiales, dentro de una excavación o
-  fuera del modelo.
-- `.h5` sin `.ogr`; `.ogr` renombrado o movido; `.h5` de otra versión del programa.
-- Magnitud sin sentido en el modelo (factor de resistencia de un material sin resistencia).
+- Una fase que no cambia nada (`solved` falso), que no converge, o un cálculo cancelado entre fases.
+- Un nudo sobre el eje en axisimetría; un nudo retirado; un elemento inactivo.
+- Un material con pocos elementos, sin ningún nudo interior que dé un parche (D5).
+- Un punto de consulta sobre un lado entre dos elementos del mismo material, sobre un contacto entre
+  dos materiales, entre la cuerda y el arco de un lado curvo, dentro de una excavación o fuera del
+  modelo.
+- Un `.h5` sin `.ogrfem2d`; un `.ogrfem2d` renombrado o movido sin su `.h5`; un `.h5` de otra
+  versión del programa o de un formato posterior; un `.h5` abierto por otro programa al
+  sobrescribirlo.
+- Una consulta sobre un contorno con un vértice cóncavo, con distancia que la saca del modelo.
 
 ## Fuera de alcance
 
-- El dibujo, la leyenda y los menús de interpretación (006).
-- Resultados de SSR, agua, soportes y juntas; plastificación como resultado propio (fase 2).
+- El dibujo: contornos, leyenda, paletas, deformada, vectores, valor absoluto como opción de
+  dibujo, menús de interpretación (006).
+- El factor de resistencia (008, D4). Resultados de SSR, agua, soportes y juntas; la plastificación
+  como resultado propio (fase 2). El estado plástico se guarda, pero no se interpreta aquí.
 - Datos de usuario por expresión, juntas ubicuas, líneas de flujo de tensiones, isolíneas,
-  animación; informes en PDF.
+  animación, fase de referencia (diferencias entre fases), informes en PDF.
+- Las tensiones normal y tangencial sobre la línea de una consulta (`I03` §7): 006, si las pide.
 
 ## Criterios de finalización
 
-- [ ] Dudas convertidas en decisiones y aprobadas por la propietaria
-- [ ] Todos los RF con su test en verde
+- [ ] D1–D16 aprobadas por la propietaria y anotadas aquí
+- [ ] `plan_de_desarrollo.md` y ADR-0003 corregidos donde dicen que se parte de `results_io.py` y
+      citan el §14.2 (T0)
+- [ ] Todos los RF con su test en verde, y la regla 7 en cada opción nueva
 - [ ] Cada magnitud con su definición comprobada contra su fuente y citada en el código
-- [ ] La consulta por línea de los casos de la fase, dentro de la tolerancia fijada antes de medir
+- [ ] Las consultas de los casos 005, 006 y 007 dentro de la tolerancia fijada antes de medir
 - [ ] Las identidades de la tabla, en verde y con dientes
-- [ ] Formato del `.h5` documentado; lo pedido a OGR-Core, etiquetado y fijado
-- [ ] Changelog con lo encontrado; fichas con su «Seguimiento» (`POST-LINEA`)
+- [ ] Los casos 001 a 007 dan lo mismo bit a bit (el motor solo cambia en cómo entrega las fases, D7)
+- [ ] `docs/resultados/formato.md` completo; tamaño y tiempos del caso 005 en el changelog
+- [ ] Changelog con lo encontrado; fichas STR-01, STR-04 y STR-09 con su «Seguimiento» (`POST-LINEA`)
 
-## Dudas abiertas
+## Decisiones propuestas (2026-11-24)
 
-- [NECESITA ACLARACIÓN] **1. Convenio de lo que entrega esta capa** (S06, duda 14): tracción positiva,
-  como el motor, y la conversión en la 006; o compresión positiva ya aquí, para que la línea de
-  órdenes y un agente vean lo mismo que la interfaz. Igual con las deformaciones (en la referencia,
-  positivas en acortamiento).
-- [NECESITA ACLARACIÓN] **2. σ1 y σ3: en el plano o en 3D.** En la referencia son las del plano (σ1
-  puede ser la intermedia si σz es mayor), y la diferencial es la de 3D. ¿Igual, o principales 3D
-  con σz? El nombre tiene que decirlo.
-- [NECESITA ACLARACIÓN] **3. Deformación de corte máxima**: la documentación de la referencia es
-  ambigua entre la ingenieril y su mitad (carpeta B, `compute_interpret/I02`, §2.1). Lo decide la
-  fuente.
-- [NECESITA ACLARACIÓN] **4. Factor de resistencia** (plan: T05): necesita parámetros de resistencia
-  en un material que en la fase 1 es elástico, y no tiene fuente leída. Opciones: (a) aquí, con
-  Mohr-Coulomb y su fuente; (b) a la spec 008, con las leyes.
-- [NECESITA ACLARACIÓN] **5. Método de paso a nudos**: promedio de los elementos que comparten el
-  nudo, recuperación por parches (§14.2) o por material. La referencia promedia sin separar
-  materiales (carpeta B, `I02`, §7), y en P12 su media nodal de T3 dio en la pared de la cavidad
-  σrr = 0.69 MPa en vez de 0.
-- [NECESITA ACLARACIÓN] **6. Qué se guarda y con qué compresión** (ADR-0003): deformaciones guardadas
-  o derivadas al leer; la malla en el `.h5`, o solo su huella si la guarda el `.ogr` (spec 004,
-  duda 4).
-- [NECESITA ACLARACIÓN] **7. Versiones y resultados parciales**: ¿un `.h5` de otra versión del motor
-  o del núcleo es obsoleto, o solo si cambia el modelo? Con una fase que no converge o un cálculo
-  cancelado, ¿se guardan las fases anteriores, marcadas, o nada?
-- [NECESITA ACLARACIÓN] **8. Dónde vive el escritor**: un escritor HDF5 genérico en el núcleo
-  (petición a OGR-Core, junto al de Slip2D) y la disposición FEM aquí, o todo aquí.
-- [NECESITA ACLARACIÓN] **9. La consulta dentro de un elemento**: interpolar desde los nudos
-  recuperados o desde los puntos de integración; y el formato de la tabla exportada (en la
-  referencia, texto con identificador, x, y, distancia y valor).
-- [NECESITA ACLARACIÓN] **10. Tolerancias de `POST-LINEA`**, fijadas antes de medir, para puntos y
-  para nudos (que en zonas de gradiente fuerte se apartan más).
+Para el OK de la propietaria. Las referencias I02, I03, P11 y P12 son del análisis de interfaz
+(`../Referencias/Doc_Guia/Analisis_interfaz_funcionamiento/`). JCZ es Jaeger, Cook y Zimmerman
+(2007); Z&T, Zienkiewicz y Taylor (2000); dSN, de Souza Neto, Perić y Owen (2008).
+
+| # | Duda del borrador | Decisión propuesta | Por qué |
+|---|---|---|---|
+| D1 | 1: convenio de lo que entrega esta capa | **Esta capa entrega el convenio del usuario**: tensiones en compresión positiva, deformaciones en acortamiento positivo (JCZ ecs. 2.169 y 2.231) y desplazamientos según +x y +y (spec 004, D6; no el x* = x − u de JCZ, ec. 2.168). **El `.h5` guarda lo que da el motor**, en tracción positiva, y lo dice en sus atributos. La conversión de salida se añade a `model/conventions.py`, junto a la de entrada | Con la conversión aquí, la interfaz, la línea de órdenes, un agente y un test ven el mismo número, como pide la regla 10 («en un único sitio»). En el `.h5`, el número del motor sin tocar: el investigador lo lee tal cual, y la ida y vuelta es bit a bit |
+| D2 | 2: σ1 y σ3, en el plano o en 3D | **Las dos, con nombres que lo dicen.** `sigma_1` y `sigma_3` son las principales **en el plano** (JCZ ecs. 2.37–2.38), con `theta_1`, el ángulo de σ1 desde +x en sentido antihorario (ecs. 2.33 y 2.41–2.44). `sigma_z` es la de fuera del plano, que también es principal. `sigma_I` ≥ `sigma_II` ≥ `sigma_III` son las tres ordenadas. La media es p = I1/3 (JCZ ec. 2.153); la de von Mises, q = √(3 J2) (dSN ec. 6.111, con J2 de JCZ ec. 2.163); la diferencial, σI − σIII (JCZ cap. 6, pág. 151) | Las del plano son las que comparan las fichas (Michell da σ1 y σ3 en el plano) y las que muestra la referencia. Las 3D son las que entran en la media, von Mises y la diferencial. Con el nombre, una σ1 que es la intermedia (σz mayor) no engaña a nadie |
+| D3 | 3: deformación de corte máxima | **La ingenieril en el plano**: `gamma_max` = ε1 − ε3, con las principales de deformación en el plano (JCZ ec. 2.195). El nombre y la definición dicen que es el doble de la tensorial, que es la que JCZ prefiere (pág. 46: γ = 2ε) | Es la que se usa en geotecnia y la que muestra la referencia (`I02` §7: «los cortantes que muestra son ingenieriles»). La duda del factor 1/2 la resuelve la definición escrita, no la fuente: las dos están en JCZ |
+| D4 | 4: factor de resistencia | **A la spec 008**, con las leyes. Su borrador ya lo pide (T05), y allí el material tiene c y φ. dSN, ec. (6.119), da Mohr-Coulomb en invariantes (tracción positiva, según Owen y Hinton 1980). El cociente que define el factor es una definición sin fuente leída, y se decide allí | En la fase 1 el material es elástico: añadir c y φ solo para un resultado adelantaría la 008 a medias. La forma en invariantes ya está localizada, y la 008 no empieza de cero |
+| D5 | 5: el paso a los nudos | **Recuperación por parches (SPR), material a material** (Z&T §14.4, ecs. 14.28–14.31). En cada nudo de esquina interior del material, un polinomio del grado de los desplazamientos (1 en T3, 2 en T6) se ajusta por mínimos cuadrados a los valores de los puntos de integración del parche. Cada nudo toma la media de los parches que lo contienen (pág. 379). Los nudos del borde del material (contornos, excavación, contactos) toman los valores de los parches interiores vecinos (fig. 14.9). Un nudo intermedio del T6, los de los parches de las esquinas de su lado. **Sin parche posible** (un material de un elemento de espesor), el campo del propio elemento extrapolado, y el valor lo dice. **Sin promedio simple** | Z&T §14.3, pág. 376: el promedio es inadecuado en triángulos y en orden alto. En P12, la referencia promediaba y daba σrr = 0.69 MPa en la pared, donde vale 0. Por material, porque las tensiones tangenciales y las principales saltan en un contacto (`I02` §7; Z&T fig. 14.9: «on interfaces where stresses are discontinuous»). La salida de los parches que faltan es **propuesta propia**: Z&T no trata el caso |
+| D6 | 6: qué se guarda y con qué compresión | **En el `.h5` va lo que dio el motor y lo que se sigue de ello sin elegir nada**: por fase, desplazamientos, tensiones, deformaciones (B u, con la B del motor), estado plástico, elementos activos, nudos retirados y del eje, reacciones, historia y ajustes. **Va también una copia de la malla** con las coordenadas de los puntos, aunque el `.ogrfem2d` ya la tiene; la huella garantiza que es la misma. **No van los valores recuperados**, que dependen de un método y se calculan al leer. Compresión gzip, la de HDF5 que cualquier lector abre, con el nivel fijado midiendo el caso 005 | Las deformaciones guardadas son las que pide el ADR-0003, y el investigador las lee sin reconstruir la B. La copia de la malla deja el `.h5` completo por sí mismo, por H6 y por el investigador, por unos MB en el caso 005 (se mide). Lo que depende de un método no se congela en el archivo: si el método mejora, los resultados viejos se ven con el nuevo |
+| D7 | 7: versiones y resultados parciales | **Solo la huella del modelo hace obsoletos unos resultados.** Las versiones del programa, del núcleo y del formato y la variante del motor se guardan y se muestran con el resultado (regla 12). Un formato posterior al que se conoce, error. **Si una fase falla o se cancela el cálculo, se guardan las fases resueltas**, con el estado `incomplete` o `cancelled`, la fase y el porqué. Para eso `analysis.py` entrega las fases una a una (un generador; `run` sigue igual, bit a bit) | Obsoleto por versión obligaría a recalcular horas en cada actualización, y un cambio de número entre versiones lo vigilan los casos, no el `.h5`. Las fases resueltas de un cálculo largo valen, y el estado impide tomarlas por un cálculo completo. El cambio en el motor es de orquestación, en Python: no toca leyes, elementos ni `rust/` |
+| D8 | 8: dónde vive el escritor | **Todo aquí**, en un paquete nuevo `ogr_fem2d/results/`, con `h5py` directamente, **declarado en `pyproject.toml`**. No se pide nada al núcleo | Lo que el núcleo tiene es de equilibrio límite, y lo genérico serían unas 20 líneas (atributos, gzip, escritura a un temporal). Si Slip2D quiere compartirlo algún día, se pide entonces con lo que haya en los dos. Un import directo de un paquete no declarado dependería de que el núcleo lo siga pidiendo |
+| D9 | 9: el valor dentro de un elemento y la tabla | **Desplazamientos**: las funciones de forma del elemento (el campo de elementos finitos). **Tensiones y deformaciones**: los valores recuperados de D5, interpolados con las funciones de forma (Z&T ec. 14.27), que dentro de un material son continuos. **En un contacto entre materiales**, una fila por lado, con la misma distancia. Los valores en los puntos, aparte (RF-13), con sus coordenadas. Tabla: D15 | La consulta da un campo continuo y definido en todo punto, como la referencia, que interpola de verdad (`I03` §1). El salto en un contacto existe (`I02` §7), y dos filas lo enseñan en vez de esconderlo. Los puntos, que son lo que se valida, siguen al alcance |
+| D10 | 10: tolerancias de `POST-LINEA` | **Antes de medir**, en `esperado.json`. **Tensiones**: error absoluto ≤ 0.01 de la tensión de campo (p0 o P0). En el 005 es el mismo 0.3 MPa que el 0.5 % del caso sobre σθ(a) = 2 p0, y vale también donde σr → 0. **Desplazamientos**: error absoluto ≤ 0.005 del de la pared, ur(a) o uR(a). **Caso 006**: la del caso, 0.01 q. **Caso 007**: contra la esfera de 21 m fija, que es el modelo, y no contra el medio infinito | Medir el error relativo al valor local no significa nada donde la tensión pasa por cero. Las de puntos, las de los casos, siguen igual. En el 007, la ficha y el caso 003 ya miden que el medio infinito se aparta un 0.5 % hacia R = 3.6 m: la comparación con la esfera finita no lleva ese error del contorno. **En el 006 el margen es pequeño**: el efecto del dominio ya es 0.0045 q, y en los puntos se midió 0.0053 q. Si no cumple, es un hallazgo y no se afloja |
+| D11 | Nueva: situar un punto | **Aquí**: una rejilla de cajas de los elementos activos, ampliadas para que quepan los lados curvos, y la inversa isoparamétrica de `reference/loads.local_coordinates`. Un punto sobre un lado común a dos elementos del mismo material toma el de menor índice, y da igual cuál, porque el campo recuperado es continuo. Sobre un contacto, los dos (D9) | El localizador del núcleo es de T3 rectos: un punto entre la cuerda y el arco quedaría fuera. Con T6 curvos hace falta la transformación del elemento, que el motor ya tiene |
+| D12 | Nueva: la consulta sobre un contorno | Sobre la geometría del modelo, con los arcos. Toma los vértices, o N puntos por segmento sobre el segmento o el arco. Con distancia d ≠ 0, cada punto se mueve d por la normal del contorno hacia el lado pedido; en un vértice, por la bisectriz de las dos normales. Lado: dentro o fuera en los cerrados, izquierda o derecha en los abiertos. **Distancia por defecto: 0**, sobre el contorno | Sobre la geometría, porque los puntos de un arco tienen que estar en el arco (`I03` §3). La regla del desplazamiento es **propia**, porque la referencia no la documenta. La distancia por defecto de la referencia (0.1 m) cambiaría el número sin pedirlo (regla 12) |
+| D13 | Nueva: dónde y cómo se escribe | `results.calculate(modelo, ruta)` traduce, resuelve fase a fase y escribe `<raíz>.h5` junto a `<raíz>.ogrfem2d`. Escribe a `<raíz>.h5.tmp` y lo mueve con `os.replace` al terminar, también si el cálculo acaba incompleto. Un fallo de escritura borra el temporal y deja el `.h5` anterior | Es el patrón de Slip2D (`ogr_gui/background.py`). Un corte deja el `.h5` de antes, que su huella juzga |
+| D14 | Nueva: el resumen por fase | Por magnitud, el máximo y el mínimo en los puntos y en los nudos, cada uno con dónde y de qué tipo. El desplazamiento total máximo, con su nudo. Las reacciones, totales y por contorno del modelo (con el mapa segmento → nudos de la 003) | Es lo que pide RF-15 y lo que la 006 enseña como resumen. Que las reacciones sean por contorno las hace legibles («el fondo soporta…») y da la identidad del equilibrio |
+| D15 | Nueva: unidades y tabla | La capa entrega en las unidades guardadas (m, kN, kPa) y lo declara. **La tabla, en las del sistema que se muestra** (`ogr_core.units`, `to_user`). CSV en UTF-8, punto decimal, cabecera de comentarios (`#`) con magnitud, unidad, convenio, fase, método y huella. Columnas: `query_id, point, x, y, distance, value, element, material, source`. Las cinco primeras, como las de la referencia | La tabla la lee una persona en las unidades que ve; la API, un programa, que necesita un solo sistema. Identificadores fijos, porque una columna traducida rompería los scripts que la leen |
+| D16 | Nueva: el catálogo | Cada magnitud es una entrada con id, clave traducible, unidad, convenio, nombre en axisimetría, si es de tensión, deformación o desplazamiento, su definición y su fuente. La 006 lo usa para el selector | Un sitio para cada definición y su fuente, como piden los criterios. La interfaz no inventa nombres |
+
+### Consecuencias en el resto del proyecto
+
+- ADR-0003, «Decisión»: dice que se parte de `ogr_core/project/results_io.py`; con D8, no. Se
+  corrige en la T0, con el OK de la propietaria.
+- `plan_de_desarrollo.md`, «Spec 005»: el §14.2, a §14.3–14.4; el factor de resistencia, a la 008;
+  `results_io.py`, fuera. En la T0.
+- El borrador de la 008 recibe el factor de resistencia con la forma de dSN (6.119) localizada (D4).
+- La 006 recibe el catálogo (D16), los estados de RF-3, `calculate` (D13) para su subproceso, y el
+  valor absoluto como opción de dibujo.
