@@ -122,11 +122,14 @@ Empieza cuando la versión de OGR-Core de D1 (i) está etiquetada.
   *Hecho cuando:* la cabecera del runner nombra la versión nueva y la suite entera está en verde.
   (Hecho el 2026-11-24: OGR-Core v0.2.9, `23bc41a`, con `ogr_core.api`; 660 de 660 con
   `shared: ogr_core 0.2.9`.)
-- [ ] T11. `api/workspace.py`, `api/ops/project.py` y `api/ops/history.py`: abrir, nuevo, guardar,
+- [x] T11. `api/workspace.py`, `api/ops/project.py` y `api/ops/history.py`: abrir, nuevo, guardar,
   cerrar, abrir un `.ogr` de Slip2D o un DXF, deshacer y rehacer (RF-6–8).
 
   *Hecho cuando:* cada operación rechaza un argumento desconocido o inválido con su nombre; cada
   edición es un paso de deshacer; abrir una importación devuelve su informe.
+  (Hecho el 2026-11-24: también `project_summary`, `project_validate` y `project_settings`; los
+  textos, codificados. 7 tests; 14 mutaciones, 14 cazadas. **Anomalía reportada**: un modelo a
+  medio dibujar no se puede guardar, porque `ogr_file.write` lo valida entero.)
 - [ ] T12. `api/ops/model.py` y `api/ops/mesh.py`: las ediciones de la parte A, discretizar y mallar
   (RF-6, RF-12).
 
