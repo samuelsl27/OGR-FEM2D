@@ -64,6 +64,11 @@ _ENTRIES = [
     _spec("fem.run.unsaved", "Model {model} has changes that are not in its file."),
     _spec("fem.run.unsaved.hint", "Save it first (project_save): the results carry the file's "
                                   "fingerprint, and would be stale at once."),
+    _spec("fem.results.not_valid", "The results are {status} ({message})."),
+    _spec("fem.results.not_valid.hint", "Calculate the model again (analysis_run), or read them as "
+                                        "they are with allow_invalid=true: every answer then says "
+                                        "their state."),
+    _spec("fem.field.refused", "The field cannot be drawn so: {what}"),
     # -- the names of the undo steps (the Edit menu, project_history) -------
     _spec("fem.step.project_settings", "Project settings"),
     _spec("fem.step.boundary_add", "Add boundary"),

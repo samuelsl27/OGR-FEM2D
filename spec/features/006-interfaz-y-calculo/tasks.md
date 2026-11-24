@@ -153,11 +153,12 @@ Empieza cuando la versión de OGR-Core de D1 (i) está etiquetada.
 
   (Hecho el 2026-11-24: el gestor del núcleo no encola, rechaza (`Busy`): eso es lo que se prueba en
   lugar de `queued`. 8 tests; 11 mutaciones, 11 cazadas.)
-- [ ] T14. `api/ops/results.py`: abrir con su estado, las consultas, el resumen, la tabla, el informe
+- [x] T14. `api/ops/results.py`: abrir con su estado, las consultas, el resumen, la tabla, el informe
   y los triángulos de un campo (RF-6).
 
   *Hecho cuando:* cada consulta de la 005 tiene su operación y da sus mismos números bit a bit;
   unos resultados no válidos solo se leen pidiéndolo, y cada respuesta lleva el estado.
+  (Hecho el 2026-11-24: también el campo listo para dibujar. 4 tests; 11 mutaciones, 11 cazadas.)
 - [ ] T15. `cli/__main__.py`: la línea de órdenes.
 
   *Hecho cuando:* abrir, mallar, calcular, consultar, exportar y el informe funcionan sobre un caso;

@@ -120,3 +120,26 @@ sobre los trabajos del núcleo (`ogr_core.api.jobs`), con los nombres de Slip2D 
 8 tests; 11 mutaciones, 11 cazadas (tres se escapaban al principio: el plazo por defecto, la limpieza
 del temporal y el progreso de cada fase; ahora el destino y su limpieza se prueban también en el
 proceso del test).
+
+## T14 — las operaciones de resultados (2026-11-24)
+
+`ogr_fem2d/api/ops/results.py`: `results_open` (el estado del `.h5`), `results_query` (por línea, por
+contorno a una distancia, en todos los nudos, en todos los puntos y en un punto a lo largo de las
+fases), `results_summary`, `results_table`, `results_report` y `results_field` (el campo listo para
+dibujar de la T8) (RF-6; spec 005). 41 operaciones en total.
+
+- **Cada consulta de la spec 005 da sus mismos números bit a bit** por su operación, y la tabla, el
+  informe y el campo, el mismo texto y los mismos arreglos.
+- **Unos resultados que no son válidos solo se leen pidiéndolo** (`allow_invalid`), y entonces cada
+  respuesta dice su estado; con resultados obsoletos el resumen no da las reacciones por contorno (la
+  malla puede ser otra).
+- Los valores, en las unidades que guardan los resultados y en el convenio del usuario, con su unidad,
+  su convenio y sus ajustes en cada respuesta (regla 12); la tabla, en las que muestra el modelo (spec
+  005, D15).
+- **Lo recuperado en los nudos se calcula una vez por fase** y se guarda con los resultados mientras ni
+  el modelo ni el archivo de resultados cambien (su fecha entra en la clave): en el caso 005 es lo que
+  cuesta 1,1 s por fase (T8).
+
+4 tests; 11 mutaciones, 11 cazadas (dos se escapaban: la tabla en las unidades del modelo, con un modelo
+en kPa, y la caché que no se renovaba, sin una consulta antes del cambio; ahora el modelo de la prueba se
+muestra en MPa y se consulta antes de cambiarlo).
