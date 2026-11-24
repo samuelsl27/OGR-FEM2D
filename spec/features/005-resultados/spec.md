@@ -1,5 +1,6 @@
 # Spec 005 — Resultados (`.h5`) y su interpretación sin interfaz
 
+> **Cerrada (2026-11-24)**: criterios de finalización cumplidos (changelog v0.0.11, T18).
 > **Aprobada (2026-11-24)**, con D1–D16 tal como se propusieron. Fase 1 del plan de desarrollo
 > (`spec/constitution/plan_de_desarrollo.md`, «Spec 005 — Resultados (`.h5`) y su interpretación
 > sin interfaz»). Solo el **qué** y el **porqué**; el cómo, en `plan.md`. Versión: **v0.0.11**.
@@ -251,13 +252,13 @@ Las tablas de errores de las fichas son del programa de referencia y no son valo
 - [x] D1–D16 aprobadas por la propietaria y anotadas aquí (2026-11-24)
 - [x] `plan_de_desarrollo.md` y ADR-0003 corregidos donde dicen que se parte de `results_io.py` y
       citan el §14.2 (T0)
-- [ ] Todos los RF con su test en verde, y la regla 7 en cada opción nueva
-- [ ] Cada magnitud con su definición comprobada contra su fuente y citada en el código
-- [ ] Las consultas de los casos 005, 006 y 007 dentro de la tolerancia fijada antes de medir
-- [ ] Las identidades de la tabla, en verde y con dientes
-- [ ] Los casos 001 a 007 dan lo mismo bit a bit (el motor solo cambia en cómo entrega las fases, D7)
-- [ ] `docs/resultados/formato.md` completo; tamaño y tiempos del caso 005 en el changelog
-- [ ] Changelog con lo encontrado; fichas STR-01, STR-04 y STR-09 con su «Seguimiento» (`POST-LINEA`)
+- [x] Todos los RF con su test en verde, y la regla 7 en cada opción nueva
+- [x] Cada magnitud con su definición comprobada contra su fuente y citada en el código
+- [x] Las consultas de los casos 005, 006 y 007 dentro de la tolerancia fijada antes de medir
+- [x] Las identidades de la tabla, en verde y con dientes
+- [x] Los casos 001 a 007 dan lo mismo bit a bit (el motor solo cambia en cómo entrega las fases, D7)
+- [x] `docs/resultados/formato.md` completo; tamaño y tiempos del caso 005 en el changelog
+- [x] Changelog con lo encontrado; fichas STR-01, STR-04 y STR-09 con su «Seguimiento» (`POST-LINEA`)
 
 ## Decisiones (2026-11-24)
 
@@ -293,3 +294,24 @@ Aprobadas el 2026-11-24, tal como se propusieron. Las referencias I02, I03, P11 
 - El borrador de la 008 recibe el factor de resistencia con la forma de dSN (6.119) localizada (D4).
 - La 006 recibe el catálogo (D16), los estados de RF-3, `calculate` (D13) para su subproceso, y el
   valor absoluto como opción de dibujo.
+
+### Lo que se encontró al hacerla (changelog v0.0.11)
+
+Reportado y resuelto durante las tareas, para revisar por la propietaria:
+
+- **Tres erratas del libro en JCZ (T1)**: (2.149), (2.162) y (2.195), vistas sobre la página. Ninguna
+  se usa tal cual.
+- **Los puntos del T6 no son los óptimos de Z&T (T7)**: los tres medios de los lados son los de la
+  cuadratura mínima (fig. 14.6). La recuperación se hace igual; la superconvergencia no está
+  asegurada.
+- **D5 precisada por la fig. 14.8 (T7)**: un parche determina su nudo central, los intermedios de sus
+  radios y los nudos del borde del material que tiene; no todos los nudos que contiene.
+- **Lo que no alcanza ningún parche (T8)** no es solo un material de un elemento de espesor: también
+  un elemento con sus tres esquinas en el contorno (la esquina de un cuadrado). Toma la salida de D5.
+- **Las tolerancias de los casos no distinguen los parches del promedio (T14–T16)**: con el campo
+  propio de los elementos promediado, los tres casos también cumplen, y en la pared del 005 sale algo
+  mejor. Lo que fija los parches son las identidades de la T8.
+- **Las consultas no llevaban sus ajustes (T17)**: ahora sí (`Query.settings`), y la tabla los
+  escribe (regla 12).
+- **Un sistema de unidades desconocido** en la tabla es un error; el núcleo lo sustituiría en
+  silencio (T12).

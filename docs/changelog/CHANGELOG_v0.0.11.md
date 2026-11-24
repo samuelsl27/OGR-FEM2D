@@ -353,3 +353,25 @@ el lado de una consulta sobre un contorno. La tabla los escribe en su cabecera.
 | La variante del motor y las versiones | atributos del `.h5`; `Opened.other_version` |
 | El convenio del archivo (tracción positiva) | atributo `sign_convention` del `.h5` |
 | La procedencia de cada valor | `Row.source` y la columna `source` |
+
+## T18 — el cierre (2026-11-24)
+
+- Cada fórmula de «Formulación» de `plan.md`, citada en el código:
+  - JCZ (2007) y de Souza Neto et al. (2008), en `results/quantities.py`;
+  - Z&T (2000), caps. 2 y 5, en `results/strains.py`, y §14.3–14.4, en `results/recovery.py`;
+  - Kirsch, Michell y Lamé, en `tests/test_validation_queries_v0011.py` y en los `esperado.json`.
+- **Los casos 001 a 007, bit a bit**: la huella de todos los campos del motor en los casos 003 a 007,
+  la misma que antes de la T3. Los 001 y 002 no pasan por `analysis`, y su código (`rust/`, el motor de
+  referencia, `tests/_hole.py`) no ha cambiado desde 7f6abd6.
+- `docs/resultados/formato.md`, completo: el archivo, calcular y abrir, las magnitudes, los nudos, las
+  consultas y la tabla.
+- Para la propietaria:
+  - **La 006** recibe:
+    - el catálogo (D16) para el selector de magnitud, con las claves para traducir (regla 2);
+    - los estados de `open_results`;
+    - `calculate`, con `should_stop`, para su subproceso;
+    - las consultas, el resumen y la tabla;
+    - el valor absoluto, como opción de dibujo.
+  - **La 008** recibe el factor de resistencia (D4), con Mohr-Coulomb en invariantes localizado (dSN
+    ec. 6.119). Queda anotado en su borrador.
+  - Los hallazgos para revisar están en `spec.md`, «Lo que se encontró al hacerla».

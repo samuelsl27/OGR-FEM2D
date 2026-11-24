@@ -35,8 +35,12 @@ OGR Slip2D habrán avanzado. Al abrirla, y antes de escribir el plan:
 - Spec 007 (tolerancia, colapso y escalones): las leyes nuevas se prueban en modelo con su criterio.
 - Spec `004-modelo-y-proyecto`: los parámetros de cada ley en el material, por fase, con sus valores
   por defecto a la vista.
-- Spec `005-resultados`: el estado de rotura por punto (corte, tracción, residual) y el factor de
-  resistencia (T05), que hoy solo cubre Mohr-Coulomb.
+- Spec `005-resultados`: el estado de rotura por punto (corte, tracción, residual). **El factor de
+  resistencia (T05) vino de la 005 a esta** (su D4, 2026-11-24): la forma publicada de Mohr-Coulomb
+  en invariantes está localizada, de Souza Neto, Perić y Owen (2008), ec. (6.119), pág. 166 (tracción
+  positiva, según Owen y Hinton 1980; el ángulo de Lode, ec. 6.97); el cociente que define el factor
+  no tiene fuente leída. Las magnitudes, los nudos y las consultas de la 005 lo recibirán como una
+  entrada más del catálogo (`results/quantities.py`).
 - Spec `006-interfaz-y-calculo`: el diálogo de materiales de cada ley.
 
 ## Contexto y objetivo

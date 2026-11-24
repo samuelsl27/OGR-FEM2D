@@ -183,7 +183,7 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   *Hecho cuando:* la tabla está en el changelog y no le falta ninguna opción.
   (Hecho el 2026-11-24: 5 tests; 3 mutaciones, 3 cazadas. Las consultas llevan ahora sus ajustes,
   `Query.settings`, y la tabla los escribe.)
-- [ ] T18. El cierre.
+- [x] T18. El cierre.
   - Cada fórmula de «Formulación», citada en el código.
   - Los casos 001 a 007, bit a bit.
   - `CHANGELOG_v0.0.11.md`, completo.
@@ -191,3 +191,6 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
     valor absoluto como opción de dibujo) y la 008 (el factor de resistencia con dSN 6.119).
 
   *Hecho cuando:* todos los criterios de finalización de `spec.md` están marcados.
+  (Hecho el 2026-11-24: los criterios, marcados; los casos 003 a 007 con la misma huella de todos sus
+  campos que antes de la spec, y los 001 y 002 sin un cambio en su código desde 7f6abd6; la nota de la
+  008, en su borrador.)
