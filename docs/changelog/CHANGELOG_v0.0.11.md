@@ -51,3 +51,16 @@ deformación cambian de signo, el desplazamiento no. La versión pasa a 0.0.11.
   del ángulo, el orden con σz mayor, intermedia y menor, el signo del usuario, la conversión en un solo
   sitio y el catálogo. 12 mutaciones, 12 cazadas tras añadir un test (la media sin σz sobrevivía a los
   giros y al estado hidrostático).
+
+## T2 — las deformaciones (2026-11-24)
+
+`results/strains.py`: B u en cada punto con la B que construye el propio motor
+(`solver.integration_points`), escrita con NumPy; NaN en los puntos de los elementos inactivos. En el
+signo del motor (alargamiento positivo); el del usuario lo pone `conventions.py` (D1).
+
+- `tests/test_results_strains_v0011.py`, 7 tests: la prueba de la parcela (desplazamiento lineal
+  impuesto, deformación exacta en todos los puntos) con T3 y T6, en deformación plana y en
+  axisimetría (εθ = u/r en el punto) y en los T6 curvos de un túnel; el producto es
+  `IntegrationPoint.strain` del motor punto a punto; los inactivos sin deformación; γmax es la
+  ingenieril (un corte puro γ da γmax = γ). 7 mutaciones, 7 cazadas tras completar un test (εv sin
+  εθ sobrevivía en deformación plana, donde εz = 0).

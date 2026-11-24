@@ -37,11 +37,12 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   (Hecho el 2026-11-24: 16 tests; 12 mutaciones, 12 cazadas. **Tres erratas del libro** en JCZ,
   (2.149), (2.162) y (2.195), vistas sobre la página; ninguna se usa tal cual. θ1 en [0°, 180°), el
   intervalo de JCZ, changelog.)
-- [ ] T2. `results/strains.py` y las magnitudes de deformación (D3, D6): B u con la B del motor;
+- [x] T2. `results/strains.py` y las magnitudes de deformación (D3, D6): B u con la B del motor;
   εv y γmax.
 
   *Hecho cuando:* la prueba de la parcela (desplazamiento lineal impuesto) da la deformación exacta
   en todos los puntos con T3 y T6, en deformación plana y en axisimetría, y γmax tiene su factor 2.
+  (Hecho el 2026-11-24: 7 tests; 7 mutaciones, 7 cazadas.)
 - [ ] T3. `engine/analysis.py`: `stages()`, el generador de fases (D7).
 
   *Hecho cuando:*
