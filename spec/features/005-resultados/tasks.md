@@ -82,11 +82,12 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
 ## Los nudos y las consultas
 
-- [ ] T6. `results/locate.py`: situar un punto (D11) — RF-10.
+- [x] T6. `results/locate.py`: situar un punto (D11) — RF-10.
 
   *Hecho cuando:* tienen su test un punto en el interior, uno sobre un lado común, uno sobre un
   contacto (sus dos elementos), uno entre la cuerda y el arco de un T6 curvo, uno en una excavación
   y uno fuera del modelo.
+  (Hecho el 2026-11-24: 4 tests; 5 mutaciones, 5 cazadas.)
 - [ ] T7. **Las figuras de Z&T, sobre la página**: la 14.6 (qué puntos óptimos da para el T6) y las
   14.8 y 14.9 (los parches y los bordes). Lo que se vea, al plan («Formulación») y, si no es lo
   esperado, reportado antes de seguir (regla 6).

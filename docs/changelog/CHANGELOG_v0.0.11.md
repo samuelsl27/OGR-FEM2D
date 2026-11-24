@@ -125,3 +125,17 @@ núcleo no los hace obsoletos, pero se dice (D7).
 - `tests/test_results_calculate_v0011.py`, 6 tests: los resultados son los del motor; cada estado,
   con el incompleto (una liberación de todo el externo en la fase 2) y el cancelado; otra versión,
   válida y dicha; un modelo sin malla no escribe nada. 7 mutaciones, 7 cazadas.
+
+## T6 — situar un punto (2026-11-24)
+
+`results/locate.py`: una rejilla de las cajas de los elementos (ampliadas un 1 % de su diagonal) y,
+en cada candidato, la inversa isoparamétrica del motor (`loads.local_coordinates`). El punto está en
+el elemento si sus coordenadas de área son ≥ −10⁻⁹ y el mapa las devuelve al punto. Da todos los
+elementos activos que lo contienen, en orden de índice, o dice si el punto está en una excavación o
+fuera del modelo.
+
+- `tests/test_results_locate_v0011.py`, 4 tests: dentro de un elemento; sobre un lado y sobre un nudo,
+  todos los que lo tienen; entre la cuerda y el arco de un T6 curvo, en el elemento del arco (en el
+  hueco: con el hueco excavado no hay elemento activo, aunque el triángulo de esquinas del vecino lo
+  contiene) y, justo fuera del arco, en la roca; excavado y fuera, por separado. 5 mutaciones, 5
+  cazadas (entre ellas, situar con el triángulo de esquinas).
