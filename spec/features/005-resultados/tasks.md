@@ -123,7 +123,7 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   - el desplazamiento interpolado en un nudo es el nodal.
 
   (Hecho el 2026-11-24: 7 tests; 8 mutaciones, 8 cazadas.)
-- [ ] T10. La consulta sobre un contorno, con distancia y lado (D12) — RF-12.
+- [x] T10. La consulta sobre un contorno, con distancia y lado (D12) — RF-12.
 
   *Hecho cuando:*
   - sobre un arco, los puntos están en el arco;
@@ -131,6 +131,8 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   - en un vértice cóncavo, el punto va por la bisectriz;
   - un punto que sale del modelo queda sin valor;
   - la distancia por defecto es 0.
+
+  (Hecho el 2026-11-24: 5 tests; 7 mutaciones, 7 cazadas.)
 - [ ] T11. El punto frente a la fase y el resumen por fase (D14) — RF-15.
 
   *Hecho cuando:*

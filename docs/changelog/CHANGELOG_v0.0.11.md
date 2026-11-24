@@ -221,3 +221,22 @@ excavado. `tests/test_results_queries_v0011.py`, 7 tests: dónde caen los puntos
 contacto; sin valor fuera y en la excavación; el desplazamiento y la tensión en un nudo son el nodal y
 el recuperado; todos los nudos, con dos filas en el contacto y ninguna en los retirados; todos los
 puntos, los del motor. 8 mutaciones, 8 cazadas.
+
+## T10 — la consulta sobre un contorno (2026-11-24)
+
+`queries.on_boundary` y `boundary_points`: sobre la geometría del modelo, con sus arcos (D12). Toma
+los vértices, o n puntos por segmento sobre el segmento o el arco, con la distancia a lo largo del
+contorno (longitud de arco en los arcos). Con una distancia d, cada punto se mueve por la normal hacia
+el lado pedido: dentro o fuera en un contorno cerrado, izquierda o derecha en uno abierto. En un
+vértice va por la bisectriz de las dos normales. Qué lado es dentro lo dice el área con signo del
+contorno, con los arcos incluidos: la mitad de ∮ x dy − y dx. La distancia por defecto es 0, y una
+distancia sin lado es un error.
+
+- `tests/test_results_boundary_v0011.py`, 5 tests:
+  - sobre el círculo de un túnel, los puntos en el círculo y a su longitud de arco;
+  - dentro y fuera, los círculos concéntricos, también con el contorno en sentido horario;
+  - el área con signo de un círculo de cuatro arcos es πr²;
+  - izquierda, derecha y la bisectriz en una esquina;
+  - en el hueco excavado no hay valor, fuera sí, y fuera del externo tampoco.
+
+  7 mutaciones, 7 cazadas.

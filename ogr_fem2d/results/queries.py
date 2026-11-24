@@ -269,3 +269,117 @@ def all_points(view: View, quantity: str) -> Query:
                             reason="excavated"))
     return Query(quantity, view.stage, view.info["id"], tuple(rows), "points",
                  "the integration points, as the engine gave them")
+
+
+# ------------------------------------------------------- on a boundary
+INSIDE, OUTSIDE, LEFT, RIGHT = "inside", "outside", "left", "right"
+
+
+def _arc(a, b, centre):
+    """(radius, start angle, signed sweep) of the minor arc from a to b."""
+    ta = math.atan2(a[1] - centre[1], a[0] - centre[0])
+    tb = math.atan2(b[1] - centre[1], b[0] - centre[0])
+    sweep = (tb - ta + math.pi) % (2.0 * math.pi) - math.pi
+    return math.hypot(a[0] - centre[0], a[1] - centre[1]), ta, sweep
+
+
+def signed_area(b) -> float:
+    """The signed area the closed boundary ``b`` encloses (positive when
+    its vertices go anticlockwise), arcs included: half the integral of
+    x dy - y dx along it."""
+    total = 0.0
+    for k in range(b.n_segments):
+        a, c = b.segment(k)
+        attr = b.attr(k)
+        if attr is None or attr.arc is None:
+            total += a[0] * c[1] - c[0] * a[1]
+        else:
+            o = attr.arc
+            r, _t, sweep = _arc(a, c, o)
+            total += o[0] * (c[1] - a[1]) - o[1] * (c[0] - a[0]) + r * r * sweep
+    return 0.5 * total
+
+
+def boundary_points(b, n_per_segment: int | None = None, distance: float = 0.0,
+                    side: str | None = None):
+    """The points of a query on the boundary ``b`` of the model (D12): its
+    vertices (``n_per_segment`` None) or n points on each segment, on its
+    arc if it is one (the start of each segment and n - 1 between; the end
+    of an open boundary too), moved ``distance`` along the boundary's normal
+    to ``side``: inside or outside for a closed boundary, left or right
+    (of its direction) for an open one. At a vertex the normal is the
+    bisector of those of its two segments. Returns the points and their
+    distance along the boundary."""
+    if distance != 0.0:
+        allowed = (INSIDE, OUTSIDE) if b.closed else (LEFT, RIGHT)
+        if side not in allowed:
+            raise ValueError(f"a distance needs its side, one of {allowed} for this boundary")
+    if n_per_segment is not None and n_per_segment < 1:
+        raise ValueError("n_per_segment >= 1")
+    sign = 0.0
+    if distance != 0.0:
+        if b.closed:
+            ccw = signed_area(b) > 0.0                    # the left of an anticlockwise ring is inside
+            sign = (1.0 if ccw else -1.0) * (1.0 if side == INSIDE else -1.0)
+        else:
+            sign = 1.0 if side == LEFT else -1.0
+
+    def piece(k, t):
+        """Point, unit tangent and length of segment k at fraction t."""
+        a, c = b.segment(k)
+        attr = b.attr(k)
+        if attr is None or attr.arc is None:
+            length = math.hypot(c[0] - a[0], c[1] - a[1])
+            tx, ty = (c[0] - a[0]) / length, (c[1] - a[1]) / length
+            return (a[0] + t * (c[0] - a[0]), a[1] + t * (c[1] - a[1])), (tx, ty), length
+        o = attr.arc
+        r, start, sweep = _arc(a, c, o)
+        th = start + t * sweep
+        s = 1.0 if sweep > 0.0 else -1.0
+        point = (o[0] + r * math.cos(th), o[1] + r * math.sin(th))
+        if t == 0.0:
+            point = a                                    # the vertex itself, not its rounding
+        return point, (-s * math.sin(th), s * math.cos(th)), r * abs(sweep)
+
+    def left(tangent):
+        return -tangent[1], tangent[0]
+
+    segments = b.n_segments
+    points, distances, along = [], [], 0.0
+    for k in range(segments):
+        count = 1 if n_per_segment is None else n_per_segment
+        _p, _t, length = piece(k, 0.0)
+        for i in range(count):
+            t = i / count
+            p, tangent, _ = piece(k, t)
+            normal = left(tangent)
+            if i == 0 and (b.closed or k > 0):
+                prev = (k - 1) % segments
+                _q, before, _ = piece(prev, 1.0)
+                nb = left(before)
+                sx, sy = normal[0] + nb[0], normal[1] + nb[1]
+                size = math.hypot(sx, sy)
+                if size > 1e-12:
+                    normal = (sx / size, sy / size)
+            points.append((p[0] + sign * distance * normal[0], p[1] + sign * distance * normal[1]))
+            distances.append(along + t * length)
+        along += length
+    if not b.closed:
+        p, tangent, _ = piece(segments - 1, 1.0)
+        p = b.vertices[-1]
+        normal = left(tangent)
+        points.append((p[0] + sign * distance * normal[0], p[1] + sign * distance * normal[1]))
+        distances.append(along)
+    return points, distances
+
+
+def on_boundary(view: View, quantity: str, m, boundary_id: str, n_per_segment: int | None = None,
+                distance: float = 0.0, side: str | None = None) -> Query:
+    """The quantity on a boundary of the model ``m``, or at ``distance`` to
+    one ``side`` of it (RF-12, D12). The default distance is 0: on it."""
+    b = m.boundary(boundary_id)
+    if b is None:
+        raise KeyError(f"no boundary {boundary_id!r} in the model")
+    points, distances = boundary_points(b, n_per_segment, distance, side)
+    return Query(quantity, view.stage, view.info["id"],
+                 tuple(_rows_at(view, quantity, points, distances)), "boundary", method_of(quantity))
