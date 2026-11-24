@@ -78,3 +78,18 @@ anteriores (D7). `docs/motor/entrada.md` lo dice.
 - `tests/test_analysis_stages_v0011.py`, 3 tests: `run` es la lista de las fases; una fase sin
   restricciones suficientes deja entregada la anterior y lanza su error con su índice; la entrada se
   comprueba antes de la primera fase. 4 mutaciones, 4 cazadas.
+
+## T4 — el archivo de resultados (2026-11-24)
+
+`results/store.py` y `docs/resultados/formato.md`: el `.h5` campo a campo. `Writer` escribe a
+`<raíz>.h5.tmp`, añade las fases según llegan y, en `finish`, pone el estado y lo mueve con
+`os.replace`. Si algo falla, o el escritor se queda sin `finish`, borra el temporal y deja el `.h5`
+anterior. `read` comprueba la forma entera al abrir (formato, versión, atributos, cada campo con su
+tamaño) y después lee una fase o un campo sueltos. Las tensiones de los inactivos van como NaN y
+vuelven como `None`; los grandes, con gzip y *shuffle*.
+
+- `tests/test_results_store_v0011.py`, 10 tests: cada fase leída es la `StageOutcome` del motor (`==`),
+  y las deformaciones y la malla, los mismos bits; lo que decidió el resultado vuelve; un campo se lee
+  solo; un archivo que no es HDF5, de otro programa, de un formato posterior, sin un campo o con un
+  campo de otro tamaño dan `ResultsError` con lo que falla; un error a mitad o un escritor sin
+  `finish` dejan el anterior y ningún temporal; el estado es coherente. 9 mutaciones, 9 cazadas.

@@ -56,7 +56,7 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
 ## El `.h5`
 
-- [ ] T4. `results/store.py` y `docs/resultados/formato.md` (D6, D13) — RF-1, RF-2 y RF-4.
+- [x] T4. `results/store.py` y `docs/resultados/formato.md` (D6, D13) — RF-1, RF-2 y RF-4.
   - El formato del plan, con gzip.
   - La escritura a `<raíz>.h5.tmp` y `os.replace`.
   - La lectura perezosa de una fase o de un campo.
@@ -66,6 +66,8 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
   - la ida y vuelta es bit a bit, con los NaN de los inactivos en su sitio;
   - un archivo dañado, sin un campo o de un formato posterior da un error que lo nombra;
   - un fallo a mitad de la escritura deja el `.h5` anterior intacto y ningún temporal.
+
+  (Hecho el 2026-11-24: 10 tests; 9 mutaciones, 9 cazadas.)
 - [ ] T5. `results/calculate.py`: `calculate` y `open_results` (D7, D13) — RF-1, RF-2 y RF-3.
 
   *Hecho cuando:*
