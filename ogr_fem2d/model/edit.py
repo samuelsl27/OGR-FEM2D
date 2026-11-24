@@ -18,6 +18,15 @@ The boundaries and their vertices (T2):
 * ``move_vertex``, ``insert_vertex``, ``delete_vertex``;
 * ``set_arc``, ``set_divisions``: the attributes of one segment.
 
+The rest (T5): ``add_material``, ``set_material``, ``delete_material``;
+``set_field``; ``add_condition``, ``set_condition``, ``delete_condition``,
+``set_default_restraint``; ``add_distributed_load``, ``add_point_load``,
+``set_load``, ``delete_load``; ``set_mesh_settings``; ``set_analysis``,
+``set_units``, ``set_summary``; and the free ids of what is new. The stages
+and the assignments are ``stages``'s. These are refused when they add a
+problem to the model (``model.refuse_new_problems``), not because the model
+had one before.
+
 Boundaries meet only at the vertices they share (spec 004, D15), and a
 vertex is shared by having the same coordinates. So:
 
@@ -55,7 +64,7 @@ Point = tuple[float, float]
 #: The rules of what the edits refuse (the model's own, md.RULES, besides).
 RULES = ("boundary_unknown", "vertex_unknown", "segment_unknown", "not_on_segment",
          "vertex_taken", "shared_vertex", "shared_side", "arc_vertex", "divisions_vertex",
-         "in_use")
+         "in_use", "argument", "material_unknown", "condition_unknown", "load_unknown")
 
 #: The prefix of the ids ``next_id`` gives, by kind of boundary.
 ID_PREFIX = {md.EXTERNAL: "ext", md.MATERIAL: "mat", md.EXCAVATION: "exc", md.STAGE: "stg"}
@@ -462,3 +471,183 @@ def set_divisions(m: md.Model, boundary_id: str, segment: int, divisions: int | 
     out = _put(m, nb)
     _check(out, nb)
     return out
+
+
+# ================================================================ the rest
+def _changed(obj, changes: dict, what: str, allowed: tuple[str, ...]):
+    """``obj`` with ``changes``; a name it does not have is refused."""
+    unknown = [k for k in changes if k not in allowed]
+    if unknown:
+        _fail("argument", what, f"has no {', '.join(map(repr, unknown))} "
+                                f"(it has {', '.join(allowed)})")
+    return replace(obj, **changes)
+
+
+def _fields(cls, drop=()) -> tuple[str, ...]:
+    return tuple(f for f in cls.__dataclass_fields__ if f not in drop)
+
+
+def _index(items: tuple, index, what: str) -> int:
+    if not (md._int(index) and 0 <= index < len(items)):
+        _fail(f"{what}_unknown", f"{what} {index!r}",
+              f"there is no such {what} (there are {len(items)}, from 0)")
+    return index
+
+
+# ------------------------------------------------------------- materials
+def next_material_id(m: md.Model) -> str:
+    """A free id for a new material: ``m`` and the first number not taken."""
+    taken = {x.id for x in m.materials}
+    k = 1
+    while f"m{k}" in taken:
+        k += 1
+    return f"m{k}"
+
+
+def _material(m: md.Model, material_id: str) -> md.Material:
+    mat = m.material(material_id)
+    if mat is None:
+        known = ", ".join(repr(x.id) for x in m.materials) or "none"
+        _fail("material_unknown", f"material {material_id!r}",
+              f"does not exist (the materials are: {known})")
+    return mat
+
+
+def add_material(m: md.Model, material_id: str | None = None, **values) -> md.Model:
+    """A new material at the end of the list, with ``values`` (name, E, nu,
+    unit_weight, initial_loading, color). E and nu stay None until given
+    (spec 004, D16): the model is a valid document without them, and the
+    translation to the engine says which material lacks them."""
+    mid = next_material_id(m) if material_id is None else material_id
+    mat = _changed(md.Material(mid), values, f"material {mid!r}", _fields(md.Material, ("id",)))
+    return md.refuse_new_problems(m, replace(m, materials=m.materials + (mat,)))
+
+
+def set_material(m: md.Model, material_id: str, **changes) -> md.Model:
+    mat = _changed(_material(m, material_id), changes, f"material {material_id!r}",
+                   _fields(md.Material, ("id",)))
+    return md.refuse_new_problems(m, replace(m, materials=tuple(
+        mat if x.id == material_id else x for x in m.materials)))
+
+
+def delete_material(m: md.Model, material_id: str) -> md.Model:
+    """Refused while a region has it."""
+    _material(m, material_id)
+    users = [f"assignment at {a.point}" for a in m.assignments if a.material == material_id]
+    if users:
+        _fail("in_use", f"material {material_id!r}",
+              f"{', '.join(users)} have it: assign another material first")
+    return replace(m, materials=tuple(x for x in m.materials if x.id != material_id))
+
+
+# ----------------------------------------------------- the field stress
+def set_field(m: md.Model, field: md.ConstantField | md.GravityField) -> md.Model:
+    """The field stress: constant, or gravitational with its strata;
+    compression positive, as the model keeps it (spec 004, D6)."""
+    return md.refuse_new_problems(m, replace(m, field=field))
+
+
+# ----------------------------------------------------------- conditions
+def add_condition(m: md.Model, kind: str, span: md.Span | None = None, vertex=None,
+                  ux: float | None = None, uy: float | None = None, name: str = "") -> md.Model:
+    """A restraint (x, y, xy) or a release (free) acting in every stage, or
+    an imposed displacement (ux and/or uy) with factor 1 in every stage, on
+    a span or at a vertex (spec 004, D7, D10). Its state stage by stage is
+    changed afterwards with ``stages.set_condition_active`` and
+    ``set_condition_factor``."""
+    v = None if vertex is None else _pt(vertex)
+    if kind == md.DISPLACEMENT:
+        c = md.Condition(kind, span, v, (), ux, uy, md.every_stage(m, 1.0), name)
+    else:
+        c = md.Condition(kind, span, v, md.every_stage(m, True), ux, uy, (), name)
+    return md.refuse_new_problems(m, replace(m, conditions=m.conditions + (c,)))
+
+
+def set_condition(m: md.Model, index: int, **changes) -> md.Model:
+    k = _index(m.conditions, index, "condition")
+    c = _changed(m.conditions[k], changes, f"condition {k}", _fields(md.Condition))
+    return md.refuse_new_problems(m, replace(
+        m, conditions=m.conditions[:k] + (c,) + m.conditions[k + 1:]))
+
+
+def delete_condition(m: md.Model, index: int) -> md.Model:
+    k = _index(m.conditions, index, "condition")
+    return replace(m, conditions=m.conditions[:k] + m.conditions[k + 1:])
+
+
+def set_default_restraint(m: md.Model, kind: str) -> md.Model:
+    """The condition of the external boundary where nothing else is said
+    (spec 004, D16)."""
+    return md.refuse_new_problems(m, replace(m, default_restraint=kind))
+
+
+# ----------------------------------------------------------------- loads
+def add_distributed_load(m: md.Model, span: md.Span, start_value: float,
+                         end_value: float | None = None, orientation: str = md.NORMAL,
+                         angle: float = 0.0, name: str = "") -> md.Model:
+    """A load per unit length along a span, from ``start_value`` to
+    ``end_value`` (uniform when it is not given), with factor 1 in every
+    stage. Normal: positive pushes into the ground (spec 004, D6)."""
+    end = start_value if end_value is None else end_value
+    ld = md.DistributedLoad(span, start_value, end, orientation, angle,
+                            md.every_stage(m, 1.0), name)
+    return md.refuse_new_problems(m, replace(m, loads=m.loads + (ld,)))
+
+
+def add_point_load(m: md.Model, vertex, magnitude: float, orientation: str = md.VERTICAL,
+                   angle: float = 0.0, name: str = "") -> md.Model:
+    """A force at a vertex, with factor 1 in every stage."""
+    ld = md.PointLoad(_pt(vertex), magnitude, orientation, angle, md.every_stage(m, 1.0), name)
+    return md.refuse_new_problems(m, replace(m, loads=m.loads + (ld,)))
+
+
+def set_load(m: md.Model, index: int, **changes) -> md.Model:
+    k = _index(m.loads, index, "load")
+    ld = _changed(m.loads[k], changes, f"load {k}", _fields(type(m.loads[k])))
+    return md.refuse_new_problems(m, replace(m, loads=m.loads[:k] + (ld,) + m.loads[k + 1:]))
+
+
+def delete_load(m: md.Model, index: int) -> md.Model:
+    k = _index(m.loads, index, "load")
+    return replace(m, loads=m.loads[:k] + m.loads[k + 1:])
+
+
+# -------------------------------------------------------- mesh settings
+def set_mesh_settings(m: md.Model, **changes) -> md.Model:
+    """The settings of the mesher (spec 003), checked with its own rules.
+    The mesh already made stays, and becomes the mesh of other settings:
+    calculating says so (spec 004, RF-11)."""
+    st = _changed(m.mesh_settings, changes, "mesh settings", _fields(g.MeshSettings))
+    found: list[Problem] = []
+    g._settings_problems(g.MeshInput(m.analysis, (), (), (), st),
+                         lambda rule, where, message: found.append(Problem(rule, where, message)))
+    if found:
+        raise md.ModelError(found)
+    return replace(m, mesh_settings=st)
+
+
+# ------------------------------------------------------------ the project
+def set_analysis(m: md.Model, analysis: str) -> md.Model:
+    """Plane strain or axisymmetry. Refused if the geometry does not allow
+    it (a vertex with x < 0 in axisymmetry)."""
+    return md.refuse_new_problems(m, replace(m, analysis=analysis))
+
+
+def set_units(m: md.Model, units: str) -> md.Model:
+    """The unit system shown. The values are kept in m, kN, kPa and kN/m3
+    whatever it is, and do not change (spec 004, D5)."""
+    return md.refuse_new_problems(m, replace(m, units=units))
+
+
+def set_summary(m: md.Model, **changes) -> md.Model:
+    return replace(m, summary=_changed(m.summary, changes, "summary", _fields(md.Summary)))
+
+
+def next_stage_id(m: md.Model) -> str:
+    """A free id for a new stage: the first whole number from the count of
+    stages on that is not taken."""
+    taken = {s.id for s in m.stages}
+    k = len(m.stages) + 1
+    while str(k) in taken:
+        k += 1
+    return str(k)

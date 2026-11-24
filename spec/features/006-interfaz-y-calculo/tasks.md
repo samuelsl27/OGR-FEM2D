@@ -64,12 +64,15 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   que pasan por sus vértices.
   (Hecho el 2026-11-24: también por inicio, centro y ángulo, y `Drawn` para juntar rectas y arcos.
   11 tests; 12 mutaciones, 12 cazadas.)
-- [ ] T5. `model/edit.py`: materiales, asignaciones, campo, condiciones, cargas, ajustes de la malla
+- [x] T5. `model/edit.py`: materiales, asignaciones, campo, condiciones, cargas, ajustes de la malla
   y del proyecto (RF-1), sobre `stages.py` donde ya existe.
 
   *Hecho cuando:* lo mismo que la T2 para cada una; un material nuevo sin E ni ν es válido como
   documento y la traducción al motor lo dice (004, D16); cambiar de sistema de unidades no toca
   ningún valor (004, D5).
+  (Hecho el 2026-11-24: 12 tests; 12 mutaciones, 12 cazadas. Las ediciones de fases de la 004 se
+  juzgan ahora por lo que rompen, como estas. **Anomalía reportada, sin corregir**: `assign_material`
+  con la geometría a medias añade una asignación duplicada; changelog.)
 - [ ] T6. `results/calculate.py`: el aviso de progreso (D9).
 
   *Hecho cuando:* los eventos salen en orden, uno al empezar y otro al terminar cada fase, también

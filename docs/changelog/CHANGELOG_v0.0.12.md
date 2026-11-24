@@ -94,3 +94,39 @@ junta rectas y arcos en un contorno que se está dibujando (RF-3, D10).
   no cambia: ahora se miran también los ángulos de los vértices.
 
 11 tests; 12 mutaciones, 12 cazadas.
+
+## T5 — las ediciones de materiales, campo, condiciones, cargas y ajustes (2026-11-24)
+
+En `ogr_fem2d/model/edit.py`: añadir, cambiar y borrar materiales; el campo; añadir, cambiar y borrar
+condiciones y cargas; la condición por defecto del externo; los ajustes de la malla; el tipo de
+análisis, las unidades y el resumen; los identificadores libres de lo nuevo (RF-1, RF-7).
+
+- **Una edición se juzga por lo que rompe** (`model.refuse_new_problems`): se rechaza cuando añade un
+  problema al modelo, no porque el modelo ya tuviera alguno. Así se edita un modelo a medio dibujar.
+  **Las ediciones de fases y de asignaciones de la spec 004 pedían el modelo entero válido**, y en la
+  interfaz no se habría podido, por ejemplo, insertar una fase antes de asignar todas las regiones:
+  ahora usan la misma regla. Sus 15 tests siguen igual.
+- **Un argumento que no existe se rechaza por su nombre** (un campo de un material, de una condición,
+  de una carga, de los ajustes de la malla o del resumen), igual que un índice o un identificador que
+  no existe.
+- **Un material nuevo no tiene E ni ν hasta que se dan** (spec 004, D16). Lo nuevo que depende de las
+  fases se escribe para todas: una restricción activa, un desplazamiento impuesto o una carga con
+  factor 1. Un material que tiene una región no se borra.
+- **Los ajustes de la malla se comprueban con las reglas del mallador**, y cambiarlos deja la malla,
+  que pasa a ser de otros ajustes: calcular lo dice.
+
+12 tests; 12 mutaciones, 12 cazadas (la del identificador libre de una fase se escapaba: con las fases
+«1» y «2» las dos reglas dan «3»; ahora se prueba también con un hueco en la numeración).
+
+### Anomalía encontrada, sin corregir (regla 6): asignar un material con la geometría a medias
+
+`stages.assign_material` busca la región del punto con `regions.build`, que exige el modelo entero
+válido. **Si la geometría tiene cualquier problema** (una región todavía sin material, un cruce), la
+búsqueda falla, la función lo toma por «la región no tiene asignación» y **añade una asignación nueva
+en el mismo punto**, en vez de cambiar la que hay. El modelo queda con dos asignaciones en una región
+(`region_twice`). Viene de la spec 004 y ya pasaba antes de esta tarea; aquí se ve porque la interfaz
+asigna regiones una a una.
+
+Se propone: buscar la región con las caras del grafo, sin el paso de las asignaciones (una función
+nueva de `regions`), y, si la geometría no deja encontrar las regiones (un cruce), rechazar la
+asignación diciendo por qué, en vez de añadirla a ciegas. Espera el OK de la propietaria.

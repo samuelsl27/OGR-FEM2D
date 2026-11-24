@@ -657,3 +657,15 @@ def validate(m: Model) -> Model:
     if found:
         raise ModelError(found)
     return m
+
+
+def refuse_new_problems(before: Model, after: Model) -> Model:
+    """``after`` when it has no problem that ``before`` did not have;
+    ModelError with the new ones otherwise (spec 006, T5). An edit of a
+    model being drawn (no external yet, a region without its material) is
+    judged by what it breaks, not by what was not finished before it."""
+    old = {(p.rule, p.where, p.message) for p in problems(before)}
+    new = [p for p in problems(after) if (p.rule, p.where, p.message) not in old]
+    if new:
+        raise ModelError(new)
+    return after

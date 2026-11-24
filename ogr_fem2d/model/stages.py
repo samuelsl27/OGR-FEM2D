@@ -21,7 +21,10 @@ RF-4: an excavated region coming back, or a region changing material between
 stages, is refused with ModelError (until spec 012). The material of a
 region is one for the whole analysis, the initial state included.
 
-Every edit returns a new model; none changes the one it was given.
+Every edit returns a new model; none changes the one it was given. An edit
+is refused when it adds a problem to the model (``refuse_new_problems``),
+not when the model had one before it: a model being drawn is edited too
+(spec 006, T5; until then they asked the whole model to be valid).
 
 Author: Samuel Sáez López (UPCT)
 """
@@ -69,7 +72,7 @@ def insert_stage(m: md.Model, index: int, stage_id: str, name: str = "") -> md.M
     source = index - 1 if index > 0 else 0
     out = _each_stage_table(m, lambda v: _insert(v, index, source))
     stages = m.stages[:index] + (md.Stage(stage_id, name),) + m.stages[index:]
-    return md.validate(replace(out, stages=stages))
+    return md.refuse_new_problems(m, replace(out, stages=stages))
 
 
 def delete_stage(m: md.Model, stage_id: str) -> md.Model:
@@ -78,7 +81,7 @@ def delete_stage(m: md.Model, stage_id: str) -> md.Model:
                                      "the only stage cannot be deleted")])
     k = m.stage_index(stage_id)
     out = _each_stage_table(m, lambda v: _drop(v, k))
-    return md.validate(replace(out, stages=_drop(m.stages, k)))
+    return md.refuse_new_problems(m, replace(out, stages=_drop(m.stages, k)))
 
 
 def rename_stage(m: md.Model, stage_id: str, name: str) -> md.Model:
@@ -111,7 +114,7 @@ def set_excavated(m: md.Model, point, stage_id: str, excavated: bool,
     old = m.assignments[a]
     new = replace(old, excavated=_write(old.excavated, k, excavated, this_stage_only))
     assignments = m.assignments[:a] + (new,) + m.assignments[a + 1:]
-    return md.validate(replace(m, assignments=assignments))
+    return md.refuse_new_problems(m, replace(m, assignments=assignments))
 
 
 def assign_material(m: md.Model, point, material_id: str, stage_id: str | None = None,
@@ -145,7 +148,7 @@ def assign_material(m: md.Model, point, material_id: str, stage_id: str | None =
             "(spec 002; RF-4, until spec 012)")])
     assignments = (m.assignments[:a] + (replace(old, material=material_id),)
                    + m.assignments[a + 1:])
-    return md.validate(replace(m, assignments=assignments))
+    return md.refuse_new_problems(m, replace(m, assignments=assignments))
 
 
 def set_condition_active(m: md.Model, index: int, stage_id: str, active: bool,
@@ -153,8 +156,8 @@ def set_condition_active(m: md.Model, index: int, stage_id: str, active: bool,
     k = m.stage_index(stage_id)
     c = m.conditions[index]
     new = replace(c, active=_write(c.active, k, active, this_stage_only))
-    return md.validate(replace(m, conditions=m.conditions[:index] + (new,)
-                               + m.conditions[index + 1:]))
+    return md.refuse_new_problems(m, replace(m, conditions=m.conditions[:index] + (new,)
+                                                + m.conditions[index + 1:]))
 
 
 def set_condition_factor(m: md.Model, index: int, stage_id: str, factor: float | None,
@@ -162,8 +165,8 @@ def set_condition_factor(m: md.Model, index: int, stage_id: str, factor: float |
     k = m.stage_index(stage_id)
     c = m.conditions[index]
     new = replace(c, factors=_write(c.factors, k, factor, this_stage_only))
-    return md.validate(replace(m, conditions=m.conditions[:index] + (new,)
-                               + m.conditions[index + 1:]))
+    return md.refuse_new_problems(m, replace(m, conditions=m.conditions[:index] + (new,)
+                                                + m.conditions[index + 1:]))
 
 
 def set_load_factor(m: md.Model, index: int, stage_id: str, factor: float,
@@ -171,4 +174,4 @@ def set_load_factor(m: md.Model, index: int, stage_id: str, factor: float,
     k = m.stage_index(stage_id)
     ld = m.loads[index]
     new = replace(ld, factors=_write(ld.factors, k, factor, this_stage_only))
-    return md.validate(replace(m, loads=m.loads[:index] + (new,) + m.loads[index + 1:]))
+    return md.refuse_new_problems(m, replace(m, loads=m.loads[:index] + (new,) + m.loads[index + 1:]))
