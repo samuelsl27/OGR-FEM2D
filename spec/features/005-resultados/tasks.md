@@ -150,11 +150,12 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
 ## Los casos
 
-- [ ] T13. **Las tolerancias antes de medir** (D10): `comparaciones_consulta` en los `esperado.json`
+- [x] T13. **Las tolerancias antes de medir** (D10): `comparaciones_consulta` en los `esperado.json`
   del 005, el 006 y el 007, con la línea (sus extremos, N, la fase), la magnitud, la referencia y la
   tolerancia. Va en un commit propio, antes de que la consulta exista sobre los casos.
 
   *Hecho cuando:* el commit está hecho y los casos no se han consultado todavía.
+  (Hecho el 2026-11-24, antes de consultar ningún caso.)
 - [ ] T14. **Caso 005 por la consulta**: σr, σθ y ur a lo largo de un radio, de r = a a 5a, y σθ
   sobre el contorno del hueco, contra Kirsch.
 

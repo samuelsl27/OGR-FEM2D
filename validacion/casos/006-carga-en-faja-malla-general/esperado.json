@@ -13,6 +13,17 @@
      "valor": "q/pi (alpha - sin alpha) en el (x, z) de cada punto", "unidad": "MPa", "convenio": "compresion positiva",
      "como": "lo mismo para sigma_3"}
   ],
+  "comparaciones_consulta": {
+    "spec": "005, D10: tolerancia escrita antes de medir (T13), la del caso, sobre los valores recuperados en los nudos (SPR) e interpolados",
+    "fase": 0,
+    "consultas": [
+      {"tipo": "linea", "desde": [0.0, -0.25], "hasta": [0.0, -5.0], "n": 20,
+       "magnitudes": [
+         {"magnitud": "sigma_1", "referencia": "q/pi (alpha + sin alpha) en x = 0", "tolerancia_absoluta": 0.01, "unidad_tolerancia": "q"},
+         {"magnitud": "sigma_3", "referencia": "q/pi (alpha - sin alpha) en x = 0", "tolerancia_absoluta": 0.01, "unidad_tolerancia": "q"}]}
+    ],
+    "como": "la linea x = 0 es el eje de simetria, un contorno del modelo: sus nudos salen de los parches interiores (Z&T fig. 14.9). El efecto del dominio de 200 m ya es 0.0045 q en sigma_3 (caso 004), y en los puntos se midio 0.0053 q: el margen es pequeño, y si no cumple es un hallazgo, no se afloja"
+  },
   "modelo": {
     "archivo": "modelo.ogrfem2d",
     "analisis": "deformacion_plana",

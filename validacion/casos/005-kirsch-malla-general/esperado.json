@@ -18,6 +18,21 @@
     "tolerancia_relativa": 0.005,
     "como": "sigma_theta en los puntos de integración y u_r en los nudos sobre r = a, punto a punto contra Kirsch (8.113)-(8.116) y kirsch_induced_displacement"
   },
+  "comparaciones_consulta": {
+    "spec": "005, D10: tolerancias escritas antes de medir (T13), sobre los valores recuperados en los nudos (SPR por material) e interpolados, y el campo de desplazamientos",
+    "fase": 0,
+    "consultas": [
+      {"tipo": "linea", "desde": [1.0, 0.0], "hasta": [5.0, 0.0], "n": 41,
+       "magnitudes": [
+         {"magnitud": "sigma_1", "es": "sigma_theta", "referencia": "p0 (1 + a^2 / r^2)", "tolerancia_absoluta": 0.01, "unidad_tolerancia": "p0"},
+         {"magnitud": "sigma_3", "es": "sigma_r", "referencia": "p0 (1 - a^2 / r^2)", "tolerancia_absoluta": 0.01, "unidad_tolerancia": "p0"},
+         {"magnitud": "u", "es": "u_r hacia el centro", "referencia": "p0 a^2 / (2 G r)", "tolerancia_absoluta": 0.005, "unidad_tolerancia": "u_r(a)"}]},
+      {"tipo": "contorno", "contorno": "hole", "n_por_segmento": 16, "distancia": 0.0,
+       "magnitudes": [
+         {"magnitud": "sigma_1", "es": "sigma_theta en la pared", "referencia": "2 p0", "tolerancia_absoluta": 0.01, "unidad_tolerancia": "p0"}]}
+    ],
+    "como": "en el campo hidrostatico sigma_theta >= sigma_r en todo r, asi que sigma_1 y sigma_3 en el plano son sigma_theta y sigma_r; u es el modulo del desplazamiento, radial. El error de cada punto, absoluto, sobre p0 (o sobre u_r(a) = 0.0036 m): donde sigma_r pasa por cero un error relativo no significa nada. 0.01 p0 = 0.3 MPa es el 0.5 % del caso sobre sigma_theta(a) = 2 p0"
+  },
   "modelo": {
     "geometria": {"a": 1.0, "semilado_exterior": 100.0, "contorno_exterior": "cuadrado", "unidad": "m"},
     "material": {"ley": "elastica", "E": 10000.0, "nu": 0.2, "unidad": "MPa"},

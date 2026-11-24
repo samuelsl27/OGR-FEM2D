@@ -274,3 +274,18 @@ vacío y `source` dice por qué.
 - `tests/test_results_table_v0011.py`, 3 tests: la cabecera y las columnas; MPa = kPa / 1000, pies =
   metros × 3.2808…, y los números que vuelven; una evolución con una fila por fase; el sistema
   desconocido. 6 mutaciones, 6 cazadas.
+
+## T13 — las tolerancias de la consulta, antes de medir (2026-11-24)
+
+`comparaciones_consulta` en los `esperado.json` del 005, el 006 y el 007 (D10), en un commit propio y
+antes de consultar ningún caso:
+
+- **005**: un radio de r = a a 5a (41 puntos) con σ1 = σθ y σ3 = σr, a 0.01 p0, y u = u_r, a 0.005
+  u_r(a); σθ sobre el contorno del hueco (16 puntos por arco), a 0.01 p0.
+- **006**: x = 0 de z = 0.25 a 5 m (20 puntos), σ1 y σ3 a 0.01 q, la del caso.
+- **007**: el radio a 45° de R = a a 5 m (41 puntos), contra la esfera fija a 21 m (el modelo):
+  σ1 = σt meridiana, σz = σt circunferencial y σ3 = σR, a 0.01 P0, y u = u_R, a 0.005 u_R(a); σt
+  sobre el arco de la cavidad.
+
+En los campos hidrostáticos σt ≥ σr en todo el radio, así que las principales en el plano son las
+polares: se comparan magnitudes del catálogo, sin componentes polares nuevas.

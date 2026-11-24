@@ -13,6 +13,24 @@
      "valor": 0.0003, "unidad": "m", "convenio": "hacia el centro positivo",
      "como": "el mayor error de todos los nudos sobre R = a, esquinas e intermedios"}
   ],
+  "comparaciones_consulta": {
+    "spec": "005, D10: tolerancias escritas antes de medir (T13), sobre los valores recuperados en los nudos (SPR) e interpolados, y el campo de desplazamientos",
+    "fase": 0,
+    "referencia": "Lame (1852), en T&G (1951), §121, ecs. (197)-(198), la esfera hueca con presion nula en R = a y u_R = 0 en R = b = 21 m, que es el modelo (spec 002, comprobaciones/soluciones_cerradas.py, sphere_fixed_outer); no el medio infinito, del que la esfera fija se aparta un 0.5 % hacia R = 3.6 m",
+    "consultas": [
+      {"tipo": "linea", "desde": [0.7071067811865476, 0.7071067811865476], "hasta": [3.5355339059327378, 3.5355339059327378], "n": 41,
+       "magnitudes": [
+         {"magnitud": "sigma_1", "es": "sigma_t meridiana", "tolerancia_absoluta": 0.01, "unidad_tolerancia": "P0"},
+         {"magnitud": "sigma_z", "es": "sigma_t circunferencial", "tolerancia_absoluta": 0.01, "unidad_tolerancia": "P0"},
+         {"magnitud": "sigma_3", "es": "sigma_R", "tolerancia_absoluta": 0.01, "unidad_tolerancia": "P0"},
+         {"magnitud": "u", "es": "u_R hacia el centro", "tolerancia_absoluta": 0.005, "unidad_tolerancia": "u_R(a)"}]},
+      {"tipo": "contorno", "contorno": "cavity", "n_por_segmento": 16, "distancia": 0.0, "solo": "los puntos sobre el arco, R = a, con valor (los de los tramos rectos estan en la cavidad excavada)",
+       "magnitudes": [
+         {"magnitud": "sigma_1", "es": "sigma_t en la pared", "tolerancia_absoluta": 0.01, "unidad_tolerancia": "P0"},
+         {"magnitud": "sigma_z", "es": "sigma_t circunferencial en la pared", "tolerancia_absoluta": 0.01, "unidad_tolerancia": "P0"}]}
+    ],
+    "como": "a 45 grados, lejos del eje y del plano de simetria; en el campo hidrostatico sigma_t >= sigma_R, asi que sigma_1 (en el plano meridiano) es la meridiana, sigma_3 la radial y sigma_z la circunferencial. Error absoluto sobre P0 = 10 MPa, y sobre u_R(a) para el desplazamiento; la linea llega a R = 5 m"
+  },
   "modelo": {
     "archivo": "modelo.ogrfem2d",
     "analisis": "axisimetria",
