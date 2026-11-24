@@ -211,11 +211,13 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   (Hecho el 2026-11-25: el registro de acciones va en `main_window.py` (`_mk`), sin `actions.py`
   aparte; y `session.py`, la ventana sobre las operaciones. Los mensajes del núcleo, sin español
   todavía: pedido a OGR-GUI. 9 tests; 12 mutaciones, 12 cazadas.)
-- [ ] T21. `gui/canvas/`: el dibujo del modelo (contornos por tipo, regiones con el color de su
+- [x] T21. `gui/canvas/`: el dibujo del modelo (contornos por tipo, regiones con el color de su
   material, la fase visible) y la navegación (ampliar, mover, rejilla, regla, enganche) — RF-15.
 
   *Hecho cuando:* cada tipo de objeto tiene su color y su trazo de la suite; los tiempos de D15 con la
   malla del caso 005, medidos y anotados.
+  (Hecho el 2026-11-25: 0,17 s el primer dibujo, 16 ms ampliar, 6 ms mover. La regla del lienzo, en
+  la T22 con la entrada de geometría. 9 tests; 14 mutaciones, 14 cazadas.)
 - [ ] T22. La entrada de geometría (D10): clic, X, Y absolutos, relativos y polares, tabla, círculo,
   arco, editar vértices; los cortes y sus vértices, a la vista.
 

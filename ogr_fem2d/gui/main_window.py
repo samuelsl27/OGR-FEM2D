@@ -26,7 +26,8 @@ from typing import Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QKeySequence
-from PySide6.QtWidgets import QFileDialog, QLabel, QMainWindow, QMessageBox
+from PySide6.QtWidgets import (QFileDialog, QLabel, QMainWindow, QMessageBox, QStackedWidget,
+                               QTabBar, QVBoxLayout, QWidget)
 
 from ogr_core.api import OgrApiError
 from ogr_ui import disabled_reasons
@@ -38,6 +39,7 @@ from ogr_ui.widgets.status_bar import OgrStatusBar
 import ogr_fem2d
 from . import i18n as fem_i18n
 from . import menus
+from .canvas.view import ModelView
 from .session import Session
 
 FILE_FILTER = "OGR FEM2D (*.ogrfem2d);;OGR Slip2D (*.ogr);;DXF (*.dxf)"
@@ -58,7 +60,21 @@ class MainWindow(QMainWindow):
         self.setStatusBar(OgrStatusBar(self))
         self._empty = QLabel()
         self._empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setCentralWidget(self._empty)
+        self.view = ModelView()
+        self.view.cursor_moved.connect(self.statusBar().update_coords)
+        self.stage_tabs = QTabBar()
+        self.stage_tabs.setShape(QTabBar.Shape.RoundedSouth)
+        self.stage_tabs.currentChanged.connect(self._stage_chosen)
+        canvas = QWidget()
+        lay = QVBoxLayout(canvas)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+        lay.addWidget(self.view, 1)
+        lay.addWidget(self.stage_tabs)
+        self._stack = QStackedWidget()
+        self._stack.addWidget(self._empty)
+        self._stack.addWidget(canvas)
+        self.setCentralWidget(self._stack)
         self._build_actions()
         self._build_menus()
         disabled_reasons.install(self)
@@ -92,6 +108,13 @@ class MainWindow(QMainWindow):
         self._mk("undo", "Undo", self.act_undo, "undo", "Ctrl+Z")
         self._mk("redo", "Redo", self.act_redo, "redo", "Ctrl+Y")
         self._mk("window_main", "Model", self.act_front, None)
+        self._mk("zoom_all", "Zoom All", self.view.zoom_all, "zoom_all", "F2")
+        self._mk("zoom_in", "Zoom In", lambda: self.view.zoom_by(1.5), "zoom_in", "F5")
+        self._mk("zoom_out", "Zoom Out", lambda: self.view.zoom_by(1 / 1.5), "zoom_out", "F4")
+        self._mk("show_grid", "Grid", self.act_show_grid, "grid", "F7").setCheckable(True)
+        self._mk("show_mesh", "Mesh", self.act_show_mesh, None).setCheckable(True)
+        self._actions["show_grid"].setChecked(self.view.show_grid)
+        self._actions["show_mesh"].setChecked(self.view.show_mesh)
         self._mk("about", "About OGR FEM2D...", self.act_about, "about")
         for menu, (key, text, why) in menus.FUTURE.items():
             act = self._mk(key, text, lambda: None)
@@ -135,8 +158,46 @@ class MainWindow(QMainWindow):
             self._actions["redo"].setText(tr("Redo") + f": {fem_i18n.say(redo[-1])}")
         else:
             self._actions["redo"].setText(tr("Redo"))
-        self._empty.setText(tr("No model: File > New, or File > Open.") if not has else
-                            tr("Draw the external boundary: Boundaries > Add External."))
+        self._empty.setText(tr("No model: File > New, or File > Open."))
+        self._stack.setCurrentIndex(1 if has else 0)
+        for key in ("zoom_all", "zoom_in", "zoom_out"):
+            disabled_reasons.gate(self._actions[key], has, tr("There is no model: File > New."))
+        m = self.session.model
+        self._fill_stage_tabs(m)
+        self.view.set_model(m, self.stage_tabs.currentIndex() if m is not None else 0)
+        if m is not None and not m.boundaries:
+            self.statusBar().showMessage(
+                tr("Draw the external boundary: Boundaries > Add External."), 10000)
+
+    def _fill_stage_tabs(self, m) -> None:
+        """One tab per stage, the one shown kept (RF-15)."""
+        names = [] if m is None else [s.name or s.id for s in m.stages]
+        current = self.stage_tabs.currentIndex()
+        self.stage_tabs.blockSignals(True)
+        while self.stage_tabs.count():
+            self.stage_tabs.removeTab(0)
+        for name in names:
+            self.stage_tabs.addTab(name)
+        if names:
+            self.stage_tabs.setCurrentIndex(min(max(current, 0), len(names) - 1))
+        self.stage_tabs.blockSignals(False)
+
+    def _stage_chosen(self, k: int) -> None:
+        if k >= 0:
+            self.view.set_stage(k)
+
+    @property
+    def stage(self) -> int:
+        """The stage shown, which is the one edited (RF-15)."""
+        return max(self.stage_tabs.currentIndex(), 0)
+
+    def act_show_grid(self) -> None:
+        self.view.show_grid = self._actions["show_grid"].isChecked()
+        self.view.viewport().update()
+
+    def act_show_mesh(self) -> None:
+        self.view.show_mesh = self._actions["show_mesh"].isChecked()
+        self.view.set_model(self.session.model)
 
     def show_error(self, err: Exception) -> None:
         """An operation's refusal, on the status bar (it does not insist,

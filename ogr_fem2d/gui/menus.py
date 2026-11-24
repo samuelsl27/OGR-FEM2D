@@ -38,13 +38,14 @@ FUTURE = {
 
 #: menu -> the task of spec 006 that gives it its entries
 PENDING = {
-    "View": "T21", "Analysis": "T23", "Boundaries": "T22", "Mesh": "T25", "Loading": "T27",
+    "Analysis": "T23", "Boundaries": "T22", "Mesh": "T25", "Loading": "T27",
     "Displacements": "T27", "Properties": "T26",
 }
 
 MENUS = {
     "File": ("new", "open", "-", "save", "save_as", "-", "prefs", "-", "exit"),
     "Edit": ("undo", "redo"),
+    "View": ("zoom_all", "zoom_in", "zoom_out", "-", "show_grid", "show_mesh"),
     "Window": ("window_main",),
     "Help": ("about",),
     **{menu: (key,) for menu, (key, _t, _w) in FUTURE.items()},

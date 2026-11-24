@@ -60,3 +60,28 @@ Una fuga que vio el vigilante en la suite entera: el guardián del recolector de
 si Qt ya estaba cargado, y una corrida del runner dentro de un test (`test_project_setup_v001`) lo
 instalaba después de que la corrida de fuera hubiera mirado. Ahora se instala al empezar cada corrida,
 como en OGR-GUI: no importa Qt, e instalarlo dos veces no hace nada.
+
+## T21 — el lienzo: el modelo dibujado y moverse por él (2026-11-25)
+
+`ogr_fem2d/gui/canvas/view.py` y `paths.py`; en la ventana, el lienzo con las pestañas de las fases debajo,
+y el menú Vista (ver todo, acercar, alejar, rejilla, malla) (RF-15; D15; guía §3, §4, §6).
+
+- **y hacia arriba**, como el modelo: un punto de la escena es un punto del modelo.
+- **Cada tipo de contorno, su trazo**: externo y de material con los colores de Slip2D, excavación en rojo
+  oscuro y fase discontinua en azul; trazos cosméticos, igual de gruesos a cualquier ampliación. Los arcos,
+  con 16 cuerdas por cuarto de vuelta, solo para el dibujo: el modelo, la malla y las consultas guardan el
+  arco.
+- **Las regiones, con el color de su material**; una excavada en la fase que se ve, o todavía sin material,
+  vacía. La fase que se ve es la que se edita (RF-15), en las pestañas. Un modelo a medio dibujar (sin
+  externo, con un cruce) dibuja sus contornos y ninguna región.
+- **La malla, un solo objeto** que pinta todas sus aristas, cada una una vez (84 432 en el caso 005).
+- **D15, medido con el caso 005** (28 066 T6), escrito antes de medir: el primer dibujo, 0,17 s (objetivo,
+  1 s); ampliar, 16 ms, y mover, 6 ms (objetivo, 0,1 s); cambiar de fase, 0,14 s. El test lo exige en este
+  equipo, y con un margen de 5 en la CI, que es más lenta y compartida.
+- La rueda amplía alrededor del cursor, el botón central mueve, la rejilla sigue la ampliación a pasos
+  1-2-5 con los colores del tema, y las coordenadas del cursor van a la barra de estado.
+
+9 tests; 14 mutaciones, 14 cazadas (cuatro se escapaban al principio: los trazos se comparaban con la
+propia tabla, una arista repetida no cambiaba la cuenta, un arco recto pasaba con pocos puntos y las
+coordenadas se emitían a mano; ahora se comparan con los colores de la suite, se cuentan los trazos del
+camino, se piden las cuerdas y se mueve el ratón de verdad).

@@ -31,6 +31,10 @@ ES = {
     "Undo": "Deshacer",
     "Redo": "Rehacer",
     "Model": "Modelo",
+    "Zoom All": "Ver todo",
+    "Zoom In": "Acercar",
+    "Zoom Out": "Alejar",
+    "Grid": "Rejilla",
     "About OGR FEM2D...": "Acerca de OGR FEM2D...",
     "About OGR FEM2D": "Acerca de OGR FEM2D",
     # the menus of later phases (D4)
