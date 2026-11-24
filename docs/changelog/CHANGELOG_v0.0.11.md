@@ -320,3 +320,36 @@ su sitio. Todo dentro de la tolerancia fijada antes de medir:
 - La etiqueta de una procedencia mezclada es ahora `spr+element`, en ese orden, como dice el
   docstring. Antes salía en orden alfabético, `element+spr`; se vio en el arco del 007.
 - Fichas STR-01, STR-04 y STR-09, con su «Seguimiento» (`POST-LINEA`).
+
+## T17 — las reglas 7 y 12 (2026-11-24)
+
+**Hallazgo al barrer la regla 12**: una consulta no decía con qué ajustes se hizo, así que la
+distancia 0 por defecto o el número de puntos no iban con el resultado. Ahora cada `Query` lleva sus
+ajustes (`settings`): los vértices y los puntos de una línea; el contorno, los puntos, la distancia y
+el lado de una consulta sobre un contorno. La tabla los escribe en su cabecera.
+
+| Opción | Qué mueve | Test |
+|---|---|---|
+| n de la línea | los puntos y sus valores | `test_results_rules_v0011.py`, regla 7 |
+| vértices o n | los puntos | ídem |
+| la fase | los valores | ídem |
+| la magnitud | los valores | ídem |
+| n por segmento del contorno | los puntos | ídem |
+| la distancia al contorno | los valores | ídem |
+| el lado | los valores, o sin valor dentro de la excavación | ídem |
+| el sistema de unidades de la tabla | los números y las etiquetas | ídem, y `test_results_table_v0011.py` |
+| el análisis de la tabla | el nombre de la magnitud | ídem |
+| `query_id` | la columna | ídem |
+| el nivel de gzip | el tamaño del archivo, **no** los números | ídem |
+| `should_stop` | el estado (`cancelled`) | ídem, y `test_results_calculate_v0011.py` |
+| `n_per_segment`, `distance` y `side` mal dados | un error, no un resultado | `test_results_boundary_v0011.py` |
+
+| Valor que decide el resultado | Dónde va con él (regla 12) |
+|---|---|
+| El método de la recuperación (SPR por material) y el de los desplazamientos | `Query.method` y la cabecera de la tabla |
+| La distancia 0 por defecto, el lado, los puntos | `Query.settings` y la cabecera de la tabla |
+| El convenio (compresión y acortamiento positivos) y la unidad | el catálogo, `Query.convention` y `Query.unit`, la cabecera |
+| Lo que decidió el cálculo (unidades, análisis, defecto del externo, carga inicial, malla, ajustes del motor) | `/deciding` del `.h5` (`translate.deciding_values`) |
+| La variante del motor y las versiones | atributos del `.h5`; `Opened.other_version` |
+| El convenio del archivo (tracción positiva) | atributo `sign_convention` del `.h5` |
+| La procedencia de cada valor | `Row.source` y la columna `source` |

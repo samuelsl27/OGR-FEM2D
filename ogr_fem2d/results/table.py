@@ -67,6 +67,8 @@ def to_csv(query: Query | History, units: str = "metric_kpa", analysis: str = "p
     else:
         rows = list(query.rows)
         head = [f"query: {query.what}", f"stage: {query.stage} (id {query.stage_id})"]
+        if query.settings:
+            head.append("settings: " + "; ".join(f"{k} = {v}" for k, v in query.settings))
         method = query.method
     out = io.StringIO()
     lines = [f"OGR FEM2D {ogr_fem2d.__version__}",

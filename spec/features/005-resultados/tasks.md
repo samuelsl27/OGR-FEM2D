@@ -174,13 +174,15 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
 ## El cierre
 
-- [ ] T17. El barrido de las reglas 7 y 12:
+- [x] T17. El barrido de las reglas 7 y 12:
   - una tabla de cada opción nueva (N, modo, lado, distancia, fase, magnitud, unidades), con el test
     que demuestra que mueve el número;
   - los valores por defecto que cambian el resultado (el método de recuperación, la distancia 0, el
     convenio), dichos con él.
 
   *Hecho cuando:* la tabla está en el changelog y no le falta ninguna opción.
+  (Hecho el 2026-11-24: 5 tests; 3 mutaciones, 3 cazadas. Las consultas llevan ahora sus ajustes,
+  `Query.settings`, y la tabla los escribe.)
 - [ ] T18. El cierre.
   - Cada fórmula de «Formulación», citada en el código.
   - Los casos 001 a 007, bit a bit.

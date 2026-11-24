@@ -68,6 +68,8 @@ class Query:
     rows: tuple[Row, ...]
     what: str                       # "line", "boundary", "nodes", "points", "history"
     method: str                     # how the values were obtained
+    #: the settings that decided the rows, defaults included (rule 12)
+    settings: tuple[tuple[str, object], ...] = ()
 
     @property
     def unit(self) -> str:
@@ -216,7 +218,9 @@ def line(view: View, quantity: str, vertices, n: int | None = None) -> Query:
     """The quantity along a line or a polyline (RF-11)."""
     points, distances = spread(vertices, n)
     return Query(quantity, view.stage, view.info["id"],
-                 tuple(_rows_at(view, quantity, points, distances)), "line", method_of(quantity))
+                 tuple(_rows_at(view, quantity, points, distances)), "line", method_of(quantity),
+                 (("vertices", tuple(tuple(map(float, p)) for p in vertices)),
+                  ("points", "at the vertices" if n is None else n)))
 
 
 # --------------------------------------------- every node and every point
@@ -383,7 +387,11 @@ def on_boundary(view: View, quantity: str, m, boundary_id: str, n_per_segment: i
         raise KeyError(f"no boundary {boundary_id!r} in the model")
     points, distances = boundary_points(b, n_per_segment, distance, side)
     return Query(quantity, view.stage, view.info["id"],
-                 tuple(_rows_at(view, quantity, points, distances)), "boundary", method_of(quantity))
+                 tuple(_rows_at(view, quantity, points, distances)), "boundary", method_of(quantity),
+                 (("boundary", boundary_id),
+                  ("points", "at the vertices" if n_per_segment is None else
+                   f"{n_per_segment} per segment"),
+                  ("distance", float(distance)), ("side", side if distance else "on it")))
 
 
 # ---------------------------------------------------- through the stages
