@@ -182,10 +182,11 @@ Empieza cuando la versión de OGR-Core de D1 (i) está etiquetada.
 
   (Hecho el 2026-11-24: la tolerancia, por los mismos números que la 005 ya compara con las
   soluciones cerradas. 4 tests; las mutaciones, en el changelog.)
-- [ ] T18. **Cierre de la parte B**: el barrido de las reglas 7 y 12 sobre las operaciones;
+- [x] T18. **Cierre de la parte B**: el barrido de las reglas 7 y 12 sobre las operaciones;
   `docs/operaciones/catalogo.md`; `CHANGELOG_v0.0.13.md`.
 
   *Hecho cuando:* la tabla de opciones con su test está en el changelog y no le falta ninguna.
+  (Hecho el 2026-11-24: el catálogo, escrito desde el registro y vigilado por un test. 5 tests más.)
 
 ## Parte C — v0.0.14: el modelador
 

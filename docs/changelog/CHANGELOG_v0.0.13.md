@@ -202,3 +202,43 @@ declara como extra opcional.
 4 tests; 4 mutaciones, 2 cazadas y 2 equivalentes, descartadas: el nivel de gzip del hijo no cambia los
 datos, y la distancia de una consulta sobre un contorno es 0 en los tres casos (ya la prueba la T14).
 Añadida una que hace calcular al hijo otro modelo (ν = 0,31): cazada en los cuatro tests.
+
+## T18 — el cierre de la parte B (2026-11-24)
+
+- `docs/operaciones/catalogo.md`: las 41 operaciones por grupos, con su descripción y sus argumentos,
+  escrito desde el registro (`api/catalog.py`); un test comprueba que la página es la del código.
+- **El barrido de las reglas 7 y 12** sobre las operaciones (`test_api_rules_v0013.py`, 4 tests; 3
+  mutaciones, 3 cazadas). Cada opción, con el test que demuestra que mueve lo que dice:
+
+| Opción | Qué mueve | Test |
+|---|---|---|
+| `boundary_add(cut)` | con cortes, contornos que comparten vértices y un modelo válido; sin ellos, un cruce | `test_api_rules_v0013`, `test_cut` |
+| `boundary_edit(with_dependents)`, `delete_boundary` | borrar o no las condiciones y cargas del contorno | `test_model_edit_v0012`, `test_the_option_moves_the_result` |
+| `material_assign`, `region_excavate`, `condition_stage`, `load_stage` (`stage`, `this_stage_only`) | la tabla fase a fase | `test_api_model_v0013`, `TestStages`; `test_model_stages_v009` |
+| `mesh_settings` (cada ajuste) | la malla, que queda vieja | `test_api_model_v0013`, `TestTheMesh`; spec 003 |
+| `project_settings(units)` | las unidades de la tabla y del informe, no los valores | `test_api_results_v0013` (la tabla en MPa), `test_model_edit_rest_v0012` |
+| `analysis_run(variant)` | el motor que escribe los resultados, dicho en el `.h5` y en el informe; los números, iguales a redondeo | `test_api_rules_v0013`, `test_variant` |
+| `job_cancel(grace_s)` | parar entre fases (`cancelled`, fases escritas) o matar el árbol (el `.h5` anterior) | `test_api_analysis_v0013`, `TestCancel` |
+| `results_query` (`kind`, `n`, `boundary`, `distance`, `side`, `stage`) | los puntos y los valores, como la spec 005 | `test_api_results_v0013`; spec 005, T17 |
+| `results_field` (`level`, `absolute`, `range_mode`) | los triángulos, el valor absoluto, el rango de la leyenda | `test_api_rules_v0013`, `test_field_options` |
+| `allow_invalid` | leer o no unos resultados que no son válidos, y decir su estado | `test_api_results_v0013`, `TestNotValid` |
+| `overwrite` | reemplazar o no otro archivo | `test_api_project_v0013`, `test_open_save_close` |
+| `wait` | cuánto espera la llamada; ningún número | — (no es un ajuste del resultado) |
+
+  **Regla 12**: los resultados llevan lo que los decidió (`deciding_values`, spec 005), el motor y las
+  versiones; una consulta devuelve su unidad, su convenio y sus ajustes, valores por defecto incluidos; un
+  trabajo, su procedencia.
+
+### Lo que se encontró en la parte B, en resumen
+
+1. **Un modelo a medio dibujar no se podía guardar** (spec 004): corregido con el OK de la propietaria;
+   el archivo guarda un modelo válido como documento (T11).
+2. El espacio de trabajo del núcleo cambia el modelo en sitio; aquí es un valor, y se resuelve con los
+   ganchos que el núcleo ofrece (`undo_step`, `document_hash`) (T11).
+3. El gestor de trabajos del núcleo no encola: rechaza un segundo trabajo (`Busy`) (T13).
+4. **El SDK de MCP descartaba en silencio un argumento desconocido**: ahora se rechaza por su nombre
+   (T16).
+5. La CI no instala el extra `[mcp]`: sus tests se saltan allí, a falta de una línea en el flujo, que
+   decide la propietaria (T16).
+6. El caso 006 construido desde cero por las operaciones tiene la huella de su archivo, y los casos 005 a
+   007 por las operaciones dan bit a bit los números de la spec 005 (T12, T17).
