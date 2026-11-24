@@ -25,6 +25,9 @@ Autor y titular del copyright: Samuel Sáez López (UPCT). Licencia AGPL-3.0-or-
   `../Referencias/Ejemplos/Casos_por_problema/00_INDICE.md`.
 - Trabajo guiado por especificaciones (SDD): constitución en `spec/constitution/`, una carpeta por
   función en `spec/features/NNN-nombre/` con `spec.md`, `plan.md` y `tasks.md`.
+- **Antes de diseñar o revisar cualquier pantalla, diálogo, menú o mensaje**, la guía de interfaz:
+  `spec/constitution/guia-de-interfaz.md` (la estética de Slip2D como base, las buenas prácticas
+  que la mejoran, los patrones que no se usan y la lista por componente).
 - Repositorio público `samuelsl27/OGR-FEM2D`. Las contribuciones se aceptan con el CLA de la suite
   (`CLA.md`, `CONTRIBUTING.md`).
 
