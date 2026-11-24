@@ -200,7 +200,9 @@ SHA-256 de un JSON canónico (claves ordenadas, separadores fijos, ASCII, sin Na
   referencia: laterales y fondo fijos, superficie libre. El informe (`Report`) dice qué se trajo, qué
   no, qué se puso por defecto y qué se cambió.
 - **DXF** (`import_dxf.boundaries_from_dxf`, D13): las polilíneas del lector del núcleo, por capa, en
-  los cuatro tipos de contorno. El lector aplana los arcos, y el informe lo dice.
+  los cuatro tipos de contorno. Desde la v0.0.10 (OGR-Core 0.2.7, `keep_arcs`) los `ARC`, `CIRCLE` y
+  *bulges* llegan como arcos, en tramos de 90° como mucho, cada uno con su centro; las `SPLINE` se
+  siguen aplanando y las `ELLIPSE` no se leen, y el informe lo dice.
 
 ## Reglas
 

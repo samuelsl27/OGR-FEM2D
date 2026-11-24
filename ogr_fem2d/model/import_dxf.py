@@ -12,11 +12,12 @@ external and the material boundaries, and these for the excavation and the
 stage ones. A layer that is none of the four does not come, and the report
 says so.
 
-The core's reader FLATTENS the arcs (ARC, CIRCLE, SPLINE and the curved
-pieces of a polyline) into straight pieces: they come as polylines, and the
-mid-side nodes of a six-node mesh go on the chords, not on the circle. The
-report says how many curved entities there were. A reader that keeps the
-arcs is asked of the core (D13; it does not block this).
+The core's reader keeps the arcs (``read_dxf(..., keep_arcs=True)``, OGR-Core
+0.2.7, asked by D13): every ARC, CIRCLE and bulge of a polyline comes in
+pieces of at most 90 degrees, each the minor arc of its centre
+(``DxfPolyline.arcs``), which is the arc of a segment here (``SegmentAttr``,
+spec 003, D3). A SPLINE still comes flattened into straight pieces, and an
+ELLIPSE is not read: the report says how many there were.
 
 The boundaries come as they are drawn: a model needs them to meet only at
 shared vertices (D15), and its validation says where they do not. The
@@ -41,7 +42,9 @@ LAYERS = {
     md.STAGE: ("OGR_STAGE", "STAGE", "FASE", "FASES", "STAGEBOUNDARY", "CONTORNO_FASE"),
 }
 
-CURVED = ("ARC", "CIRCLE", "SPLINE", "ELLIPSE")
+#: what the reader still flattens, or does not read
+FLATTENED = ("SPLINE",)
+UNREAD = ("ELLIPSE",)
 
 
 def kind_of(layer: str) -> str | None:
@@ -60,13 +63,14 @@ def kind_of(layer: str) -> str | None:
 
 def boundaries_from_dxf(path, unit: str = "m") -> tuple[tuple[md.Boundary, ...], Report]:
     """The boundaries of a DXF, and what was done."""
-    cat = reader.read_dxf(Path(path), unit=unit)
+    cat = reader.read_dxf(Path(path), unit=unit, keep_arcs=True)
     report = Report()
     out = []
     count = {}
+    arcs = 0
     for layer in cat.layers:
         kind = kind_of(layer.name)
-        curved = sum(layer.entity_counts.get(t, 0) for t in CURVED)
+        flattened = sum(layer.entity_counts.get(t, 0) for t in FLATTENED)
         if kind is None:
             report.not_brought.append(f"layer {layer.name!r} ({layer.entity_count} entities): "
                                       "not one of the four kinds of boundary")
@@ -76,17 +80,23 @@ def boundaries_from_dxf(path, unit: str = "m") -> tuple[tuple[md.Boundary, ...],
             pts = [(float(x), float(y)) for x, y in poly.points]
             closed = poly.closed
             if len(pts) > 2 and pts[0] == pts[-1]:
-                pts.pop()
+                pts.pop()                  # the closing piece keeps its index, len(pts) - 1
                 closed = True
-            out.append(md.Boundary(f"{kind} {count[kind]}", kind, tuple(pts), closed,
+            segments = tuple(md.SegmentAttr(i, arc=(float(c[0]), float(c[1])))
+                             for i, c in sorted(poly.arcs.items()))
+            arcs += len(segments)
+            out.append(md.Boundary(f"{kind} {count[kind]}", kind, tuple(pts), closed, segments,
                                    name=f"{layer.name} {k + 1}"))
-        if curved:
-            report.changed.append(f"layer {layer.name!r}: {curved} curved entities came as "
-                                  "straight pieces (the core's reader flattens the arcs; the "
-                                  "mid-side nodes will be on the chords, D13)")
+        if flattened:
+            report.changed.append(f"layer {layer.name!r}: {flattened} SPLINE came as straight "
+                                  "pieces (the core's reader flattens them; the mid-side nodes "
+                                  "will be on the chords)")
+    for etype in UNREAD:
+        n = sum(v for key, v in cat.skipped.items() if key.startswith(etype))
+        if n:
+            report.not_brought.append(f"{n} {etype}: the core's reader does not read them")
     report.brought.append(f"{len(out)} boundaries: " + ", ".join(
-        f"{n} {kind}" for kind, n in sorted(count.items())))
-    report.defaults.append("the curved pieces of the polylines (bulges) come flattened too")
+        f"{n} {kind}" for kind, n in sorted(count.items())) + f"; {arcs} pieces of arc")
     report.defaults.append("materials, assignments, stages, conditions and loads: none, the "
                            "user's to give")
     return tuple(out), report

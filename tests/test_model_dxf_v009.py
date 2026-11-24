@@ -13,9 +13,11 @@ Invariants protected:
   external and the material boundaries and this program's for the
   excavation and the stage ones; a layer that is none of them does not come,
   and the report names it;
-* **the arcs come flattened**, as the core's reader gives them, and the
-  report says how many curved entities there were (D13: a reader that keeps
-  them is asked of the core);
+* **the arcs come as arcs** (OGR-Core 0.2.7, ``keep_arcs``; D13): a CIRCLE
+  in four pieces of 90 degrees, each with its centre, its vertices on the
+  circle; a bulge of a polyline and an ARC too. Meshed, the mid-side nodes
+  of the sides on a circle lie on it. A SPLINE still comes flattened, and an
+  ELLIPSE is not read: the report says so;
 * **the boundaries come as drawn**: a closed polyline is closed, an open one
   open; with vertices shared where they meet the model they make is valid,
   and its regions fill the external boundary.
@@ -43,6 +45,11 @@ def _drawing(path):
     msp.add_circle((0, 4), 1.0, dxfattribs={"layer": "EXCAVACION"})
     msp.add_line((-1, 4), (1, 4), dxfattribs={"layer": "FASE"})
     msp.add_line((0, 0), (5, 5), dxfattribs={"layer": "COTAS"})
+    # a material boundary with a bulge: a half circle of radius 1 from (4, -6) to (6, -6)
+    msp.add_lwpolyline([(3, -6, 0.0), (4, -6, -1.0), (6, -6, 0.0), (7, -6, 0.0)], format="xyb",
+                       dxfattribs={"layer": "MATERIAL"})
+    msp.add_spline([(-8, 6), (-7, 7), (-6, 6), (-5, 7)], dxfattribs={"layer": "MATERIAL"})
+    msp.add_ellipse((-6, -6), major_axis=(1, 0), ratio=0.5, dxfattribs={"layer": "MATERIAL"})
     doc.saveas(path)
 
 
@@ -59,7 +66,9 @@ BOUNDARIES, REPORT = _open()
 class TestTheLayers:
     def test_the_four_kinds(self):
         kinds = sorted(b.kind for b in BOUNDARIES)
-        assert kinds == sorted([md.EXTERNAL, md.MATERIAL, md.EXCAVATION, md.STAGE])
+        # three material boundaries: the line, the polyline with a bulge, the spline
+        assert kinds == sorted([md.EXTERNAL, md.MATERIAL, md.MATERIAL, md.MATERIAL, md.EXCAVATION,
+                                md.STAGE])
         for name, kind in (("OGR_EXTERNAL", md.EXTERNAL), ("material", md.MATERIAL),
                            ("Excavación", md.EXCAVATION), ("TUNEL", md.EXCAVATION),
                            ("fase", md.STAGE), ("COTAS", None)):
@@ -70,21 +79,49 @@ class TestTheLayers:
 
 
 class TestTheArcs:
-    def test_flattened_and_said(self):
+    def test_a_circle_in_four_quarters_with_their_centre(self):
         (circle,) = [b for b in BOUNDARIES if b.kind == md.EXCAVATION]
-        assert circle.closed and not circle.segments and len(circle.vertices) > 8
+        assert circle.closed and len(circle.vertices) == 4
+        assert [(s.index, s.arc) for s in circle.segments] == [(k, (0.0, 4.0)) for k in range(4)]
         assert all(abs(math.hypot(x, y - 4.0) - 1.0) < 1e-12 for x, y in circle.vertices)
-        assert any("'EXCAVACION'" in x and "1 curved" in x for x in REPORT.changed)
+
+    def test_a_bulge_is_an_arc(self):
+        bulged = [b for b in BOUNDARIES if b.kind == md.MATERIAL and (3.0, -6.0) in b.vertices]
+        (b,) = bulged
+        arcs = [s for s in b.segments if s.arc is not None]
+        assert len(arcs) == 2 and all(s.arc == (5.0, -6.0) for s in arcs)
+        for s in arcs:
+            p, q = b.segment(s.index)
+            assert abs(math.dist(p, s.arc) - 1.0) < 1e-12 and abs(math.dist(q, s.arc) - 1.0) < 1e-12
+
+    def test_the_spline_and_the_ellipse_are_said(self):
+        assert any("SPLINE" in x and "'MATERIAL'" in x for x in REPORT.changed)
+        assert any("ELLIPSE" in x for x in REPORT.not_brought)
+
+    def test_meshed_the_mid_side_nodes_are_on_the_circle(self):
+        from ogr_fem2d.mesh import geometry as g
+        from ogr_fem2d.model import translate
+        external = next(b for b in BOUNDARIES if b.kind == md.EXTERNAL)
+        circle = next(b for b in BOUNDARIES if b.kind == md.EXCAVATION)
+        m = md.Model(boundaries=(external, circle), materials=(md.Material("m"),),
+                     assignments=(md.Assignment((5.0, 5.0), "m", (False,)),
+                                  md.Assignment((0.0, 4.0), "m", (True,))),
+                     mesh_settings=g.MeshSettings(boundary_nodes=40))
+        mesh = translate.mesh(m).mesh
+        on = [n for n, (x, y) in enumerate(mesh.nodes) if abs(math.hypot(x, y - 4.0) - 1.0) < 1e-9]
+        assert len(on) >= 2 * 40                       # the corners and the mid-side nodes
 
 
 class TestAsDrawn:
     def test_closed_and_open(self):
-        by = {b.kind: b for b in BOUNDARIES}
-        assert by[md.EXTERNAL].closed and len(by[md.EXTERNAL].vertices) == 6
-        assert not by[md.MATERIAL].closed and by[md.MATERIAL].vertices == ((-10.0, -2.0), (10.0, -2.0))
+        external = next(b for b in BOUNDARIES if b.kind == md.EXTERNAL)
+        assert external.closed and len(external.vertices) == 6 and not external.segments
+        line = next(b for b in BOUNDARIES if b.kind == md.MATERIAL and (-10.0, -2.0) in b.vertices)
+        assert not line.closed and line.vertices == ((-10.0, -2.0), (10.0, -2.0))
 
     def test_they_make_a_valid_model(self):
-        external, material = (next(b for b in BOUNDARIES if b.kind == k) for k in (md.EXTERNAL, md.MATERIAL))
+        external = next(b for b in BOUNDARIES if b.kind == md.EXTERNAL)
+        material = next(b for b in BOUNDARIES if b.kind == md.MATERIAL and (-10.0, -2.0) in b.vertices)
         m = md.Model(boundaries=(external, material), materials=(md.Material("m"),),
                      assignments=(md.Assignment((0.0, -6.0), "m", (False,)),
                                   md.Assignment((0.0, 4.0), "m", (False,))))

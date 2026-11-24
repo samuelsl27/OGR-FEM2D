@@ -167,7 +167,8 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
   *Hecho cuando:* el escrito está en `Promts_desarrollo/` y la propietaria sabe que no bloquea nada.
   (Escrito el 2026-11-23: `Promts_desarrollo/2026_11_23_peticion_ogr_core_arcos_en_dxf.md`; falta
-  llevarlo.)
+  llevarlo.) (Llevado; el núcleo lo dio en su 0.2.7, fijada en la v0.0.10, y `import_dxf.py` conserva
+  los arcos desde entonces.)
 
 ## Identidades y casos
 

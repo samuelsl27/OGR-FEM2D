@@ -22,3 +22,16 @@ commit suyo; el uso de los arcos en `ogr_fem2d/model/import_dxf.py`, en el sigui
   `modelo.ogrfem2d` de los casos byte a byte, `written_by` incluido, y la v0.0.10 escribe su nombre. El
   contenido es la identidad, no quién lo escribió (la huella del documento tampoco lo cuenta, D12): el
   test compara ahora todas las líneas menos esa. Los archivos no se reescriben con cada versión.
+
+## Los arcos del DXF (spec 004, D13, cerrada)
+
+`ogr_fem2d/model/import_dxf.py` lee con `keep_arcs=True`: cada tramo curvo llega como el segmento de
+su contorno con su arco (`SegmentAttr(k, arc=centro)`), y el T6 pone sus nudos intermedios sobre la
+circunferencia. El aviso de arcos aplanados queda para las `SPLINE`, que el lector sigue aplanando; las
+`ELLIPSE`, que no lee, se nombran en lo que no se trae.
+
+- `tests/test_model_dxf_v009.py`, 8 tests: un `CIRCLE` en cuatro cuartos con su centro y sus vértices
+  sobre la circunferencia; una `LWPOLYLINE` con *bulge* (media vuelta, dos tramos de 90°) con su
+  centro; la `SPLINE` y la `ELLIPSE`, dichas; mallado, los nudos intermedios de la cavidad sobre el
+  círculo. 4 mutaciones (leer sin `keep_arcs`, perder los arcos, callar la `ELLIPSE` o la `SPLINE`), 4
+  cazadas.
