@@ -57,11 +57,13 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
 
   (Hecho el 2026-11-24: 9 tests; 10 mutaciones, 10 cazadas. Un tramo en común se rechaza, como dice
   el plan; la alternativa, dejarlo como lado compartido, queda propuesta en el changelog.)
-- [ ] T4. `model/shapes.py`: arcos y círculos (RF-3, D10).
+- [x] T4. `model/shapes.py`: arcos y círculos (RF-3, D10).
 
   *Hecho cuando:* tres puntos de una circunferencia conocida dan su centro; tres colineales, error;
   inicio, centro y fin en los dos sentidos; un arco de 270° sale en dos; el círculo son cuatro arcos
   que pasan por sus vértices.
+  (Hecho el 2026-11-24: también por inicio, centro y ángulo, y `Drawn` para juntar rectas y arcos.
+  11 tests; 12 mutaciones, 12 cazadas.)
 - [ ] T5. `model/edit.py`: materiales, asignaciones, campo, condiciones, cargas, ajustes de la malla
   y del proyecto (RF-1), sobre `stages.py` donde ya existe.
 

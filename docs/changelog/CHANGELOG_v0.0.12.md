@@ -72,3 +72,25 @@ centro.
   un error de signo en la cuerda común no se veía).
 
 9 tests; 10 mutaciones, 10 cazadas.
+
+## T4 — arcos y círculos (2026-11-24)
+
+`ogr_fem2d/model/shapes.py`: el arco por tres puntos, por inicio, centro y fin (en el sentido que se
+pida) o por inicio, centro y ángulo; el círculo por centro y radio o por centro y punto; y `Drawn`, que
+junta rectas y arcos en un contorno que se está dibujando (RF-3, D10).
+
+- **Medio círculo o más son dos segmentos**, partidos por su punto medio, porque el segmento guarda el
+  arco menor (spec 003, D4). Se parte desde un micro-radián por debajo de 180°, para que el centro quede
+  bien lejos de la cuerda y la regla `arc` del modelo no lo rechace por redondeo.
+- **El círculo son cuatro arcos de 90°**; con el inicio por defecto (desde +x) sus vértices son
+  exactos, los del hueco del caso 005.
+- **Un cuarto o media vuelta pone su vértice donde se dibuja**: cos(π/2) vale 6·10⁻¹⁷ en coma
+  flotante, y un coseno o un seno a menos de 10⁻¹⁵ de 0 se toma como 0. Sin eso, la bóveda de un túnel
+  dejaba su clave en (6·10⁻¹⁷, 1).
+- Geometría analítica elemental, sin fuente que citar. Los tests la comprueban con identidades: cada
+  vértice está en su circunferencia, y el área de un círculo de cuatro arcos, medida con las áreas de
+  región del propio modelo, es π r² (y la de un túnel de suelo, hastiales y bóveda, 2 + π/2). Una
+  mutación que movía un vértice del círculo sin sacarlo de la circunferencia se escapaba al área, que
+  no cambia: ahora se miran también los ángulos de los vértices.
+
+11 tests; 12 mutaciones, 12 cazadas.
