@@ -130,3 +130,22 @@ asigna regiones una a una.
 Se propone: buscar la región con las caras del grafo, sin el paso de las asignaciones (una función
 nueva de `regions`), y, si la geometría no deja encontrar las regiones (un cruce), rechazar la
 asignación diciendo por qué, en vez de añadirla a ciegas. Espera el OK de la propietaria.
+
+## T6 — lo que `calculate` cuenta mientras calcula (2026-11-24)
+
+`calculate(…, progress=…)` avisa de cada paso: una fase empezada, terminada o fallida, y el final, con
+el estado y las fases escritas (`results/calculate.py`, `Progress`; RF-9, D9). Es lo que el trabajo en
+subproceso de la parte B escribirá en su archivo de progreso.
+
+- **Se cuenta, no decide nada**: los resultados con `progress` son los del motor bit a bit, en un
+  túnel de tres fases y en el caso 007 abierto desde su `modelo.ogrfem2d`. Los casos 005 y 006 pasan
+  por el mismo bucle en sus tests de la spec 005, que siguen dentro de su tolerancia. Los 003 y 004 no
+  pasan por `calculate`.
+- **Una fase terminada dice si se resolvió**, sus escalones y su última iteración, los de su resultado.
+  Al escribir el test se vio que **una fase que no cambia nada no se resuelve** (spec 002): la primera
+  del túnel, que es la tensión de campo en equilibrio, y una que repite la anterior; dan un escalón y
+  ninguna iteración. Por eso el aviso lleva `solved`, y la interfaz podrá decir «sin cambios» en vez
+  de «resuelta».
+- Iteración a iteración, mientras una fase avanza, llega con la spec 007, cuando haya escalones.
+
+6 tests; 8 mutaciones, 8 cazadas.

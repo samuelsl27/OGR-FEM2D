@@ -73,11 +73,14 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   (Hecho el 2026-11-24: 12 tests; 12 mutaciones, 12 cazadas. Las ediciones de fases de la 004 se
   juzgan ahora por lo que rompen, como estas. **Anomalía reportada, sin corregir**: `assign_material`
   con la geometría a medias añade una asignación duplicada; changelog.)
-- [ ] T6. `results/calculate.py`: el aviso de progreso (D9).
+- [x] T6. `results/calculate.py`: el aviso de progreso (D9).
 
   *Hecho cuando:* los eventos salen en orden, uno al empezar y otro al terminar cada fase, también
   en un cálculo cancelado o incompleto; los casos 003 a 007 dan la misma huella de todos sus campos
   con y sin `progress`.
+  (Hecho el 2026-11-24: bit a bit en un túnel de tres fases y en el caso 007 desde su archivo; el
+  005 y el 006 pasan por el mismo bucle en sus tests de la 005; el 003 y el 004 no pasan por
+  `calculate`. El aviso dice si la fase se resolvió. 6 tests; 8 mutaciones, 8 cazadas.)
 - [ ] T7. `report/info.py`: el informe (RF-4, D17).
 
   *Hecho cuando:* cada sección aparece; están todos los `deciding_values`; sin resultados, con

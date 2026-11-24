@@ -18,6 +18,14 @@ Calculate a model and write its results; open them, with their state (spec
   - ``cancelled``: ``should_stop()``, asked between stages, said so. The
     interface (006) asks it; it does not interrupt a stage.
 
+  ``progress(p)``, if given, hears each step of the way (spec 006, D9): a
+  stage started, done or failed, and the end, as a ``Progress``. It is
+  told, it decides nothing: the numbers are the same with it and without
+  it, bit for bit. A stage's steps and iterations are those its outcome
+  reports; in elasticity, one step of one iteration (of none, in a stage
+  that changes nothing). Iteration by iteration, as a stage goes, comes
+  with spec 007.
+
   An error of the input (the engine's ``InputError``) or of a program's own
   fault is not a stage that failed: it raises, and the previous ``.h5``
   stays.
@@ -75,6 +83,30 @@ def results_path(model_path) -> Path:
     return Path(model_path).with_suffix(".h5")
 
 
+#: the events of ``Progress``
+STARTED, DONE, FAILED, FINISHED = "stage_started", "stage_done", "stage_failed", "finished"
+
+
+@dataclass(frozen=True)
+class Progress:
+    """A step of the way of ``calculate``: the event; the stage (its index,
+    from 0, of ``stages``, with its id and name), or at the end how many
+    stages were written; of a stage done, whether it was solved (a stage
+    that changes nothing is not, spec 002) and its steps and last
+    iteration; and the status and its reason at the end (and the reason of
+    a stage that failed)."""
+    event: str
+    stage: int
+    stages: int
+    stage_id: str = ""
+    stage_name: str = ""
+    solved: bool = False
+    steps: int = 0
+    iteration: int = 0
+    status: str = ""
+    reason: str = ""
+
+
 @dataclass(frozen=True)
 class Calculated:
     path: Path
@@ -93,29 +125,46 @@ def mesh_data(m: md.Model, engine, g: st.PointGeometry) -> store.MeshData:
 
 def calculate(m: md.Model, model_path, variant: interface.Variant = solver.REFERENCE,
               should_stop: Callable[[], bool] | None = None,
-              level: int = store.GZIP_LEVEL) -> Calculated:
+              level: int = store.GZIP_LEVEL,
+              progress: Callable[[Progress], None] | None = None) -> Calculated:
     engine = translate.to_engine(m)
     g = st.geometry(engine.nodes, engine.elements, engine.analysis)
     path = results_path(model_path)
+    n = len(m.stages)
     status, stopped, reason, k = store.COMPLETE, None, "", 0
+
+    def tell(event: str, stage: int, **more) -> None:
+        if progress is not None:
+            named = event != FINISHED
+            progress(Progress(event, stage, n, m.stages[stage].id if named else "",
+                              m.stages[stage].name if named else "", **more))
+
     with store.Writer(path, written_by=written_by(), core=core_version(),
                       engine_variant=variant.name, model_fingerprint=fingerprint.model_fingerprint(m),
                       analysis=m.analysis, mesh=mesh_data(m, engine, g),
                       deciding=translate.deciding_values(m), level=level) as w:
+        solving = analysis.stages(engine, variant)
         try:
-            for outcome in analysis.stages(engine, variant):
+            while k < n:
+                tell(STARTED, k)
+                outcome = next(solving)
                 stage = m.stages[k]
                 w.add_stage(stage.id, stage.name, outcome,
                             st.strains(g, outcome.displacement, outcome.active))
+                last = max((it for step, it, _r in outcome.history if step == outcome.steps),
+                           default=0)
+                tell(DONE, k, solved=outcome.solved, steps=outcome.steps, iteration=last)
                 k += 1
-                if k < len(m.stages) and should_stop is not None and should_stop():
+                if k < n and should_stop is not None and should_stop():
                     status, stopped = store.CANCELLED, k
                     reason = f"stopped before stage {m.stages[k].id!r}"
                     break
         except STAGE_FAILURES as err:
             status, stopped = store.INCOMPLETE, k
             reason = f"stage {m.stages[k].id!r}: {type(err).__name__}: {err}"
+            tell(FAILED, k, reason=reason)
         w.finish(status, stopped, reason)
+    tell(FINISHED, k, status=status, reason=reason)
     return Calculated(path, status, k, stopped, reason)
 
 
