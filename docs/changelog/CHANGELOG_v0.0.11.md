@@ -139,3 +139,29 @@ fuera del modelo.
   hueco: con el hueco excavado no hay elemento activo, aunque el triángulo de esquinas del vecino lo
   contiene) y, justo fuera del arco, en la roca; excavado y fuera, por separado. 5 mutaciones, 5
   cazadas (entre ellas, situar con el triángulo de esquinas).
+
+## T7 — las figuras de Zienkiewicz y Taylor, sobre la página (2026-11-24)
+
+Leídas sobre las páginas renderizadas, porque el texto extraído pierde los dibujos.
+
+- **Fig. 14.6, pág. 375** (puntos de muestreo óptimos y de cuadratura mínima, según Moan). En el T3
+  coinciden: el centroide. **En el T6, no** (hallazgo, regla 6):
+  - los óptimos, con error O(h⁴), son puntos interiores;
+  - los tres medios de los lados, que es la regla del motor en deformación plana (spec 002, D1), son
+    los de la **cuadratura mínima**, con O(h³).
+
+  La recuperación se hace igual, como ajuste por mínimos cuadrados sobre los puntos de integración, y
+  la regla del motor no se toca. Se pierde la superconvergencia que promete el texto, pero no la
+  exactitud con un campo que la malla representa, que es la identidad que se prueba. La regla de 7
+  puntos de la axisimetría tampoco es la óptima.
+- **Fig. 14.8, pág. 378** (los parches). En los triángulos, el parche se monta en un nudo de esquina
+  interior con los elementos que lo tienen. **Determina el nudo central y, en el T6, los intermedios de
+  los lados que salen de él** (los puntos negros). Los nudos del borde exterior del parche (blancos)
+  los determinan otros parches. Esto **precisa D5**: decía que cada nudo toma la media de todos los
+  parches que lo contienen. Ahora un nudo de esquina interior sale solo de su parche, y un intermedio
+  interior, de los dos parches de los extremos de su lado.
+- **Fig. 14.9, pág. 379** (bordes y contactos). Los nudos de un contorno o de un contacto entre
+  materiales salen de los parches interiores vecinos de su material, cada material con los suyos. Es
+  lo que decía D5.
+
+El plan («Decisiones de diseño» y «Formulación») está corregido con las tres.

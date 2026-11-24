@@ -110,9 +110,13 @@ En el convenio del usuario (D1). Con t el tensor del motor (tracción positiva),
     con P = [1, x, y] en T3 y [1, x, y, x², xy, y²] en T6.
   - Un nudo «interior del material» es el que no está en un lado con un solo elemento del material
     activo. Sus parches son los que se ajustan.
-  - Un nudo del borde del material toma la media de los polinomios de los parches interiores cuyos
-    elementos lo contienen (fig. 14.9). Si no hay ninguno, el campo extrapolado de cada elemento suyo
-    del material, y la procedencia lo dice.
+  - **Qué nudos determina un parche** (fig. 14.8, leída sobre la página en la T7): su nudo central
+    y, en T6, los nudos intermedios de los lados que salen de él; no los del borde exterior del
+    parche, que son de otros parches. Además, los nudos del parche que están en el borde del material
+    (contornos, excavaciones, contactos), que no tienen parche propio (fig. 14.9). Un nudo
+    determinado por varios parches toma la media (pág. 379).
+  - Un nudo que ningún parche determina toma el campo extrapolado de cada elemento suyo del material
+    (la media si son varios), y la procedencia lo dice.
   - Un parche con menos puntos que coeficientes, o con A mal condicionada (número de condición por
     encima de 10¹⁰), no cuenta.
   - El resultado se guarda por (elemento, nudo local): continuo dentro de un material, con un valor
@@ -155,8 +159,8 @@ En el convenio del usuario (D1). Con t el tensor del motor (tracción positiva),
 | Mohr-Coulomb en invariantes (para la 008, D4) | dSN (2008), según Owen y Hinton (1980) | ec. (6.119), pág. 166 (PDF 191); ángulo de Lode, ec. (6.97) | **Leído**; no se programa aquí |
 | Deformación B u, la B del motor | Zienkiewicz y Taylor (2000), 5.ª ed., vol. 1 | ecs. (2.2)–(2.4); en axisimetría, (5.5)–(5.6) | **Leído** (spec 002) |
 | Recuperación: el promedio, inadecuado | Z&T (2000) | §14.3, págs. 375–377 (PDF 391–393) | **Leído** |
-| SPR: el polinomio, el ajuste, la media de parches, los bordes y contactos | Z&T (2000) | §14.4.1, ecs. (14.28)–(14.31), figs. 14.8–14.9, págs. 377–379 (PDF 393–395) | **Leído**; las figs. 14.8 y 14.9 se miran sobre la página en la T8 |
-| Puntos de muestreo óptimos de los triángulos | Z&T (2000), según Moan (1974) | §14.2, fig. 14.6, pág. 375 (PDF 391) | **Por mirar sobre la página** (T8): qué puntos da para T6, y si son los tres medios de los lados de la spec 002 |
+| SPR: el polinomio, el ajuste, la media de parches, los bordes y contactos | Z&T (2000) | §14.4.1, ecs. (14.28)–(14.31), figs. 14.8–14.9, págs. 377–379 (PDF 393–395) | **Leído**, con las figs. 14.8 y 14.9 sobre la página (T7): qué nudos determina cada parche, arriba en «Decisiones de diseño» |
+| Puntos de muestreo óptimos de los triángulos | Z&T (2000), según Moan (1974) | §14.2, fig. 14.6, pág. 375 (PDF 391) | **Leído sobre la página** (T7). **Para el T6 no son los tres medios de los lados**: esos son los de la cuadratura mínima, O(h³), columna derecha; los óptimos, O(h⁴), son interiores. Para el T3, el centroide en las dos. Hallazgo, abajo |
 | Interpolación de los valores recuperados | Z&T (2000) | ec. (14.27), pág. 376 (PDF 392) | **Leído** |
 | Kirsch, para la línea del 005 | JCZ (2007) | §8.4, ecs. (8.90)–(8.92), págs. 216–218 | **Leído** (spec 001; errata de signo de la (8.92) en la extracción, en la memoria) |
 | Michell, para la línea del 006 | Timoshenko y Goodier (1951) | §34, ec. (f), págs. 92–95 | **Leído** (caso 004) |
