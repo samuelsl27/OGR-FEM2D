@@ -159,10 +159,11 @@ Empieza cuando la versión de OGR-Core de D1 (i) está etiquetada.
   *Hecho cuando:* cada consulta de la 005 tiene su operación y da sus mismos números bit a bit;
   unos resultados no válidos solo se leen pidiéndolo, y cada respuesta lleva el estado.
   (Hecho el 2026-11-24: también el campo listo para dibujar. 4 tests; 11 mutaciones, 11 cazadas.)
-- [ ] T15. `cli/__main__.py`: la línea de órdenes.
+- [x] T15. `cli/__main__.py`: la línea de órdenes.
 
   *Hecho cuando:* abrir, mallar, calcular, consultar, exportar y el informe funcionan sobre un caso;
   un error sale con su código y la salida distinta de cero.
+  (Hecho el 2026-11-24: también `run` con una lista de pasos. 3 tests; 6 mutaciones, 6 cazadas.)
 - [ ] T16. `mcp/`: el servidor MCP, con el SDK (`mcp>=2.1,<3`, MIT) en el extra `[mcp]`, con el OK de
   la propietaria y `--no-deps` (D14).
 

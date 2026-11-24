@@ -38,6 +38,11 @@ dependencies = [
     "h5py>=3.10",
 ]
 
+[project.scripts]
+# The command line (spec 006, T15): the operations of ogr_fem2d.api, JSON in
+# and out. From the tree, without installing: python -m ogr_fem2d.cli
+ogr-fem2d = "ogr_fem2d.cli.__main__:main"
+
 [project.urls]
 Homepage = "https://opengeorock.org"
 Repository = "https://github.com/samuelsl27/OGR-FEM2D"

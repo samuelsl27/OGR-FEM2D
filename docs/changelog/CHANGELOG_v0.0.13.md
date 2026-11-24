@@ -143,3 +143,17 @@ dibujar de la T8) (RF-6; spec 005). 41 operaciones en total.
 4 tests; 11 mutaciones, 11 cazadas (dos se escapaban: la tabla en las unidades del modelo, con un modelo
 en kPa, y la caché que no se renovaba, sin una consulta antes del cambio; ahora el modelo de la prueba se
 muestra en MPa y se consulta antes de cambiarlo).
+
+## T15 — la línea de órdenes (2026-11-24)
+
+`ogr_fem2d/cli/` (`python -m ogr_fem2d.cli`, y `ogr-fem2d` para quien instale la rueda): `call OP` (una
+operación, con sus argumentos en `--json` y `--arg nombre=valor`, y `--open` para abrir un modelo antes),
+`run FILE` (una lista de pasos `{"op", "kwargs"}` sobre un espacio de trabajo), `info FILE` (el informe) y
+`calculate FILE` (abrir, calcular en el subproceso y esperar). JSON a la salida; un error de una operación,
+JSON con su código en la salida de error y estado 2 (RF-6).
+
+- **La línea de órdenes son las operaciones**: los mismos pasos dados por ella en otro proceso responden
+  lo mismo que aquí, los números de una consulta bit a bit (JSON conserva el `repr` de un float).
+
+3 tests; 6 mutaciones, 6 cazadas (la que leía `--arg` como texto se escapaba: un número como texto lo
+acepta la conversión del núcleo; ahora se pasa una lista).
