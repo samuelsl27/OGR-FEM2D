@@ -289,3 +289,34 @@ antes de consultar ningún caso:
 
 En los campos hidrostáticos σt ≥ σr en todo el radio, así que las principales en el plano son las
 polares: se comparan magnitudes del catálogo, sin componentes polares nuevas.
+
+## T14 a T16 — los casos por la consulta (2026-11-24)
+
+`tests/test_validation_queries_v0011.py`: cada caso se calcula a su `modelo.h5`, se abre y se
+consulta como dice su `comparaciones_consulta` (T13). Cada fila se compara con la solución cerrada en
+su sitio. Todo dentro de la tolerancia fijada antes de medir:
+
+| Caso | Consulta | Magnitud | Error | Tolerancia |
+|---|---|---|---|---|
+| 005 (Kirsch) | radio r = a a 5a, 41 puntos | σ1 = σθ / σ3 = σr / u | 0.0022 / 0.0020 p0 / 0.0008 u_r(a) | 0.01 p0 / 0.005 u_r(a) |
+| 005 | pared del hueco, 64 puntos | σ1 = σθ | 0.0035 p0 | 0.01 p0 |
+| 006 (Michell) | eje x = 0, z = 0.25 a 5 m, 20 puntos | σ1 / σ3 | 0.00006 / 0.00449 q | 0.01 q |
+| 007 (Lamé, esfera fija a 21 m) | radio a 45°, R = a a 5 m, 41 puntos | σt merid. / σt circ. / σR / u | 0.0004 / 0.0003 / 0.0015 P0 / 0.00006 uR(a) | 0.01 P0 / 0.005 uR(a) |
+| 007 | arco de la cavidad, 17 puntos | σ1 / σz | 0.0015 / 0.0008 P0 | 0.01 P0 |
+
+- **Hallazgo, para la propietaria: estas tolerancias no distinguen los parches del promedio.** Con la
+  mutación que quita los parches, cada nudo toma la media del campo propio de sus elementos, como el
+  promedio clásico pero por material. Los tres casos siguen cumpliendo:
+  - 005: línea 0.0016 p0 y pared 0.0019 p0, **mejor que con los parches** en la pared;
+  - 006: σ3 0.0052 q;
+  - 007: entre el doble y el triple que con los parches, también dentro.
+
+  Lo que fija la recuperación por parches son las identidades de la T8 (el campo cuadrático exacto
+  en todos los nudos que alcanza un parche), no estos casos. Que en la pared del 005 el promedio salga
+  mejor encaja con lo de la T7: los puntos del T6 de deformación plana no son los óptimos de Z&T, y
+  la superconvergencia que promete el texto no está asegurada.
+- **Dientes**: el signo del usuario y tomar el valor del primer nudo del elemento en lugar de
+  interpolar, cazados. Quitar los parches, sobrevive, por lo que se acaba de decir.
+- La etiqueta de una procedencia mezclada es ahora `spr+element`, en ese orden, como dice el
+  docstring. Antes salía en orden alfabético, `element+spr`; se vio en el arco del 007.
+- Fichas STR-01, STR-04 y STR-09, con su «Seguimiento» (`POST-LINEA`).

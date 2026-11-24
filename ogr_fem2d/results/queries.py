@@ -153,8 +153,9 @@ class View:
             else:
                 rec = self.recovered(kind)
                 tensor = n @ rec.values[e]
-                kinds = sorted({recovery.SOURCES[int(s)] for s in rec.source[e]})
-                source = "+".join(kinds)
+                present = {int(s) for s in rec.source[e]}
+                source = "+".join(recovery.SOURCES[s] for s in (recovery.SPR, recovery.ELEMENT)
+                                  if s in present)
             out.append((float(qt.of(quantity, tensor)), int(e), mat, source))
             if kind == qt.DISPLACEMENT:
                 break

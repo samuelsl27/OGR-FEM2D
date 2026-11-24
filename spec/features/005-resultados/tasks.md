@@ -156,18 +156,21 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
   *Hecho cuando:* el commit está hecho y los casos no se han consultado todavía.
   (Hecho el 2026-11-24, antes de consultar ningún caso.)
-- [ ] T14. **Caso 005 por la consulta**: σr, σθ y ur a lo largo de un radio, de r = a a 5a, y σθ
+- [x] T14. **Caso 005 por la consulta**: σr, σθ y ur a lo largo de un radio, de r = a a 5a, y σθ
   sobre el contorno del hueco, contra Kirsch.
 
   *Hecho cuando:* cumple la tolerancia de la T13, o el hallazgo está reportado (regla 6). La ficha
   STR-01 tiene su «Seguimiento».
-- [ ] T15. **Caso 006 por la consulta**: σ1 y σ3 en x = 0, de z = 0.25 a 5 m, contra Michell.
+  (Hecho el 2026-11-24, dentro de la tolerancia: σ1 = σθ 0.0022 p0, σ3 = σr 0.0020 p0, u 0.0008 u_r(a); la pared, 0.0035 p0.)
+- [x] T15. **Caso 006 por la consulta**: σ1 y σ3 en x = 0, de z = 0.25 a 5 m, contra Michell.
 
   *Hecho cuando:* lo mismo, y la ficha STR-04 tiene su «Seguimiento».
-- [ ] T16. **Caso 007 por la consulta**: σR, σt y uR a lo largo del radio a 45°, de R = a a 5 m,
+  (Hecho el 2026-11-24, dentro de la tolerancia: σ1 0.00006 q, σ3 0.00449 q.)
+- [x] T16. **Caso 007 por la consulta**: σR, σt y uR a lo largo del radio a 45°, de R = a a 5 m,
   contra la esfera con u(b) = 0, y σt sobre el contorno de la cavidad.
 
   *Hecho cuando:* lo mismo, y la ficha STR-09 tiene su «Seguimiento».
+  (Hecho el 2026-11-24, dentro de la tolerancia: σt 0.0004 y 0.0003 P0, σR 0.0015 P0, u 0.00006 uR(a); el arco, 0.0015 y 0.0008 P0.)
 
 ## El cierre
 
