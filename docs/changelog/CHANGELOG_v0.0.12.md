@@ -193,3 +193,33 @@ escriben (RF-4, D17). Lo usarán la ventana del informe (parte D), la línea de 
   las reacciones por contorno suman la total, 6320 kN por metro, que es el peso más la carga.
 
 7 tests; 9 mutaciones, 9 cazadas.
+
+## T8 — un campo listo para dibujar (2026-11-24)
+
+`ogr_fem2d/results/drawing.py`: `field(vista, magnitud, nivel)` subdivide cada elemento activo en
+triángulos y da a cada vértice nuevo su posición y su valor con las funciones de forma del propio
+elemento (Z&T ec. 14.27, como las consultas de la 005); `value_range` da el rango de la leyenda
+(RF-5, D11).
+
+- **Subdivisión regular en coordenadas de área**: 2^nivel partes por lado, 4^nivel triángulos por
+  elemento; nivel 2 por defecto (16). La posición pasa por la transformación isoparamétrica: la pared
+  del hueco se dibuja sobre el lado cuadrático del T6, a menos de 10⁻⁵ del arco (dibujada recta, sus
+  tramos de 10° entrarían hasta cos 5° = 0,9962).
+- **Cada elemento con sus vértices**: el dibujo es continuo dentro de un material y conserva el salto
+  en un contacto. Comprobado contra la solución cerrada (regla 1) en la columna de dos estratos con
+  carga q: σyy = q + Σγh en todos los vértices, y σxx = K·(campo) + ν/(1 − ν)·q a cada lado del
+  contacto, 86,06 arriba y 69,33 abajo.
+- **El rango de la leyenda es el rango entero**, con los extremos: el de la fase, el de todas o el que
+  se dé. **Cambia lo previsto en el plan**: el plan ponía aquí también los N intervalos, pero las
+  bandas, la paleta y sus colores son de `ContourSettings` de Slip2D, que va a `ogr-gui` (ADR-0005);
+  repetirlos aquí sería otra copia. Y **no se recorta a un percentil**, como hace Slip2D con sus
+  factores de seguridad (el 98 %): aquí el pico de tensión en la pared de un túnel es justo lo que se
+  busca. La interfaz tendrá que usar este rango, no el ajuste de `ContourSettings`.
+- **Tiempos, caso 005** (26 518 T6 activos, nivel 2: 424 288 triángulos y 397 770 vértices): el primer
+  campo de tensión de una fase, 1,12 s, casi todo la recuperación por parches, que se hace una vez por
+  fase y tipo; los siguientes, 0,06 s; un desplazamiento, 0,05 s; el nivel 3 (1,7 millones de
+  triángulos), 0,18 s. **El objetivo de D15 (cambiar de magnitud o de fase en 1 s) queda justo en la
+  primera tensión de cada fase**; se vuelve a medir con la interfaz (T31).
+
+10 tests; 11 mutaciones, 11 cazadas (una que desordenaba los índices de los triángulos se escapaba: no
+había test que dibujara con ellos; ahora los triángulos tienen que cubrir el modelo una vez, 200 m²).

@@ -89,7 +89,7 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   resultados obsoletos o incompletos, lo dice; el texto y el HTML dicen lo mismo.
   (Hecho el 2026-11-24: con la columna de dos estratos como comprobación externa, 316 kPa y las
   reacciones. 7 tests; 9 mutaciones, 9 cazadas.)
-- [ ] T8. `results/drawing.py`: los triángulos y los niveles de un campo (RF-5, D11).
+- [x] T8. `results/drawing.py`: los triángulos y los niveles de un campo (RF-5, D11).
 
   *Hecho cuando:*
   - en los nudos, el valor dibujado es el recuperado;
@@ -99,6 +99,10 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   - los niveles automáticos de una fase cubren su rango, los de todas las fases el de todas, y los
     manuales son los pedidos;
   - el tiempo con el caso 005 está medido y anotado.
+
+  (Hecho el 2026-11-24: 10 tests; 11 mutaciones, 11 cazadas. **Cambia lo previsto**: los intervalos y
+  los colores son de `ogr-gui`; aquí, el rango entero, sin percentil. Caso 005: 1,12 s la primera
+  tensión de una fase, 0,06 s las siguientes.)
 - [ ] T9. **Cierre de la parte A**: `docs/interfaz/edicion.md`; los casos 001 a 007, bit a bit;
   `CHANGELOG_v0.0.12.md` con lo encontrado.
 
