@@ -86,8 +86,8 @@ En el convenio del usuario (D1). Con t el tensor del motor (tracción positiva),
 | id | Qué | Definición | Fuente |
 |---|---|---|---|
 | `sigma_xx`, `sigma_yy`, `tau_xy`, `sigma_z` | cartesianas y la de fuera del plano (en axisimetría: radial, axial, rz, circunferencial) | s | — |
-| `sigma_1`, `sigma_3` | principales en el plano, σ1 ≥ σ3 | ½(sxx + syy) ± [τxy² + ¼(sxx − syy)²]^½ | JCZ ecs. (2.37)–(2.38) |
-| `theta_1` | ángulo de σ1 desde +x, antihorario, en (−90°, 90°] | tan 2θ = 2τxy / (sxx − syy), con la rama de las ecs. (2.41)–(2.44) | JCZ ecs. (2.33), (2.41)–(2.44) |
+| `sigma_1`, `sigma_3` | principales en el plano, σ1 ≥ σ3 | ½(sxx + syy) ± [τxy² + ¼(sxx − syy)²]^½ | JCZ ecs. (2.37)–(2.38), leídas sobre la página |
+| `theta_1` | ángulo de σ1 desde +x, antihorario, en [0°, 180°), el intervalo de JCZ | tan 2θ = 2τxy / (sxx − syy), con la rama de las ecs. (2.41)–(2.44) | JCZ ecs. (2.33), (2.41)–(2.44) |
 | `sigma_I`, `sigma_II`, `sigma_III` | las tres principales ordenadas | {σ1, σ3, σz} ordenadas: z es principal porque τxz = τyz = 0 | JCZ §2.5 |
 | `p` | tensión media | (sxx + syy + sz) / 3 | JCZ ec. (2.153) |
 | `q` | tensión de von Mises | √(3 J2), J2 = ⅙[(sxx − syy)² + (syy − sz)² + (sz − sxx)²] + τxy² | dSN ec. (6.111); JCZ ec. (2.163) |
@@ -144,10 +144,10 @@ En el convenio del usuario (D1). Con t el tensor del motor (tracción positiva),
 
 | Qué | Fuente | Dónde | Estado |
 |---|---|---|---|
-| Tensiones en un plano y principales en 2-D | Jaeger, Cook y Zimmerman (2007), 4.ª ed. | §2.3, ecs. (2.31)–(2.44), págs. 20–21 (PDF 33–34) | **Leído** en el texto; se comprueba sobre la página en la T1 |
-| Invariantes, media, desviador, J2 | JCZ (2007) | §2.8, ecs. (2.137)–(2.167), págs. 38–41 (PDF 51–54) | **Leído**; **(2.149)** sale con «(σ3 − σ3)» y **(2.162)** con τ²xx donde se espera s²xx: errata de la extracción o del libro, se mira la página en la T1 |
+| Tensiones en un plano y principales en 2-D | Jaeger, Cook y Zimmerman (2007), 4.ª ed. | §2.3, ecs. (2.31)–(2.44), págs. 20–21 (PDF 33–34) | **Leído sobre la página** (T1) |
+| Invariantes, media, desviador, J2 | JCZ (2007) | §2.8, ecs. (2.137)–(2.167), págs. 38–41 (PDF 51–54) | **Leído sobre la página** (T1). **Erratas del libro**, no de la extracción: (2.149) imprime (σ3 − σ3)² por (σ3 − σ1)², y (2.162) τ²xx por s²xx. No se usan: J2 sale de la (2.163), que está bien |
 | Deformaciones en 2-D, γ = 2ε | JCZ (2007) | §2.10, ecs. (2.181)–(2.186), págs. 44–46 (PDF 57–59) | **Leído** |
-| Principales de deformación | JCZ (2007) | ec. (2.195), pág. 47 (PDF 60) | **Leído**; la raíz del corchete no sale en la extracción: se mira la página en la T1 |
+| Principales de deformación | JCZ (2007) | ec. (2.195), pág. 47 (PDF 60) | **Leído sobre la página** (T1). **Errata del libro**: el corchete va sin la raíz que lleva su gemela de tensiones, la (2.37); se programa con la raíz |
 | Deformación volumétrica | JCZ (2007) | §2.13, ec. (2.231), pág. 53 (PDF 66) | **Leído** |
 | Convenio de signos de JCZ (compresión y acortamiento positivos; su x* = x − u, que aquí **no** se sigue) | JCZ (2007) | §2.2; ecs. (2.168)–(2.170), págs. 42–43 | **Leído** |
 | Tensión diferencial | JCZ (2007) | cap. 6, pág. 151 (PDF 164): «σ1 − σ3 is referred to as the differential stress» | **Leído** |

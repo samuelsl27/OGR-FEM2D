@@ -24,7 +24,7 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
 ## Las magnitudes, las deformaciones y el motor
 
-- [ ] T1. **v0.0.11**, `results/quantities.py`, el catálogo (D16) y las magnitudes de tensión (D2).
+- [x] T1. **v0.0.11**, `results/quantities.py`, el catálogo (D16) y las magnitudes de tensión (D2).
   - Antes de programar, las ecuaciones de JCZ (2.37)–(2.44), (2.149), (2.153), (2.162)–(2.163) y
     (2.195), y la (6.111) de dSN, **leídas sobre la página**, no sobre el texto extraído. Lo que
     se vea de las tres erratas posibles, al changelog.
@@ -34,6 +34,9 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
   *Hecho cuando:* los tests de invariantes, de convenio y de axisimetría de la «Estrategia» están en
   verde con tensores sueltos, y cada magnitud cita su fuente en el código.
+  (Hecho el 2026-11-24: 16 tests; 12 mutaciones, 12 cazadas. **Tres erratas del libro** en JCZ,
+  (2.149), (2.162) y (2.195), vistas sobre la página; ninguna se usa tal cual. θ1 en [0°, 180°), el
+  intervalo de JCZ, changelog.)
 - [ ] T2. `results/strains.py` y las magnitudes de deformación (D3, D6): B u con la B del motor;
   εv y γmax.
 
