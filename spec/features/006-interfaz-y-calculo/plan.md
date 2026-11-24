@@ -104,7 +104,7 @@ se propone una rama corta `dev/…`, que elige la propietaria (`AGENTS.md`).
 
 - **Capas** (`tech-stack.md`, «Separaciones»): `engine` no importa nada de `model`, `results`, `api`
   ni `gui` (regla 11); `model`, `results`, `report`, `api` y `cli` **no importan Qt**; `api` no importa
-  `mcp`; solo `gui` importa PySide6 y `ogr-gui`. Lo vigila un test que lee el código y mira
+  `mcp`; solo `gui` importa PySide6 y `ogr_ui` (el paquete de `ogr-gui`). Lo vigila un test que lee el código y mira
   `sys.modules`, como el del núcleo.
 - **Una edición es una función pura más un paso de deshacer.** `model/edit.py` da `modelo → modelo`
   y valida; la operación la aplica con `Document.edit(cambio, descripción)`, que es el único sitio

@@ -10,9 +10,11 @@
    la regla, y aquí se dice cómo se resuelve el choque (abajo, «Cuando chocan»).
 2. **La base es la estética de OGR Slip2D**: el mismo aspecto, los mismos atajos, el mismo orden de
    menús y la misma forma de entrar datos. Un ingeniero que sabe usar uno sabe usar el otro.
-3. **Las guías de abajo sirven para mejorar esa base, no para cambiarla por gusto.** Una mejora que
-   rompe la coherencia con Slip2D se propone a la propietaria y, si se acepta, se pide también para
-   Slip2D (a su sesión), para que la suite no diverja.
+3. **Las guías de abajo sirven para mejorar esa base, no para cambiarla por gusto.** La base común de
+   la suite está en `ogr-gui` (`OGR-GUI/spec/constitution/referencias-de-diseno.md`, aprobada el
+   2026-11-24, que recoge esta guía y la de OGR Data y dice dónde difieren); esta guía la concreta
+   para este programa. Una mejora de una pieza común se pide a `ogr-gui` (a su sesión), y llega a
+   todos los programas cuando suben su fijación; nunca se hace en una copia de este programa.
 4. Cada tarea de interfaz de una spec cierra con la lista de comprobación de esta guía
    («Lista por componente»), además de sus tests.
 
@@ -162,7 +164,7 @@ Ninguno de estos patrones tiene sitio en el programa, ni siquiera «sin querer»
 | Revelación progresiva frente a la regla 12 | Se puede plegar un ajuste; su valor se ve siempre junto al resultado |
 | Entrada tolerante (Postel) frente a «nunca aceptar en silencio» | Se acepta lo no ambiguo y se muestra lo entendido; lo ambiguo se rechaza en el campo |
 | Menos opciones (Hick) frente a la regla 7 | Una opción que no mueve el número no se añade; una que lo mueve no se quita por simplificar: se agrupa o se pliega |
-| Mejorar el aspecto frente a la coherencia con Slip2D | Se propone, y si se acepta se pide también para Slip2D |
+| Mejorar el aspecto frente a la coherencia con Slip2D | Se propone; si se acepta, se pide a `ogr-gui` y llega a todos |
 | Esconder lo que no aplica frente a descubrirlo | Se deshabilita con su porqué, no se oculta |
 
 ## Lista por componente

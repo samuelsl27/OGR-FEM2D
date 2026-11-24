@@ -47,7 +47,7 @@ Autor y titular del copyright: Samuel Sáez López (UPCT). Licencia AGPL-3.0-or-
   versiones distintas.
 - **Interfaz común** (`ADR-0005`): lo genérico sin Qt (operaciones, errores, trabajos en
   subproceso, puente) viene de `ogr_core`; lo genérico con Qt, del paquete hermano `ogr-gui`
-  (repositorio OGR-GUI), fijado por etiqueta como el núcleo y con las mismas reglas: **se cambia
+  (repositorio OGR-GUI, paquete `ogr_ui`, que no depende del núcleo), fijado por etiqueta como el núcleo y con las mismas reglas: **se cambia
   solo en su repositorio** y aquí no se copia. La ventana, el lienzo y la interpretación son de este
   programa.
 - **Formato de proyecto**: `.ogrfem2d` (JSON) propio, con el modelo y la malla; abre el `.ogr` de

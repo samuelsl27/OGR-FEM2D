@@ -2,7 +2,9 @@
 
 - **Estado:** ACEPTADA (2026-11-24, propietaria). Decisión D1 de la spec 006
   (`spec/features/006-interfaz-y-calculo/spec.md`), que concreta la decisión P1 del plan de
-  desarrollo (opción (b), tomada el 2026-10-27).
+  desarrollo (opción (b), tomada el 2026-10-27). **Modificada el mismo día** por la propietaria, al
+  hacer `ogr-gui` v0.1.0 (abajo, «Modificación»): se importa como `ogr_ui` y no depende de
+  `ogr-core`.
 
 ## Contexto
 
@@ -33,8 +35,9 @@ la interfaz. Lo que se midió al abrirla (Slip2D v0.1.486, OGR-Core v0.2.7, solo
 - **Lo genérico sin Qt va a una versión nueva de OGR-Core**: el registro de operaciones, los errores
   con código, la conversión de argumentos, los trabajos en subproceso y el protocolo del puente. No
   importa PySide6 ni `mcp`, así que cabe sin cambiar la regla de capas.
-- **Lo genérico con Qt va a un paquete hermano, `ogr-gui`** (repositorio `samuelsl27/OGR-GUI`), que
-  depende de `ogr-core` y que cada programa fija por etiqueta, como el núcleo. Lleva también el
+- **Lo genérico con Qt va a un paquete hermano, `ogr-gui`** (repositorio `samuelsl27/OGR-GUI`,
+  paquete `ogr_ui`), que cada programa fija por etiqueta, como el núcleo, y que no depende de él
+  (abajo, «Modificación»). Lleva también el
   diccionario de sus propios textos y las comprobaciones de las reglas 2 y 3 (todo texto por `tr()`
   y traducido; toda acción en un menú), para que digan lo mismo en todos los programas.
 - Las dos cosas **se copian de Slip2D sin tocarlo**. Slip2D, y OGR Data si quiere, las adoptan
@@ -61,8 +64,27 @@ la interfaz. Lo que se midió al abrirla (Slip2D v0.1.486, OGR-Core v0.2.7, solo
 
 ## Consecuencias
 
-- Este programa fija tres etiquetas: `ogr-core`, `ogr-gui` y, por él, la de `ogr-core` que pida
-  `ogr-gui`. Subir cualquiera es un commit propio (`AGENTS.md`, «Un núcleo y varios programas»).
+- Este programa fija dos etiquetas independientes, `ogr-core` y `ogr-gui`. Subir cualquiera es un
+  commit propio (`AGENTS.md`, «Un núcleo y varios programas»).
 - La spec 006 se parte en cuatro partes (D2). La A no depende de nada de esto; la B espera a la versión
   de OGR-Core; la C y la D, a `ogr-gui` v0.1.0.
 - `tech-stack.md`, `AGENTS.md` («Stack») y `plan_de_desarrollo.md` (P1) lo recogen.
+
+## Modificación (2026-11-24, propietaria, al hacer `ogr-gui` v0.1.0)
+
+La respuesta de la sesión de OGR-GUI a la petición de este programa trae dos cambios sobre lo que se
+pidió, decididos por la propietaria:
+
+- **El paquete se importa como `ogr_ui`**, no `ogr_gui`: `ogr_gui` es el paquete de interfaz de OGR
+  Slip2D, y con el mismo nombre Slip2D no podría instalarlo nunca sin renombrar el suyo. El
+  repositorio y la distribución siguen siendo `OGR-GUI` y `ogr-gui`.
+- **`ogr-gui` no depende de `ogr-core`.** pip no admite dos referencias git distintas a la misma
+  distribución: si `ogr-gui` fijara una etiqueta del núcleo, este programa no se podría instalar
+  mientras fijara otra, y cada subida de cualquiera obligaría a sacar otra `ogr-gui`. Las dos piezas
+  que en Slip2D leían el núcleo lo reciben por una interfaz pequeña (`SnapShape` para el enganche,
+  `install_progress` para las tareas). La tabla de quién fija qué de `ogr-gui` está en su propio
+  `docs/consumidores.md`, no en el de OGR-Core.
+
+Por eso este programa fija dos etiquetas independientes, y donde este ADR o la spec 006 decían
+`ogr_gui` como paquete, es `ogr_ui`. Las referencias de diseño comunes de la suite viven ahora en
+`OGR-GUI/spec/constitution/referencias-de-diseno.md`; la guía de este programa las concreta.
