@@ -33,6 +33,9 @@ dependencies = [
     "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.2.7",
     "numpy>=1.26",
     "scipy>=1.14",
+    # The results file, modelo.h5 (ADR-0003; spec 005, D8). BSD-3-Clause,
+    # compatible with AGPL-3.0; ogr-core asks for it too (>= 3.10).
+    "h5py>=3.10",
 ]
 
 [project.urls]

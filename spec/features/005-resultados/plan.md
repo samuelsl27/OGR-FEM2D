@@ -1,6 +1,6 @@
 # Plan de implementación — Spec 005, resultados (`.h5`) y su interpretación sin interfaz
 
-> **Propuesto (2026-11-24), para aprobar** con D1–D16 de `spec.md`. Ninguna fórmula se programa
+> **Aprobado (2026-11-24)**, con D1–D16 de `spec.md`. Ninguna fórmula se programa
 > antes de estar en la tabla «Formulación» como leída **sobre la página** (no sobre el texto
 > extraído).
 

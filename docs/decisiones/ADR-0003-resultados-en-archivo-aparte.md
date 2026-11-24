@@ -20,8 +20,10 @@ formato de archivos, fuera del repositorio: `../Referencias/Doc_Guia/Analisis_in
 - El `.h5` guarda la **huella** (hash) del contenido del modelo que los produjo. Al abrir, si la
   huella no coincide con la del modelo actual, los resultados se marcan **obsoletos** y no se
   presentan como válidos.
-- Se parte del módulo HDF5 que Slip2D ya tiene sin usar (`ogr_core/project/results_io.py`).
-  `h5py` es BSD-3-Clause, compatible con AGPL-3.0, y ya es dependencia de Slip2D.
+- El `.h5` lo escribe y lo lee este programa (`ogr_fem2d/results/`, spec 005, D8), con `h5py`
+  declarado como dependencia propia. `h5py` es BSD-3-Clause, compatible con AGPL-3.0, y también lo
+  pide `ogr-core`. (Hasta la spec 005 decía que se partía de `ogr_core/project/results_io.py`: ese
+  módulo es de equilibrio límite de punta a punta, y no se reutiliza.)
 
 ## Alternativas descartadas
 

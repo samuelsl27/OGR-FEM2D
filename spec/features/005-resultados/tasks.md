@@ -10,7 +10,7 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
 
 ## Antes de programar
 
-- [ ] T0. **Spec, plan y tareas aprobados**, con D1–D16. Va en un commit propio.
+- [x] T0. **Spec, plan y tareas aprobados**, con D1–D16. Va en un commit propio.
   - ADR-0003, «Decisión»: ya no se parte de `ogr_core/project/results_io.py` (D8).
   - `plan_de_desarrollo.md`, «Spec 005»: el §14.2 pasa a §14.3–14.4, el factor de resistencia va a
     la 008 (D4) y `results_io.py` sale.
@@ -18,7 +18,9 @@ Cada test lleva su cabecera y tiene dientes: mutaciones sistemáticas
     No se instala nada: ya está en el `.venv` (3.16).
 
   *Hecho cuando:* la propietaria ha dado el OK, y las decisiones están anotadas como aprobadas en
-  `spec.md` y `plan.md`.
+  `spec.md` y `plan.md`. (Hecho el 2026-11-24: OK de la propietaria a D1–D16; corregidos ADR-0003,
+  que ahora dice que el `.h5` se escribe aquí, y `plan_de_desarrollo.md`, en la 005 y en la 008;
+  `h5py>=3.10` declarado, sin instalar nada.)
 
 ## Las magnitudes, las deformaciones y el motor
 

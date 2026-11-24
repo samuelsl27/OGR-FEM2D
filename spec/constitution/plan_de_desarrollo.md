@@ -165,13 +165,13 @@ aplicarlo en la interfaz).
 - Huella del modelo (ADR-0003) calculada aquí.
 
 ### Spec 005 — Resultados (`.h5`) y su interpretación sin interfaz
-- Archivo `modelo.h5` con la huella (ADR-0003) y resultados obsoletos marcados como tales; partir de
-  `ogr_core/project/results_io.py`.
+- Archivo `modelo.h5` con la huella (ADR-0003) y resultados obsoletos marcados como tales, escrito
+  aquí (`ogr_fem2d/results/`, spec 005, D8).
 - Magnitudes de campo: tensiones cartesianas y principales, σz, media, von Mises, diferencial,
-  desplazamientos, deformaciones volumétrica y de corte máximo, factor de resistencia (T05). Cada
-  una con su definición y su fuente.
+  desplazamientos, deformaciones volumétrica y de corte máximo. Cada una con su definición y su
+  fuente. El factor de resistencia (T05), a la spec 008 (spec 005, D4).
 - Paso de puntos de integración a nudos para dibujar contornos (fuente: Zienkiewicz y Taylor 2000,
-  §14.2, recuperación de tensiones), sin perder los valores en los puntos, que son los que se
+  §14.3–14.4, recuperación por parches, material a material), sin perder los valores en los puntos, que son los que se
   validan.
 - Consultas por línea, por contorno de excavación y en todos los nudos, con exportación a tabla;
   evolución por fase.
@@ -219,6 +219,8 @@ colapso).
   Rust y su caso.
 - Contrato común de ley constitutiva, pensado ya para los modelos de la fase 5 (T00 §4 propone el del
   modelo de usuario).
+- El factor de resistencia (T05) de cada ley, que viene de la spec 005 (D4); Mohr-Coulomb en
+  invariantes, de Souza Neto, Perić y Owen (2008), ec. (6.119).
 
 ### Spec 009 — Reducción de resistencia al corte (SSR)
 - Algoritmo (sin manual de teoría: fuente por conseguir; el análisis cita Dawson et al. 1999), con

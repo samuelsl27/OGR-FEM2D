@@ -1,10 +1,9 @@
 # Spec 005 — Resultados (`.h5`) y su interpretación sin interfaz
 
-> **Revisada (2026-11-24), para aprobar.** Fase 1 del plan de desarrollo
+> **Aprobada (2026-11-24)**, con D1–D16 tal como se propusieron. Fase 1 del plan de desarrollo
 > (`spec/constitution/plan_de_desarrollo.md`, «Spec 005 — Resultados (`.h5`) y su interpretación
 > sin interfaz»). Solo el **qué** y el **porqué**; el cómo, en `plan.md`. Versión: **v0.0.11**.
-> Las dudas del borrador son ahora las decisiones D1–D16 (abajo), propuestas para el OK de la
-> propietaria.
+> Las dudas del borrador son ahora las decisiones D1–D16 (abajo).
 
 ## La revisión (2026-11-24)
 
@@ -62,7 +61,7 @@
 - [x] Fichas STR-01, STR-04 y STR-09 releídas con su «Seguimiento»: las tres piden `POST-LINEA`. La
   de STR-09 ya avisa de que, con la esfera fija a 21 m, la línea hasta 5 m se aparta de la solución
   del medio infinito; aquí se compara con la de la esfera finita (D10).
-- [x] Dudas convertidas en decisiones (D1–D16), para el OK.
+- [x] Dudas convertidas en decisiones (D1–D16), aprobadas el 2026-11-24.
 
 ## Depende de
 
@@ -249,8 +248,8 @@ Las tablas de errores de las fichas son del programa de referencia y no son valo
 
 ## Criterios de finalización
 
-- [ ] D1–D16 aprobadas por la propietaria y anotadas aquí
-- [ ] `plan_de_desarrollo.md` y ADR-0003 corregidos donde dicen que se parte de `results_io.py` y
+- [x] D1–D16 aprobadas por la propietaria y anotadas aquí (2026-11-24)
+- [x] `plan_de_desarrollo.md` y ADR-0003 corregidos donde dicen que se parte de `results_io.py` y
       citan el §14.2 (T0)
 - [ ] Todos los RF con su test en verde, y la regla 7 en cada opción nueva
 - [ ] Cada magnitud con su definición comprobada contra su fuente y citada en el código
@@ -260,9 +259,9 @@ Las tablas de errores de las fichas son del programa de referencia y no son valo
 - [ ] `docs/resultados/formato.md` completo; tamaño y tiempos del caso 005 en el changelog
 - [ ] Changelog con lo encontrado; fichas STR-01, STR-04 y STR-09 con su «Seguimiento» (`POST-LINEA`)
 
-## Decisiones propuestas (2026-11-24)
+## Decisiones (2026-11-24)
 
-Para el OK de la propietaria. Las referencias I02, I03, P11 y P12 son del análisis de interfaz
+Aprobadas el 2026-11-24, tal como se propusieron. Las referencias I02, I03, P11 y P12 son del análisis de interfaz
 (`../Referencias/Doc_Guia/Analisis_interfaz_funcionamiento/`). JCZ es Jaeger, Cook y Zimmerman
 (2007); Z&T, Zienkiewicz y Taylor (2000); dSN, de Souza Neto, Perić y Owen (2008).
 
