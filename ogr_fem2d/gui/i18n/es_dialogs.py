@@ -113,6 +113,41 @@ ES = {
         "Mallado: %d nudos, %d elementos; ángulo mínimo %.1f° (B = %.4g).",
     "Warnings of the mesher: %d (see the mesh on the status bar).":
         "Avisos del mallador: %d (mira la malla en la barra de estado).",
+    # the materials and the assignment
+    "Define Materials...": "Definir materiales...",
+    "Define Materials": "Definir materiales",
+    "Assign Properties...": "Asignar propiedades...",
+    "Add": "Añadir",
+    "Delete": "Borrar",
+    "Name": "Nombre",
+    "Colour": "Color",
+    "Initial element loading": "Carga inicial del elemento",
+    "Field stress only": "Solo tensión de campo",
+    "Field stress and body force": "Tensión de campo y peso propio",
+    "Body force only": "Solo peso propio",
+    "None": "Ninguna",
+    "Unit weight": "Peso específico",
+    "Elastic properties (isotropic)": "Propiedades elásticas (isótropo)",
+    "Young's modulus E": "Módulo de Young E",
+    "Poisson's ratio ν": "Coeficiente de Poisson ν",
+    "(E and ν to be given)": "(E y ν por dar)",
+    "The unit weight acts only with an initial loading that has the body force.":
+        "El peso específico solo actúa con una carga inicial que tenga el peso propio.",
+    "Material %d": "Material %d",
+    "Assign": "Asignar",
+    "Choose, then click inside the regions:": "Elige y haz clic dentro de las regiones:",
+    "Excavate": "Excavar",
+    "Fill": "Rellenar",
+    "This stage only": "Solo esta fase",
+    "An excavation or a fill in the stage shown only; without it, from that stage on.":
+        "Una excavación o un relleno solo en la fase que se ve; sin marcar, desde esa fase "
+        "en adelante.",
+    "Click inside the regions [Esc: stop].": "Haz clic dentro de las regiones [Esc: "
+        "terminar].",
+    "Assigned in the stage shown.": "Asignado en la fase que se ve.",
+    "Assign Material": "Asignar material",
+    "%s cannot be taken away once given: write its value.":
+        "%s no se puede quitar una vez dado: escribe su valor.",
     # the unit systems of the suite (ogr_core.units.unit_system.SYSTEMS)
     "Metric, stress as kPa": "Métrico, tensiones en kPa",
     "Metric, stress as MPa": "Métrico, tensiones en MPa",

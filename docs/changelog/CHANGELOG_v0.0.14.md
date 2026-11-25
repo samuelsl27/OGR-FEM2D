@@ -197,3 +197,33 @@ mismo armazón que calcular (parte D, T30), o aceptarlo así para la fase 1. No 
 
 5 tests; 23 mutaciones, todas cazadas (tres, después de reforzar los tests para que comprueben el ajuste
 guardado y no solo que la malla cambie; una línea redundante que hacía equivalente la cuarta, quitada).
+
+## T26 — los materiales y el panel de asignación (2026-11-25)
+
+`ogr_fem2d/gui/dialogs/materials.py`, `gui/assign_panel.py`, `dialogs/fields.py`; el menú Propiedades
+(definir materiales, asignar propiedades) y el menú de la región en el lienzo (RF-14; D7; 004, D9, D11,
+D16; P03).
+
+- **Los materiales**: la lista con su color a la izquierda y el escogido a la derecha (nombre, color,
+  carga inicial, peso específico, E y ν), como la referencia. **Cada acción es una operación al
+  momento**, un paso de deshacer: Añadir, Borrar (rechazado si una región lo tiene, y se dice), Aplicar
+  (solo lo cambiado); escoger otro aplica antes lo cambiado en el que se ve.
+- **E y ν sin defecto** (D16): uno nuevo los muestra «(por dar)» y la lista lo marca; `project_validate`
+  y calcular lo nombran. Una vez dados no se pueden quitar (la operación no lo admite): el diálogo lo
+  dice en vez de ignorarlo.
+- **El peso específico solo con peso propio** (D11): habilitado con una carga inicial que lo tenga, y
+  con su porqué cuando no.
+- **El panel de asignación**, junto al lienzo y abierto mientras se hace clic: un material, Excavar o
+  Rellenar, en la fase que se ve; «Solo esta fase» cambia solo esa. Lo que el motor no admite (un
+  elemento que vuelve, otro material en una fase posterior) lo rechaza la operación y se dice.
+- **El menú de la región** (D7): con el botón derecho y sin herramienta, asignar un material, excavar,
+  rellenar y los materiales; fuera de una región, ninguno.
+- `dialogs/fields.py`: el número de un diálogo en las unidades del modelo, que vuelve exacto si no se
+  tocó, compartido ahora por la tensión de campo y los materiales.
+
+**Encontrado por los tests**: escoger otro material con cambios sin aplicar los aplicaba, pero al
+rellenar la lista de nuevo la fila volvía al material anterior, y el diálogo mostraba uno con la fila
+de otro. Corregido (la fila se repone). Y «Solo esta fase» no se distinguía con dos fases: con tres,
+rellenar solo la primera deja la excavación en las otras.
+
+5 tests; 24 mutaciones, todas cazadas (cinco, después de reforzar los tests).

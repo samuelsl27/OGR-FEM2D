@@ -43,6 +43,7 @@ from ..model import model as md
 from . import i18n as fem_i18n
 from . import menus, units
 from .canvas import controller as tc
+from .assign_panel import AssignPanel
 from .canvas.view import ModelView
 from .dialogs.mesh_setup import guaranteed_angle
 from .session import Session
@@ -90,6 +91,9 @@ class MainWindow(QMainWindow):
         self._stack.addWidget(canvas)
         self.setCentralWidget(self._stack)
         self.tools = tc.ToolController(self)
+        self.assign_panel = AssignPanel(self)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.assign_panel)
+        self.assign_panel.hide()
         self.view.clicked.connect(self.tools.clicked)
         self.view.cursor_moved.connect(self.tools.moved)
         self.view.key_pressed.connect(self.tools.key)
@@ -145,6 +149,9 @@ class MainWindow(QMainWindow):
         self._mk("mesh_discretize", "Discretize", self.act_discretize, None)
         self._mk("mesh_generate", "Discretize and Mesh", self.act_mesh, None, "Ctrl+M")
         self._mk("mesh_reset", "Reset Mesh", self.act_mesh_reset, None)
+        self._mk("define_materials", "Define Materials...", self.act_materials,
+                 "define_materials")
+        self._mk("assign", "Assign Properties...", self.act_assign, "assign", "Ctrl+A")
         t = self.tools
         self._mk("add_excavation", "Add Excavation", lambda: t.start(tc.DRAW, md.EXCAVATION),
                  "add_polygon", "Ctrl+1")
@@ -214,7 +221,8 @@ class MainWindow(QMainWindow):
         m = self.session.model
         self.analysis_label.setText(self.analysis_text())
         for key in ("project_settings", "stage_insert", "stage_rename", "field_stress",
-                    "mesh_setup", "mesh_discretize", "mesh_generate"):
+                    "mesh_setup", "mesh_discretize", "mesh_generate", "define_materials",
+                    "assign"):
             disabled_reasons.gate(self._actions[key], has, tr("There is no model: File > New."))
         disabled_reasons.gate(self._actions["stage_delete"], has and len(m.stages) > 1,
                               tr("The only stage cannot be deleted: add another first.")
@@ -226,6 +234,7 @@ class MainWindow(QMainWindow):
         self.view.mesh_stale = state == "stale"
         self.mesh_label.setText(self.mesh_text())
         self.mesh_label.setToolTip(self.mesh_notes())
+        self.assign_panel.refresh(m)
         if "draw_arc" in self._actions:
             self.refresh_tools()
         self._fill_stage_tabs(m)
@@ -525,6 +534,81 @@ class MainWindow(QMainWindow):
 
     def act_mesh_reset(self) -> None:
         self._do("mesh_reset")
+
+    # ------------------------------------------------------------ materials
+    def said(self, op: str, /, **kwargs):
+        """For a dialog: (the operation's result, None) or (None, the
+        refusal's text)."""
+        try:
+            return self.session.call(op, **kwargs), None
+        except OgrApiError as err:
+            return None, fem_i18n.say(getattr(err, "message", str(err)))
+
+    def materials_dialog(self, material: Optional[str] = None):
+        from .dialogs.materials import MaterialsDialog
+        return MaterialsDialog(lambda: self.session.model, self.said, self, material)
+
+    def act_materials(self, material: Optional[str] = None) -> None:
+        if self.session.model is not None:
+            self.materials_dialog(material or None).exec()
+
+    def act_assign(self) -> None:
+        """The assignment panel, beside the canvas."""
+        if self.session.model is not None:
+            self.assign_panel.show()
+            self.assign_panel.raise_()
+            self.resizeDocks([self.assign_panel], [240], Qt.Orientation.Horizontal)
+
+    def assign_at(self, x: float, y: float, what=None) -> None:
+        """Assign ``what`` (the panel's choice by default) to the region
+        at (x, y), in the stage shown."""
+        m = self.session.model
+        what = what or self.assign_panel.what
+        if m is None or what is None:
+            return
+        stage = m.stages[self.stage].id
+        only = self.assign_panel.this_stage_only.isChecked()
+        if what[0] == "material":
+            done = self._do("material_assign", material=what[1], x=x, y=y, stage=stage,
+                            this_stage_only=only)
+        else:
+            done = self._do("region_excavate", x=x, y=y, stage=stage, excavated=what[1],
+                            this_stage_only=only)
+        if done is not None:
+            self.statusBar().showMessage(tr("Assigned in the stage shown."), 5000)
+
+    def region_menu(self, x: float, y: float) -> Optional[QMenu]:
+        """The menu of the region at (x, y) (D7): its material, excavate,
+        fill, the materials; None if the click is in no region."""
+        from ..model import regions
+        m = self.session.model
+        if m is None:
+            return None
+        try:
+            regions.region_of(m, (x, y))
+        except md.ModelError:
+            return None
+        menu = QMenu(self)
+        sub = menu.addMenu(tr("Assign Material"))
+        from .dialogs.materials import swatch
+        for mat in m.materials:
+            act = sub.addAction(swatch(mat.color), mat.name or mat.id)
+            act.triggered.connect(lambda _c=False, i=mat.id: self.assign_at(
+                x, y, ("material", i)))
+        sub.setEnabled(bool(m.materials))
+        menu.addAction(tr("Excavate")).triggered.connect(
+            lambda: self.assign_at(x, y, ("excavate", True)))
+        menu.addAction(tr("Fill")).triggered.connect(
+            lambda: self.assign_at(x, y, ("excavate", False)))
+        menu.addSeparator()
+        menu.addAction(self._actions["define_materials"])
+        return menu
+
+    def region_context(self, x: float, y: float) -> None:
+        from PySide6.QtGui import QCursor
+        menu = self.region_menu(x, y)
+        if menu is not None:
+            menu.exec(QCursor.pos())
 
     def stage_menu(self) -> QMenu:
         """The tabs' context menu: the actions of the Analysis menu."""

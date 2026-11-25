@@ -38,6 +38,8 @@ MAPPED = {
     "mesh_discretize": "mesh_discretize",
     "mesh_generate": "mesh_generate",
     "mesh_reset": "mesh_reset",
+    "define_materials": "material_set",
+    "assign": "material_assign",
 }
 
 #: action key -> why it calls no operation

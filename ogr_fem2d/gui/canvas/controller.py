@@ -37,6 +37,8 @@ from .. import units
 from . import paths, tools
 
 NONE, DRAW, CIRCLE = "none", "draw", "circle"
+#: assigning what the assignment panel chose, by clicks inside regions (T26)
+ASSIGN = "assign"
 MOVE, INSERT, DELETE_VERTEX, DELETE_BOUNDARY = ("move_vertex", "insert_vertex", "delete_vertex",
                                                 "delete_boundary")
 
@@ -75,6 +77,8 @@ class ToolController:
             self.say(tr("Click the vertex to delete."))
         elif mode == DELETE_BOUNDARY:
             self.say(tr("Click the boundary to delete."))
+        elif mode == ASSIGN:
+            self.say(tr("Click inside the regions [Esc: stop]."))
         self.w.refresh_tools()
 
     def cancel(self, quiet: bool = False) -> None:
@@ -119,8 +123,16 @@ class ToolController:
         self.cursor = self.snapped(x, y) if self.mode in (DRAW, CIRCLE) else (x, y)
         self._show_preview()
 
+    def start_assign(self) -> None:
+        self.start(ASSIGN)
+
     def clicked(self, x: float, y: float, button) -> None:
         if self.mode == NONE:
+            if button == Qt.MouseButton.RightButton:
+                self.w.region_context(x, y)          # the region's menu (D7)
+            return
+        if self.mode == ASSIGN and button == Qt.MouseButton.LeftButton:
+            self.w.assign_at(x, y)
             return
         if button == Qt.MouseButton.RightButton:
             if self.mode == DRAW:

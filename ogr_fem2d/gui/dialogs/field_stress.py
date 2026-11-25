@@ -32,7 +32,7 @@ from __future__ import annotations
 from typing import Callable, Optional
 
 from PySide6.QtCore import QSize
-from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QDoubleSpinBox, QFormLayout,
+from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QFormLayout,
                                QGroupBox, QHBoxLayout, QHeaderView, QLabel, QPushButton,
                                QRadioButton, QStackedWidget, QTableWidget, QTableWidgetItem,
                                QVBoxLayout, QWidget)
@@ -45,6 +45,7 @@ from ...model import model as md
 from .. import units
 from ..canvas import paths
 from .coordinates import TableError, read_number
+from .fields import Number as _Number
 
 #: the columns of the strata: (the model's name, its quantity)
 STRATA = (("bottom", Q.LENGTH), ("unit_weight", Q.UNIT_WEIGHT), ("k", Q.DIMENSIONLESS),
@@ -55,27 +56,6 @@ def _note(text: str) -> QLabel:
     label = QLabel(text)
     label.setWordWrap(True)
     return label
-
-
-class _Number:
-    """A spin box for a value kept in SI and shown in the model's units; a
-    value not touched is given back as it was."""
-
-    def __init__(self, m: md.Model, value: float, q: Q, decimals: int = 3):
-        self.m, self.si, self.q = m, value, q
-        self.box = QDoubleSpinBox()
-        self.box.setRange(-1e12, 1e12)
-        self.box.setDecimals(decimals)
-        self.box.setStepType(QDoubleSpinBox.StepType.AdaptiveDecimalStepType)
-        label = units.label(m, q)
-        if label:
-            self.box.setSuffix(" " + label)
-        self.box.setValue(units.to_user_value(m, value, q))
-        self.shown = self.box.value()
-
-    def value(self) -> float:
-        v = self.box.value()
-        return self.si if v == self.shown else units.from_user_value(self.m, v, self.q)
 
 
 class FieldStressDialog(QDialog):

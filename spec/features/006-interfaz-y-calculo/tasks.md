@@ -247,11 +247,13 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   la cota B y las notas del mallador están a la vista.
   (Hecho el 2026-11-25: mallar es síncrono, 2-4 s con las mallas de los casos; hallazgo
   reportado en el changelog, para decidir. 5 tests; 23 mutaciones, todas cazadas.)
-- [ ] T26. Los materiales y el panel de asignación (por clic en la región, excavar, «solo esta fase»),
+- [x] T26. Los materiales y el panel de asignación (por clic en la región, excavar, «solo esta fase»),
   con su menú contextual — RF-14, D7.
 
   *Hecho cuando:* asignar y excavar mueven el número (P03); un material sin E ni ν se señala y
   calcular dice cuál falta.
+  (Hecho el 2026-11-25: cada acción del diálogo es una operación al momento; el menú de la
+  región. 5 tests; 24 mutaciones, todas cazadas.)
 - [ ] T27. Las condiciones y las cargas: restringir en X, en Y o en las dos, imponer, liberar; carga
   repartida y puntual con su orientación y su factor por fase; su dibujo — RF-14, RF-16.
 
