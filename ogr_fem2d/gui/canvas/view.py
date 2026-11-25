@@ -46,6 +46,8 @@ KIND_PENS = {
 MESH_PEN = ("#8a9399", "#6b7378")
 REGION_ALPHA = 0.55
 ZOOM_STEP = 1.15
+#: what the canvas shows of a model with nothing drawn yet, in metres
+EMPTY_EXTENT = (-10.0, -10.0, 60.0, 40.0)
 
 
 def kind_pen(kind: str, width: float = 2.0) -> QPen:
@@ -110,6 +112,10 @@ class ModelView(QGraphicsView):
 
     #: the cursor's model coordinates
     cursor_moved = Signal(float, float)
+    #: a left or right click, at its model coordinates
+    clicked = Signal(float, float, object)
+    #: a key pressed on the canvas (the tools take Esc, Enter, Backspace)
+    key_pressed = Signal(object)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -134,8 +140,12 @@ class ModelView(QGraphicsView):
 
     # ------------------------------------------------------------ drawing
     def set_model(self, m: md.Model | None, stage: int | None = None) -> None:
-        """Draw ``m`` (its stage ``stage``, or the one shown)."""
-        first = self.model is None and m is not None
+        """Draw ``m`` (its stage ``stage``, or the one shown). A model seen
+        for the first time is fitted; one with nothing drawn yet shows
+        ``EMPTY_EXTENT``, so that the grid and the snap are of a size an
+        engineer draws at (at one pixel per metre the grid was of 50 m, and
+        every click went to its nearest node)."""
+        first = m is not None and (self.model is None or not self.model.boundaries)
         self.model = m
         if stage is not None:
             self.stage = stage
@@ -143,7 +153,14 @@ class ModelView(QGraphicsView):
             self.stage = min(self.stage, len(m.stages) - 1)
         self._draw()
         if first:
-            self.zoom_all()
+            if m.boundaries:
+                self.zoom_all()
+            else:
+                self.show_extent(*EMPTY_EXTENT)
+
+    def show_extent(self, x0: float, y0: float, x1: float, y1: float) -> None:
+        """Fit the rectangle (x0, y0)-(x1, y1) in the view."""
+        self.fitInView(QRectF(x0, y0, x1 - x0, y1 - y0), Qt.AspectRatioMode.KeepAspectRatio)
 
     def set_stage(self, stage: int) -> None:
         self.stage = stage
@@ -235,7 +252,16 @@ class ModelView(QGraphicsView):
             self._pan_from = event.position()
             event.accept()
             return
+        if event.button() in (Qt.MouseButton.LeftButton, Qt.MouseButton.RightButton):
+            x, y = self.model_point(event.position())
+            self.clicked.emit(x, y, event.button())
+            event.accept()
+            return
         super().mousePressEvent(event)
+
+    def keyPressEvent(self, event) -> None:  # noqa: N802
+        self.key_pressed.emit(event.key())
+        super().keyPressEvent(event)
 
     def mouseMoveEvent(self, event) -> None:  # noqa: N802
         x, y = self.model_point(event.position())

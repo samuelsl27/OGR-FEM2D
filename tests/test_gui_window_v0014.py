@@ -58,9 +58,11 @@ EXCEPTIONS = {
         "the window's title: the model's name, its star and the kind of analysis (each through "
         "tr()) joined with the program's name, which is not translated",
     ("main_window.py", "OGR FEM2D {}\n\n"): "the program's name and its version in About",
+    ("main_window.py", "x, y · @dx, dy · @d<a"):
+        "the placeholder of the X, Y field: the forms of a typed point, in symbols",
 }
 #: Spanish words that are the English ones
-SAME = {"Material"}
+SAME = {"Material", "X (m)", "Y (m)"}
 
 _WINDOWS = []
 
@@ -133,6 +135,12 @@ class TestRule2:
             # every message of the operations, both forms of one with a count
             english += [s.english for s in FEM_MESSAGES.values()]
             english += [s.one for s in FEM_MESSAGES.values() if s.one]
+            # the errors of a typed point and of drawing, said through tr()
+            import ast
+            tree = ast.parse((GUI / "canvas" / "tools.py").read_text(encoding="utf-8"))
+            english += [n.args[0].value for n in ast.walk(tree) if isinstance(n, ast.Call)
+                        and getattr(n.func, "id", "") == "EntryError" and n.args
+                        and isinstance(n.args[0], ast.Constant)]
             assert texts.missing_translations(english, table) == []
         finally:
             _close(w)

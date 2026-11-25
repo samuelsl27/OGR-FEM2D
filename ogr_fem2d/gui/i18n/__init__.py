@@ -12,10 +12,11 @@ from __future__ import annotations
 from ogr_ui.i18n import add_translations
 
 from .es_menus import ES as _MENUS
+from .es_canvas import ES as _CANVAS
 from .es_messages import ES as _MESSAGES
 
 #: every Spanish text of this program, by area
-AREAS = {"menus": _MENUS, "messages": _MESSAGES}
+AREAS = {"menus": _MENUS, "canvas": _CANVAS, "messages": _MESSAGES}
 
 
 def spanish() -> dict[str, str]:

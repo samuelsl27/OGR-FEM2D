@@ -218,11 +218,13 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   malla del caso 005, medidos y anotados.
   (Hecho el 2026-11-25: 0,17 s el primer dibujo, 16 ms ampliar, 6 ms mover. La regla del lienzo, en
   la T22 con la entrada de geometría. 9 tests; 14 mutaciones, 14 cazadas.)
-- [ ] T22. La entrada de geometría (D10): clic, X, Y absolutos, relativos y polares, tabla, círculo,
+- [x] T22. La entrada de geometría (D10): clic, X, Y absolutos, relativos y polares, tabla, círculo,
   arco, editar vértices; los cortes y sus vértices, a la vista.
 
   *Hecho cuando:* cada forma de entrada da los vértices esperados; un clic de selección en vacío lo
   dice en la barra de estado; deshacer quita un vértice o un contorno.
+  (Hecho el 2026-11-25: el campo de X, Y de `ogr_ui`, con el lector de este programa; pedido a
+  OGR-GUI. 11 tests; 14 mutaciones, 13 cazadas y 1 equivalente.)
 - [ ] T23. Los ajustes del proyecto (análisis, unidades, resumen) y las fases (pestañas: insertar,
   borrar, renombrar) — RF-14, RF-15.
 

@@ -85,3 +85,29 @@ y el menú Vista (ver todo, acercar, alejar, rejilla, malla) (RF-15; D15; guía 
 propia tabla, una arista repetida no cambiaba la cuenta, un arco recto pasaba con pocos puntos y las
 coordenadas se emitían a mano; ahora se comparan con los colores de la suite, se cuentan los trazos del
 camino, se piden las cuerdas y se mueve el ratón de verdad).
+
+## T22 — la entrada de geometría (2026-11-25)
+
+`ogr_fem2d/gui/canvas/tools.py` (sin Qt), `controller.py` y `dialogs/coordinates.py`; el menú Contornos
+(añadir excavación, externo, de material, de fase y excavación circular; arco, tabla de coordenadas y
+terminar; mover, insertar y borrar vértices; borrar contornos) (D10, D12; guía §3, §8; P05, P13).
+
+- **Un punto escrito quiere decir una cosa** (D12): `x, y`, `x y`, `x; y` con coma decimal, `x,y` con
+  punto; relativo, `@dx, dy`; polar, `@d<ángulo` en grados, exacto en un cuarto de vuelta. Lo ambiguo
+  (`1,5,2,5`) se rechaza diciendo cómo escribirlo. **El campo de X, Y de `ogr_ui` solo admite el punto
+  absoluto con punto decimal**: se usa el mismo campo con el lector de este programa, y se pide a OGR-GUI
+  que lo traiga (tercera cosa de `../Promts_desarrollo/2026_11_24_peticion_ogr_gui_rango_entero.md`).
+- **Un contorno se dibuja** por clics, puntos escritos, la tabla o arcos por tres puntos (medio círculo o
+  más, dos segmentos); un punto sobre el primer vértice lo cierra; Retroceso deshace el último paso, Esc
+  cancela, Intro o el botón derecho terminan. Terminar es una sola operación (`boundary_add`, con sus
+  cortes) y un solo paso de deshacer, y la barra de estado dice cuántos cortes puso.
+- **Cada clic se engancha** (`ogr_ui`, `SnapEngine`): a un vértice, a un segmento (un arco por sus
+  cuerdas, que no son vértices), a la rejilla; las palancas, las de la barra de estado. **Escoger** un
+  vértice o un segmento funciona a 8 píxeles de la pantalla, y un clic que no escoge nada lo dice (P13).
+- **El lienzo vacío muestra una vista de partida** de 70 × 50 m: a un píxel por metro la rejilla era de
+  50 m, y cada clic se iba a su nudo. Lo encontraron los tests.
+- La tabla de coordenadas, con la coma o el punto decimal; una celda que no es un número se dice con su
+  fila (P05: escribir deprisa en la referencia no era fiable; la tabla sí).
+
+11 tests; 14 mutaciones, 13 cazadas y 1 equivalente (la cuenta de marcas decimales sobraba, porque la
+expresión regular ya admite una por número: quitada del código).

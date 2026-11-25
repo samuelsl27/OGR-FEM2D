@@ -37,8 +37,10 @@ from ogr_ui.user_prefs import Preferences
 from ogr_ui.widgets.status_bar import OgrStatusBar
 
 import ogr_fem2d
+from ..model import model as md
 from . import i18n as fem_i18n
 from . import menus
+from .canvas import controller as tc
 from .canvas.view import ModelView
 from .session import Session
 
@@ -75,6 +77,11 @@ class MainWindow(QMainWindow):
         self._stack.addWidget(self._empty)
         self._stack.addWidget(canvas)
         self.setCentralWidget(self._stack)
+        self.tools = tc.ToolController(self)
+        self.view.clicked.connect(self.tools.clicked)
+        self.view.cursor_moved.connect(self.tools.moved)
+        self.view.key_pressed.connect(self.tools.key)
+        self._typed_points()
         self._build_actions()
         self._build_menus()
         disabled_reasons.install(self)
@@ -116,6 +123,26 @@ class MainWindow(QMainWindow):
         self._actions["show_grid"].setChecked(self.view.show_grid)
         self._actions["show_mesh"].setChecked(self.view.show_mesh)
         self._mk("about", "About OGR FEM2D...", self.act_about, "about")
+        t = self.tools
+        self._mk("add_excavation", "Add Excavation", lambda: t.start(tc.DRAW, md.EXCAVATION),
+                 "add_polygon", "Ctrl+1")
+        self._mk("add_external", "Add External", lambda: t.start(tc.DRAW, md.EXTERNAL),
+                 "ext_boundary", "Ctrl+2")
+        self._mk("add_material", "Add Material Boundary", lambda: t.start(tc.DRAW, md.MATERIAL),
+                 "mat_boundary", "Ctrl+3")
+        self._mk("add_stage", "Add Stage Boundary", lambda: t.start(tc.DRAW, md.STAGE),
+                 "add_polyline", "Ctrl+4")
+        self._mk("add_circle", "Add Circular Excavation",
+                 lambda: t.start(tc.CIRCLE, md.EXCAVATION), "add_circle")
+        self._mk("draw_arc", "Arc", t.start_arc, None, "A")
+        self._mk("coords_table", "Enter Coordinates...", self.act_coords_table, None, "T")
+        self._mk("finish_boundary", "Finish Boundary", t.finish, None)
+        self._mk("move_vertex", "Move Vertex", lambda: t.start(tc.MOVE), "move_vertex")
+        self._mk("insert_vertex", "Insert Vertex", lambda: t.start(tc.INSERT), "insert_vertex")
+        self._mk("delete_vertex", "Delete Vertex", lambda: t.start(tc.DELETE_VERTEX),
+                 "delete_vertex")
+        self._mk("delete_boundary", "Delete Boundary", lambda: t.start(tc.DELETE_BOUNDARY),
+                 "boundary_delete")
         for menu, (key, text, why) in menus.FUTURE.items():
             act = self._mk(key, text, lambda: None)
             disabled_reasons.gate(act, False, tr(why))
@@ -163,6 +190,8 @@ class MainWindow(QMainWindow):
         for key in ("zoom_all", "zoom_in", "zoom_out"):
             disabled_reasons.gate(self._actions[key], has, tr("There is no model: File > New."))
         m = self.session.model
+        if "draw_arc" in self._actions:
+            self.refresh_tools()
         self._fill_stage_tabs(m)
         self.view.set_model(m, self.stage_tabs.currentIndex() if m is not None else 0)
         if m is not None and not m.boundaries:
@@ -224,12 +253,52 @@ class MainWindow(QMainWindow):
         return box.clickedButton() is discard
 
     # ------------------------------------------------------------ doing
-    def _do(self, op: str, /, **kwargs):
+    def do(self, op: str, /, **kwargs):
+        """An operation on the model; its refusal on the status bar."""
         try:
             return self.session.call(op, **kwargs)
         except OgrApiError as err:
             self.show_error(err)
             return None
+
+    _do = do
+
+    # ------------------------------------------------------------ tools
+    def _typed_points(self) -> None:
+        """The status bar's X, Y field, with this program's reading of a
+        point (absolute, relative, polar, a decimal comma: D10, D12). The
+        field's own reading (absolute, points only) is left out."""
+        field = self.statusBar().coord_input
+        field.setValidator(None)
+        field.returnPressed.disconnect()
+        field.setPlaceholderText("x, y · @dx, dy · @d<a")
+        field.setToolTip(tr("While drawing: x, y (or x; y with decimal commas), @dx, dy relative "
+                            "to the last vertex, or @distance<angle in degrees; then Enter."))
+        field.returnPressed.connect(self._typed)
+
+    def _typed(self) -> None:
+        field = self.statusBar().coord_input
+        text = field.text()
+        field.clear()
+        self.tools.typed(text)
+
+    def act_coords_table(self) -> None:
+        from .dialogs.coordinates import CoordinatesDialog
+        dlg = CoordinatesDialog(self)
+        if dlg.exec():
+            self.tools.points(dlg.result_points)
+
+    def refresh_tools(self) -> None:
+        """What the tools can do now: drawing needs a model, a step of
+        drawing needs a boundary being drawn."""
+        has = self.session.model is not None
+        drawing = self.tools.mode == tc.DRAW
+        for key in ("add_excavation", "add_external", "add_material", "add_stage", "add_circle",
+                    "move_vertex", "insert_vertex", "delete_vertex", "delete_boundary"):
+            disabled_reasons.gate(self._actions[key], has, tr("There is no model: File > New."))
+        for key in ("draw_arc", "coords_table", "finish_boundary"):
+            disabled_reasons.gate(self._actions[key], drawing,
+                                  tr("Draw a boundary first: Boundaries > Add."))
 
     def _leave_current(self) -> bool:
         """The current model is closed, its changes discarded if the user

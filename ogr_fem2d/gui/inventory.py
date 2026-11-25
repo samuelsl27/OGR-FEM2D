@@ -19,6 +19,16 @@ MAPPED = {
     "save_as": "project_save",
     "undo": "project_history",
     "redo": "project_history",
+    "add_excavation": "boundary_add",
+    "add_external": "boundary_add",
+    "add_material": "boundary_add",
+    "add_stage": "boundary_add",
+    "finish_boundary": "boundary_add",
+    "add_circle": "boundary_circle",
+    "move_vertex": "boundary_edit",
+    "insert_vertex": "boundary_edit",
+    "delete_vertex": "boundary_edit",
+    "delete_boundary": "boundary_edit",
 }
 
 #: action key -> why it calls no operation
@@ -32,6 +42,8 @@ UI_ONLY = {
     "zoom_out": "zooms the canvas out",
     "show_grid": "shows or hides the canvas's grid",
     "show_mesh": "shows or hides the mesh in the canvas",
+    "draw_arc": "a step of drawing: the boundary goes in by boundary_add when it is finished",
+    "coords_table": "a step of drawing: the boundary goes in by boundary_add when it is finished",
     "soon_support": "disabled: says when its phase comes (D4)",
     "soon_groundwater": "disabled: says when its phase comes (D4)",
     "soon_statistics": "disabled: says when its phase comes (D4)",
