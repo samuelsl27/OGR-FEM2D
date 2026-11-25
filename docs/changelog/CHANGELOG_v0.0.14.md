@@ -168,3 +168,32 @@ escogido, la celda no tocada, la celda en otras unidades y el bloque en «ver to
 
 Encontrado de paso: unos borradores escritos con el Python del sistema salieron con CRLF; normalizados a
 LF antes del commit (el `.gitattributes` ya fija `eol=lf`, así que nada llegó al repositorio).
+
+## T25 — la malla en dos pasos (2026-11-25)
+
+`ogr_fem2d/gui/dialogs/mesh_setup.py`; el menú Malla (ajustes, discretizar, discretizar y mallar, quitar
+la malla); la malla en el lienzo y en la barra de estado (RF-14, RF-20; spec 003; P10).
+
+- **Dos pasos, como la referencia**: «Discretizar» dibuja una cruz en cada nudo que tendrán los
+  contornos y los cuenta, sin tocar el modelo; «Mallar» se habilita después (y vuelve a deshabilitarse
+  al cambiar el tipo de malla). Cada ajuste cambiado es una `mesh_settings` con solo lo cambiado; mallar,
+  otro paso.
+- **Cada ajuste mueve la malla** (regla 7): tipo, elemento, B, nudos en las excavaciones (o en el
+  externo si no hay), lado máximo, tamaño o número de elementos de la uniforme, y las ventanas de
+  refinamiento como rectángulos (una ventana que no lo es, dada por la operación, se muestra y se
+  guarda tal cual). Las longitudes, en las unidades del modelo.
+- **Los nudos de la graduada no tienen defecto** (guía §10; spec 003, D5): el campo empieza «(por dar)»
+  y discretizar sin ellos se rechaza en el diálogo diciendo por qué (la referencia ponía 75 o 60).
+- **B y lo que decidió la malla, a la vista** (regla 12): junto a B, el ángulo mínimo que garantiza,
+  arcsin(1/2B) (Shewchuk 2002a); en la barra de estado, el tamaño de la malla, y en su ayuda emergente B,
+  el ángulo mínimo obtenido y los avisos del mallador; al mallar, el resumen.
+- **La malla de otra geometría se queda y se marca** (P10; 004, RF-11): se dibuja a trazos en otro color
+  y la barra de estado lo dice. «Quitar la malla» es un paso de deshacer, deshabilitado sin malla.
+
+**Hallazgo (regla 6), para decidir**: mallar es síncrono. El caso 006 tarda 2,1 s en la ventana y el 005,
+3,6 s (medido fuera): la ventana se queda quieta con el cursor de espera y «Mallando...». La guía (§4)
+pide progreso y cancelar para un proceso largo. Propuesta: mallar como trabajo en subproceso, con el
+mismo armazón que calcular (parte D, T30), o aceptarlo así para la fase 1. No se ha cambiado nada.
+
+5 tests; 23 mutaciones, todas cazadas (tres, después de reforzar los tests para que comprueben el ajuste
+guardado y no solo que la malla cambie; una línea redundante que hacía equivalente la cuarta, quitada).

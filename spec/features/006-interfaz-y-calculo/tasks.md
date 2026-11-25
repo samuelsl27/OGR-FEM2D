@@ -240,11 +240,13 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   está escrito en el diálogo.
   (Hecho el 2026-11-25: en Cargas; el bloque, junto al modelo y dentro de «ver todo». 7 tests;
   19 mutaciones, todas cazadas.)
-- [ ] T25. La malla en dos pasos (ajustes, discretizar, mallar, quitar), su dibujo y sus notas —
+- [x] T25. La malla en dos pasos (ajustes, discretizar, mallar, quitar), su dibujo y sus notas —
   RF-14, RF-20.
 
   *Hecho cuando:* cada ajuste mueve la malla; la malla de otra geometría se marca y calcular lo dice;
   la cota B y las notas del mallador están a la vista.
+  (Hecho el 2026-11-25: mallar es síncrono, 2-4 s con las mallas de los casos; hallazgo
+  reportado en el changelog, para decidir. 5 tests; 23 mutaciones, todas cazadas.)
 - [ ] T26. Los materiales y el panel de asignación (por clic en la región, excavar, «solo esta fase»),
   con su menú contextual — RF-14, D7.
 

@@ -38,13 +38,13 @@ FUTURE = {
 
 #: menu -> the task of spec 006 that gives it its entries
 PENDING = {
-    "Mesh": "T25",
     "Displacements": "T27", "Properties": "T26",
 }
 
 MENUS = {
     "File": ("new", "open", "-", "save", "save_as", "-", "prefs", "-", "exit"),
     "Edit": ("undo", "redo"),
+    "Mesh": ("mesh_setup", "-", "mesh_discretize", "mesh_generate", "-", "mesh_reset"),
     "Loading": ("field_stress",),
     "Analysis": ("project_settings", "-", "stage_insert", "stage_rename", "stage_delete"),
     "View": ("zoom_all", "zoom_in", "zoom_out", "-", "show_grid", "show_mesh"),

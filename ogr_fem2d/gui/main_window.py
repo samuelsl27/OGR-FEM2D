@@ -38,11 +38,13 @@ from ogr_ui.user_prefs import Preferences
 from ogr_ui.widgets.status_bar import OgrStatusBar
 
 import ogr_fem2d
+from ..api.ops.project import mesh_state
 from ..model import model as md
 from . import i18n as fem_i18n
 from . import menus, units
 from .canvas import controller as tc
 from .canvas.view import ModelView
+from .dialogs.mesh_setup import guaranteed_angle
 from .session import Session
 
 FILE_FILTER = "OGR FEM2D (*.ogrfem2d);;OGR Slip2D (*.ogr);;DXF (*.dxf)"
@@ -63,6 +65,9 @@ class MainWindow(QMainWindow):
         self.setStatusBar(OgrStatusBar(self))
         self.analysis_label = QLabel()
         self.statusBar().insertPermanentWidget(0, self.analysis_label)
+        self.mesh_label = QLabel()
+        self.statusBar().insertPermanentWidget(1, QLabel(" │ "))
+        self.statusBar().insertPermanentWidget(2, self.mesh_label)
         self._empty = QLabel()
         self._empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.view = ModelView()
@@ -136,6 +141,10 @@ class MainWindow(QMainWindow):
         self._mk("stage_rename", "Rename Stage...", self.act_stage_rename, None)
         self._mk("stage_delete", "Delete Stage", self.act_stage_delete, None)
         self._mk("field_stress", "Field Stress...", self.act_field_stress, None)
+        self._mk("mesh_setup", "Mesh Setup...", self.act_mesh_setup, None, "Ctrl+U")
+        self._mk("mesh_discretize", "Discretize", self.act_discretize, None)
+        self._mk("mesh_generate", "Discretize and Mesh", self.act_mesh, None, "Ctrl+M")
+        self._mk("mesh_reset", "Reset Mesh", self.act_mesh_reset, None)
         t = self.tools
         self._mk("add_excavation", "Add Excavation", lambda: t.start(tc.DRAW, md.EXCAVATION),
                  "add_polygon", "Ctrl+1")
@@ -204,12 +213,19 @@ class MainWindow(QMainWindow):
             disabled_reasons.gate(self._actions[key], has, tr("There is no model: File > New."))
         m = self.session.model
         self.analysis_label.setText(self.analysis_text())
-        for key in ("project_settings", "stage_insert", "stage_rename", "field_stress"):
+        for key in ("project_settings", "stage_insert", "stage_rename", "field_stress",
+                    "mesh_setup", "mesh_discretize", "mesh_generate"):
             disabled_reasons.gate(self._actions[key], has, tr("There is no model: File > New."))
         disabled_reasons.gate(self._actions["stage_delete"], has and len(m.stages) > 1,
                               tr("The only stage cannot be deleted: add another first.")
                               if has else tr("There is no model: File > New."))
         self.view.length_factor = units.length_factor(m)
+        state = None if m is None else mesh_state(m)
+        disabled_reasons.gate(self._actions["mesh_reset"], state not in (None, "none"),
+                              tr("There is no mesh."))
+        self.view.mesh_stale = state == "stale"
+        self.mesh_label.setText(self.mesh_text())
+        self.mesh_label.setToolTip(self.mesh_notes())
         if "draw_arc" in self._actions:
             self.refresh_tools()
         self._fill_stage_tabs(m)
@@ -227,6 +243,39 @@ class MainWindow(QMainWindow):
         kind = tr("Axisymmetric") if m.analysis == md.AXISYMMETRIC else tr("Plane strain")
         s = units.system(m)
         return " · ".join((kind, s.label_for(Q.LENGTH), s.label_for(Q.PRESSURE)))
+
+    def mesh_text(self) -> str:
+        """The mesh's state, for the status bar: none, of another
+        geometry (calculating will refuse it, RF-12), or its size."""
+        m = self.session.model
+        if m is None:
+            return ""
+        state = mesh_state(m)
+        if state == "none":
+            return tr("No mesh: Mesh > Discretize and Mesh")
+        if state == "stale":
+            return tr("Mesh of another geometry: Mesh > Discretize and Mesh")
+        npe = m.mesh.notes.get("nodes_per_element") or len(m.mesh.elements[0])
+        return tr("Mesh: %d nodes, %d elements T%d") % (len(m.mesh.nodes),
+                                                       len(m.mesh.elements), npe)
+
+    def mesh_notes(self) -> str:
+        """What decided the mesh, and its warnings (rule 12; RF-20)."""
+        m = self.session.model
+        if m is None or m.mesh is None:
+            return ""
+        notes = m.mesh.notes
+        lines = []
+        b = notes.get("quality_bound")
+        if b is not None:
+            lines.append(tr("Quality bound B = %.4g (smallest angle guaranteed %.1f°)")
+                         % (b, guaranteed_angle(b)))
+        worst = notes.get("quality", {}).get("min_angle", {}).get("worst")
+        if worst is not None:
+            lines.append(tr("Smallest angle of the mesh: %.2f°") % worst)
+        for w in m.mesh.warnings:
+            lines.append(tr("Warning of the mesher: %s") % w)
+        return "\n".join(lines)
 
     def _show_cursor(self, x: float, y: float) -> None:
         """The cursor's coordinates in the units shown."""
@@ -411,6 +460,71 @@ class MainWindow(QMainWindow):
                 return fem_i18n.say(getattr(err, "message", str(err)))
             return None
         return apply
+
+    # ------------------------------------------------------------ the mesh
+    def mesh_setup_dialog(self):
+        """The dialog, connected: settings by ``mesh_settings``, then the
+        two steps."""
+        from .dialogs.mesh_setup import MeshSetupDialog
+        return MeshSetupDialog(self.session.model, self._applying("mesh_settings"),
+                               self.discretize, self.mesh, self)
+
+    def act_mesh_setup(self) -> None:
+        if self.session.model is not None:
+            self.mesh_setup_dialog().exec()
+
+    def discretize(self) -> Optional[str]:
+        """The first step: the nodes of the boundaries, drawn and counted;
+        the refusal's text, or None."""
+        try:
+            got = self.session.call("mesh_discretize")
+        except OgrApiError as err:
+            return fem_i18n.say(getattr(err, "message", str(err)))
+        points = {tuple(p) for s in got["segments"] for p in s["nodes"]}
+        self.view.show_discretization(sorted(points))
+        self.statusBar().showMessage(
+            tr("Discretized: %d nodes on %d segments. Then: Mesh > Discretize and Mesh.")
+            % (len(points), len(got["segments"])), 10000)
+        return None
+
+    def mesh(self) -> Optional[str]:
+        """The mesh, with what decided it on the status bar; the refusal's
+        text, or None. It takes seconds with a large mesh (3.6 s for case
+        005): the cursor says so."""
+        from PySide6.QtWidgets import QApplication
+        self.statusBar().showMessage(tr("Meshing..."))
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            QApplication.processEvents()
+            got = self.session.call("mesh_generate")
+        except OgrApiError as err:
+            text = fem_i18n.say(getattr(err, "message", str(err)))
+            self.statusBar().showMessage(text, 10000)
+            return text
+        finally:
+            QApplication.restoreOverrideCursor()
+        said = tr("Meshed: %d nodes, %d elements; smallest angle %.1f° (B = %.4g).") % (
+            got["nodes"], got["elements"], got["min_angle"] or 0.0, got["quality_bound"])
+        if got["warnings"]:
+            said += " " + tr("Warnings of the mesher: %d (see the mesh on the status bar).") \
+                % len(got["warnings"])
+        self.statusBar().showMessage(said, 15000)
+        return None
+
+    def act_discretize(self) -> None:
+        refused = self.discretize()
+        if refused:
+            self.statusBar().showMessage(refused, 10000)
+
+    def act_mesh(self) -> None:
+        """Both steps at once."""
+        if self.session.model is not None and self.discretize() is None:
+            self.mesh()
+        elif self.session.model is not None:
+            self.act_discretize()
+
+    def act_mesh_reset(self) -> None:
+        self._do("mesh_reset")
 
     def stage_menu(self) -> QMenu:
         """The tabs' context menu: the actions of the Analysis menu."""

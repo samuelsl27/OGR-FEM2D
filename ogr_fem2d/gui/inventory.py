@@ -34,6 +34,10 @@ MAPPED = {
     "stage_rename": "stage_rename",
     "stage_delete": "stage_delete",
     "field_stress": "field_set",
+    "mesh_setup": "mesh_settings",
+    "mesh_discretize": "mesh_discretize",
+    "mesh_generate": "mesh_generate",
+    "mesh_reset": "mesh_reset",
 }
 
 #: action key -> why it calls no operation

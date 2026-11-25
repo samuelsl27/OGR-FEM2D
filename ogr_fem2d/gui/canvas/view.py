@@ -45,6 +45,11 @@ KIND_PENS = {
     md.STAGE: ("#2e6fb0", "#7fb2ea", True),
 }
 MESH_PEN = ("#8a9399", "#6b7378")
+#: a mesh of another geometry (spec 004, RF-11): kept, and drawn so that it is not taken
+#: for the model's (P10: the reference program deleted it)
+MESH_STALE_PEN = ("#c08a2b", "#d9a54a")
+#: the nodes the boundaries will have (Mesh > Discretize)
+DISCRETIZATION_PEN = ("#1f78b4", "#7fb8e6")
 #: the field stress's block, surface and strata (light, dark)
 FIELD_PEN = ("#6a3d9a", "#c3a5e6")
 REGION_ALPHA = 0.55
@@ -77,8 +82,9 @@ def _path(points, closed: bool) -> QPainterPath:
 class MeshItem(QGraphicsItem):
     """Every edge of the mesh in one path, drawn at once."""
 
-    def __init__(self, mesh: md.StoredMesh):
+    def __init__(self, mesh: md.StoredMesh, stale: bool = False):
         super().__init__()
+        self.stale = stale
         nodes = mesh.nodes
         corners = 3
         seen = set()
@@ -96,9 +102,11 @@ class MeshItem(QGraphicsItem):
                 self._path.lineTo(QPointF(*nodes[b]))
         self.edges = len(seen)
         self._rect = self._path.boundingRect()
-        light, dark = MESH_PEN
+        light, dark = MESH_STALE_PEN if stale else MESH_PEN
         self._pen = QPen(QColor(dark if current_theme() == "dark" else light), 0.0)
         self._pen.setCosmetic(True)
+        if stale:
+            self._pen.setStyle(Qt.PenStyle.DashLine)
         self.setZValue(1)
         self.setCacheMode(QGraphicsItem.CacheMode.DeviceCoordinateCache)
 
@@ -140,6 +148,9 @@ class ModelView(QGraphicsView):
         self.mesh_item: MeshItem | None = None
         self.axis_item: QGraphicsLineItem | None = None
         self.field_item: QGraphicsPathItem | None = None
+        self.discretization_item: QGraphicsPathItem | None = None
+        #: whether the model's mesh is of another geometry (the window says)
+        self.mesh_stale = False
         #: the units shown in one metre (``gui.units``): the grid is round in them
         self.length_factor = 1.0
         self._pan_from = None
@@ -179,6 +190,7 @@ class ModelView(QGraphicsView):
         self.boundary_items, self.region_items, self.mesh_item = {}, [], None
         self.axis_item = None
         self.field_item = None
+        self.discretization_item = None
         m = self.model
         if m is None:
             return
@@ -201,7 +213,7 @@ class ModelView(QGraphicsView):
             scene.addItem(item)
             self.region_items.append(item)
         if self.show_mesh and m.mesh is not None:
-            self.mesh_item = MeshItem(m.mesh)
+            self.mesh_item = MeshItem(m.mesh, stale=self.mesh_stale)
             scene.addItem(self.mesh_item)
         for b in m.boundaries:
             item = QGraphicsPathItem(_path(paths.boundary_line(b), False))
@@ -218,6 +230,31 @@ class ModelView(QGraphicsView):
         if m.analysis == md.AXISYMMETRIC:
             self._draw_axis(box)
         self._draw_field()
+
+    def show_discretization(self, points) -> None:
+        """A small cross at each node the boundaries will have (gone at
+        the next change of the model)."""
+        if self.discretization_item is not None:
+            self.scene().removeItem(self.discretization_item)
+            self.discretization_item = None
+        if not points:
+            return
+        s = 3.0 / max(self.pixels_per_unit(), 1e-12)          # 3 pixels
+        path = QPainterPath()
+        for x, y in points:
+            path.moveTo(QPointF(x - s, y - s))
+            path.lineTo(QPointF(x + s, y + s))
+            path.moveTo(QPointF(x - s, y + s))
+            path.lineTo(QPointF(x + s, y - s))
+        item = QGraphicsPathItem(path)
+        pen = QPen(QColor(DISCRETIZATION_PEN[1] if current_theme() == "dark"
+                          else DISCRETIZATION_PEN[0]), 1.5)
+        pen.setCosmetic(True)
+        item.setPen(pen)
+        item.setData(0, ("discretization", len(points)))
+        item.setZValue(4)
+        self.scene().addItem(item)
+        self.discretization_item = item
 
     def _draw_field(self) -> None:
         """The field stress as it is kept (``paths.field_marks``): the block
