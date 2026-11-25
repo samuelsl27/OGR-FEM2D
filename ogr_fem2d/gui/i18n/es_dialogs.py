@@ -230,6 +230,13 @@ ES = {
     "What was changed": "Lo que se cambió",
     "Still to do in the model": "Lo que falta en el modelo",
     "Nothing.": "Nada.",
+    # T29
+    "Segment Divisions...": "Divisiones del segmento...",
+    "Segment Divisions": "Divisiones del segmento",
+    "Divisions of each segment clicked (0: the mesher decides):":
+        "Divisiones de cada segmento en que hagas clic (0: decide el mallador):",
+    "Click a segment, not a vertex.": "Haz clic en un segmento, no en un vértice.",
+    "The stretch grows to the segment clicked.": "El tramo crece hasta el segmento del clic.",
     # the unit systems of the suite (ogr_core.units.unit_system.SYSTEMS)
     "Metric, stress as kPa": "Métrico, tensiones en kPa",
     "Metric, stress as MPa": "Métrico, tensiones en MPa",

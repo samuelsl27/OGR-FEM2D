@@ -268,11 +268,14 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   reiniciar; los tests restauran idioma y tema.
   (Hecho el 2026-11-25: las líneas del informe salen en inglés; hallazgo reportado en el
   changelog. 3 tests; 14 mutaciones, todas cazadas.)
-- [ ] T29. **Cierre de la parte C**: el caso 006 dibujado desde cero por las acciones; la regla 7 de
+- [x] T29. **Cierre de la parte C**: el caso 006 dibujado desde cero por las acciones; la regla 7 de
   cada diálogo; la lista de la guía; `CHANGELOG_v0.0.14.md`.
 
   *Hecho cuando:* el modelo dibujado tiene la huella del `modelo.ogrfem2d` del caso (o el hallazgo
   está reportado, regla 6) y la tabla de opciones está completa.
+  (Hecho el 2026-11-25: la malla, bit a bit; la huella, igual salvo el orden de los vértices
+  de la ventana de refinamiento, hallazgo reportado. Tres decisiones pendientes antes de la
+  parte D, en el changelog.)
 
 ## Parte D — v0.0.15: cálculo e interpretación en la interfaz
 

@@ -98,6 +98,8 @@ class MainWindow(QMainWindow):
         self._stack.addWidget(canvas)
         self.setCentralWidget(self._stack)
         self.tools = tc.ToolController(self)
+        #: the stretch just placed: (action, its key, its index, boundary, start, end)
+        self._last_stretch = None
         self.assign_panel = AssignPanel(self)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.assign_panel)
         self.assign_panel.hide()
@@ -161,6 +163,7 @@ class MainWindow(QMainWindow):
         self._mk("mesh_discretize", "Discretize", self.act_discretize, None)
         self._mk("mesh_generate", "Discretize and Mesh", self.act_mesh, None, "Ctrl+M")
         self._mk("mesh_reset", "Reset Mesh", self.act_mesh_reset, None)
+        self._mk("segment_divisions", "Segment Divisions...", self.act_divisions, None)
         for key, text, kind in (("restrain_x", "Restrain X", md.X),
                                 ("restrain_y", "Restrain Y", md.Y),
                                 ("restrain_xy", "Restrain X, Y", md.XY),
@@ -258,7 +261,7 @@ class MainWindow(QMainWindow):
                     "mesh_setup", "mesh_discretize", "mesh_generate", "define_materials",
                     "assign", "restrain_x", "restrain_y", "restrain_xy", "release",
                     "impose", "default_restraint", "delete_condition", "add_distributed",
-                    "add_point", "delete_load", "stage_factors"):
+                    "add_point", "delete_load", "stage_factors", "segment_divisions"):
             disabled_reasons.gate(self._actions[key], has, tr("There is no model: File > New."))
         disabled_reasons.gate(self._actions["stage_delete"], has and len(m.stages) > 1,
                               tr("The only stage cannot be deleted: add another first.")
@@ -757,10 +760,50 @@ class MainWindow(QMainWindow):
         if k is not None:
             self._do("condition_default", kind=kinds[k])
 
+    def ask_int(self, title: str, label: str, value: int, lo: int) -> Optional[int]:
+        from PySide6.QtWidgets import QInputDialog
+        n, ok = QInputDialog.getInt(self, title, label, value, lo, 100000)
+        return n if ok else None
+
+    def act_divisions(self) -> None:
+        """The divisions of the segments clicked next (0: the mesher
+        decides, spec 003)."""
+        if self.session.model is None:
+            return
+        n = self.ask_int(tr("Segment Divisions"),
+                         tr("Divisions of each segment clicked (0: the mesher decides):"), 8, 0)
+        if n is not None:
+            self.tools.start_place({"op": "set_divisions", "divisions": n or None})
+
     def place(self, action: dict, vertex=None, boundary=None, start=None, end=None) -> None:
-        """Do ``action`` on a vertex or on a segment (start to end)."""
+        """Do ``action`` on a vertex or on a segment (start to end). A
+        segment that continues the stretch just placed by the same action
+        widens it, one condition or load (said), as the stretch of the
+        model is from vertex to vertex (004, D7)."""
         m = self.session.model
         op = action["op"]
+        if op == "set_divisions":
+            if vertex is not None:
+                self.statusBar().showMessage(tr("Click a segment, not a vertex."), 5000)
+                return
+            b = m.boundary(boundary)
+            self._do("boundary_edit", boundary=boundary, op="set_divisions",
+                     segment=b.vertices.index(tuple(start)), divisions=action["divisions"])
+            return
+        last = self._last_stretch
+        if (vertex is None and last is not None and last[0] is action
+                and last[3] == boundary and op in ("condition_set", "load_set")):
+            _a, key, k, _b, s0, e0 = last
+            span = ((s0, end) if tuple(start) == tuple(e0) else
+                    (start, e0) if tuple(end) == tuple(s0) else None)
+            if span is not None:
+                kwargs = {x: v for x, v in action.items() if x != "op"}
+                if self._do(op, **kwargs, **{key: k}, boundary=boundary, start=list(span[0]),
+                            end=list(span[1])) is not None:
+                    self._last_stretch = (action, key, k, boundary, span[0], span[1])
+                    self.statusBar().showMessage(tr("The stretch grows to the segment "
+                                                    "clicked."), 5000)
+                return
         where = ({"vertex": list(vertex)} if vertex is not None else
                  {"boundary": boundary, "start": list(start), "end": list(end)})
         if op in ("condition_delete", "load_delete"):
@@ -776,7 +819,10 @@ class MainWindow(QMainWindow):
                 tr("A point load goes on a vertex.") if kwargs["kind"] == "point" else
                 tr("A distributed load goes on a segment."), 8000)
             return
-        self._do(op, **kwargs, **where)
+        got = self._do(op, **kwargs, **where)
+        key = "condition" if op == "condition_set" else "load"
+        self._last_stretch = (None if got is None or vertex is not None else
+                              (action, key, got[key], boundary, tuple(start), tuple(end)))
 
     @staticmethod
     def _found(m, op, vertex, boundary, start, end):

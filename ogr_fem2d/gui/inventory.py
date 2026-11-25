@@ -53,6 +53,7 @@ MAPPED = {
     "add_point": "load_set",
     "delete_load": "load_delete",
     "stage_factors": "load_stage",
+    "segment_divisions": "boundary_edit",
 }
 
 #: action key -> why it calls no operation

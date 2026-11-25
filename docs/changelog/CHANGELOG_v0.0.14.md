@@ -277,3 +277,80 @@ operaciones), así que en español el informe sale con los títulos traducidos y
 Propuesta: darles código en `api/messages.py`, como a los mensajes de las operaciones. No se ha cambiado.
 
 3 tests; 14 mutaciones, todas cazadas (una, después de exigir cada parte del informe).
+
+## T29 — cierre de la parte C (2026-11-25)
+
+**El caso 006 dibujado desde cero por la ventana** (`tests/test_gui_case006_v0014.py`), como lo haría un
+usuario: los ajustes (MPa), la fase renombrada, el externo escrito con puntos absolutos, relativos y
+polares, las ocho divisiones de la faja, el material en MPa asignado con un clic, la superficie libre
+(dos segmentos, un tramo), los laterales en x, la carga de la faja y la malla con su diálogo en dos
+pasos. **Todo lo que decide el resultado es lo del `modelo.ogrfem2d` del caso**, y **la malla es la misma
+bit a bit** (nudos, elementos y regiones).
+
+Para llegar ahí entraron dos piezas que faltaban:
+
+- **Un tramo de varios segmentos es una condición o una carga**: un clic en el segmento que continúa el
+  tramo recién puesto (por cualquiera de sus dos extremos) lo alarga, y la barra de estado lo dice. El
+  modelo guarda un tramo de vértice a vértice (004, D7); con un clic por segmento la superficie del caso
+  habría sido dos condiciones, el mismo resultado con otra huella.
+- **Malla > Divisiones del segmento...**: el número de divisiones de los segmentos en que se haga clic
+  (0: decide el mallador), que el caso fija en la faja; existía en la operación y no en la ventana (D13).
+
+**Hallazgo (regla 6), para decidir**: la ventana de refinamiento del diálogo se escribe desde su esquina
+inferior izquierda, en sentido antihorario; el caso 006 escribió el mismo rectángulo desde la superior
+izquierda (el 005 y el 007, cada uno desde otra). La malla es idéntica, pero `model_fingerprint` guarda el
+polígono tal como se escribió, así que la huella del modelo dibujado no es la del caso hasta escribir la
+ventana como el caso. El test lo comprueba así, y comprueba que con eso la huella es la misma. Propuesta:
+o la huella toma el polígono de una ventana en una forma canónica (su vértice menor primero, antihorario),
+o se acepta como está (no cambia ningún número). Cualquiera de las dos toca la 004 y sus casos: no se ha
+hecho nada.
+
+### La regla 7, diálogo a diálogo
+
+Cada opción de la parte C con el test que demuestra que mueve el modelo (o lo dibujado):
+
+| Diálogo o herramienta | Opciones | Test |
+|---|---|---|
+| Ajustes del proyecto | análisis, unidades, título, autor, fecha, notas | `test_gui_settings_v0014`, `test_each_choice_moves_the_model` |
+| Fases | añadir (detrás de la que se ve), renombrar, borrar | `test_gui_settings_v0014`, `test_add_rename_delete` |
+| Unidades mostradas | cursor, punto escrito, tabla, rejilla | `test_gui_settings_v0014`, `test_feet_are_shown_and_read_and_the_values_kept` |
+| Tensión de campo | tipo, σ1, σ3, σz, ángulo, superficie, base, γ, K, Kz, añadir y quitar estrato | `test_gui_field_v0014` (tres tests) |
+| Malla | tipo, elemento, B, nudos, lado máximo, tamaño, número, ventana | `test_gui_mesh_v0014`, `test_each_setting_moves_the_mesh` |
+| Divisiones del segmento | el número | `test_gui_loads_v0014`, `test_a_stretch_grows_both_ways_and_divisions` |
+| Materiales | nombre, color, carga inicial, γ, E, ν; añadir, borrar | `test_gui_materials_v0014`, `test_add_each_field_and_delete` |
+| Asignación | material, excavar, rellenar, solo esta fase | `test_gui_materials_v0014`, `test_assign_excavate_fill_by_clicks` |
+| Condiciones | X, Y, XY, libre, ux, uy, defecto del externo, borrar | `test_gui_loads_v0014`, `TestConditions` |
+| Cargas | magnitud, final, orientación, ángulo, puntual, borrar | `test_gui_loads_v0014`, `TestLoads` |
+| Factores por fase | factor de carga, de desplazamiento (vacío: no actúa), restricción activa | `test_gui_loads_v0014`, `test_the_arrows`, `test_condition_factors_by_stage` |
+| Entrada de geometría | absoluto, relativo, polar, coma decimal, tabla, círculo, arco, vértices | `test_gui_tools_v0014` |
+| Recientes y preferencias | abrir, guardar, repetido, falta, vaciar; idioma, tema | `test_gui_files_v0014` |
+
+En la parte C se corrieron **140 mutaciones** (T22 a T29), todas cazadas salvo tres equivalentes cuyo
+código se quitó; las que escaparon al principio se cuentan en cada tarea, con el test que las caza ahora.
+
+### La lista de la guía, componente a componente
+
+- **Acciones**: todas en un menú (regla 3, `ogr_ui.testing.menus`), con `tr()` y su español (regla 2);
+  las deshabilitadas, con su porqué en la barra de estado; los nombres e iconos de Slip2D donde hacen lo
+  mismo (contornos, vértices, materiales, asignar, cargas). Atajos: los de la referencia (Ctrl+U
+  ajustes de la malla, Ctrl+M mallar, Ctrl+A asignar).
+- **Diálogos**: título con lo que se edita; campos en bloques con título; cada número con su unidad en
+  el campo y, en tensiones, cargas y desplazamientos, el convenio junto al campo (RF-16); los valores
+  salen del modelo, y los que no tienen fuente no tienen defecto (los nudos de la graduada; E, ν; γ, K y
+  Kz de un estrato); botón principal con el verbo (Aplicar, Escoger dónde, Añadir los vértices); un
+  rechazo se dice en el diálogo, que se queda abierto. Probados sin pantalla y sin `exec()`.
+- **Lienzo**: respuesta con la malla del 005 (T21: cursor y zum por debajo de 0.1 s); colores y trazos
+  por tipo, también de condiciones, cargas, bloque del campo y malla de otra geometría; marcas en
+  píxeles. *Pendiente*: la selección resaltada no existe todavía (se escoge por clic y se actúa al
+  momento); llegará con la consulta de la parte D.
+- **Proceso largo**: mallar es síncrono (hallazgo de T25, para decidir); calcular es la parte D.
+- **Mensajes**: dicen qué pasó, dónde y cómo seguir (los estados vacíos de la barra de estado: sin
+  modelo, sin malla, malla de otra geometría); se dicen una vez, en la barra de estado.
+
+### Lo que queda para decidir antes de la parte D
+
+1. Mallar síncrono (T25): ¿trabajo en subproceso o se acepta en la fase 1?
+2. Las líneas del informe de una conversión, en inglés (T28): ¿con código en `api/messages.py`?
+3. La huella y el orden de los vértices de una ventana de refinamiento (T29).
+4. Pedido a OGR-GUI (T22): el campo de X, Y con relativos, polares y coma decimal; y antes, el percentil
+   de «Fit to results» y el español de `API_MESSAGES` (T19).

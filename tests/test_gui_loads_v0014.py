@@ -242,3 +242,32 @@ class TestLoads:
             assert "write a number" in dlg.error.text()
         finally:
             _close(w)
+
+
+class TestStretchesAndDivisions:
+    def test_a_stretch_grows_both_ways_and_divisions(self):
+        w = _window()
+        try:
+            w.do("boundary_edit", boundary="ext1", op="insert_vertex", point_xy=[5.0, 0.0],
+                 segment=0)
+            # the bottom is (0,0)-(5,0)-(10,0): click the second, then the first
+            w.actions_by_key["restrain_y"].trigger()
+            w.tools.clicked(7.5, 0.0, LEFT)
+            w.tools.clicked(2.5, 0.0, LEFT)
+            c = w.session.model.conditions
+            assert len(c) == 1 and (c[0].span.start, c[0].span.end) == ((0.0, 0.0), (10.0, 0.0))
+            assert "grows" in w.statusBar().currentMessage()
+            # a segment that does not continue it: another condition
+            w.tools.clicked(5.0, 10.0, LEFT)                          # the top
+            assert len(w.session.model.conditions) == 2
+            w.tools.key(Qt.Key.Key_Escape)
+            # divisions: a segment takes them, a vertex is said
+            w.ask_int = lambda *_a: 6
+            w.actions_by_key["segment_divisions"].trigger()
+            w.tools.clicked(0.0, 0.0, LEFT)
+            assert "not a vertex" in w.statusBar().currentMessage()
+            w.tools.clicked(2.5, 0.0, LEFT)
+            b = w.session.model.boundary("ext1")
+            assert [(s.index, s.divisions) for s in b.segments] == [(0, 6)]
+        finally:
+            _close(w)
