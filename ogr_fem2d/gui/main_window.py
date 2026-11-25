@@ -22,6 +22,7 @@ Author: Samuel Sáez López (UPCT)
 """
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional
 
 from PySide6.QtCore import Qt
@@ -53,6 +54,8 @@ FILE_FILTER = "OGR FEM2D (*.ogrfem2d);;OGR Slip2D (*.ogr);;DXF (*.dxf)"
 #: where the language and the theme are kept on this machine (ogr_ui; a
 #: test run gives it a folder of its own, OGR_SETTINGS_DIR)
 PREFERENCES = Preferences("OGR FEM2D", "ogr-fem2d")
+#: the recent models, in the same settings (T28)
+RECENT_KEY, RECENT_MAX = "recent_files", 8
 
 #: the restraints, as the menus name them
 RESTRAINT_NAMES = {md.X: "Restrained in X", md.Y: "Restrained in Y",
@@ -130,6 +133,11 @@ class MainWindow(QMainWindow):
         self._mk("open", "Open...", self.act_open, "open_project", "Ctrl+O")
         self._mk("save", "Save", self.act_save, "save", "Ctrl+S")
         self._mk("save_as", "Save As...", self.act_save_as, "save_as", "Ctrl+Shift+S")
+        self._mk("import_slip2d", "Import OGR Slip2D Model...",
+                 lambda: self.act_import("OGR Slip2D (*.ogr)"), None)
+        self._mk("import_dxf", "Import DXF...", lambda: self.act_import("DXF (*.dxf)"),
+                 "import_dxf")
+        self._mk("clear_recent", "Clear the List", self.act_clear_recent, None)
         self._mk("prefs", "Preferences...", self.act_preferences, "preferences")
         self._mk("exit", "Exit", self.close, None, "Ctrl+Q")
         self._mk("undo", "Undo", self.act_undo, "undo", "Ctrl+Z")
@@ -206,6 +214,10 @@ class MainWindow(QMainWindow):
             for entry in menus.MENUS.get(title, ()):
                 if entry == "-":
                     m.addSeparator()
+                elif entry == menus.RECENT:
+                    self.recent_menu = m.addMenu(tr("Open Recent"))
+                    self.recent_menu.aboutToShow.connect(self.fill_recent)
+                    self.fill_recent()
                 else:
                     m.addAction(self._actions[entry])
 
@@ -435,9 +447,75 @@ class MainWindow(QMainWindow):
             return None
         got = self._do("project_open", path=str(path))
         if got and got.get("report"):
+            from .dialogs.import_report import ImportReportDialog
+            self.report_window = ImportReportDialog(Path(path).name, got["report"],
+                                                    got["problems"], self)
+            self.report_window.show()               # beside the model, not in the way
             self.statusBar().showMessage(
                 tr("Converted: see the report of what came and what did not."), 10000)
+        elif got:
+            self.remember_recent(path)
         return got
+
+    # ------------------------------------------------------------ recent files
+    def recent_files(self) -> list[str]:
+        """The models opened or saved last, newest first (kept on this
+        machine, as the language)."""
+        value = PREFERENCES.settings().value(RECENT_KEY, [])
+        if isinstance(value, str):
+            value = [value]
+        return [str(v) for v in (value or [])]
+
+    @staticmethod
+    def _store_recent(files: list) -> None:
+        s = PREFERENCES.settings()
+        s.setValue(RECENT_KEY, files)
+        s.sync()
+
+    def remember_recent(self, path) -> None:
+        p = str(Path(path).resolve())
+        files = [p] + [f for f in self.recent_files() if f != p]
+        self._store_recent(files[:RECENT_MAX])
+        self.fill_recent()
+
+    def fill_recent(self) -> None:
+        menu = self.recent_menu
+        menu.clear()
+        files = self.recent_files()
+        for k, f in enumerate(files):
+            act = menu.addAction(f"&{k + 1} {Path(f).name}")
+            act.setToolTip(f)
+            act.setStatusTip(f)
+            act.triggered.connect(lambda _c=False, f=f: self.open_recent(f))
+        if not files:
+            empty = menu.addAction(tr("(no model opened yet)"))
+            empty.setEnabled(False)
+        menu.addSeparator()
+        menu.addAction(self._actions["clear_recent"])
+        disabled_reasons.gate(self._actions["clear_recent"], bool(files),
+                              tr("The list is empty."))
+
+    def open_recent(self, path: str) -> None:
+        if not Path(path).exists():                 # said, and taken off the list
+            self._store_recent([f for f in self.recent_files() if f != path])
+            self.fill_recent()
+            self.statusBar().showMessage(tr("%s is no longer there: taken off the list.")
+                                         % path, 10000)
+            return
+        self.open_path(path)
+
+    def act_clear_recent(self) -> None:
+        self._store_recent([])
+        self.fill_recent()
+
+    def act_import(self, filters: str) -> None:
+        path = self.ask_import_path(filters)
+        if path:
+            self.open_path(path)
+
+    def ask_import_path(self, filters: str) -> Optional[str]:
+        path, _f = QFileDialog.getOpenFileName(self, tr("Import"), "", filters)
+        return path or None
 
     def act_open(self) -> None:
         path = self.ask_open_path()
@@ -454,8 +532,8 @@ class MainWindow(QMainWindow):
 
     def act_save_as(self) -> None:
         path = self.ask_save_path()
-        if path:
-            self._do("project_save", path=path, overwrite=True)
+        if path and self._do("project_save", path=path, overwrite=True) is not None:
+            self.remember_recent(path)
 
     def act_undo(self) -> None:
         self._do("project_history", action="undo")

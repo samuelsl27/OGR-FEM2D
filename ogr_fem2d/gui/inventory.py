@@ -17,6 +17,8 @@ MAPPED = {
     "open": "project_open",
     "save": "project_save",
     "save_as": "project_save",
+    "import_slip2d": "project_open",
+    "import_dxf": "project_open",
     "undo": "project_history",
     "redo": "project_history",
     "add_excavation": "boundary_add",
@@ -57,6 +59,7 @@ MAPPED = {
 UI_ONLY = {
     "prefs": "the language and the theme of this window, kept on this machine",
     "exit": "closes the window",
+    "clear_recent": "empties the list of recent models kept on this machine",
     "about": "shows who made the program and its licences",
     "window_main": "brings this window to the front",
     "zoom_all": "fits the model in the canvas",

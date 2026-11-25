@@ -261,11 +261,13 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   selección por tramo tiene su tolerancia en píxeles y lo dice.
   (Hecho el 2026-11-25: el tramo es el segmento del clic, o el vértice a menos de 8 píxeles.
   7 tests; 23 mutaciones, todas cazadas.)
-- [ ] T28. Abrir un `.ogr` de Slip2D y un DXF desde el menú, con su informe; recientes; preferencias
+- [x] T28. Abrir un `.ogr` de Slip2D y un DXF desde el menú, con su informe; recientes; preferencias
   (idioma y tema) — RF-17.
 
   *Hecho cuando:* el informe de la importación se ve entero; cambiar de idioma lo guarda y pide
   reiniciar; los tests restauran idioma y tema.
+  (Hecho el 2026-11-25: las líneas del informe salen en inglés; hallazgo reportado en el
+  changelog. 3 tests; 14 mutaciones, todas cazadas.)
 - [ ] T29. **Cierre de la parte C**: el caso 006 dibujado desde cero por las acciones; la regla 7 de
   cada diálogo; la lista de la guía; `CHANGELOG_v0.0.14.md`.
 

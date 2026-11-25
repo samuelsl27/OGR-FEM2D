@@ -43,6 +43,7 @@ from ogr_ui.testing import menus as menu_rules  # noqa: E402
 from ogr_ui.testing import texts  # noqa: E402
 
 import _cases_model  # noqa: E402
+from _settings import recent_kept  # noqa: E402
 from ogr_fem2d import api  # noqa: E402
 from ogr_fem2d.api.messages import FEM_MESSAGES  # noqa: E402
 from ogr_fem2d.gui import i18n as fem_i18n  # noqa: E402
@@ -167,6 +168,10 @@ class TestRule2:
 
 class TestTheModel:
     def test_new_open_save_and_the_title(self):
+        with recent_kept():
+            self._new_open_save()
+
+    def _new_open_save(self):
         w = _window()
         try:
             assert w.windowTitle() == "OGR FEM2D" and not w.actions_by_key["save"].isEnabled()

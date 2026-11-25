@@ -252,3 +252,28 @@ puntual, borrar carga, factores por fase) (RF-14, RF-15, RF-16; 004, D6, D7, D10
   ve dibuja lo que actúa en ella.
 
 7 tests; 23 mutaciones, todas cazadas.
+
+## T28 — importar, recientes y preferencias (2026-11-25)
+
+`ogr_fem2d/gui/dialogs/import_report.py`; en Archivo, «Abrir reciente», «Importar un modelo de OGR
+Slip2D...» e «Importar DXF...» (RF-17; D12; ADR-0004).
+
+- **El informe de la conversión se ve entero**, en una ventana junto al modelo: lo que vino, lo que no,
+  los valores por defecto tomados (que cambian el resultado: revísalos), lo que se cambió y lo que falta
+  en el modelo, cada parte con su cuenta aunque esté vacía.
+- **Los recientes**: abrir o guardar un modelo lo pone el primero, sin repetirlo, hasta ocho; uno que ya
+  no está se dice y se quita; la lista se vacía desde el mismo menú (deshabilitado si está vacía, con su
+  porqué). Una conversión no entra (todavía no tiene archivo). Se guardan en los ajustes de la máquina,
+  como el idioma.
+- **Las preferencias** (ya conectadas en T20), ahora probadas: un idioma nuevo se guarda y la barra de
+  estado dice que se aplica al volver a abrir; un tema se aplica al momento y se guarda.
+- **Los tests no dejan estado** (regla 5): `tests/_settings.py` repone la lista de recientes y el estilo
+  de la aplicación. El vigilante de fugas lo encontró: abrir un modelo desde la ventana escribía en los
+  ajustes de la corrida, y elegir un tema cambiaba el estilo para los tests siguientes.
+
+**Hallazgo (regla 2), para decidir**: las líneas del informe de una conversión las escriben
+`import_slip2d` e `import_dxf` en inglés, como texto (no son mensajes con código como los de las
+operaciones), así que en español el informe sale con los títulos traducidos y las líneas en inglés.
+Propuesta: darles código en `api/messages.py`, como a los mensajes de las operaciones. No se ha cambiado.
+
+3 tests; 14 mutaciones, todas cazadas (una, después de exigir cada parte del informe).

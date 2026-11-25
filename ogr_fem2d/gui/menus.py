@@ -39,8 +39,12 @@ FUTURE = {
 #: menu -> the task of spec 006 that gives it its entries
 PENDING: dict = {}
 
+#: where File > Open Recent goes (a submenu filled when it opens)
+RECENT = "@recent"
+
 MENUS = {
-    "File": ("new", "open", "-", "save", "save_as", "-", "prefs", "-", "exit"),
+    "File": ("new", "open", RECENT, "-", "save", "save_as", "-", "import_slip2d",
+             "import_dxf", "-", "prefs", "-", "exit"),
     "Edit": ("undo", "redo"),
     "Mesh": ("mesh_setup", "-", "mesh_discretize", "mesh_generate", "-", "mesh_reset"),
     "Loading": ("field_stress", "-", "add_distributed", "add_point", "delete_load", "-",
