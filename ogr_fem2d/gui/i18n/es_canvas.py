@@ -49,10 +49,10 @@ ES = {
         "Al dibujar: x, y (o x; y con coma decimal), @dx, dy respecto al último vértice, o "
         "@distancia<ángulo en grados; después Intro.",
     # the table of coordinates
-    "The vertices in order, in metres; an empty row is skipped.":
-        "Los vértices en orden, en metros; una fila vacía no cuenta.",
-    "X (m)": "X (m)",
-    "Y (m)": "Y (m)",
+    "The vertices in order; an empty row is skipped.":
+        "Los vértices en orden; una fila vacía no cuenta.",
+    "X (%s)": "X (%s)",
+    "Y (%s)": "Y (%s)",
     "Add Row": "Añadir fila",
     "Add the vertices": "Añadir los vértices",
     "Row %d: X and Y must be numbers.": "Fila %d: X e Y tienen que ser números.",

@@ -29,6 +29,10 @@ MAPPED = {
     "insert_vertex": "boundary_edit",
     "delete_vertex": "boundary_edit",
     "delete_boundary": "boundary_edit",
+    "project_settings": "project_settings",
+    "stage_insert": "stage_add",
+    "stage_rename": "stage_rename",
+    "stage_delete": "stage_delete",
 }
 
 #: action key -> why it calls no operation

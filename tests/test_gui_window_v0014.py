@@ -62,7 +62,7 @@ EXCEPTIONS = {
         "the placeholder of the X, Y field: the forms of a typed point, in symbols",
 }
 #: Spanish words that are the English ones
-SAME = {"Material", "X (m)", "Y (m)"}
+SAME = {"Material", "X (%s)", "Y (%s)", "General"}
 
 _WINDOWS = []
 

@@ -26,10 +26,11 @@ from typing import Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QKeySequence
-from PySide6.QtWidgets import (QFileDialog, QLabel, QMainWindow, QMessageBox, QStackedWidget,
-                               QTabBar, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QFileDialog, QInputDialog, QLabel, QMainWindow, QMenu,
+                               QMessageBox, QStackedWidget, QTabBar, QVBoxLayout, QWidget)
 
 from ogr_core.api import OgrApiError
+from ogr_core.units import Quantity as Q
 from ogr_ui import disabled_reasons
 from ogr_ui.i18n import tr
 from ogr_ui.resources.icons import icon
@@ -39,7 +40,7 @@ from ogr_ui.widgets.status_bar import OgrStatusBar
 import ogr_fem2d
 from ..model import model as md
 from . import i18n as fem_i18n
-from . import menus
+from . import menus, units
 from .canvas import controller as tc
 from .canvas.view import ModelView
 from .session import Session
@@ -60,13 +61,19 @@ class MainWindow(QMainWindow):
         self._actions: dict[str, QAction] = {}
         self._menus: dict[str, object] = {}
         self.setStatusBar(OgrStatusBar(self))
+        self.analysis_label = QLabel()
+        self.statusBar().insertPermanentWidget(0, self.analysis_label)
         self._empty = QLabel()
         self._empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.view = ModelView()
-        self.view.cursor_moved.connect(self.statusBar().update_coords)
+        self.view.cursor_moved.connect(self._show_cursor)
         self.stage_tabs = QTabBar()
         self.stage_tabs.setShape(QTabBar.Shape.RoundedSouth)
         self.stage_tabs.currentChanged.connect(self._stage_chosen)
+        self.stage_tabs.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.stage_tabs.customContextMenuRequested.connect(
+            lambda pos: self.stage_menu().exec(self.stage_tabs.mapToGlobal(pos)))
+        self.stage_tabs.tabBarDoubleClicked.connect(lambda _k: self.act_stage_rename())
         canvas = QWidget()
         lay = QVBoxLayout(canvas)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -123,6 +130,11 @@ class MainWindow(QMainWindow):
         self._actions["show_grid"].setChecked(self.view.show_grid)
         self._actions["show_mesh"].setChecked(self.view.show_mesh)
         self._mk("about", "About OGR FEM2D...", self.act_about, "about")
+        self._mk("project_settings", "Project Settings...", self.act_project_settings,
+                 "project_settings")
+        self._mk("stage_insert", "Add Stage", self.act_stage_insert, None)
+        self._mk("stage_rename", "Rename Stage...", self.act_stage_rename, None)
+        self._mk("stage_delete", "Delete Stage", self.act_stage_delete, None)
         t = self.tools
         self._mk("add_excavation", "Add Excavation", lambda: t.start(tc.DRAW, md.EXCAVATION),
                  "add_polygon", "Ctrl+1")
@@ -190,6 +202,13 @@ class MainWindow(QMainWindow):
         for key in ("zoom_all", "zoom_in", "zoom_out"):
             disabled_reasons.gate(self._actions[key], has, tr("There is no model: File > New."))
         m = self.session.model
+        self.analysis_label.setText(self.analysis_text())
+        for key in ("project_settings", "stage_insert", "stage_rename"):
+            disabled_reasons.gate(self._actions[key], has, tr("There is no model: File > New."))
+        disabled_reasons.gate(self._actions["stage_delete"], has and len(m.stages) > 1,
+                              tr("The only stage cannot be deleted: add another first.")
+                              if has else tr("There is no model: File > New."))
+        self.view.length_factor = units.length_factor(m)
         if "draw_arc" in self._actions:
             self.refresh_tools()
         self._fill_stage_tabs(m)
@@ -198,9 +217,23 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(
                 tr("Draw the external boundary: Boundaries > Add External."), 10000)
 
+    def analysis_text(self) -> str:
+        """The kind of analysis and the units shown, for the status bar
+        (P17: the reference program let one forget the kind)."""
+        m = self.session.model
+        if m is None:
+            return ""
+        kind = tr("Axisymmetric") if m.analysis == md.AXISYMMETRIC else tr("Plane strain")
+        s = units.system(m)
+        return " · ".join((kind, s.label_for(Q.LENGTH), s.label_for(Q.PRESSURE)))
+
+    def _show_cursor(self, x: float, y: float) -> None:
+        """The cursor's coordinates in the units shown."""
+        self.statusBar().update_coords(*units.to_user(self.session.model, (x, y)))
+
     def _fill_stage_tabs(self, m) -> None:
         """One tab per stage, the one shown kept (RF-15)."""
-        names = [] if m is None else [s.name or s.id for s in m.stages]
+        names = [] if m is None else [s.name or tr("Stage %s") % s.id for s in m.stages]
         current = self.stage_tabs.currentIndex()
         self.stage_tabs.blockSignals(True)
         while self.stage_tabs.count():
@@ -284,7 +317,7 @@ class MainWindow(QMainWindow):
 
     def act_coords_table(self) -> None:
         from .dialogs.coordinates import CoordinatesDialog
-        dlg = CoordinatesDialog(self)
+        dlg = CoordinatesDialog(self, length=units.length_label(self.session.model))
         if dlg.exec():
             self.tools.points(dlg.result_points)
 
@@ -346,6 +379,55 @@ class MainWindow(QMainWindow):
 
     def act_redo(self) -> None:
         self._do("project_history", action="redo")
+
+    # ------------------------------------------------------------ settings, stages
+    def project_settings_dialog(self):
+        """The dialog, connected: what it gives is one ``project_settings``."""
+        from .dialogs.project_settings import ProjectSettingsDialog
+
+        def apply(changes):
+            try:
+                self.session.call("project_settings", **changes)
+            except OgrApiError as err:
+                return fem_i18n.say(getattr(err, "message", str(err)))
+            return None
+        return ProjectSettingsDialog(self.session.model, apply, self)
+
+    def act_project_settings(self) -> None:
+        if self.session.model is not None:
+            self.project_settings_dialog().exec()
+
+    def stage_menu(self) -> QMenu:
+        """The tabs' context menu: the actions of the Analysis menu."""
+        menu = QMenu(self)
+        for key in ("stage_insert", "stage_rename", "stage_delete"):
+            menu.addAction(self._actions[key])
+        return menu
+
+    def ask_text(self, title: str, label: str, current: str) -> Optional[str]:
+        text, ok = QInputDialog.getText(self, title, label, text=current)
+        return text if ok else None
+
+    def act_stage_insert(self) -> None:
+        """A stage after the one shown, which then shows (RF-15)."""
+        k = self.stage + 1
+        if self._do("stage_add", index=k) is not None:
+            self.stage_tabs.setCurrentIndex(k)
+
+    def act_stage_rename(self) -> None:
+        m = self.session.model
+        if m is None:
+            return
+        s = m.stages[self.stage]
+        name = self.ask_text(tr("Rename Stage"), tr("Name of the stage:"), s.name)
+        if name is not None:                  # the same name is no step (the workspace)
+            self._do("stage_rename", stage=s.id, name=name)
+
+    def act_stage_delete(self) -> None:
+        """The stage shown; one step to undo, so it does not ask (guide §9)."""
+        m = self.session.model
+        if m is not None:
+            self._do("stage_delete", stage=m.stages[self.stage].id)
 
     def act_front(self) -> None:
         self.raise_()

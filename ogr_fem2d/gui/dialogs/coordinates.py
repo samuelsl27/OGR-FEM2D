@@ -41,13 +41,13 @@ def read_rows(rows) -> list[tuple[float, float]]:
 
 
 class CoordinatesDialog(QDialog):
-    def __init__(self, parent=None, rows: int = 8):
+    def __init__(self, parent=None, rows: int = 8, length: str = "m"):
         super().__init__(parent)
         self.setWindowTitle(tr("Enter Coordinates"))
         lay = QVBoxLayout(self)
-        lay.addWidget(QLabel(tr("The vertices in order, in metres; an empty row is skipped.")))
+        lay.addWidget(QLabel(tr("The vertices in order; an empty row is skipped.")))
         self.table = QTableWidget(rows, 2)
-        self.table.setHorizontalHeaderLabels([tr("X (m)"), tr("Y (m)")])
+        self.table.setHorizontalHeaderLabels([tr("X (%s)") % length, tr("Y (%s)") % length])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         lay.addWidget(self.table)
         more = QPushButton(tr("Add Row"))

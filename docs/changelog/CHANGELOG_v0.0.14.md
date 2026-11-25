@@ -111,3 +111,32 @@ terminar; mover, insertar y borrar vértices; borrar contornos) (D10, D12; guía
 
 11 tests; 14 mutaciones, 13 cazadas y 1 equivalente (la cuenta de marcas decimales sobraba, porque la
 expresión regular ya admite una por número: quitada del código).
+
+## T23 — los ajustes del proyecto y las fases (2026-11-25)
+
+`ogr_fem2d/gui/dialogs/project_settings.py`, `gui/units.py`; el menú Análisis (ajustes del proyecto;
+añadir, renombrar y borrar fase), y el mismo menú en las pestañas de las fases (RF-14, RF-15; P17).
+
+- **El diálogo, como el de Slip2D**: la lista de páginas a la izquierda (General, Resumen del proyecto).
+  Lo que muestra sale del modelo y lo que da es solo lo que cambió: **una** `project_settings` y un paso
+  de deshacer; sin cambios, ninguna operación. Cada opción dice lo que hace: la axisimetría toma x como
+  el radio y el eje en x = 0, y la carga puntual es la del anillo entero; el sistema de unidades cambia
+  lo que se muestra y cómo se lee lo escrito, nunca los valores (004, D5). Un rechazo (axisimetría con un
+  vértice a la izquierda del eje) se dice en el diálogo, que se queda abierto.
+- **El tipo de análisis, a la vista** (P17): en el título (T20) y ahora en la barra de estado, con las
+  unidades de longitud y de tensión; en axisimetría **el eje se dibuja** (x = 0, trazo y punto). Un
+  vértice dibujado a la izquierda del eje se rechaza diciendo por qué.
+- **Las unidades cambian lo mostrado, no los valores**: `gui/units.py` es el único sitio de la ventana
+  por el que una longitud pasa de metros a lo mostrado y vuelve. En pies, el cursor da pies, un punto
+  escrito o una fila de la tabla en pies cae donde dice (en metros en el modelo), la cabecera de la tabla
+  dice ft, y la rejilla es un número redondo de pies (en metros sería 3,28 ft y el enganche daría cotas
+  raras). Las demás magnitudes llegan con sus diálogos (T24-T27).
+- **Las fases son las pestañas** (RF-15): añadir va detrás de la que se ve y pasa a verse; renombrar
+  (también con doble clic en la pestaña); borrar la que se ve, sin preguntar porque se deshace (guía §9).
+  La única fase no se puede borrar, y la acción lo dice. Una fase sin nombre se ve como «Fase N».
+- **Probado en pantalla** (sin pantalla, a imagen): las notas del diálogo se cortaban y el nombre de la
+  página no cabía en la lista; se abre con `ogr_ui.dialog_size` (`open_at_content_size`, `list_width`).
+  La etiqueta del análisis, a la derecha del todo, estrechaba el campo de X, Y: va delante de las palancas.
+
+8 tests; 18 mutaciones, 17 cazadas y 1 equivalente (renombrar con el mismo nombre ya no deja paso: lo
+filtra el espacio de trabajo; la comprobación de la ventana, quitada).

@@ -225,11 +225,14 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   dice en la barra de estado; deshacer quita un vértice o un contorno.
   (Hecho el 2026-11-25: el campo de X, Y de `ogr_ui`, con el lector de este programa; pedido a
   OGR-GUI. 11 tests; 14 mutaciones, 13 cazadas y 1 equivalente.)
-- [ ] T23. Los ajustes del proyecto (análisis, unidades, resumen) y las fases (pestañas: insertar,
+- [x] T23. Los ajustes del proyecto (análisis, unidades, resumen) y las fases (pestañas: insertar,
   borrar, renombrar) — RF-14, RF-15.
 
   *Hecho cuando:* el tipo de análisis está en el título y en la barra de estado; en axisimetría el eje
   se dibuja; cambiar de unidades cambia lo mostrado y no los valores; cada opción mueve el número.
+  (Hecho el 2026-11-25: las unidades, en un único sitio de la ventana, `gui/units.py`; por ahora
+  las longitudes, y cada diálogo siguiente las suyas. 8 tests; 18 mutaciones, 17 cazadas y 1
+  equivalente.)
 - [ ] T24. La tensión de campo (constante o gravitatoria con estratos) y su bloque dibujado, con el
   convenio junto a cada campo — RF-14, RF-16.
 

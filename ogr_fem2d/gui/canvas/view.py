@@ -28,7 +28,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import QGraphicsItem, QGraphicsPathItem, QGraphicsScene, QGraphicsView
+from PySide6.QtWidgets import (QGraphicsItem, QGraphicsLineItem, QGraphicsPathItem,
+                               QGraphicsScene, QGraphicsView)
 
 from ogr_core.numbers import nice_step
 from ogr_ui.themes import current_theme, theme_color
@@ -135,6 +136,9 @@ class ModelView(QGraphicsView):
         self.boundary_items: dict[str, QGraphicsPathItem] = {}
         self.region_items: list[QGraphicsPathItem] = []
         self.mesh_item: MeshItem | None = None
+        self.axis_item: QGraphicsLineItem | None = None
+        #: the units shown in one metre (``gui.units``): the grid is round in them
+        self.length_factor = 1.0
         self._pan_from = None
         self.setBackgroundBrush(QBrush(QColor(theme_color("canvas_bg"))))
 
@@ -170,6 +174,7 @@ class ModelView(QGraphicsView):
         scene = self.scene()
         scene.clear()
         self.boundary_items, self.region_items, self.mesh_item = {}, [], None
+        self.axis_item = None
         m = self.model
         if m is None:
             return
@@ -206,6 +211,25 @@ class ModelView(QGraphicsView):
             x0, y0, x1, y1 = box
             w, h = max(x1 - x0, 1e-9), max(y1 - y0, 1e-9)
             scene.setSceneRect(QRectF(x0 - 10 * w, y0 - 10 * h, 21 * w, 21 * h))
+        if m.analysis == md.AXISYMMETRIC:
+            self._draw_axis(box)
+
+    def _draw_axis(self, box) -> None:
+        """The axis of revolution, x = 0, dash-dot, longer than the model
+        (the case limit of the spec: axisymmetry, the axis drawn)."""
+        y0, y1 = EMPTY_EXTENT[1], EMPTY_EXTENT[3]
+        if box is not None:
+            h = max(box[3] - box[1], 1.0)
+            y0, y1 = box[1] - h, box[3] + h
+        item = QGraphicsLineItem(0.0, y0, 0.0, y1)
+        pen = QPen(QColor(theme_color("status_text")), 1.0)
+        pen.setCosmetic(True)
+        pen.setStyle(Qt.PenStyle.DashDotLine)
+        item.setPen(pen)
+        item.setData(0, ("axis",))
+        item.setZValue(1)
+        self.scene().addItem(item)
+        self.axis_item = item
 
     # ------------------------------------------------------------ moving about
     def pixels_per_unit(self) -> float:
@@ -287,9 +311,10 @@ class ModelView(QGraphicsView):
             self.draw_grid(painter, rect)
 
     def grid_step(self) -> float:
-        """The grid's spacing: about 60 pixels, rounded to 1-2-5."""
-        s = self.pixels_per_unit()
-        return nice_step(60.0 / s) if s > 0 else 0.0
+        """The grid's spacing in metres: about 60 pixels, rounded to 1-2-5
+        in the units shown (in feet, a round number of feet)."""
+        s, f = self.pixels_per_unit(), self.length_factor
+        return nice_step(60.0 * f / s) / f if s > 0 else 0.0
 
     def draw_grid(self, painter: QPainter, rect: QRectF) -> None:
         step = self.grid_step()

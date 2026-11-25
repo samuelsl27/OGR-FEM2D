@@ -33,6 +33,7 @@ from ogr_ui.i18n import tr
 from ogr_ui.themes import theme_color
 
 from ...model import model as md
+from .. import units
 from . import paths, tools
 
 NONE, DRAW, CIRCLE = "none", "draw", "circle"
@@ -138,8 +139,10 @@ class ToolController:
             self.say(tr("Typed points are for drawing: Boundaries > Add."))
             return
         last = self.drawing.last if self.drawing is not None else self.circle_centre
-        try:
-            p = tools.parse_point(text, last)
+        m = self.w.session.model
+        try:                    # read in the units shown, kept in metres (gui.units)
+            p = units.from_user(m, tools.parse_point(
+                text, None if last is None else units.to_user(m, last)))
         except tools.EntryError as err:
             self.say(tr(str(err)))
             return
@@ -153,7 +156,7 @@ class ToolController:
         for p in pts:
             if self.mode not in (DRAW,):
                 break
-            self.point(p)
+            self.point(units.from_user(self.w.session.model, p))
 
     def key(self, key) -> bool:
         """A key of the canvas; True if it was a tool's."""
