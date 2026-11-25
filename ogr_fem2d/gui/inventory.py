@@ -40,6 +40,17 @@ MAPPED = {
     "mesh_reset": "mesh_reset",
     "define_materials": "material_set",
     "assign": "material_assign",
+    "restrain_x": "condition_set",
+    "restrain_y": "condition_set",
+    "restrain_xy": "condition_set",
+    "release": "condition_set",
+    "impose": "condition_set",
+    "default_restraint": "condition_default",
+    "delete_condition": "condition_delete",
+    "add_distributed": "load_set",
+    "add_point": "load_set",
+    "delete_load": "load_delete",
+    "stage_factors": "load_stage",
 }
 
 #: action key -> why it calls no operation

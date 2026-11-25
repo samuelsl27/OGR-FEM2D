@@ -37,15 +37,16 @@ FUTURE = {
 }
 
 #: menu -> the task of spec 006 that gives it its entries
-PENDING = {
-    "Displacements": "T27",
-}
+PENDING: dict = {}
 
 MENUS = {
     "File": ("new", "open", "-", "save", "save_as", "-", "prefs", "-", "exit"),
     "Edit": ("undo", "redo"),
     "Mesh": ("mesh_setup", "-", "mesh_discretize", "mesh_generate", "-", "mesh_reset"),
-    "Loading": ("field_stress",),
+    "Loading": ("field_stress", "-", "add_distributed", "add_point", "delete_load", "-",
+                "stage_factors"),
+    "Displacements": ("restrain_x", "restrain_y", "restrain_xy", "release", "-", "impose",
+                      "-", "default_restraint", "delete_condition"),
     "Properties": ("define_materials", "assign"),
     "Analysis": ("project_settings", "-", "stage_insert", "stage_rename", "stage_delete"),
     "View": ("zoom_all", "zoom_in", "zoom_out", "-", "show_grid", "show_mesh"),

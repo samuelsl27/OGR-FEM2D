@@ -35,7 +35,7 @@ from ogr_core.numbers import nice_step
 from ogr_ui.themes import current_theme, theme_color
 
 from ...model import model as md
-from . import paths
+from . import marks, paths
 
 #: kind -> (colour in the light theme, in the dark one, dashed)
 KIND_PENS = {
@@ -48,6 +48,12 @@ MESH_PEN = ("#8a9399", "#6b7378")
 #: a mesh of another geometry (spec 004, RF-11): kept, and drawn so that it is not taken
 #: for the model's (P10: the reference program deleted it)
 MESH_STALE_PEN = ("#c08a2b", "#d9a54a")
+#: the conditions (light, dark), the default restraint of the external, the loads
+CONDITION_PEN = ("#2e7d32", "#81c784")
+DEFAULT_PEN = ("#9e9e9e", "#757575")
+LOAD_PEN = ("#c62828", "#ef9a9a")
+#: the size of a condition's mark, in pixels
+MARK_PX = 7.0
 #: the nodes the boundaries will have (Mesh > Discretize)
 DISCRETIZATION_PEN = ("#1f78b4", "#7fb8e6")
 #: the field stress's block, surface and strata (light, dark)
@@ -149,6 +155,8 @@ class ModelView(QGraphicsView):
         self.axis_item: QGraphicsLineItem | None = None
         self.field_item: QGraphicsPathItem | None = None
         self.discretization_item: QGraphicsPathItem | None = None
+        self.condition_items: list[QGraphicsPathItem] = []
+        self.load_items: list[QGraphicsPathItem] = []
         #: whether the model's mesh is of another geometry (the window says)
         self.mesh_stale = False
         #: the units shown in one metre (``gui.units``): the grid is round in them
@@ -191,6 +199,7 @@ class ModelView(QGraphicsView):
         self.axis_item = None
         self.field_item = None
         self.discretization_item = None
+        self.condition_items, self.load_items = [], []
         m = self.model
         if m is None:
             return
@@ -230,6 +239,74 @@ class ModelView(QGraphicsView):
         if m.analysis == md.AXISYMMETRIC:
             self._draw_axis(box)
         self._draw_field()
+        self._draw_conditions()
+        self._draw_loads()
+
+    def _pen(self, colours, width: float = 1.5) -> QPen:
+        pen = QPen(QColor(colours[1] if current_theme() == "dark" else colours[0]), width)
+        pen.setCosmetic(True)
+        return pen
+
+    def _draw_conditions(self) -> None:
+        """A mark per place (``marks.condition_marks``), drawn in pixels
+        whatever the zoom: x a horizontal bar between ticks, y a vertical
+        one, xy both, free a ring, an imposed displacement an arrow; the
+        external's default restraint in grey."""
+        s = MARK_PX
+        for mk in marks.condition_marks(self.model, self.stage):
+            path = QPainterPath()
+            if mk.kind in (md.X, md.XY):
+                path.moveTo(-s, 0.0)
+                path.lineTo(s, 0.0)
+                for x in (-s, s):
+                    path.moveTo(x, -s / 2)
+                    path.lineTo(x, s / 2)
+            if mk.kind in (md.Y, md.XY):
+                path.moveTo(0.0, -s)
+                path.lineTo(0.0, s)
+                for y in (-s, s):
+                    path.moveTo(-s / 2, y)
+                    path.lineTo(s / 2, y)
+            if mk.kind == md.FREE:
+                path.addEllipse(QPointF(0.0, 0.0), s / 2, s / 2)
+            if mk.kind == md.DISPLACEMENT:
+                dx, dy = mk.direction or (0.0, 0.0)
+                n = (dx * dx + dy * dy) ** 0.5 or 1.0
+                ux, uy = 2 * s * dx / n, -2 * s * dy / n      # y down on the screen
+                path.moveTo(0.0, 0.0)
+                path.lineTo(ux, uy)
+                path.addEllipse(QPointF(ux, uy), 1.5, 1.5)
+            item = QGraphicsPathItem(path)
+            item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+            item.setPos(QPointF(*mk.at))
+            item.setPen(self._pen(DEFAULT_PEN if mk.default else CONDITION_PEN, 2.0))
+            item.setData(0, ("condition", mk.kind, mk.default))
+            item.setZValue(5)
+            self.scene().addItem(item)
+            self.condition_items.append(item)
+
+    def _draw_loads(self) -> None:
+        """Each load's arrows (``marks.load_arrows``), one item a load."""
+        paths_of: dict[int, QPainterPath] = {}
+        for a in marks.load_arrows(self.model, self.stage):
+            path = paths_of.setdefault(a.load, QPainterPath())
+            path.moveTo(QPointF(*a.tail))
+            path.lineTo(QPointF(*a.tip))
+            dx, dy = a.tip[0] - a.tail[0], a.tip[1] - a.tail[1]
+            n = (dx * dx + dy * dy) ** 0.5 or 1.0
+            h = 0.25 * n
+            ux, uy = dx / n, dy / n
+            for side in (1.0, -1.0):
+                path.moveTo(QPointF(a.tip[0] - h * ux - side * 0.5 * h * uy,
+                                    a.tip[1] - h * uy + side * 0.5 * h * ux))
+                path.lineTo(QPointF(*a.tip))
+        for k, path in sorted(paths_of.items()):
+            item = QGraphicsPathItem(path)
+            item.setPen(self._pen(LOAD_PEN))
+            item.setData(0, ("load", k))
+            item.setZValue(5)
+            self.scene().addItem(item)
+            self.load_items.append(item)
 
     def show_discretization(self, points) -> None:
         """A small cross at each node the boundaries will have (gone at

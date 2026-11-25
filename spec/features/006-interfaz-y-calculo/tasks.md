@@ -254,11 +254,13 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   calcular dice cuál falta.
   (Hecho el 2026-11-25: cada acción del diálogo es una operación al momento; el menú de la
   región. 5 tests; 24 mutaciones, todas cazadas.)
-- [ ] T27. Las condiciones y las cargas: restringir en X, en Y o en las dos, imponer, liberar; carga
+- [x] T27. Las condiciones y las cargas: restringir en X, en Y o en las dos, imponer, liberar; carga
   repartida y puntual con su orientación y su factor por fase; su dibujo — RF-14, RF-16.
 
   *Hecho cuando:* cada opción mueve el número; el externo fijo por defecto se ve en el lienzo; la
   selección por tramo tiene su tolerancia en píxeles y lo dice.
+  (Hecho el 2026-11-25: el tramo es el segmento del clic, o el vértice a menos de 8 píxeles.
+  7 tests; 23 mutaciones, todas cazadas.)
 - [ ] T28. Abrir un `.ogr` de Slip2D y un DXF desde el menú, con su informe; recientes; preferencias
   (idioma y tema) — RF-17.
 

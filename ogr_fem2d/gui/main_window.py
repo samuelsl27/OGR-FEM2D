@@ -54,6 +54,10 @@ FILE_FILTER = "OGR FEM2D (*.ogrfem2d);;OGR Slip2D (*.ogr);;DXF (*.dxf)"
 #: test run gives it a folder of its own, OGR_SETTINGS_DIR)
 PREFERENCES = Preferences("OGR FEM2D", "ogr-fem2d")
 
+#: the restraints, as the menus name them
+RESTRAINT_NAMES = {md.X: "Restrained in X", md.Y: "Restrained in Y",
+                   md.XY: "Restrained in X and Y", md.FREE: "Free (no restraint)"}
+
 
 class MainWindow(QMainWindow):
     def __init__(self, session: Optional[Session] = None, parent=None):
@@ -149,6 +153,24 @@ class MainWindow(QMainWindow):
         self._mk("mesh_discretize", "Discretize", self.act_discretize, None)
         self._mk("mesh_generate", "Discretize and Mesh", self.act_mesh, None, "Ctrl+M")
         self._mk("mesh_reset", "Reset Mesh", self.act_mesh_reset, None)
+        for key, text, kind in (("restrain_x", "Restrain X", md.X),
+                                ("restrain_y", "Restrain Y", md.Y),
+                                ("restrain_xy", "Restrain X, Y", md.XY),
+                                ("release", "Free", md.FREE)):
+            self._mk(key, text, lambda _c=False, k=kind: self.tools.start_place(
+                {"op": "condition_set", "kind": k}), None)
+        self._mk("impose", "Impose Displacement...", self.act_impose, None)
+        self._mk("default_restraint", "External Default...", self.act_default_restraint,
+                 None)
+        self._mk("delete_condition", "Delete Condition", lambda: self.tools.start_place(
+            {"op": "condition_delete"}), None)
+        self._mk("add_distributed", "Add Distributed Load...",
+                 lambda: self.act_load("distributed"), "distributed_load")
+        self._mk("add_point", "Add Point Load...", lambda: self.act_load("point"),
+                 "line_load")
+        self._mk("delete_load", "Delete Load", lambda: self.tools.start_place(
+            {"op": "load_delete"}), "delete_load")
+        self._mk("stage_factors", "Factors by Stage...", self.act_stage_factors, None)
         self._mk("define_materials", "Define Materials...", self.act_materials,
                  "define_materials")
         self._mk("assign", "Assign Properties...", self.act_assign, "assign", "Ctrl+A")
@@ -222,7 +244,9 @@ class MainWindow(QMainWindow):
         self.analysis_label.setText(self.analysis_text())
         for key in ("project_settings", "stage_insert", "stage_rename", "field_stress",
                     "mesh_setup", "mesh_discretize", "mesh_generate", "define_materials",
-                    "assign"):
+                    "assign", "restrain_x", "restrain_y", "restrain_xy", "release",
+                    "impose", "default_restraint", "delete_condition", "add_distributed",
+                    "add_point", "delete_load", "stage_factors"):
             disabled_reasons.gate(self._actions[key], has, tr("There is no model: File > New."))
         disabled_reasons.gate(self._actions["stage_delete"], has and len(m.stages) > 1,
                               tr("The only stage cannot be deleted: add another first.")
@@ -609,6 +633,89 @@ class MainWindow(QMainWindow):
         menu = self.region_menu(x, y)
         if menu is not None:
             menu.exec(QCursor.pos())
+
+    # ------------------------------------------------------------ conditions, loads
+    def impose_dialog(self):
+        from .dialogs.loads import ImposeDialog
+        return ImposeDialog(self.session.model, self)
+
+    def act_impose(self) -> None:
+        dlg = self.impose_dialog()
+        if self.session.model is not None and dlg.exec():
+            self.tools.start_place({"op": "condition_set", **dlg.params()})
+
+    def load_dialog(self, kind: str):
+        from .dialogs.loads import LoadDialog
+        return LoadDialog(self.session.model, kind, self)
+
+    def act_load(self, kind: str) -> None:
+        dlg = self.load_dialog(kind)
+        if self.session.model is not None and dlg.exec():
+            self.tools.start_place({"op": "load_set", **dlg.params()})
+
+    def stage_factors_dialog(self):
+        from .dialogs.loads import StageFactorsDialog
+        return StageFactorsDialog(self.session.model, self.said, self)
+
+    def act_stage_factors(self) -> None:
+        if self.session.model is not None:
+            self.stage_factors_dialog().exec()
+
+    def ask_choice(self, title: str, label: str, options: list, current: int):
+        from PySide6.QtWidgets import QInputDialog
+        text, ok = QInputDialog.getItem(self, title, label, options, current, False)
+        return options.index(text) if ok else None
+
+    def act_default_restraint(self) -> None:
+        """What the external has where no condition says otherwise (the
+        reference program fixed it without showing it: it is drawn)."""
+        m = self.session.model
+        if m is None:
+            return
+        kinds = list(md.RESTRAINTS)
+        names = [tr(RESTRAINT_NAMES[k]) for k in kinds]
+        k = self.ask_choice(tr("External Default"), tr("Where no condition says otherwise, "
+                            "the external is:"), names, kinds.index(m.default_restraint))
+        if k is not None:
+            self._do("condition_default", kind=kinds[k])
+
+    def place(self, action: dict, vertex=None, boundary=None, start=None, end=None) -> None:
+        """Do ``action`` on a vertex or on a segment (start to end)."""
+        m = self.session.model
+        op = action["op"]
+        where = ({"vertex": list(vertex)} if vertex is not None else
+                 {"boundary": boundary, "start": list(start), "end": list(end)})
+        if op in ("condition_delete", "load_delete"):
+            k = self._found(m, op, vertex, boundary, start, end)
+            if k is None:
+                self.statusBar().showMessage(tr("Nothing of that kind there."), 5000)
+            else:
+                self._do(op, **({"condition": k} if op == "condition_delete" else {"load": k}))
+            return
+        kwargs = {k: v for k, v in action.items() if k != "op"}
+        if op == "load_set" and (kwargs["kind"] == "point") != (vertex is not None):
+            self.statusBar().showMessage(
+                tr("A point load goes on a vertex.") if kwargs["kind"] == "point" else
+                tr("A distributed load goes on a segment."), 8000)
+            return
+        self._do(op, **kwargs, **where)
+
+    @staticmethod
+    def _found(m, op, vertex, boundary, start, end):
+        """The last condition (or load) at that vertex or on that segment."""
+        items = m.conditions if op == "condition_delete" else m.loads
+        for k in range(len(items) - 1, -1, -1):
+            it = items[k]
+            v = getattr(it, "vertex", None)
+            span = getattr(it, "span", None)
+            if vertex is not None and v is not None and tuple(v) == tuple(vertex):
+                return k
+            if boundary is not None and span is not None and span.boundary == boundary:
+                b = m.boundary(boundary)
+                seg = b.vertices.index(tuple(start)) if tuple(start) in b.vertices else None
+                if seg is not None and seg in (md.span_indices(b, span) or []):
+                    return k
+        return None
 
     def stage_menu(self) -> QMenu:
         """The tabs' context menu: the actions of the Analysis menu."""

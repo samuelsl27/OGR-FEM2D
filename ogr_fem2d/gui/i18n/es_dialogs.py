@@ -148,6 +148,70 @@ ES = {
     "Assign Material": "Asignar material",
     "%s cannot be taken away once given: write its value.":
         "%s no se puede quitar una vez dado: escribe su valor.",
+    # the conditions and the loads
+    "Restrain X": "Restringir X",
+    "Restrain Y": "Restringir Y",
+    "Restrain X, Y": "Restringir X, Y",
+    "Free": "Liberar",
+    "Impose Displacement...": "Imponer desplazamiento...",
+    "Impose Displacement": "Imponer desplazamiento",
+    "External Default...": "Por defecto del externo...",
+    "External Default": "Por defecto del externo",
+    "Where no condition says otherwise, the external is:":
+        "Donde ninguna condición diga otra cosa, el externo está:",
+    "Restrained in X": "Restringido en X",
+    "Restrained in Y": "Restringido en Y",
+    "Restrained in X and Y": "Restringido en X e Y",
+    "Free (no restraint)": "Libre (sin restricción)",
+    "Delete Condition": "Borrar condición",
+    "Add Distributed Load...": "Añadir carga repartida...",
+    "Add Distributed Load": "Añadir carga repartida",
+    "Add Point Load...": "Añadir carga puntual...",
+    "Add Point Load": "Añadir carga puntual",
+    "Delete Load": "Borrar carga",
+    "Factors by Stage...": "Factores por fase...",
+    "Factors by Stage": "Factores por fase",
+    "Click the segments or vertices (within %d pixels) [Esc: stop].":
+        "Haz clic en los segmentos o vértices (a menos de %d píxeles) [Esc: terminar].",
+    "Nothing of that kind there.": "Ahí no hay nada de ese tipo.",
+    "A point load goes on a vertex.": "Una carga puntual va en un vértice.",
+    "A distributed load goes on a segment.": "Una carga repartida va en un segmento.",
+    "(not imposed)": "(no impuesto)",
+    "ux (+ towards +x)": "ux (+ hacia +x)",
+    "uy (+ upward)": "uy (+ hacia arriba)",
+    "Then click the segments or vertices where it goes.":
+        "Después haz clic en los segmentos o vértices donde va.",
+    "Choose where": "Escoger dónde",
+    "of the whole ring": "del anillo entero",
+    "per metre out of the plane": "por metro fuera del plano",
+    "Magnitude (%s)": "Magnitud (%s)",
+    "(as at the start)": "(como al inicio)",
+    "Magnitude at the start": "Magnitud al inicio",
+    "Magnitude at the end": "Magnitud al final",
+    "Normal to the boundary (+ into the ground)": "Normal al contorno (+ hacia el terreno)",
+    "Vertical (+ downward)": "Vertical (+ hacia abajo)",
+    "Horizontal (+ towards +x)": "Horizontal (+ hacia +x)",
+    "At an angle from the horizontal (anticlockwise)":
+        "Con un ángulo desde la horizontal (antihorario)",
+    "At an angle to the boundary (anticlockwise)":
+        "Con un ángulo respecto al contorno (antihorario)",
+    "Orientation": "Orientación",
+    "Angle": "Ángulo",
+    "Only for an orientation at an angle.": "Solo para una orientación con ángulo.",
+    "Then click the vertices where it goes.": "Después haz clic en los vértices donde va.",
+    "Then click the segments where it goes (start to end, in the order of the boundary's "
+    "vertices).":
+        "Después haz clic en los segmentos donde va (del inicio al final, en el orden de los "
+        "vértices del contorno).",
+    "The total in a stage is factor × value (0 takes a load off); a restraint is ticked where "
+    "it acts; an imposed displacement with no factor does not act there.":
+        "El total en una fase es factor × valor (0 quita una carga); una restricción va "
+        "marcada donde actúa; un desplazamiento impuesto sin factor no actúa ahí.",
+    "point load": "carga puntual",
+    "distributed load": "carga repartida",
+    "imposed displacement": "desplazamiento impuesto",
+    "restraint %s": "restricción %s",
+    "Row %d, %s: write a number.": "Fila %d, %s: escribe un número.",
     # the unit systems of the suite (ogr_core.units.unit_system.SYSTEMS)
     "Metric, stress as kPa": "Métrico, tensiones en kPa",
     "Metric, stress as MPa": "Métrico, tensiones en MPa",

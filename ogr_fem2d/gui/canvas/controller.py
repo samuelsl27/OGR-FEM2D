@@ -39,6 +39,8 @@ from . import paths, tools
 NONE, DRAW, CIRCLE = "none", "draw", "circle"
 #: assigning what the assignment panel chose, by clicks inside regions (T26)
 ASSIGN = "assign"
+#: putting a condition or a load on what a click picks: a vertex, or a segment (T27)
+PLACE = "place"
 MOVE, INSERT, DELETE_VERTEX, DELETE_BOUNDARY = ("move_vertex", "insert_vertex", "delete_vertex",
                                                 "delete_boundary")
 
@@ -57,6 +59,7 @@ class ToolController:
         self.cursor = None
         self.snap = SnapEngine(SnapSettings(snap=True, ortho=False, osnap=False))
         self._preview = None
+        self.action: dict = {}
 
     # ------------------------------------------------------------ modes
     def start(self, mode: str, kind: str | None = None) -> None:
@@ -77,6 +80,9 @@ class ToolController:
             self.say(tr("Click the vertex to delete."))
         elif mode == DELETE_BOUNDARY:
             self.say(tr("Click the boundary to delete."))
+        elif mode == PLACE:
+            self.say(tr("Click the segments or vertices (within %d pixels) [Esc: stop].")
+                     % tools.PICK_PX)
         elif mode == ASSIGN:
             self.say(tr("Click inside the regions [Esc: stop]."))
         self.w.refresh_tools()
@@ -123,6 +129,28 @@ class ToolController:
         self.cursor = self.snapped(x, y) if self.mode in (DRAW, CIRCLE) else (x, y)
         self._show_preview()
 
+    def start_place(self, action: dict) -> None:
+        """Put ``action`` (a condition or a load, the window's) on what
+        the next clicks pick."""
+        self.start(PLACE)
+        self.action = action
+
+    def place_at(self, p) -> None:
+        """A vertex within ``PICK_PX`` pixels, else a segment: said if
+        neither (P13)."""
+        m = self.w.session.model
+        v = tools.pick_vertex(m, p, self.tol)
+        if v is not None:
+            self.w.place(self.action, vertex=v[2])
+            return
+        s = tools.pick_segment(m, p, self.tol)
+        if s is None:
+            self.say(tr("No boundary within %d pixels of the click.") % tools.PICK_PX)
+            return
+        b = m.boundary(s[0])
+        start, end = b.segment(s[1])
+        self.w.place(self.action, boundary=b.id, start=start, end=end)
+
     def start_assign(self) -> None:
         self.start(ASSIGN)
 
@@ -130,6 +158,9 @@ class ToolController:
         if self.mode == NONE:
             if button == Qt.MouseButton.RightButton:
                 self.w.region_context(x, y)          # the region's menu (D7)
+            return
+        if self.mode == PLACE and button == Qt.MouseButton.LeftButton:
+            self.place_at((x, y))
             return
         if self.mode == ASSIGN and button == Qt.MouseButton.LeftButton:
             self.w.assign_at(x, y)

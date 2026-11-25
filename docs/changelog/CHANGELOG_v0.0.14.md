@@ -227,3 +227,28 @@ de otro. Corregido (la fila se repone). Y «Solo esta fase» no se distinguía c
 rellenar solo la primera deja la excavación en las otras.
 
 5 tests; 24 mutaciones, todas cazadas (cinco, después de reforzar los tests).
+
+## T27 — las condiciones y las cargas (2026-11-25)
+
+`ogr_fem2d/gui/canvas/marks.py` (sin Qt) y `dialogs/loads.py`; los menús Desplazamientos (restringir X,
+Y o las dos, liberar, imponer, el defecto del externo, borrar condición) y Cargas (carga repartida,
+puntual, borrar carga, factores por fase) (RF-14, RF-15, RF-16; 004, D6, D7, D10).
+
+- **Se ponen con clics**, como la referencia: se escoge qué y se hace clic en los segmentos o vértices
+  hasta Esc. Un clic a menos de 8 píxeles de un vértice lo escoge; si no, el segmento; si no hay nada,
+  se dice, con los píxeles (P13). Una carga puntual en un segmento, o una repartida en un vértice, se
+  dice y no se hace. Borrar quita la última condición (o carga) de ese sitio.
+- **El convenio, junto a cada valor** (RF-16): la normal «+ hacia el terreno», la vertical «+ hacia
+  abajo», la horizontal «+ hacia +x», los ángulos antihorarios, ux «+ hacia +x» y uy «+ hacia arriba»;
+  la carga puntual, «por metro fuera del plano» (en axisimetría, «del anillo entero»).
+- **El defecto del externo se ve** (la referencia lo fijaba sin mostrarlo): en gris, en cada segmento del
+  externo que ninguna condición cubre; se cambia en Desplazamientos > Por defecto del externo.
+- **Las flechas de una carga** tienen la punta en el contorno y son tan largas como su total en la fase
+  sobre el mayor; la normal empuja hacia el terreno: hacia dentro del modelo, hacia fuera de una
+  excavación. **Encontrado al probarlo**: en una esquina, la sonda que decide el lado caía sobre el otro
+  contorno y una flecha salía al revés; el lado se decide ahora en el centro del segmento.
+- **Los factores por fase** (D10), en una tabla: el factor de cada carga y desplazamiento impuesto (vacío:
+  no actúa) y si cada restricción actúa; cada cambio es una operación en esa fase sola. La fase que se
+  ve dibuja lo que actúa en ella.
+
+7 tests; 23 mutaciones, todas cazadas.
