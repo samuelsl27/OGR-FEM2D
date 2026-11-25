@@ -27,6 +27,15 @@ class TableError(ValueError):
     pass
 
 
+def read_number(text: str) -> float:
+    """A number with a point or a comma as its decimal mark (D12);
+    TableError if it is not one."""
+    text = (text or "").strip()
+    if not _NUMBER.fullmatch(text):
+        raise TableError(text)
+    return float(text.replace(",", "."))
+
+
 def read_rows(rows) -> list[tuple[float, float]]:
     """The points of ``[(x text, y text)]`` (see the module's notes)."""
     out = []

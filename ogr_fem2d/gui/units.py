@@ -6,9 +6,9 @@ The lengths the window shows and reads, in the model's unit system (spec
 
 The model keeps its values in m, kN, kPa and kN/m³ whatever system it shows;
 the system changes only what is shown and how what is typed is read. This
-is the one place of the window where a length crosses between the two: the
-cursor's coordinates, a typed point, the table of coordinates and the
-grid's spacing go through it, so that choosing feet shows feet and a point
+is the one place of the window where a value crosses between the two: the
+cursor's coordinates, a typed point, the table of coordinates, the grid's
+spacing and the fields of every dialog go through it, so that choosing feet shows feet and a point
 typed in feet lands where it says.
 
 Author: Samuel Sáez López (UPCT)
@@ -32,6 +32,20 @@ def length_factor(m: md.Model | None) -> float:
 
 def length_label(m: md.Model | None) -> str:
     return system(m).label_for(Q.LENGTH)
+
+
+def label(m: md.Model | None, q: Q) -> str:
+    return system(m).label_for(q)
+
+
+def to_user_value(m: md.Model | None, value: float, q: Q) -> float:
+    """A value kept in SI (m, kN, kPa, kN/m³), in the units shown."""
+    return system(m).to_user(value, q)
+
+
+def from_user_value(m: md.Model | None, value: float, q: Q) -> float:
+    """A value in the units shown, in SI."""
+    return system(m).from_user(value, q)
 
 
 def to_user(m: md.Model | None, p) -> tuple[float, float]:

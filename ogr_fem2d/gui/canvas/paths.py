@@ -111,3 +111,53 @@ def bounds(m: md.Model) -> tuple[float, float, float, float] | None:
         return None
     xs, ys = [p[0] for p in pts], [p[1] for p in pts]
     return min(xs), min(ys), max(xs), max(ys)
+
+
+# ------------------------------------------------------------ the field stress
+@dataclass(frozen=True)
+class FieldMarks:
+    """What the canvas draws of the field stress (spec 006, T24; RF-15):
+    ``lines`` are polylines in model coordinates. A constant field is a
+    block beside the model's top right corner: a square turned by the angle
+    of sigma_1, with an arrow on each face, as long as its stress over the
+    largest one, pointing in for compression and out for tension. A
+    gravitational field is the ground surface and the bottom of each
+    stratum, across the model."""
+    kind: str                   # "constant" or "gravity"
+    lines: tuple
+    centre: tuple | None = None
+
+
+def field_marks(m: md.Model) -> FieldMarks | None:
+    box = bounds(m)
+    if box is None:
+        return None
+    x0, y0, x1, y1 = box
+    size = max(x1 - x0, y1 - y0, 1e-9)
+    f = m.field
+    if isinstance(f, md.GravityField):
+        a, b = x0 - 0.05 * size, x1 + 0.05 * size
+        levels = (f.surface,) + tuple(s.bottom for s in f.strata)
+        return FieldMarks("gravity", tuple(((a, y), (b, y)) for y in levels))
+    half, longest = 0.04 * size, 0.06 * size
+    c = (x1 + 0.15 * size, y1 - 0.1 * size)
+    t = math.radians(f.angle)
+    e1, e2 = (math.cos(t), math.sin(t)), (-math.sin(t), math.cos(t))
+    at = lambda u, v: (c[0] + u * e1[0] + v * e2[0], c[1] + u * e1[1] + v * e2[1])  # noqa: E731
+    lines = [(at(-half, -half), at(half, -half), at(half, half), at(-half, half),
+              at(-half, -half))]
+    top = max(abs(f.sigma_1), abs(f.sigma_3), 1e-300)
+    for sigma, axis in ((f.sigma_1, 0), (f.sigma_3, 1)):
+        length = longest * abs(sigma) / top
+        if length <= 1e-12 * size:
+            continue
+        head = min(0.3 * length, 0.4 * half)
+        for side in (1.0, -1.0):
+            def p(along, across, axis=axis, side=side):
+                return at(side * along, across) if axis == 0 else at(across, side * along)
+            near, far = half, half + length
+            tip, tail = (near, far) if sigma > 0 else (far, near)   # compression: inward
+            back = tip + head if sigma > 0 else tip - head
+            lines.append((p(tail, 0.0), p(tip, 0.0)))
+            lines.append((p(back, -0.6 * head), p(tip, 0.0), p(back, 0.6 * head)))
+    return FieldMarks("constant", tuple(lines), c)

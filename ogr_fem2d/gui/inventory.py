@@ -33,6 +33,7 @@ MAPPED = {
     "stage_insert": "stage_add",
     "stage_rename": "stage_rename",
     "stage_delete": "stage_delete",
+    "field_stress": "field_set",
 }
 
 #: action key -> why it calls no operation

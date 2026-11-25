@@ -45,6 +45,8 @@ KIND_PENS = {
     md.STAGE: ("#2e6fb0", "#7fb2ea", True),
 }
 MESH_PEN = ("#8a9399", "#6b7378")
+#: the field stress's block, surface and strata (light, dark)
+FIELD_PEN = ("#6a3d9a", "#c3a5e6")
 REGION_ALPHA = 0.55
 ZOOM_STEP = 1.15
 #: what the canvas shows of a model with nothing drawn yet, in metres
@@ -137,6 +139,7 @@ class ModelView(QGraphicsView):
         self.region_items: list[QGraphicsPathItem] = []
         self.mesh_item: MeshItem | None = None
         self.axis_item: QGraphicsLineItem | None = None
+        self.field_item: QGraphicsPathItem | None = None
         #: the units shown in one metre (``gui.units``): the grid is round in them
         self.length_factor = 1.0
         self._pan_from = None
@@ -175,6 +178,7 @@ class ModelView(QGraphicsView):
         scene.clear()
         self.boundary_items, self.region_items, self.mesh_item = {}, [], None
         self.axis_item = None
+        self.field_item = None
         m = self.model
         if m is None:
             return
@@ -213,6 +217,27 @@ class ModelView(QGraphicsView):
             scene.setSceneRect(QRectF(x0 - 10 * w, y0 - 10 * h, 21 * w, 21 * h))
         if m.analysis == md.AXISYMMETRIC:
             self._draw_axis(box)
+        self._draw_field()
+
+    def _draw_field(self) -> None:
+        """The field stress as it is kept (``paths.field_marks``): the block
+        of a constant field, the surface and strata of a gravitational one."""
+        marks = paths.field_marks(self.model)
+        if marks is None:
+            return
+        path = QPainterPath()
+        for line in marks.lines:
+            path.addPath(_path(line, False))
+        item = QGraphicsPathItem(path)
+        pen = QPen(QColor(FIELD_PEN[1] if current_theme() == "dark" else FIELD_PEN[0]), 1.5)
+        pen.setCosmetic(True)
+        if marks.kind == "gravity":
+            pen.setStyle(Qt.PenStyle.DashLine)
+        item.setPen(pen)
+        item.setData(0, ("field", marks.kind))
+        item.setZValue(3)
+        self.scene().addItem(item)
+        self.field_item = item
 
     def _draw_axis(self, box) -> None:
         """The axis of revolution, x = 0, dash-dot, longer than the model
@@ -236,11 +261,17 @@ class ModelView(QGraphicsView):
         return abs(self.transform().m11())
 
     def zoom_all(self, margin: float = 0.08) -> None:
-        """Fit the model's boundaries in the view."""
+        """Fit the model's boundaries in the view, and the field's block
+        beside them."""
         box = None if self.model is None else paths.bounds(self.model)
         if box is None:
             return
         x0, y0, x1, y1 = box
+        marks = paths.field_marks(self.model)
+        if marks is not None and marks.kind == "constant":
+            xs = [p[0] for line in marks.lines for p in line]
+            ys = [p[1] for line in marks.lines for p in line]
+            x0, y0, x1, y1 = min(x0, *xs), min(y0, *ys), max(x1, *xs), max(y1, *ys)
         w, h = max(x1 - x0, 1e-9), max(y1 - y0, 1e-9)
         self.fitInView(QRectF(x0 - margin * w, y0 - margin * h, w * (1 + 2 * margin),
                               h * (1 + 2 * margin)), Qt.AspectRatioMode.KeepAspectRatio)

@@ -233,11 +233,13 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   (Hecho el 2026-11-25: las unidades, en un único sitio de la ventana, `gui/units.py`; por ahora
   las longitudes, y cada diálogo siguiente las suyas. 8 tests; 18 mutaciones, 17 cazadas y 1
   equivalente.)
-- [ ] T24. La tensión de campo (constante o gravitatoria con estratos) y su bloque dibujado, con el
+- [x] T24. La tensión de campo (constante o gravitatoria con estratos) y su bloque dibujado, con el
   convenio junto a cada campo — RF-14, RF-16.
 
   *Hecho cuando:* cada campo del diálogo mueve el número; el bloque dibuja lo guardado; el convenio
   está escrito en el diálogo.
+  (Hecho el 2026-11-25: en Cargas; el bloque, junto al modelo y dentro de «ver todo». 7 tests;
+  19 mutaciones, todas cazadas.)
 - [ ] T25. La malla en dos pasos (ajustes, discretizar, mallar, quitar), su dibujo y sus notas —
   RF-14, RF-20.
 

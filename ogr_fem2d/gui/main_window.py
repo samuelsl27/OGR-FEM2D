@@ -135,6 +135,7 @@ class MainWindow(QMainWindow):
         self._mk("stage_insert", "Add Stage", self.act_stage_insert, None)
         self._mk("stage_rename", "Rename Stage...", self.act_stage_rename, None)
         self._mk("stage_delete", "Delete Stage", self.act_stage_delete, None)
+        self._mk("field_stress", "Field Stress...", self.act_field_stress, None)
         t = self.tools
         self._mk("add_excavation", "Add Excavation", lambda: t.start(tc.DRAW, md.EXCAVATION),
                  "add_polygon", "Ctrl+1")
@@ -203,7 +204,7 @@ class MainWindow(QMainWindow):
             disabled_reasons.gate(self._actions[key], has, tr("There is no model: File > New."))
         m = self.session.model
         self.analysis_label.setText(self.analysis_text())
-        for key in ("project_settings", "stage_insert", "stage_rename"):
+        for key in ("project_settings", "stage_insert", "stage_rename", "field_stress"):
             disabled_reasons.gate(self._actions[key], has, tr("There is no model: File > New."))
         disabled_reasons.gate(self._actions["stage_delete"], has and len(m.stages) > 1,
                               tr("The only stage cannot be deleted: add another first.")
@@ -384,18 +385,32 @@ class MainWindow(QMainWindow):
     def project_settings_dialog(self):
         """The dialog, connected: what it gives is one ``project_settings``."""
         from .dialogs.project_settings import ProjectSettingsDialog
-
-        def apply(changes):
-            try:
-                self.session.call("project_settings", **changes)
-            except OgrApiError as err:
-                return fem_i18n.say(getattr(err, "message", str(err)))
-            return None
-        return ProjectSettingsDialog(self.session.model, apply, self)
+        return ProjectSettingsDialog(self.session.model, self._applying("project_settings"),
+                                     self)
 
     def act_project_settings(self) -> None:
         if self.session.model is not None:
             self.project_settings_dialog().exec()
+
+    def field_stress_dialog(self):
+        """The dialog, connected: what it gives is one ``field_set``."""
+        from .dialogs.field_stress import FieldStressDialog
+        return FieldStressDialog(self.session.model, self._applying("field_set"), self)
+
+    def act_field_stress(self) -> None:
+        if self.session.model is not None:
+            self.field_stress_dialog().exec()
+
+    def _applying(self, op: str):
+        """For a dialog: do ``op`` with what it gives; the refusal's text,
+        or None."""
+        def apply(changes):
+            try:
+                self.session.call(op, **changes)
+            except OgrApiError as err:
+                return fem_i18n.say(getattr(err, "message", str(err)))
+            return None
+        return apply
 
     def stage_menu(self) -> QMenu:
         """The tabs' context menu: the actions of the Analysis menu."""

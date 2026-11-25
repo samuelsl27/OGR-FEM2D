@@ -140,3 +140,31 @@ añadir, renombrar y borrar fase), y el mismo menú en las pestañas de las fase
 
 8 tests; 18 mutaciones, 17 cazadas y 1 equivalente (renombrar con el mismo nombre ya no deja paso: lo
 filtra el espacio de trabajo; la comprobación de la ventana, quitada).
+
+## T24 — la tensión de campo y su bloque (2026-11-25)
+
+`ogr_fem2d/gui/dialogs/field_stress.py` y `canvas/paths.field_marks`; en el menú Cargas, «Tensión de
+campo...» (RF-14, RF-15, RF-16; 004, D5, D6 y D14).
+
+- **El diálogo**: constante (σ1, σ3, σz y el ángulo de σ1 con la horizontal, antihorario) o
+  gravitatorio (la cota de la superficie y los estratos de arriba abajo: base, peso específico, K y Kz).
+  **El convenio está escrito junto a cada tensión** («compresión +», RF-16) y la unidad, en cada campo.
+  En axisimetría, una nota dice lo que pide el equilibrio radial (σr = σθ, τrz = 0), que el motor ya
+  exige (spec 002, enmienda de D3).
+- **Las unidades del modelo, en los dos sentidos**: en ksf, un σ3 escrito como 1 se guarda como
+  47,88 kPa; un valor que el usuario no tocó vuelve **exactamente** como estaba, no a través del redondeo
+  de lo que se muestra (un γ de 20,123456789 se ve 20,1235 y sigue siendo 20,123456789).
+- **Sin defectos que muevan el número** (guía §10): sin estratos, el primero llega hasta la base del
+  modelo y la superficie es su techo (geometría del modelo); el peso específico, K y Kz los escribe el
+  usuario, y una celda vacía se dice con su estrato. Un rechazo (σ1 < σ3, una base que no queda por
+  debajo de su techo) se dice en el diálogo.
+- **El bloque dibuja lo guardado**: un campo constante es un cuadrado girado el ángulo de σ1, junto al
+  modelo, con una flecha por cara tan larga como su tensión sobre la mayor, hacia dentro en compresión y
+  hacia fuera en tracción; uno gravitatorio, la superficie y la base de cada estrato. «Ver todo» incluye
+  el bloque, que si no quedaba fuera de la vista (se vio al dibujarlo a imagen).
+
+7 tests; 19 mutaciones, todas cazadas (cuatro, después de reforzar los tests: quitar el estrato
+escogido, la celda no tocada, la celda en otras unidades y el bloque en «ver todo»).
+
+Encontrado de paso: unos borradores escritos con el Python del sistema salieron con CRLF; normalizados a
+LF antes del commit (el `.gitattributes` ya fija `eol=lf`, así que nada llegó al repositorio).
