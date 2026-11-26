@@ -9,25 +9,21 @@ clicks, the mesh by its dialog in two steps.
 
 Invariants protected:
 
-* **the model drawn is the case's**: every part that decides the result
+* **the model drawn is the case's**: its fingerprint
   (``fingerprint.model_fingerprint``: geometry, material, assignment,
   stages, field, conditions, loads, mesh settings and the mesh itself) is
   that of ``validacion/casos/006-carga-en-faja-malla-general/
-  modelo.ogrfem2d``, but one representation (below);
-* **the finding of the window's rectangle** (rule 6, reported in the
-  changelog): the dialog writes a refinement window from its lower left
-  corner, anticlockwise; the case wrote the same rectangle from its upper
-  left corner. The model fingerprint holds the polygon as written, so the
-  two differ although the rectangle and **the mesh are the same** (nodes
-  and elements, bit for bit), which the test checks;
+  modelo.ogrfem2d``, and its mesh is the same bit for bit;
+* **a refinement window is one however written**: the dialog writes the
+  rectangle from its lower left corner and the case from its upper left
+  one; the fingerprint and the mesher take one form of it (T29's finding,
+  solved);
 * **a stretch of several segments is one condition**: the free surface is
   two segments, clicked one after the other.
 """
 from __future__ import annotations
 
 import os
-from dataclasses import replace
-
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import Qt  # noqa: E402
@@ -36,7 +32,6 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 import _cases_model  # noqa: E402
 from ogr_fem2d.gui.canvas import controller as tc  # noqa: E402
 from ogr_fem2d.gui.main_window import MainWindow  # noqa: E402
-from ogr_fem2d.mesh import geometry as g  # noqa: E402
 from ogr_fem2d.model import fingerprint, ogr_file  # noqa: E402
 from ogr_fem2d.model import model as md  # noqa: E402
 
@@ -135,20 +130,15 @@ class TestCase006ByTheWindow:
                      ld.factors) for ld in drawn.loads] == [
                 (ld.span.start, ld.span.end, ld.start_value, ld.end_value, ld.orientation,
                  ld.factors) for ld in case.loads]
-            # the window: the same rectangle, written from another corner (the finding)
+            # the window: the same rectangle, written from another corner
             (dw,), (cw,) = drawn.mesh_settings.windows, case.mesh_settings.windows
             assert dw.size == cw.size and set(dw.polygon) == set(cw.polygon)
             assert dw.polygon != cw.polygon
-            same = replace(drawn, mesh_settings=replace(drawn.mesh_settings,
-                                                        windows=(g.Window(cw.polygon, cw.size),)))
-            assert replace(same, mesh=None).mesh_settings == case.mesh_settings
-            # the mesh: bit for bit
+            # the mesh, bit for bit, and the fingerprint: the same model
             assert drawn.mesh.nodes == case.mesh.nodes
             assert drawn.mesh.elements == case.mesh.elements
             assert drawn.mesh.element_region == case.mesh.element_region
-            # and the fingerprint, once the window is written as the case wrote it
-            fixed = replace(same, mesh=replace(drawn.mesh, source=case.mesh.source))
-            assert fingerprint.model_fingerprint(fixed) == fingerprint.model_fingerprint(case)
+            assert fingerprint.model_fingerprint(drawn) == fingerprint.model_fingerprint(case)
         finally:
             w.confirm_discard = lambda: True
             w.close()

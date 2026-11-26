@@ -172,3 +172,77 @@ class TestPreferences:
             _close(w)
         assert current_theme() == theme and mw.PREFERENCES.saved_language() == lang
         assert mw.PREFERENCES.saved_theme() == saved
+
+
+class TestTheReportInSpanish:
+    """Decided on 2026-11-25: the report says every line in the reader's
+    language, its own lines by their code and the problems by their rule."""
+
+    def test_every_line_has_its_spanish(self):
+        from ogr_fem2d.gui import i18n as fem_i18n
+        from ogr_fem2d.gui import problems
+        from ogr_fem2d.model import model as md
+        from ogr_fem2d.model import regions
+        from ogr_fem2d.model.import_messages import IMPORT_MESSAGES
+        table = fem_i18n.spanish()
+        english = [s.english for s in IMPORT_MESSAGES.values()]
+        english += [s.one for s in IMPORT_MESSAGES.values() if s.one]
+        assert [e for e in english if e not in table] == []
+        rules = set(md.RULES) | set(regions.RULES)
+        assert sorted(rules - set(problems.RULE_TEXT)) == []
+        said = list(problems.RULE_TEXT.values()) + [t for _p, t in problems._WHERE]
+        said += list(problems._PLAIN.values())
+        assert [e for e in said if e not in table] == []
+
+    def test_a_conversion_in_spanish(self):
+        from ogr_ui import i18n as ui_i18n
+        w = _window()
+        ui_i18n.set_language("es")
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                ogr = Path(d) / "talud.ogr"
+                _slip2d(ogr)
+                w.open_path(str(ogr))
+                text = w.report_window.text.toPlainText()
+                for spanish in ("Lo que vino", "1 material (nombre, color, peso específico)",
+                                "condiciones: los lados y la base del contorno externo",
+                                "la resistencia de los materiales"):
+                    assert spanish in text, spanish
+                assert "materials (name" not in text and "the strength" not in text
+                dxf = Path(d) / "plano.dxf"
+                doc = ezdxf.new()
+                doc.modelspace().add_lwpolyline([(0, 0), (10, 0), (10, 10), (0, 10)], close=True,
+                                                dxfattribs={"layer": "External"})
+                doc.modelspace().add_line((0, 0), (1, 1), dxfattribs={"layer": "Notas"})
+                doc.saveas(dxf)
+                w.open_path(str(dxf))
+                text = w.report_window.text.toPlainText()
+                for spanish in ("1 contorno: externos: 1; 0 trozos de arco",
+                                "capa 'Notas' (1 entidad): no es de ninguno",
+                                "Una región todavía no tiene material",
+                                "la región cuyo contorno pasa por"):
+                    assert spanish in text, (spanish, text)
+                w.report_window.close()
+        finally:
+            ui_i18n.set_language("en")
+            _close(w)
+
+    def test_the_orientations_of_a_line_load(self):
+        from types import SimpleNamespace
+
+        from ogr_core.loads.loads import LoadOrientation
+        from ogr_fem2d.gui import i18n as fem_i18n
+        from ogr_fem2d.model import import_messages as im
+        from ogr_fem2d.model import import_slip2d
+        from ogr_ui import i18n as ui_i18n
+        ui_i18n.set_language("es")
+        try:
+            for o in LoadOrientation:
+                nested = import_slip2d._orientation(SimpleNamespace(orientation=o))
+                line = im.say("fem.import.point_turned", name="q", orientation=nested,
+                              angle="30")
+                assert o.value not in str(line) or o.value in ("vertical", "horizontal"), line
+                said = fem_i18n.say(line)
+                assert said.startswith("carga lineal q: ") and "convertida" in said, said
+        finally:
+            ui_i18n.set_language("en")

@@ -153,7 +153,7 @@ class TestTheConditions:
 
 class TestTheReport:
     def test_what_came_what_did_not_what_was_put(self):
-        assert any("1 boundaries of type WATER_TABLE" in x for x in REPORT.not_brought)
+        assert any("1 boundary of type WATER_TABLE" in x for x in REPORT.not_brought)
         assert any("strength" in x for x in REPORT.not_brought)
         assert any("analysis settings" in x for x in REPORT.not_brought)
         assert any("E and nu not given" in x for x in REPORT.defaults)

@@ -237,6 +237,66 @@ ES = {
         "Divisiones de cada segmento en que hagas clic (0: decide el mallador):",
     "Click a segment, not a vertex.": "Haz clic en un segmento, no en un vértice.",
     "The stretch grows to the segment clicked.": "El tramo crece hasta el segmento del clic.",
+    # a problem of the model, by its rule (gui/problems.py)
+    "The kind of analysis is not one the program knows.":
+        "El tipo de análisis no es uno que el programa conozca.",
+    "The unit system is not one the program knows.":
+        "El sistema de unidades no es uno que el programa conozca.",
+    "A boundary is not well formed: draw it again.": "Un contorno está mal formado: dibújalo otra vez.",
+    "Two boundaries share an id, or one has none.":
+        "Dos contornos comparten identificador, o uno no tiene.",
+    "An arc or the divisions of a segment are not well given.":
+        "Un arco o las divisiones de un segmento están mal dados.",
+    "A model has exactly one external boundary: Boundaries > Add External.":
+        "Un modelo tiene exactamente un contorno externo: Contornos > Añadir externo.",
+    "In axisymmetry the model lies on x ≥ 0: move the vertex, or choose plane strain.":
+        "En axisimetría el modelo está en x ≥ 0: mueve el vértice, o elige deformación plana.",
+    "A material is not well given: Properties > Define Materials.":
+        "Un material está mal dado: Propiedades > Definir materiales.",
+    "Two materials share an id, or one has none.":
+        "Dos materiales comparten identificador, o uno no tiene.",
+    "A stage is not well given: Analysis > Project Settings.":
+        "Una fase está mal dada: Análisis > Ajustes del proyecto.",
+    "An assignment is not well given: Properties > Assign Properties.":
+        "Una asignación está mal dada: Propiedades > Asignar propiedades.",
+    "An excavated region cannot come back in a later stage.":
+        "Una región excavada no puede volver en una fase posterior.",
+    "The field stress is not well given: Loading > Field Stress.":
+        "La tensión de campo está mal dada: Cargas > Tensión de campo.",
+    "The default restraint of the external is not one the program knows.":
+        "La restricción por defecto del externo no es una que el programa conozca.",
+    "A condition is not well given: Displacements.":
+        "Una condición está mal dada: Desplazamientos.",
+    "A load is not well given: Loading.": "Una carga está mal dada: Cargas.",
+    "The mesh is not well formed: Mesh > Discretize and Mesh.":
+        "La malla está mal formada: Malla > Discretizar y mallar.",
+    "An arc is not well given: its centre must make an arc of its segment.":
+        "Un arco está mal dado: su centro tiene que hacer un arco de su segmento.",
+    "Two boundaries share a segment with different attributes.":
+        "Dos contornos comparten un segmento con atributos distintos.",
+    "Two boundaries cross where neither has a vertex.":
+        "Dos contornos se cruzan donde ninguno tiene un vértice.",
+    "A boundary ends inside the model without meeting another.":
+        "Un contorno acaba dentro del modelo sin encontrar a otro.",
+    "A boundary goes outside the external.": "Un contorno sale fuera del externo.",
+    "A region has no material yet: Properties > Assign Properties.":
+        "Una región todavía no tiene material: Propiedades > Asignar propiedades.",
+    "A region has two assignments: keep one.": "Una región tiene dos asignaciones: deja una.",
+    "An assignment point is in no region.": "Un punto de asignación no está en ninguna región.",
+    "the region with outline through %s": "la región cuyo contorno pasa por %s",
+    "segment %s of boundary %s": "el segmento %s del contorno %s",
+    "boundary %s": "el contorno %s",
+    "material %s": "el material %s",
+    "stage %s": "la fase %s",
+    "assignment at %s": "la asignación en %s",
+    "condition %s": "la condición %s",
+    "load %s": "la carga %s",
+    "stratum %s": "el estrato %s",
+    "point %s": "el punto %s",
+    "the model": "el modelo",
+    "the mesh settings": "los ajustes de la malla",
+    "the field stress": "la tensión de campo",
+    "the mesh": "la malla",
     # the unit systems of the suite (ogr_core.units.unit_system.SYSTEMS)
     "Metric, stress as kPa": "Métrico, tensiones en kPa",
     "Metric, stress as MPa": "Métrico, tensiones en MPa",

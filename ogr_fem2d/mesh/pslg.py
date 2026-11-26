@@ -216,8 +216,8 @@ def window_corners(m: g.MeshInput, disc: Discretization, pieces) -> list[Point]:
     """The corners of the windows that are strictly inside a region of the
     domain of chords, not on a piece, in no cap of an arc (the core refuses
     a vertex there; a corner within a sagitta of the boundary is left out)
-    and not already a vertex, in the order of the windows and their
-    corners, each once."""
+    and not already a vertex, in the order of the windows and of their
+    corners written one way (``geometry.canonical_polygon``), each once."""
     pts = disc.points
     rings_of = [[_ring_chain(m, disc, region.outline)]
                 + [_ring_chain(m, disc, h) for h in region.holes] for region in m.regions]
@@ -226,7 +226,7 @@ def window_corners(m: g.MeshInput, disc: Discretization, pieces) -> list[Point]:
     seen = set(pts)
     out = []
     for window in m.settings.windows:
-        for corner in window.polygon:
+        for corner in g.canonical_polygon(window.polygon):      # as written or not (T29)
             p = (float(corner[0]), float(corner[1]))
             if p in seen:
                 continue

@@ -10,11 +10,13 @@ Invariants protected:
   result** (a table of mutations, one per datum: geometry, arcs, divisions,
   kind of boundary, kind of analysis, materials, initial loading,
   assignments and excavation, stages, the field, the default restraint,
-  conditions, loads, mesh settings and the mesh itself);
+  conditions, loads, mesh settings, a refinement window and the mesh
+  itself);
 * **and with nothing else**: the summary, the unit system shown, the names
   and colours, the notes and warnings of the mesh, who wrote the file, and
   the ids (renamed everywhere: a boundary, a material and a stage are known
-  by their place);
+  by their place); the corner a window is written from, and its way round
+  (v0.0.14, T29): the mesher gives it the same mesh;
 * **the document's fingerprint changes with all of it**, but who wrote it;
 * **a fingerprint survives the file**: the model read back has the same two;
 * **the canonical text**: keys sorted, fixed separators, ASCII, no NaN, and
@@ -60,6 +62,16 @@ def _renamed(m):
                     for ld in m.loads))
 
 
+def _window(polygon):
+    return replace(BASE, mesh_settings=replace(BASE.mesh_settings,
+                                               windows=(g.Window(polygon, 0.5),)))
+
+
+#: one rectangle written from each corner, both ways round (spec 006, T29)
+RECTANGLE = ((2.0, -6.0), (8.0, -6.0), (8.0, -2.0), (2.0, -2.0))
+WRITTEN = [RECTANGLE[k:] + RECTANGLE[:k] for k in range(4)]
+WRITTEN += [tuple(reversed(w)) for w in WRITTEN]
+
 MOVES = {
     "a vertex": _b(BASE, 0, vertices=((0.0, -10.0), (20.0, -10.0), (20.0, -4.0), (20.0, 0.0), (0.0, 0.5),
                                       (0.0, -4.0))),
@@ -85,6 +97,7 @@ MOVES = {
     "a load": replace(BASE, loads=(md.PointLoad((0.0, 0.0), 1.0, factors=(1.0, 1.0)),)),
     "a mesh setting": replace(BASE, mesh_settings=replace(BASE.mesh_settings, quality_bound=1.5)),
     "the mesh": replace(BASE, mesh=replace(BASE.mesh, nodes=((0.0, -10.000001),) + BASE.mesh.nodes[1:])),
+    "a window": _window(RECTANGLE),
 }
 
 STILL = {
@@ -101,6 +114,20 @@ STILL = {
 
 
 class TestTheModel:
+    def test_a_window_is_one_however_written(self):
+        """v0.0.14 (T29): the same rectangle from any corner, either way
+        round, is the same model, and the mesher gives it the same mesh."""
+        prints = {fp.model_fingerprint(_window(w)) for w in WRITTEN}
+        assert len(prints) == 1
+        assert prints != {fp.model_fingerprint(_window(RECTANGLE[:3] + ((2.0, -2.5),)))}
+        meshes = {(translate.mesh(replace(_window(w), mesh=None)).mesh.nodes,
+                   translate.mesh(replace(_window(w), mesh=None)).mesh.elements)
+                  for w in WRITTEN[:1] + WRITTEN[2:3] + WRITTEN[5:6]}
+        assert len(meshes) == 1
+        # its four corners are inside the model: the order they go in mattered
+        assert translate.mesh(replace(_window(RECTANGLE), mesh=None)).mesh.notes[
+            "window_corners"] == 4
+
     def test_every_datum_that_moves_the_result_moves_it(self):
         base = fp.model_fingerprint(BASE)
         for what, m in MOVES.items():

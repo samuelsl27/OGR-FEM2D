@@ -451,6 +451,23 @@ def graded_targets(segs) -> tuple[Segment, ...]:
     return tuple(s for s in chosen if s.divisions is None)
 
 
+def canonical_polygon(polygon) -> tuple[Point, ...]:
+    """The same polygon written one way: anticlockwise, from its least
+    vertex (by x, then y). A window drawn from another corner, or the other
+    way round, is the same window (spec 006, T29): the mesher takes its
+    corners in this order, so it gives the same mesh, and the model's
+    fingerprint takes this form, so it says they are the same."""
+    pts = [(float(p[0]), float(p[1])) for p in polygon]
+    if len(pts) < 3:
+        return tuple(pts)
+    twice_area = sum(pts[k][0] * pts[(k + 1) % len(pts)][1]
+                     - pts[(k + 1) % len(pts)][0] * pts[k][1] for k in range(len(pts)))
+    if twice_area < 0.0:
+        pts.reverse()
+    k = pts.index(min(pts))
+    return tuple(pts[k:] + pts[:k])
+
+
 def region_area(m: MeshInput, r: int) -> float:
     """The area of a region of a valid input, its arcs and holes included."""
     arcs = _arcs(m)

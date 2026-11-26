@@ -53,6 +53,7 @@ from ogr_core.loads.loads import LoadDistribution, LoadOrientation
 from ogr_core.project.project import Project
 
 from . import model as md
+from .import_messages import part, say
 
 EXTERNAL_ID = "external"
 
@@ -68,6 +69,11 @@ class Report:
     not_brought: list[str] = field(default_factory=list)
     defaults: list[str] = field(default_factory=list)
     changed: list[str] = field(default_factory=list)
+
+
+def _orientation(ld) -> dict:
+    """A line load's orientation, as a line of the report says it."""
+    return part(f"fem.import.orientation.{ld.orientation.value}")
 
 
 def _key(p) -> tuple[float, float]:
@@ -237,25 +243,23 @@ def open_slip2d(path) -> tuple[md.Model, Report]:
             loop, ins0, s = _insert(loop, (ld.start.x, ld.start.y), tol)
             loop, ins1, e = _insert(loop, (ld.end.x, ld.end.y), tol)
         except ValueError:
-            report.not_brought.append(f"distributed load {ld.name or ld.id}: its ends are not on "
-                                      "the external boundary")
+            report.not_brought.append(say("fem.import.load_off_external", name=ld.name or ld.id))
             continue
         for ins, q in ((ins0, s), (ins1, e)):
             if ins is not None:
-                report.changed.append(f"a vertex inserted in the external boundary at {q}, an end "
-                                      f"of the distributed load {ld.name or ld.id}")
+                report.changed.append(say("fem.import.vertex_for_load", point=str(q),
+                                          name=ld.name or ld.id))
         loads_in.append((ld, s, e))
     points_in = []
     for ld in project.line_loads:
         try:
             loop, seg, q = _insert(loop, (ld.point.x, ld.point.y), tol)
         except ValueError:
-            report.not_brought.append(f"line load {ld.name or ld.id}: its point is not on the "
-                                      "external boundary")
+            report.not_brought.append(say("fem.import.point_off_external", name=ld.name or ld.id))
             continue
         if seg is not None:
-            report.changed.append(f"a vertex inserted in the external boundary at {q}, the point "
-                                  f"of the line load {ld.name or ld.id}")
+            report.changed.append(say("fem.import.vertex_for_point", point=str(q),
+                                      name=ld.name or ld.id))
         points_in.append((ld, seg, q))
     n = len(loop)
 
@@ -265,13 +269,13 @@ def open_slip2d(path) -> tuple[md.Model, Report]:
     assignments = []
     for r in regions:
         if r.material_id is None:
-            report.not_brought.append("a region with no material in Slip2D")
+            report.not_brought.append(say("fem.import.region_no_material"))
             continue
         assignments.append(md.Assignment(_inside_point(r), r.material_id, (False,)))
         if not any(r.contains(x, y) for x, y in clicks):
-            report.defaults.append(
-                f"the region with material {r.material_id!r} at {assignments[-1].point} had no "
-                "assignment of its own in Slip2D (inherited, or Slip2D's first material)")
+            report.defaults.append(say("fem.import.region_inherited",
+                                       material=repr(r.material_id),
+                                       point=str(assignments[-1].point)))
 
     boundaries = [md.Boundary(EXTERNAL_ID, md.EXTERNAL, tuple(loop), True, name="External")]
     for k, (chain, closed) in enumerate(chains):
@@ -300,13 +304,11 @@ def open_slip2d(path) -> tuple[md.Model, Report]:
             dx, dy = ld.direction_vector()
             if dx * into[0] + dy * into[1] < 0.0:
                 v0, v1 = -v0, -v1
-                report.changed.append(f"distributed load {name}: Slip2D's normal pointed out of "
-                                      "the ground; brought with the sign changed (D6)")
+                report.changed.append(say("fem.import.normal_flipped", name=name))
             angle = 0.0
         elif ld.orientation == LoadOrientation.ANGLE_TO_BOUNDARY and swapped:
             angle = angle + 180.0
-            report.changed.append(f"distributed load {name}: runs the other way round the "
-                                  "external boundary; its angle to the boundary + 180 degrees")
+            report.changed.append(say("fem.import.angle_reversed", name=name))
         elif ld.orientation in (LoadOrientation.VERTICAL, LoadOrientation.HORIZONTAL):
             angle = 0.0
         loads.append(md.DistributedLoad(md.Span(EXTERNAL_ID, loop[i], loop[j]), v0, v1,
@@ -319,8 +321,8 @@ def open_slip2d(path) -> tuple[md.Model, Report]:
             loads.append(md.PointLoad(p, ld.magnitude, md.ANGLE_FROM_HORIZONTAL, ld.angle_deg,
                                       (1.0,), name))
         elif seg is None:
-            report.not_brought.append(f"line load {name}: {ld.orientation.value} at a corner of "
-                                      "the boundary, where the boundary has no one direction")
+            report.not_brought.append(say("fem.import.point_at_corner", name=name,
+                                          orientation=_orientation(ld)))
         else:
             k = loop.index(p)
             a, b = loop[k - 1], loop[(k + 1) % n]
@@ -336,8 +338,8 @@ def open_slip2d(path) -> tuple[md.Model, Report]:
                 dx, dy = tx * math.cos(r) - ty * math.sin(r), tx * math.sin(r) + ty * math.cos(r)
             angle = math.degrees(math.atan2(dy, dx))
             loads.append(md.PointLoad(p, ld.magnitude, md.ANGLE_FROM_HORIZONTAL, angle, (1.0,), name))
-            report.changed.append(f"line load {name}: {ld.orientation.value} turned into an angle "
-                                  f"of {angle:.6g} degrees from the horizontal")
+            report.changed.append(say("fem.import.point_turned", name=name,
+                                      orientation=_orientation(ld), angle=f"{angle:.6g}"))
 
     # the conditions, as the reference program: sides and bottom fixed
     xs, ys = [p[0] for p in loop], [p[1] for p in loop]
@@ -364,32 +366,25 @@ def open_slip2d(path) -> tuple[md.Model, Report]:
             conditions.append(md.Condition(md.FREE, md.Span(EXTERNAL_ID, loop[run[0]],
                                                             loop[(run[-1] + 1) % n]),
                                            active=(True,), name="Surface"))
-    report.defaults.append("conditions: the sides and the bottom of the external boundary "
-                           "fixed in x and y, the surface free (as the reference program)")
-    report.defaults.append("materials: E and nu not given; the model is not translated to the "
-                           "engine until they are (D16)")
-    report.defaults.append("field stress: none (constant, zero); the gravitational field under "
-                           "the real ground surface is spec 009")
-    report.defaults.append("one stage; the mesh settings by default (graded, six-node "
-                           "triangles, B = sqrt 2), boundary_nodes to be given")
-    report.brought += [f"{len(boundaries)} boundaries (1 external, {len(chains)} material)",
-                       f"{len(materials)} materials (name, colour, unit weight)",
-                       f"{len(assignments)} regions with their material",
-                       f"{len(loads)} loads"]
-    report.not_brought.append("the strength of the materials (no law of this version uses it, "
-                              "spec 008) and their pore pressure settings")
+    report.defaults += [say("fem.import.default_conditions"), say("fem.import.default_materials"),
+                        say("fem.import.default_field"), say("fem.import.default_stage_mesh")]
+    report.brought += [say("fem.import.brought_boundaries", count=len(boundaries),
+                           materials=len(chains)),
+                       say("fem.import.brought_materials", count=len(materials)),
+                       say("fem.import.brought_regions", count=len(assignments)),
+                       say("fem.import.brought_loads", count=len(loads))]
+    report.not_brought.append(say("fem.import.no_strength"))
     other = {}
     for b in project.boundaries:
         if b.btype not in (BoundaryType.EXTERNAL, BoundaryType.MATERIAL):
             other[b.btype.name] = other.get(b.btype.name, 0) + 1
     for name, count in sorted(other.items()):
-        report.not_brought.append(f"{count} boundaries of type {name}")
+        report.not_brought.append(say("fem.import.boundaries_of_type", count=count, kind=name))
     if project.supports:
-        report.not_brought.append(f"{len(project.supports)} supports")
+        report.not_brought.append(say("fem.import.supports", count=len(project.supports)))
     if project.water_pressure_grid is not None or project.fem_mesh is not None:
-        report.not_brought.append("the water pressure grid, the seepage mesh and its results")
-    report.not_brought.append("the analysis settings: methods, searches, seismic loading, "
-                              "statistics")
+        report.not_brought.append(say("fem.import.water"))
+    report.not_brought.append(say("fem.import.analysis_settings"))
 
     model = md.Model(
         summary=md.Summary(title=project.name, notes=f"Opened from the OGR Slip2D model {Path(path).name}"),

@@ -11,9 +11,14 @@ writes them (the shortest text that reads back to the same number).
   file's content (``ogr_file.to_dict``) without the summary, the unit system
   shown (D5: the values do not depend on it), the names and colours, the
   notes and warnings of the mesh (they say how the mesh was made; the mesh
-  itself, its nodes, elements and regions, is in), and the ids: a boundary,
+  itself, its nodes, elements and regions, is in; the fingerprint of the
+  mesher input it was made from is not, as that input is the model's own
+  and the mesh is in), and the ids: a boundary,
   a material and a stage are named by their place (their order is part of
-  the model), so renaming an id everywhere does not move it. The results of
+  the model), so renaming an id everywhere does not move it. A refinement
+  window is taken in one form (``mesh.geometry.canonical_polygon``): the
+  same rectangle written from another corner, or the other way round, is
+  the same model (spec 006, T29). The results of
   spec 005 will carry it (ADR-0003).
 * ``document_fingerprint``: everything in the file but ``written_by``, which
   is who wrote it, not what it holds.
@@ -95,6 +100,10 @@ def model_fingerprint(m) -> str:
     if d["mesh"] is not None:
         d["mesh"].pop("notes")
         d["mesh"].pop("warnings")
+        d["mesh"].pop("source")
+    from ..mesh.geometry import canonical_polygon
+    for w in d["mesh_settings"]["windows"]:
+        w["polygon"] = [list(p) for p in canonical_polygon(w["polygon"])]
     return digest(_by_place(d))
 
 

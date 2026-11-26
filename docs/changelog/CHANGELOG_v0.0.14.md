@@ -354,3 +354,35 @@ código se quitó; las que escaparon al principio se cuentan en cada tarea, con 
 3. La huella y el orden de los vértices de una ventana de refinamiento (T29).
 4. Pedido a OGR-GUI (T22): el campo de X, Y con relativos, polares y coma decimal; y antes, el percentil
    de «Fit to results» y el español de `API_MESSAGES` (T19).
+
+## Lo decidido el 2026-11-25 sobre los hallazgos de la parte C
+
+**Una ventana de refinamiento es una, se escriba como se escriba** (hallazgo de T29). El mismo
+rectángulo desde otra esquina, o al revés, era otra huella con la misma malla. Ahora:
+
+- `mesh.geometry.canonical_polygon` escribe un polígono de una sola forma: antihorario, desde su vértice
+  menor (por x y luego y). **El mallador toma las esquinas de una ventana en ese orden** (`pslg`), así que
+  la misma ventana da la misma malla **por construcción**, y no solo en los casos probados: el orden en que
+  entraban las esquinas sí podía cambiar la malla cuando las cuatro caen dentro del modelo (el 005).
+- **La huella del modelo toma la ventana en esa forma** y ya no lleva la huella de la entrada del
+  mallador de la malla guardada (`source`): esa entrada es el propio modelo, que ya está en la huella, y
+  la malla también. Así, el caso 006 dibujado por la ventana tiene **la huella del caso**, sin arreglos.
+- **Los casos no cambian**: la forma de una sola manera es la que ya tenían el 005 y el 007, y el 006 solo
+  mete en el modelo una esquina de su ventana (las otras tres están en el contorno), así que sus mallas y
+  su `source` guardados siguen siendo los suyos. Lo comprueban sus tests, sin tocar sus archivos.
+- Cambian las huellas de todo modelo con malla (ya no llevan `source`): unos resultados calculados antes
+  de esta versión se verán como de otro modelo, y se calculan otra vez.
+- Queda conservador: reescribir la ventana desde otra esquina deja la malla como «de otra geometría»
+  (`source` se calcula sobre lo escrito), aunque sea la misma; mallar otra vez da la misma malla.
+
+**El informe de una conversión, entero en el idioma del lector** (hallazgo de T28):
+
+- Sus líneas llevan código (`model/import_messages.py`, 39 mensajes con su singular donde hay cuenta),
+  como los mensajes de las operaciones: siguen siendo la frase inglesa para la línea de órdenes y un
+  agente, y la ventana las dice en español. De paso, «1 boundaries» pasa a «1 boundary», y la orientación
+  de una carga lineal se dice con palabras, no con su identificador.
+- Lo que falta en el modelo se dice por su regla (`gui/problems.py`: una frase por regla del modelo y de
+  sus regiones, con dónde seguir), y el «dónde» con las palabras del programa (contorno, material,
+  fase...); un test exige frase y español para cada regla.
+
+Mutaciones: 11, todas cazadas (una, después de probar las orientaciones de una carga lineal).

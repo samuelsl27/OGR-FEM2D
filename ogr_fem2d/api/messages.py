@@ -21,6 +21,8 @@ from __future__ import annotations
 
 from ogr_core.messages import MessageSpec, as_nested, coded
 
+from ..model.import_messages import IMPORT_MESSAGES
+
 
 def _spec(code: str, english: str, group_by=(), **kw) -> MessageSpec:
     return MessageSpec(code, english, group_by=tuple(group_by), **kw)
@@ -94,7 +96,8 @@ _ENTRIES = [
 ]
 
 #: Every message of the operations of this program, by code.
-FEM_MESSAGES: dict = {s.code: s for s in _ENTRIES}
+#: with the lines of the report of a conversion (model/import_messages.py)
+FEM_MESSAGES: dict = {**{s.code: s for s in _ENTRIES}, **IMPORT_MESSAGES}
 
 
 def say(code: str, **args):

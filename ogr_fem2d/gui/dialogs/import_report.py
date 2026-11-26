@@ -7,7 +7,10 @@ took, what it changed, and what is still unfinished in the model (its
 problems), **whole**, in a window that stays open beside the model.
 
 Every line is shown; none is summarised away (the reference program's
-import said nothing of what it left behind).
+import said nothing of what it left behind). Every line is said in the
+reader's language: the report's lines carry their code
+(``model/import_messages.py``), and a problem is said by its rule
+(``gui/problems.py``).
 
 Author: Samuel Sáez López (UPCT)
 """
@@ -21,6 +24,9 @@ from PySide6.QtWidgets import QDialog, QDialogButtonBox, QTextBrowser, QVBoxLayo
 from ogr_ui.dialog_size import open_at_content_size
 from ogr_ui.i18n import tr
 
+from ..i18n import say
+from ..problems import problem_text
+
 #: the parts of the report, in the order shown
 PARTS = (("brought", "What came"), ("not_brought", "What did not come"),
          ("defaults", "Defaults taken (they change the result: check them)"),
@@ -32,11 +38,11 @@ def report_html(source: str, report: dict, problems: list) -> str:
     for key, title in PARTS:
         lines = report.get(key) or []
         out.append(f"<h4>{html.escape(tr(title))} ({len(lines)})</h4>")
-        out.append("<ul>" + "".join(f"<li>{html.escape(str(x))}</li>" for x in lines) + "</ul>"
+        out.append("<ul>" + "".join(f"<li>{html.escape(say(x))}</li>" for x in lines) + "</ul>"
                    if lines else f"<p>{html.escape(tr('Nothing.'))}</p>")
     out.append(f"<h4>{html.escape(tr('Still to do in the model'))} ({len(problems)})</h4>")
     out.append("<ul>" + "".join(
-        f"<li>{html.escape(p['where'])}: {html.escape(p['message'])}</li>" for p in problems)
+        f"<li>{html.escape(problem_text(p))}</li>" for p in problems)
         + "</ul>" if problems else f"<p>{html.escape(tr('Nothing.'))}</p>")
     return "".join(out)
 

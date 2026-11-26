@@ -41,6 +41,7 @@ from pathlib import Path
 from ogr_core.dxf import reader
 
 from . import model as md
+from .import_messages import part, say
 from .import_slip2d import Report
 
 #: Layer names of the excavation and stage boundaries (the core knows the
@@ -54,21 +55,27 @@ LAYERS = {
 #: what the reader still flattens
 FLATTENED = ("SPLINE",)
 
-#: what each kind of key of the reader's ``skipped`` means (OGR-Core 0.2.8);
-#: any other key is an entity type it does not read
+#: what each kind of key of the reader's ``skipped`` means (OGR-Core 0.2.8), by the
+#: code of its sentence; any other key is an entity type it does not read
 SKIPPED = {
-    " (not in the XY plane)": "not in the plane of the drawing (its extrusion leans away from Z)",
-    " (unreadable)": "could not be read (a malformed entity)",
-    "degenerate": "fewer than two distinct points",
+    " (not in the XY plane)": "fem.import.dxf_reason.plane",
+    " (unreadable)": "fem.import.dxf_reason.unreadable",
+    "degenerate": "fem.import.dxf_reason.degenerate",
 }
 
 
-def skipped_reason(key: str) -> str:
-    """What a key of the reader's ``skipped`` means."""
-    for tail, reason in SKIPPED.items():
+def skipped_code(key: str) -> str:
+    """The code (``import_messages``) of what a key of the reader's
+    ``skipped`` means."""
+    for tail, code in SKIPPED.items():
         if key == tail or key.endswith(tail):
-            return reason
-    return "the core's reader does not read this type"
+            return code
+    return "fem.import.dxf_reason.type"
+
+
+def skipped_reason(key: str) -> str:
+    """What a key of the reader's ``skipped`` means, in English."""
+    return str(say(skipped_code(key)))
 
 
 def kind_of(layer: str) -> str | None:
@@ -96,8 +103,8 @@ def boundaries_from_dxf(path, unit: str = "m") -> tuple[tuple[md.Boundary, ...],
         kind = kind_of(layer.name)
         flattened = sum(layer.entity_counts.get(t, 0) for t in FLATTENED)
         if kind is None:
-            report.not_brought.append(f"layer {layer.name!r} ({layer.entity_count} entities): "
-                                      "not one of the four kinds of boundary")
+            report.not_brought.append(say("fem.import.dxf_layer", layer=repr(layer.name),
+                                          count=layer.entity_count))
             continue
         for k, poly in enumerate(layer.polylines):
             count[kind] = count.get(kind, 0) + 1
@@ -112,13 +119,12 @@ def boundaries_from_dxf(path, unit: str = "m") -> tuple[tuple[md.Boundary, ...],
             out.append(md.Boundary(f"{kind} {count[kind]}", kind, tuple(pts), closed, segments,
                                    name=f"{layer.name} {k + 1}"))
         if flattened:
-            report.changed.append(f"layer {layer.name!r}: {flattened} SPLINE came as straight "
-                                  "pieces (the core's reader flattens them; the mid-side nodes "
-                                  "will be on the chords)")
+            report.changed.append(say("fem.import.dxf_spline", layer=repr(layer.name),
+                                      count=flattened))
     for key, n in sorted(cat.skipped.items()):
-        report.not_brought.append(f"{n} {key}: {skipped_reason(key)}; not read")
-    report.brought.append(f"{len(out)} boundaries: " + ", ".join(
-        f"{n} {kind}" for kind, n in sorted(count.items())) + f"; {arcs} pieces of arc")
-    report.defaults.append("materials, assignments, stages, conditions and loads: none, the "
-                           "user's to give")
+        report.not_brought.append(say("fem.import.dxf_skipped", count=n, key=key,
+                                      reason=part(skipped_code(key))))
+    report.brought.append(say("fem.import.dxf_brought", count=len(out), arcs=arcs, kinds=[
+        part(f"fem.import.dxf_count.{kind}", count=n) for kind, n in sorted(count.items())]))
+    report.defaults.append(say("fem.import.dxf_defaults"))
     return tuple(out), report
