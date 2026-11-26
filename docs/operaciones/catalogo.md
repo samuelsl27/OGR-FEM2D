@@ -188,6 +188,16 @@ there is factor x magnitude, 0 takes it off.
 
 ## mesh
 
+### `mesh_collect` (edita)
+
+Put in the model the mesh a job of ``mesh_generate`` made, as one step
+to undo; refused if the job is not done, or if the model changed while
+it ran (mesh again).
+
+| Argumento | Tipo | Por defecto |
+|---|---|---|
+| `job_id` | `str` | obligatorio |
+
 ### `mesh_discretize`
 
 The first step of meshing: the nodes every segment of the geometry
@@ -200,11 +210,16 @@ will have, with the settings of now, without changing the model.
 ### `mesh_generate` (edita)
 
 Mesh the geometry with its settings, and keep the mesh with the
-model; what decided it (the notes of the mesher) and its warnings.
+model; what decided it (the notes of the mesher) and its warnings. With
+``background``, in a child process that can be cancelled (job_cancel):
+it returns the job_id, and ``mesh_collect`` puts the mesh in the model
+when the job is done.
 
 | Argumento | Tipo | Por defecto |
 |---|---|---|
 | `project_id` | `str o None` | `None` |
+| `background` | `bool` | `False` |
+| `wait` | `float` | `0.0` |
 
 ### `mesh_reset` (edita)
 

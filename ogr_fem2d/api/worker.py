@@ -66,6 +66,19 @@ def run_calculation(ctx):
     return summary, summary
 
 
+def run_mesh(ctx):
+    """Meshing in the child (decided on 2026-11-25: with the meshes of the
+    cases it took 2 to 4 s, and the window stood still): the model's mesh,
+    as ``mesh_generate`` makes it, which ``mesh_collect`` puts in the model.
+    The mesher has no point to stop at, so a cancel kills it at once; the
+    model is untouched until the mesh is collected."""
+    from ..model import translate
+    ctx.progress(0, 1, event="meshing")
+    mesh = translate.mesh(ctx.data["model"]).mesh
+    summary = {"nodes": len(mesh.nodes), "elements": len(mesh.elements)}
+    return mesh, summary
+
+
 def provenance() -> dict:
     """Who ran the calculation, added to the core's provenance of a job."""
     return {"program": f"OGR FEM2D {ogr_fem2d.__version__}"}

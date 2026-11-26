@@ -602,21 +602,32 @@ class MainWindow(QMainWindow):
         return None
 
     def mesh(self) -> Optional[str]:
-        """The mesh, with what decided it on the status bar; the refusal's
-        text, or None. It takes seconds with a large mesh (3.6 s for case
-        005): the cursor says so."""
-        from PySide6.QtWidgets import QApplication
-        self.statusBar().showMessage(tr("Meshing..."))
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        """The mesh, made in a child process while the window goes on
+        drawing (decided on 2026-11-25: 2 to 4 s with the meshes of the
+        cases), with a dialog that can cancel it; then put in the model, one
+        step to undo, and what decided it on the status bar. The refusal's
+        text, or None."""
+        from ogr_ui.dialogs.progress_dialog import TaskProgressDialog
         try:
-            QApplication.processEvents()
-            got = self.session.call("mesh_generate")
+            job = self.session.call("mesh_generate", background=True)["job_id"]
         except OgrApiError as err:
-            text = fem_i18n.say(getattr(err, "message", str(err)))
+            return self._said_refusal(err)
+        dlg = TaskProgressDialog(self, tr("Meshing"), on_cancel=lambda: self.session.call(
+            "job_cancel", job_id=job, grace_s=0.0))
+        dlg.lbl_status.setText(tr("Meshing..."))
+        self.mesh_dialog = dlg
+        dlg.show()
+        state = self.wait_job(job)
+        dlg.finish()
+        if state != "done":
+            text = (tr("Meshing cancelled: the model is as it was.") if state == "cancelled"
+                    else tr("The mesher failed: %s") % self._job_error(job))
             self.statusBar().showMessage(text, 10000)
             return text
-        finally:
-            QApplication.restoreOverrideCursor()
+        try:
+            got = self.session.call("mesh_collect", job_id=job)
+        except OgrApiError as err:
+            return self._said_refusal(err)
         said = tr("Meshed: %d nodes, %d elements; smallest angle %.1f° (B = %.4g).") % (
             got["nodes"], got["elements"], got["min_angle"] or 0.0, got["quality_bound"])
         if got["warnings"]:
@@ -624,6 +635,34 @@ class MainWindow(QMainWindow):
                 % len(got["warnings"])
         self.statusBar().showMessage(said, 15000)
         return None
+
+    def wait_job(self, job: str, every_ms: int = 100) -> str:
+        """Wait for a job while the window goes on (an event loop of its
+        own, asking every ``every_ms``); its final state."""
+        from PySide6.QtCore import QEventLoop, QTimer
+        loop, timer, state = QEventLoop(), QTimer(), {}
+
+        def ask():
+            st = self.session.call("job_get", job_id=job)
+            if st["state"] in ("done", "failed", "cancelled", "crashed"):
+                state["final"] = st["state"]
+                loop.quit()
+        timer.timeout.connect(ask)
+        timer.start(every_ms)
+        ask()
+        if "final" not in state:
+            loop.exec()
+        timer.stop()
+        return state["final"]
+
+    def _job_error(self, job: str) -> str:
+        st = self.session.call("job_get", job_id=job)
+        return str(st.get("error") or st.get("log_tail") or st.get("state"))
+
+    def _said_refusal(self, err) -> str:
+        text = fem_i18n.say(getattr(err, "message", str(err)))
+        self.statusBar().showMessage(text, 10000)
+        return text
 
     def act_discretize(self) -> None:
         refused = self.discretize()

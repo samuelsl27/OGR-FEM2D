@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from ogr_core.api import InvalidArgument, unknown
+from ogr_core.api import Conflict, InvalidArgument, unknown
 from ogr_core.api.coerce import coerce_value, points
 
 from ...mesh import discretize
@@ -95,10 +95,20 @@ def mesh_discretize(ws, project_id: Optional[str] = None) -> dict:
 
 
 @OPERATIONS.operation("mesh_generate", toolset="mesh", mutates=True)
-def mesh_generate(ws, project_id: Optional[str] = None) -> dict:
+def mesh_generate(ws, project_id: Optional[str] = None, background: bool = False,
+                  wait: float = 0.0) -> dict:
     """Mesh the geometry with its settings, and keep the mesh with the
-    model; what decided it (the notes of the mesher) and its warnings."""
+    model; what decided it (the notes of the mesher) and its warnings. With
+    ``background``, in a child process that can be cancelled (job_cancel):
+    it returns the job_id, and ``mesh_collect`` puts the mesh in the model
+    when the job is done."""
+    if coerce_value(background, bool, "background"):
+        return _start(ws, project_id, coerce_value(wait, float, "wait"))
     handle, m = edit(ws, project_id, say("fem.step.mesh_generate"), translate.mesh)
+    return _meshed(handle, m)
+
+
+def _meshed(handle, m) -> dict:
     notes = m.mesh.notes
     quality = notes.get("quality", {})
     return {"project_id": handle.id, "nodes": len(m.mesh.nodes),
@@ -108,6 +118,50 @@ def mesh_generate(ws, project_id: Optional[str] = None) -> dict:
             "min_angle": quality.get("min_angle", {}).get("worst"),
             "arc_termination_proven": notes.get("arc_termination_proven"),
             "warnings": list(m.mesh.warnings)}
+
+
+def _start(ws, project_id, wait: float) -> dict:
+    """The job of meshing; what would fail at once is refused here."""
+    from .. import worker
+    handle = ws.get(project_id)
+    with ws.reading(handle.id, "mesh") as held, model_errors():
+        m = held.model
+        mi = translate.to_mesh_input(m)
+        try:
+            discretize.discretize(mi)
+        except g.MeshInputError as err:
+            geo = regions.build(m)
+            raise md.ModelError([translate._name_mesh_problem(p, geo)
+                                 for p in err.problems]) from None
+        job = ws.jobs.start("mesh", {"model": m}, handle.id, handle.document_hash(), {},
+                            target=worker.run_mesh)
+    out = {"job_id": job.id, "project_id": handle.id}
+    if wait > 0:
+        job.wait(wait)
+    out["state"] = job.status()["state"]
+    return out
+
+
+@OPERATIONS.operation("mesh_collect", toolset="mesh", mutates=True)
+def mesh_collect(ws, job_id: str) -> dict:
+    """Put in the model the mesh a job of ``mesh_generate`` made, as one step
+    to undo; refused if the job is not done, or if the model changed while
+    it ran (mesh again)."""
+    job = ws.jobs.get(job_id)
+    if job.kind != "mesh":
+        raise InvalidArgument(say("fem.mesh.not_a_mesh_job", job=job_id))
+    state = job.status()["state"]
+    if state != "done":
+        raise Conflict(say("fem.mesh.job_not_done", job=job_id, state=state))
+    handle = ws.get(job.project_id)
+    if handle.document_hash() != job.model_hash:
+        raise Conflict(say("fem.mesh.model_changed", model=handle.id),
+                       hint=say("fem.mesh.model_changed.hint"))
+    mesh = job.load_results()
+    from dataclasses import replace
+    handle, m = edit(ws, handle.id, say("fem.step.mesh_generate"),
+                     lambda m: replace(m, mesh=mesh))
+    return {**_meshed(handle, m), "job_id": job_id}
 
 
 @OPERATIONS.operation("mesh_reset", toolset="mesh", mutates=True)

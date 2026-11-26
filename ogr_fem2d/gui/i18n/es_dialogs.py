@@ -297,6 +297,10 @@ ES = {
     "the mesh settings": "los ajustes de la malla",
     "the field stress": "la tensión de campo",
     "the mesh": "la malla",
+    # meshing in a child process
+    "Meshing": "Mallado",
+    "Meshing cancelled: the model is as it was.": "Mallado cancelado: el modelo está como estaba.",
+    "The mesher failed: %s": "El mallador falló: %s",
     # the unit systems of the suite (ogr_core.units.unit_system.SYSTEMS)
     "Metric, stress as kPa": "Métrico, tensiones en kPa",
     "Metric, stress as MPa": "Métrico, tensiones en MPa",

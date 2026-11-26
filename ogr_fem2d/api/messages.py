@@ -60,6 +60,10 @@ _ENTRIES = [
     _spec("fem.load.distributed_span", "A distributed load is on a stretch of a boundary: give "
                                        "boundary (and start, end), not vertex."),
     _spec("fem.mesh.clear_and_set", "{name} is both given and cleared."),
+    _spec("fem.mesh.not_a_mesh_job", "Job {job} is not one of meshing."),
+    _spec("fem.mesh.job_not_done", "Job {job} has not made its mesh: it is {state}."),
+    _spec("fem.mesh.model_changed", "Model {model} changed while it was being meshed."),
+    _spec("fem.mesh.model_changed.hint", "Mesh it again (mesh_generate)."),
     _spec("fem.windows.shape", "windows[{index}] must be {{\"polygon\": [[x, y], ...], \"size\": h}}."),
     _spec("fem.run.no_file", "Model {model} has no file: the results are written beside it."),
     _spec("fem.run.no_file.hint", "Save it first (project_save)."),

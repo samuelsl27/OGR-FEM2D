@@ -347,7 +347,7 @@ código se quitó; las que escaparon al principio se cuentan en cada tarea, con 
 - **Mensajes**: dicen qué pasó, dónde y cómo seguir (los estados vacíos de la barra de estado: sin
   modelo, sin malla, malla de otra geometría); se dicen una vez, en la barra de estado.
 
-### Lo que queda para decidir antes de la parte D
+### Lo que quedaba para decidir antes de la parte D (decidido el 2026-11-25: abajo)
 
 1. Mallar síncrono (T25): ¿trabajo en subproceso o se acepta en la fase 1?
 2. Las líneas del informe de una conversión, en inglés (T28): ¿con código en `api/messages.py`?
@@ -386,3 +386,17 @@ rectángulo desde otra esquina, o al revés, era otra huella con la misma malla.
   fase...); un test exige frase y español para cada regla.
 
 Mutaciones: 11, todas cazadas (una, después de probar las orientaciones de una carga lineal).
+
+**Mallar, en un subproceso** (hallazgo de T25):
+
+- `mesh_generate(background=True)` malla en un proceso hijo con el armazón de trabajos del núcleo, como
+  calcular; `mesh_collect(job_id)` pone la malla en el modelo, un paso de deshacer. El modelo no cambia
+  hasta entonces: uno editado mientras se mallaba se rechaza («mállalo otra vez»), y un trabajo cancelado
+  lo deja como estaba. Lo que fallaría al momento (sin nudos en las excavaciones, un modelo que el mallador
+  rechaza) se rechaza antes de arrancar un proceso. `mesh_generate` sin `background` sigue como estaba,
+  para la línea de órdenes y los agentes.
+- **La ventana malla así**, con el diálogo de progreso de la suite y su Cancelar. Medido con los casos:
+  el 006 tarda 3,1 s y el 005, 4,3 s (cerca de un segundo más que dentro del proceso: lo que cuesta
+  arrancar el hijo), y **la ventana no se queda quieta más de 0,07 s** (un temporizador de 50 ms siguió
+  latiendo todo el tiempo); antes, 2,1 y 3,6 s parada.
+- 3 tests; 6 mutaciones, todas cazadas.

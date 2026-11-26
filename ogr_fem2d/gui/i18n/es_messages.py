@@ -41,6 +41,12 @@ ES = {
     "A distributed load is on a stretch of a boundary: give boundary (and start, end), not vertex.":
         "Una carga repartida está en un tramo de un contorno: da boundary (y start, end), no "
         "vertex.",
+    "Job {job} is not one of meshing.": "El trabajo {job} no es de mallado.",
+    "Job {job} has not made its mesh: it is {state}.":
+        "El trabajo {job} no ha hecho su malla: está {state}.",
+    "Model {model} changed while it was being meshed.":
+        "El modelo {model} cambió mientras se mallaba.",
+    "Mesh it again (mesh_generate).": "Vuelve a mallarlo (mesh_generate).",
     "{name} is both given and cleared.": "{name} se da y se borra a la vez.",
     'windows[{index}] must be {{"polygon": [[x, y], ...], "size": h}}.':
         'windows[{index}] tiene que ser {{"polygon": [[x, y], ...], "size": h}}.',
