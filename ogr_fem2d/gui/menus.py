@@ -14,6 +14,10 @@ there, in their place, with ONE entry that is disabled and says when it
 comes, so the order is the one an engineer knows and nothing is promised
 that is not there.
 
+``SOON`` are entries of this phase's menus whose content comes later (Tools
+has the agent bridge, T34, and its drawing tools still to come), disabled
+and saying when.
+
 ``PENDING`` are the menus of this phase still without their entries, each
 with the task that fills it: the list only gets shorter (a test holds it).
 
@@ -32,9 +36,11 @@ FUTURE = {
                     "Pore pressures come in phase 2 (spec 010)."),
     "Statistics": ("soon_statistics", "Probabilistic analysis",
                    "The probabilistic analysis comes in phase 6 (spec 027)."),
-    "Tools": ("soon_tools", "Drawing tools and annotations",
-              "Annotations and measuring tools come in a later spec."),
 }
+
+#: entries of this phase's menus whose content comes later: disabled, saying when
+SOON = {"soon_tools": ("Drawing tools and annotations",
+                       "Annotations and measuring tools come in a later spec.")}
 
 #: menu -> the task of spec 006 that gives it its entries
 PENDING: dict = {}
@@ -60,6 +66,7 @@ MENUS = {
                    "-", "draw_arc", "coords_table", "finish_boundary", "-", "move_vertex",
                    "insert_vertex", "delete_vertex", "delete_boundary"),
     "Window": ("window_main", "window_compute", "interpret"),
+    "Tools": ("agent_bridge", "-", "soon_tools"),
     "Help": ("about",),
     **{menu: (key,) for menu, (key, _t, _w) in FUTURE.items()},
 }

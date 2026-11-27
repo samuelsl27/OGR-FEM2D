@@ -18,8 +18,14 @@ text (``[E_NOT_FOUND] Unknown … Did you mean …? Hint: …``), which is what
 lets an agent recover; anything else as ``[E_INTERNAL]`` with its type.
 
 Over standard input and output, on models in a working folder, without
-OAuth (D1): ``python -m ogr_fem2d.mcp --workdir <folder>``. The live
-bridge to an open window comes with the interface (D8).
+OAuth (D1): ``python -m ogr_fem2d.mcp --workdir <folder>``.
+
+**The live bridge (D8, spec 006 T34)**: when an OGR FEM2D window has Tools >
+Agent Bridge (MCP) on, every call goes to that window (the core's
+``WindowRouter``), where it is drawn and undone with Edit > Undo; a call
+that names a model or a job of the server's own stays with it; without a
+window, the server works on its own models. ``--attach`` works only on a
+window, and says what to open when there is none.
 
 This module imports the SDK (the extra ``[mcp]``); ``ogr_fem2d.api`` does
 not.
@@ -94,8 +100,14 @@ class _Server(MCPServer):
         return await super().call_tool(name, arguments, context)
 
 
-def build_server(ws) -> MCPServer:
-    """An ``MCPServer`` with one tool per operation, over ``ws``."""
+def build_server(ws, only_window: bool = False, router=None) -> MCPServer:
+    """An ``MCPServer`` with one tool per operation, over ``ws``; each call
+    to the open window when there is one (``router``, by default the core's
+    ``WindowRouter`` with this program's bridge)."""
+    if router is None:
+        from ogr_core.api.bridge import WindowRouter
+        from ..api.bridge import CONFIG
+        router = WindowRouter(CONFIG, ws, local_call=api.call, only_window=only_window)
     srv = _Server("ogr-fem2d", title="OGR FEM2D",
                     description="2-D geotechnical finite-element analysis: build, mesh, "
                                 "calculate and read models.",
@@ -104,7 +116,7 @@ def build_server(ws) -> MCPServer:
     def run(op_name: str, /, **kwargs) -> dict:
         kwargs = {k: v for k, v in kwargs.items()}
         try:
-            return api.call(ws, op_name, **kwargs)
+            return router.call(op_name, **kwargs)
         except ToolError:
             raise
         except OgrApiError as err:
@@ -120,4 +132,5 @@ def build_server(ws) -> MCPServer:
         srv.tool(name=name, description=doc, annotations=ann)(_wrapper(name, op, run))
         names.append(name)
     srv._fem_tools = tuple(names)
+    srv._fem_router = router
     return srv

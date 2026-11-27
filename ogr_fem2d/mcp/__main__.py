@@ -17,12 +17,14 @@ def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="ogr-fem2d-mcp",
                                 description="The MCP server of OGR FEM2D, over stdio.")
     p.add_argument("--workdir", default=".", help="the folder relative paths mean")
+    p.add_argument("--attach", action="store_true",
+                   help="work only on an open window with its agent bridge on")
     ns = p.parse_args(argv)
     from .. import api
     from .server import build_server
     ws = api.workspace(workdir=Path(ns.workdir).resolve())
     try:
-        build_server(ws).run("stdio")
+        build_server(ws, only_window=ns.attach).run("stdio")
     finally:
         ws.shutdown()
     return 0

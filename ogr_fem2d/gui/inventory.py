@@ -66,6 +66,8 @@ UI_ONLY = {
     "clear_recent": "empties the list of recent models kept on this machine",
     "about": "shows who made the program and its licences",
     "window_main": "brings this window to the front",
+    "agent_bridge": "serves this window's model to the MCP server, whose calls are the "
+                    "operations themselves (D8)",
     "window_compute": "shows the calculation's window, which follows the jobs by job_get",
     "zoom_all": "fits the model in the canvas",
     "zoom_in": "zooms the canvas in",

@@ -220,3 +220,38 @@ interpretación (RF-4, RF-20; D17; regla 12).
 Tests: `test_gui_report_v0015.py`, 8 tests. Regla 7, 11 mutaciones (cada línea dicha, guardar en HTML o
 en texto, los nudos del eje, el sí y el no, lo que decidió los resultados, su traducción, el estado, los
 intervalos del dibujo y que el panel se vuelva a escribir): todas cazadas.
+
+## T34 — el puente entre el servidor MCP y la ventana abierta (2026-11-27)
+
+`ogr_fem2d/api/bridge.py`, `ogr_fem2d/gui/agent_bridge.py`; Herramientas > Puente con el agente
+(MCP) (D8).
+
+- **Lo que había**: el núcleo fijado (v0.2.9) trae el protocolo del puente, el lado que contesta sin Qt
+  (`BridgeSession`) y el encaminador (`WindowRouter`); `ogr-gui` v0.1.0 no trae una pieza de Qt para
+  él. No hace falta: el núcleo deja el socket a la ventana, y el de este programa es un `QTcpServer`
+  en 127.0.0.1, en el bucle de la ventana, con una sesión del núcleo por conexión. Nada se copia del
+  núcleo; aquí solo está lo que nombra el puente de este programa (`ogr-fem2d-bridge/1`, su carpeta
+  de anuncios), para que una ventana de OGR Slip2D y una de OGR FEM2D no se confundan.
+- **Lo que hace un agente es de la ventana**: cada llamada pasa por la sesión de la ventana, como la de
+  un menú, así que se dibuja al momento y es un paso de su historia, que se deshace con Edición >
+  Deshacer.
+- **El servidor MCP va a la ventana** cuando una tiene el puente encendido (el `WindowRouter` del
+  núcleo, como lo hace `build_server`), y a sus propios modelos si no; una llamada que nombra un
+  modelo o un trabajo suyo se queda con él. `--attach` trabaja solo sobre una ventana y, sin ella,
+  dice qué abrir.
+- **Con un cálculo en marcha, una edición responde `Busy`**: los resultados que se están escribiendo
+  son del modelo tal como estaba al empezar, y un agente que siguiera editando los dejaría obsoletos
+  sin saberlo. Preguntar, seguir el trabajo (`job_get`, `job_list`) y pararlo (`job_cancel`) sí se
+  puede.
+- El anuncio (el puerto y la clave, en un archivo que solo lee el usuario) se retira al apagar el
+  puente y al cerrar la ventana; una clave equivocada no entra.
+- El menú Herramientas deja de ser de una fase futura: tiene el puente y, deshabilitada con su motivo,
+  la entrada de las herramientas de dibujo que llegan después (`menus.SOON`).
+
+Tests: `test_gui_bridge_v0015.py`, 4 tests (el cliente en su propio hilo mientras el bucle de la ventana
+contesta, como el servidor MCP desde su proceso). Regla 7, 8 mutaciones (el Busy y lo que deja
+preguntar, la sesión de la ventana, el anuncio retirado al apagar y al cerrar, el encaminador del
+servidor y `--attach`, la puerta cerrada tras una clave equivocada): todas cazadas; tres después de
+reforzar los tests (una pregunta durante el cálculo, la herramienta MCP de verdad en vez de su
+encaminador, el socket cerrado). El barrido encontró también que construir el servidor MCP cambia el
+`logging` del proceso: el test lo deja como estaba (`root_logging_kept`, como los de la T16).

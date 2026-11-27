@@ -78,6 +78,11 @@ _ENTRIES = [
                                         "their state."),
     _spec("fem.field.refused", "The field cannot be drawn so: {what}"),
     _spec("fem.query.refused", "The query cannot be made so: {what}"),
+    _spec("fem.bridge.busy",
+          "A calculation is running in the window ({job}): {op} would change the model it "
+          "calculates."),
+    _spec("fem.bridge.busy.hint",
+          "Wait for it to end (job_get, job_id={job}), or stop it (job_cancel)."),
     _spec("fem.report.sections_no_path", "The sections of the report are not written to a file: "
           "ask for text or html."),
     # -- the names of the undo steps (the Edit menu, project_history) -------

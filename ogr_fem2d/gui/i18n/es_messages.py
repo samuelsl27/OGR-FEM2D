@@ -67,6 +67,11 @@ ES = {
         "cada respuesta dice entonces su estado.",
     "The field cannot be drawn so: {what}": "El campo no se puede dibujar así: {what}",
     "The query cannot be made so: {what}": "La consulta no se puede hacer así: {what}",
+    "A calculation is running in the window ({job}): {op} would change the model it "
+    "calculates.":
+        "Hay un cálculo en marcha en la ventana ({job}): {op} cambiaría el modelo que calcula.",
+    "Wait for it to end (job_get, job_id={job}), or stop it (job_cancel).":
+        "Espera a que termine (job_get, job_id={job}), o páralo (job_cancel).",
     "The sections of the report are not written to a file: ask for text or html.":
         "Las secciones del informe no se escriben en un archivo: pide texto o html.",
     # the lines of the report of a conversion (model/import_messages.py)

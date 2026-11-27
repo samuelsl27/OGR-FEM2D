@@ -209,6 +209,11 @@ class MainWindow(QMainWindow):
                  "delete_vertex")
         self._mk("delete_boundary", "Delete Boundary", lambda: t.start(tc.DELETE_BOUNDARY),
                  "boundary_delete")
+        self._mk("agent_bridge", "Agent Bridge (MCP)", self.act_agent_bridge,
+                 None).setCheckable(True)
+        for key, (text, why) in menus.SOON.items():
+            act = self._mk(key, text, lambda: None)
+            disabled_reasons.gate(act, False, tr(why))
         for menu, (key, text, why) in menus.FUTURE.items():
             act = self._mk(key, text, lambda: None)
             disabled_reasons.gate(act, False, tr(why))
@@ -806,6 +811,35 @@ class MainWindow(QMainWindow):
         if win is not None and win.isVisible():
             win.open()                                   # the results just written
 
+    # ------------------------------------------------------------ the agent bridge
+    @property
+    def agent_bridge(self):
+        """The window's agent bridge (D8), made the first time it is asked for."""
+        if getattr(self, "_agent_bridge", None) is None:
+            from .agent_bridge import AgentBridge
+            self._agent_bridge = AgentBridge(self)
+        return self._agent_bridge
+
+    def act_agent_bridge(self, on: bool) -> Optional[str]:
+        """Serve this window to the MCP server, or stop; what it says."""
+        act = self._actions["agent_bridge"]
+        if on:
+            try:
+                port = self.agent_bridge.start()
+            except OSError as err:
+                act.setChecked(False)
+                text = tr("The agent bridge could not start: %s") % err
+                self.statusBar().showMessage(text, 15000)
+                return text
+            text = tr("Agent bridge on (127.0.0.1:%d): the MCP server works on this window, and "
+                      "its edits are undone here.") % port
+        else:
+            self.agent_bridge.stop()
+            text = tr("Agent bridge off: the MCP server works on its own models.")
+        act.setChecked(self.agent_bridge.running)
+        self.statusBar().showMessage(text, 15000)
+        return text
+
     def confirm_stop_calculation(self) -> bool:
         box = QMessageBox(QMessageBox.Icon.Warning, tr("A calculation is running"),
                           tr("Closing stops the calculation that is running: its results "
@@ -1099,6 +1133,8 @@ class MainWindow(QMainWindow):
         if running:
             self.compute_window.stop_all()
             self.compute_window.hide()
+        if getattr(self, "_agent_bridge", None) is not None:
+            self._agent_bridge.stop()
         for name in ("_interpret_window", "_info_window"):
             if getattr(self, name, None) is not None:
                 getattr(self, name).close()

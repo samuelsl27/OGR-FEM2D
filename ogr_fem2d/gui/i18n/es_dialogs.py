@@ -414,6 +414,15 @@ ES = {
     "no active element": "ningún elemento activo",
     "There are no results: Analysis > Compute.": "No hay resultados: Análisis > Calcular.",
     "Shows the results: Analysis > Interpret.": "Muestra los resultados: Análisis > Interpretar.",
+    # the agent bridge (T34)
+    "Agent Bridge (MCP)": "Puente con el agente (MCP)",
+    "The agent bridge could not start: %s": "El puente con el agente no pudo arrancar: %s",
+    "Agent bridge on (127.0.0.1:%d): the MCP server works on this window, and its edits are "
+    "undone here.":
+        "Puente con el agente activo (127.0.0.1:%d): el servidor MCP trabaja sobre esta ventana, "
+        "y sus ediciones se deshacen aquí.",
+    "Agent bridge off: the MCP server works on its own models.":
+        "Puente con el agente apagado: el servidor MCP trabaja sobre sus propios modelos.",
     # the report and what decided a result (T33)
     "Report": "Informe",
     "Report...": "Informe...",

@@ -313,10 +313,12 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   *Hecho cuando:* el informe es el de la T7; los valores de RF-20 se ven en la interpretación.
   (Hecho el 2026-11-27: el informe, con cada línea codificada y en el idioma del lector; los
   nudos del eje, añadidos al informe. 8 tests; 11 mutaciones, todas cazadas.)
-- [ ] T34. El puente entre el servidor MCP y la ventana abierta (D8), si sus piezas están etiquetadas.
+- [x] T34. El puente entre el servidor MCP y la ventana abierta (D8), si sus piezas están etiquetadas.
 
   *Hecho cuando:* una edición por el servidor se ve en la ventana y se deshace en ella; con un cálculo
   en marcha, responde `Busy`. O, si no están, está dicho en el changelog y anotado para otra spec.
+  (Hecho el 2026-11-27: el protocolo del núcleo v0.2.9 bastó; la pieza de Qt es el `QTcpServer` de
+  la ventana. 4 tests; 8 mutaciones, todas cazadas.)
 - [ ] T35. **Los casos por la interfaz** (RF-22): 005, 006 y 007, abiertos, calculados y consultados
   sin pantalla, y sus contornos dibujados.
 
