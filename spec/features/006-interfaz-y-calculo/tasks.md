@@ -279,11 +279,14 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
 
 ## Parte D — v0.0.15: cálculo e interpretación en la interfaz
 
-- [ ] T30. **v0.0.15**, `gui/compute_window.py`: la cola, el progreso por fase, escalón e iteración,
+- [x] T30. **v0.0.15**, `gui/compute_window.py`: la cola, el progreso por fase, escalón e iteración,
   Cancelar, el registro y el resumen al terminar — RF-18.
 
   *Hecho cuando:* Cancelar para el proceso; cerrar con un cálculo en marcha pregunta una vez y lo
   para; un fallo nombra el objeto; la interfaz no se congela.
+  (Hecho el 2026-11-27: la cola es `job_list`, sin encolar, porque el núcleo corre un trabajo
+  cada vez; el plazo de Cancelar se espera fuera del hilo de la ventana. 9 tests; 17
+  mutaciones, todas cazadas.)
 - [ ] T31. `gui/interpret/`: la ventana, el selector de magnitud, las pestañas de fase, el campo
   dibujado con su leyenda y sus opciones (rango, intervalos, paleta, modo, valor absoluto) y el valor
   bajo el cursor — RF-19, RF-20.

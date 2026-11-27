@@ -54,6 +54,7 @@ MAPPED = {
     "delete_load": "load_delete",
     "stage_factors": "load_stage",
     "segment_divisions": "boundary_edit",
+    "compute": "analysis_run",
 }
 
 #: action key -> why it calls no operation
@@ -63,6 +64,7 @@ UI_ONLY = {
     "clear_recent": "empties the list of recent models kept on this machine",
     "about": "shows who made the program and its licences",
     "window_main": "brings this window to the front",
+    "window_compute": "shows the calculation's window, which follows the jobs by job_get",
     "zoom_all": "fits the model in the canvas",
     "zoom_in": "zooms the canvas in",
     "zoom_out": "zooms the canvas out",

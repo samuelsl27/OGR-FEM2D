@@ -301,6 +301,74 @@ ES = {
     "Meshing": "Mallado",
     "Meshing cancelled: the model is as it was.": "Mallado cancelado: el modelo está como estaba.",
     "The mesher failed: %s": "El mallador falló: %s",
+    # the calculation (T30)
+    "Compute": "Calcular",
+    "Calculation": "Cálculo",
+    "Queue": "Cola",
+    "Log": "Registro",
+    "Kind": "Tipo",
+    "State": "Estado",
+    "Time (s)": "Tiempo (s)",
+    "Queued": "En cola",
+    "Running": "En marcha",
+    "Done": "Terminado",
+    "Failed": "Falló",
+    "Cancelled": "Cancelado",
+    "Crashed": "Interrumpido",
+    "Close": "Cerrar",
+    "Cancel the Calculation": "Cancelar el cálculo",
+    "Closes this window; a calculation goes on: Window > Calculation shows it again.":
+        "Cierra esta ventana; el cálculo sigue: Ventana > Cálculo la vuelve a mostrar.",
+    "Cancelling: the stage being solved ends, or the process is stopped.":
+        "Cancelando: termina la fase que se está resolviendo, o se para el proceso.",
+    "Calculation started (%d stages).": "Cálculo empezado (%d fases).",
+    "Complete: the %d stages are solved, written in %s.":
+        "Completo: las %d fases están resueltas, escritas en %s.",
+    "Incomplete: stage %s could not be solved; the %d stages before it are written in %s. "
+    "The engine says: %s":
+        "Incompleto: la fase %s no se pudo resolver; las %d fases anteriores están escritas en "
+        "%s. El motor dice: %s",
+    "No calculation is running.": "No hay ningún cálculo en marcha.",
+    "No calculation yet: Analysis > Compute.": "Todavía no hay cálculos: Análisis > Calcular.",
+    "Cancelled: its process was stopped during a stage, and the results before it stay as "
+    "they were.":
+        "Cancelado: su proceso se paró durante una fase, y los resultados de antes quedan como "
+        "estaban.",
+    "Cancelled between two stages: the stages solved are written, and the results say they "
+    "are cancelled.":
+        "Cancelado entre dos fases: las fases resueltas están escritas, y los resultados dicen "
+        "que están cancelados.",
+    "Stage %s: %d steps, last iteration %d.": "Fase %s: %d escalones, última iteración %d.",
+    "Stage %s solved.": "Fase %s resuelta.",
+    "Stage %s solved: %d steps, last iteration %d.":
+        "Fase %s resuelta: %d escalones, última iteración %d.",
+    "Stage %s: nothing changes in it, nothing to solve.":
+        "Fase %s: en ella no cambia nada, no hay nada que resolver.",
+    "Stage %s of %d: solving...": "Fase %s de %d: resolviendo...",
+    "Starting the calculation...": "Empezando el cálculo...",
+    "The calculation failed: %s": "El cálculo falló: %s",
+    "The calculation's process ended without saying why: %s":
+        "El proceso del cálculo terminó sin decir por qué: %s",
+    "The results are written beside the model's file, with its fingerprint: the model is "
+    "saved first.":
+        "Los resultados se escriben junto al archivo del modelo, con su huella: antes se guarda "
+        "el modelo.",
+    "Save and Compute": "Guardar y calcular",
+    "Calculating: Window > Calculation shows how it goes.":
+        "Calculando: Ventana > Cálculo muestra cómo va.",
+    "A calculation is running": "Hay un cálculo en marcha",
+    "Closing stops the calculation that is running: its results will not be complete.":
+        "Cerrar para el cálculo en marcha: sus resultados no estarán completos.",
+    "Stop it and Close": "Pararlo y cerrar",
+    "Not calculated: %s": "No calculado: %s",
+    "(and %d more problems)": "(y %d problemas más)",
+    "There is no mesh: Mesh > Discretize and Mesh.": "No hay malla: Malla > Discretizar y mallar.",
+    "The mesh is of another geometry: Mesh > Discretize and Mesh.":
+        "La malla es de otra geometría: Malla > Discretizar y mallar.",
+    "The mesh is of another geometry or other settings: Mesh > Discretize and Mesh.":
+        "La malla es de otra geometría o de otros ajustes: Malla > Discretizar y mallar.",
+    "A material has no E or no ν, which the calculation needs: Properties > Define Materials.":
+        "Un material no tiene E o ν, que el cálculo necesita: Propiedades > Definir materiales.",
     # the unit systems of the suite (ogr_core.units.unit_system.SYSTEMS)
     "Metric, stress as kPa": "Métrico, tensiones en kPa",
     "Metric, stress as MPa": "Métrico, tensiones en MPa",

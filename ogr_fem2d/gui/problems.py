@@ -40,6 +40,10 @@ RULE_TEXT = {
     "condition": "A condition is not well given: Displacements.",
     "load": "A load is not well given: Loading.",
     "mesh": "The mesh is not well formed: Mesh > Discretize and Mesh.",
+    "mesh_stale": "The mesh is of another geometry or other settings: Mesh > Discretize and "
+                  "Mesh.",
+    "material_incomplete": "A material has no E or no ν, which the calculation needs: "
+                           "Properties > Define Materials.",
     "arc": "An arc is not well given: its centre must make an arc of its segment.",
     "segment_conflict": "Two boundaries share a segment with different attributes.",
     "crossing": "Two boundaries cross where neither has a vertex.",

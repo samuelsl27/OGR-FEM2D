@@ -145,6 +145,8 @@ class MainWindow(QMainWindow):
         self._mk("undo", "Undo", self.act_undo, "undo", "Ctrl+Z")
         self._mk("redo", "Redo", self.act_redo, "redo", "Ctrl+Y")
         self._mk("window_main", "Model", self.act_front, None)
+        self._mk("window_compute", "Calculation", self.act_compute_window, None)
+        self._mk("compute", "Compute", self.act_compute, "compute", "F9")
         self._mk("zoom_all", "Zoom All", self.view.zoom_all, "zoom_all", "F2")
         self._mk("zoom_in", "Zoom In", lambda: self.view.zoom_by(1.5), "zoom_in", "F5")
         self._mk("zoom_out", "Zoom Out", lambda: self.view.zoom_by(1 / 1.5), "zoom_out", "F4")
@@ -271,6 +273,11 @@ class MainWindow(QMainWindow):
         disabled_reasons.gate(self._actions["mesh_reset"], state not in (None, "none"),
                               tr("There is no mesh."))
         self.view.mesh_stale = state == "stale"
+        disabled_reasons.gate(self._actions["compute"], state == "current", {
+            None: tr("There is no model: File > New."),
+            "none": tr("There is no mesh: Mesh > Discretize and Mesh."),
+            "stale": tr("The mesh is of another geometry: Mesh > Discretize and Mesh."),
+        }.get(state, ""))
         self.mesh_label.setText(self.mesh_text())
         self.mesh_label.setToolTip(self.mesh_notes())
         self.assign_panel.refresh(m)
@@ -679,6 +686,92 @@ class MainWindow(QMainWindow):
     def act_mesh_reset(self) -> None:
         self._do("mesh_reset")
 
+    # ------------------------------------------------------------ calculating
+    @property
+    def compute_window(self):
+        """The calculation's window, made the first time it is asked for."""
+        if getattr(self, "_compute_window", None) is None:
+            from .compute_window import ComputeWindow
+            self._compute_window = ComputeWindow(self.session, self)
+            self._compute_window.job_ended.connect(self.calculated)
+        return self._compute_window
+
+    def confirm_save_to_compute(self) -> bool:
+        box = QMessageBox(QMessageBox.Icon.Question, tr("Compute"),
+                          tr("The results are written beside the model's file, with its "
+                             "fingerprint: the model is saved first."), parent=self)
+        save = box.addButton(tr("Save and Compute"), QMessageBox.ButtonRole.AcceptRole)
+        box.addButton(tr("Cancel"), QMessageBox.ButtonRole.RejectRole)
+        box.exec()
+        return box.clickedButton() is save
+
+    def compute(self) -> Optional[str]:
+        """Calculate the model in a child process (RF-9), followed by the
+        calculation's window; the model is saved first, as the results
+        are written beside its file (it asks). The refusal's text, or None."""
+        if self.session.model is None:
+            return None
+        if self.session.path is None or self.session.unsaved:
+            if not self.confirm_save_to_compute():
+                return None
+            self.act_save()
+            if self.session.path is None or self.session.unsaved:
+                return None                             # Save As was cancelled
+        m = self.session.model
+        try:
+            job = self.session.call("analysis_run")["job_id"]
+        except OgrApiError as err:
+            return self._said_compute_refusal(err)
+        win = self.compute_window
+        win.follow(job, m)
+        win.show()
+        win.raise_()
+        self.statusBar().showMessage(tr("Calculating: Window > Calculation shows how it goes."),
+                                     10000)
+        return None
+
+    def _said_compute_refusal(self, err) -> str:
+        """A refusal to calculate, naming the object of the model that
+        causes it (RF-11, RF-12)."""
+        from .problems import problem_text
+        found = (getattr(err, "details", None) or {}).get("problems") or []
+        if found:
+            text = tr("Not calculated: %s") % problem_text(found[0])
+            if len(found) > 1:
+                text += " " + tr("(and %d more problems)") % (len(found) - 1)
+        else:
+            text = tr("Not calculated: %s") % fem_i18n.say(getattr(err, "message", str(err)))
+            hint = getattr(err, "hint", None)
+            text += f" {fem_i18n.say(hint)}" if hint else ""
+        self.statusBar().showMessage(text, 15000)
+        return text
+
+    def act_compute(self) -> None:
+        self.compute()
+
+    def act_compute_window(self) -> None:
+        win = self.compute_window
+        win.show()
+        win.raise_()
+
+    def calculated(self, job: str, state: str) -> None:
+        """A calculation ended: its summary on the status bar (guide §5)."""
+        self.statusBar().showMessage(self.compute_window.summary_text(job), 20000)
+        self.refresh()
+
+    def confirm_stop_calculation(self) -> bool:
+        box = QMessageBox(QMessageBox.Icon.Warning, tr("A calculation is running"),
+                          tr("Closing stops the calculation that is running: its results "
+                             "will not be complete."), parent=self)
+        stop = box.addButton(tr("Stop it and Close"), QMessageBox.ButtonRole.DestructiveRole)
+        box.addButton(tr("Cancel"), QMessageBox.ButtonRole.RejectRole)
+        box.exec()
+        return box.clickedButton() is stop
+
+    def running_jobs(self) -> list[str]:
+        return [j["job_id"] for j in self.session.call("job_list")["jobs"]
+                if j["state"] in ("queued", "running")]
+
     # ------------------------------------------------------------ materials
     def said(self, op: str, /, **kwargs):
         """For a dialog: (the operation's result, None) or (None, the
@@ -946,9 +1039,19 @@ class MainWindow(QMainWindow):
 
     # ------------------------------------------------------------ closing
     def closeEvent(self, event) -> None:  # noqa: N802 - Qt's name
+        """With a calculation running it asks once, and stops it for real
+        (guide §14); with changes not saved, it asks to discard them. Both
+        are asked before anything is done, so a Cancel leaves all as it was."""
+        running = self.running_jobs()
+        if running and not self.confirm_stop_calculation():
+            event.ignore()
+            return
         if self.session.unsaved and not self.confirm_discard():
             event.ignore()
             return
+        if running:
+            self.compute_window.stop_all()
+            self.compute_window.hide()
         if self._own_session:
             self.session.close()
         super().closeEvent(event)
