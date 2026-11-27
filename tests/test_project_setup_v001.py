@@ -71,7 +71,8 @@ def _child_env(core_home=None, dev=None) -> dict:
     drop = {"PYTHONPATH", _runner.runner.DEV_CORE_ENV}
     env = {k: v for k, v in os.environ.items() if k.upper() not in drop}
     if core_home is not None:
-        env["PYTHONPATH"] = str(core_home)
+        homes = core_home if isinstance(core_home, (list, tuple)) else [core_home]
+        env["PYTHONPATH"] = os.pathsep.join(str(h) for h in homes)
     if dev is not None:
         env[_runner.runner.DEV_CORE_ENV] = dev
     return env
@@ -113,10 +114,17 @@ class TestTheTrees:
         # The control of the one above: the same bare Python, given the
         # folder this run's core comes from and this run's variable, runs.
         # So what refuses it there is that the core was taken away.
+        # And the folder ogr_ui comes from, after the core's: the runner
+        # needs it (its gc guard). In an ordinary run both are site-packages;
+        # with --dev-core the core is a tree of OGR-Core, without ogr_ui
+        # (OGR-Core's changelog 0.2.13 found it: the child did not start).
+        import ogr_ui
         where = _runner.runner.package_origins(_runner.SHARED)["ogr_core"]
         assert where is not None, "ogr_core is not importable"
+        homes = [where.parent] + ([] if Path(ogr_ui.__file__).parents[1] == where.parent
+                                  else [Path(ogr_ui.__file__).parents[1]])
         done = _list_in_a_bare_python(_child_env(
-            core_home=where.parent, dev=os.environ.get(_runner.runner.DEV_CORE_ENV)))
+            core_home=homes, dev=os.environ.get(_runner.runner.DEV_CORE_ENV)))
         assert done.returncode == 0, (done.returncode, done.stdout, done.stderr)
         assert "Nothing was run." in done.stdout, done.stdout
 

@@ -129,6 +129,28 @@ class TestCalculating:
                 "Stage 3 (Stage 3): nothing changes in it, nothing to solve."]
 
 
+class TestOneStage:
+    def test_is_said_in_the_singular(self):
+        """The frozen program's self-test said "the 1 stages are solved"
+        (T36): one stage is said in the singular, a whole sentence of its
+        own (each with its Spanish)."""
+        with _Open(_results.excavated_tunnel(1)) as o:
+            o.w.compute()
+            win = o.w.compute_window
+            win.wait()
+            assert win.summary_text().startswith("Complete: the stage is solved, written in "), \
+                win.summary_text()
+            assert win.log_text().splitlines()[0] == "Calculation started (1 stage)."
+            said = win._summary_done(win.followed, {"status": store.INCOMPLETE, "stages": 1,
+                                                    "results": "m.h5", "stopped_at": 1,
+                                                    "reason": "stage 's2': X: y"})
+            assert said.startswith("Incomplete: stage ") and \
+                "; the stage before it is written in m.h5. The engine says: X: y" in said, said
+            two = win._summary_done(win.followed, {"status": store.COMPLETE, "stages": 2,
+                                                   "results": "m.h5"})
+            assert two == "Complete: the 2 stages are solved, written in m.h5."
+
+
 class TestWaiting:
     def test_an_end_between_two_readings_is_said(self):
         """The CI of 2026-11-27 (macOS): the job ended after ``poll`` read it
@@ -244,8 +266,8 @@ class TestFailures:
             o.w.compute()
             o.w.compute_window.wait()
             said = o.w.compute_window.summary_text()
-            assert said.startswith("Incomplete: stage 2 (Stage 2) could not be solved; the 1 "
-                                   "stages before it"), said
+            assert said.startswith("Incomplete: stage 2 (Stage 2) could not be solved; the "
+                                   "stage before it is written in "), said
             assert "InsufficientRestraintError" in said and "stage '2'" not in said
 
     def test_refused_before_starting_names_the_object(self):

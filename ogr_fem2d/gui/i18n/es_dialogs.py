@@ -322,8 +322,15 @@ ES = {
     "Cancelling: the stage being solved ends, or the process is stopped.":
         "Cancelando: termina la fase que se está resolviendo, o se para el proceso.",
     "Calculation started (%d stages).": "Cálculo empezado (%d fases).",
+    "Calculation started (1 stage).": "Cálculo empezado (1 fase).",
     "Complete: the %d stages are solved, written in %s.":
         "Completo: las %d fases están resueltas, escritas en %s.",
+    "Complete: the stage is solved, written in %s.":
+        "Completo: la fase está resuelta, escrita en %s.",
+    "Incomplete: stage %s could not be solved; the stage before it is written in %s. The "
+    "engine says: %s":
+        "Incompleto: la fase %s no se pudo resolver; la fase anterior está escrita en %s. El "
+        "motor dice: %s",
     "Incomplete: stage %s could not be solved; the %d stages before it are written in %s. "
     "The engine says: %s":
         "Incompleto: la fase %s no se pudo resolver; las %d fases anteriores están escritas en "

@@ -405,3 +405,16 @@ Un programa congelado no puede ser el hijo de un trabajo: `_spawn` lanza `sys.ex
 ogr_core.api.jobs.worker`. Una función del núcleo que un programa llame al empezar (como
 `multiprocessing.freeze_support`), o que el núcleo lance el hijo de otra manera cuando
 `sys.frozen`, evitaría que cada programa lo resuelva en su punto de entrada.
+
+## Dos arreglos tras la T36 (2026-11-27)
+
+- **Una fase, en singular.** La autoprueba del congelado dijo «Complete: the 1 stages are solved»: la
+  ventana del cálculo pegaba el número a una frase en plural. Ahora una fase tiene su frase entera
+  (el empiece, el final completo y el incompleto), cada una con su español, como los mensajes con
+  código del núcleo. El test de la fase que no se puede resolver comprobaba, sin verlo, el plural
+  equivocado («the 1 stages before it»); se corrige con él.
+- **`test_project_setup_v001` con `--dev-core`** (lo encontró el changelog 0.2.13 de OGR-Core): el
+  test relanza el runner en un Python desnudo con `PYTHONPATH` en la carpeta del núcleo de la
+  corrida, y con `--dev-core` esa carpeta es un árbol de OGR-Core, sin `ogr_ui`, que el runner
+  necesita. Ahora se le da también la carpeta de `ogr_ui`, detrás de la del núcleo; pasa con el núcleo
+  fijado y con el árbol de OGR-Core (`0.2.13.dev0`).

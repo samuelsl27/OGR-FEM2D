@@ -148,7 +148,9 @@ class ComputeWindow(QDialog):
         if m is not None:
             self._stages[job_id] = [(s.id, s.name) for s in m.stages]
         self.followed = job_id
-        self._say(job_id, tr("Calculation started (%d stages).") % len(self._stages.get(job_id, ())))
+        n = len(self._stages.get(job_id, ()))
+        self._say(job_id, tr("Calculation started (1 stage).") if n == 1 else
+                  tr("Calculation started (%d stages).") % n)
         self.poll()
         if job_id not in self._ended:
             self.timer.start(POLL_MS)
@@ -309,15 +311,20 @@ class ComputeWindow(QDialog):
         status, written = s.get("status"), int(s.get("stages", 0))
         where = s.get("results", "")
         if status == store.COMPLETE:
+            if written == 1:                    # the singular, whole (a count is not pasted on)
+                return tr("Complete: the stage is solved, written in %s.") % where
             return tr("Complete: the %d stages are solved, written in %s.") % (written, where)
         if status == store.INCOMPLETE:
             stopped = s.get("stopped_at")
             reason = str(s.get("reason", ""))
             engine = reason.split(": ", 1)[1] if reason.startswith("stage ") and ": " in reason \
                 else reason
+            name = self.stage_name(job, int(stopped or 0))
+            if written == 1:
+                return tr("Incomplete: stage %s could not be solved; the stage before it is "
+                          "written in %s. The engine says: %s") % (name, where, engine)
             return tr("Incomplete: stage %s could not be solved; the %d stages before it are "
-                      "written in %s. The engine says: %s") % (
-                self.stage_name(job, int(stopped or 0)), written, where, engine)
+                      "written in %s. The engine says: %s") % (name, written, where, engine)
         return tr("Cancelled between two stages: the stages solved are written, and the "
                   "results say they are cancelled.")
 
