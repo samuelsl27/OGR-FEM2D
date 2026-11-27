@@ -59,6 +59,8 @@ EXCEPTIONS = {
         "the window's title: the model's name, its star and the kind of analysis (each through "
         "tr()) joined with the program's name, which is not translated",
     ("main_window.py", "OGR FEM2D {}\n\n"): "the program's name and its version in About",
+    ("interpret/queries.py", "x ({})"): "a column of a query: the coordinate's symbol and its unit",
+    ("interpret/queries.py", "y ({})"): "a column of a query: the coordinate's symbol and its unit",
     ("interpret/window.py", "x = {}, y = {} {}: "):
         "the interpretation's cursor: its coordinates in symbols, with the unit shown, before "
         "the values (each said through tr())",

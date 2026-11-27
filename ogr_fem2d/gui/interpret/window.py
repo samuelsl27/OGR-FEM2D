@@ -38,10 +38,10 @@ from __future__ import annotations
 
 from typing import Optional
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction, QActionGroup
-from PySide6.QtWidgets import (QComboBox, QDockWidget, QLabel, QMainWindow, QTabBar,
-                               QVBoxLayout, QWidget)
+from PySide6.QtCore import QPointF, Qt
+from PySide6.QtGui import QAction, QActionGroup, QColor, QPainterPath, QPen
+from PySide6.QtWidgets import (QComboBox, QDockWidget, QGraphicsPathItem, QInputDialog, QLabel,
+                               QMainWindow, QTabBar, QVBoxLayout, QWidget)
 
 from ogr_core.api import OgrApiError
 from ogr_core.units import Quantity as Q
@@ -83,6 +83,13 @@ STATE_TEXT = {
                   "before it are shown.",
     "cancelled": "Cancelled results: only the stages solved before the cancel are shown.",
 }
+#: the queries drawn on the canvas
+QUERY_PEN = "#111111"
+#: what a query picks on the canvas, said on the status bar
+PICK_TEXT = {"line": "Click the two ends of the line (Esc: cancel).",
+             "polyline": "Click the vertices of the polyline; right click or Enter ends it "
+                         "(Esc: cancel).",
+             "history": "Click the point (Esc: cancel)."}
 #: why a point has no value
 REASON_TEXT = {"outside": "outside the mesh", "excavated": "in an excavated region",
                "removed": "no active element"}
@@ -99,6 +106,9 @@ class ResultsView(ModelView):
         self.result_item: Optional[FieldItem] = None
         self.drawn: Optional[Drawn] = None
         self.opacity = 1.0
+        #: the queries drawn: polylines of model points
+        self.queries: list[list] = []
+        self.query_items: list[QGraphicsPathItem] = []
 
     def _draw(self) -> None:
         super()._draw()
@@ -106,6 +116,20 @@ class ResultsView(ModelView):
         if self.drawn is not None and self.model is not None:
             self.result_item = FieldItem(self.drawn, self.opacity)
             self.scene().addItem(self.result_item)
+        self.query_items = []
+        if self.model is None:
+            return
+        pen = QPen(QColor(QUERY_PEN), 2.0)
+        pen.setCosmetic(True)
+        for points in self.queries:
+            path = QPainterPath(QPointF(*points[0]))
+            for p in points[1:]:
+                path.lineTo(QPointF(*p))
+            item = QGraphicsPathItem(path)
+            item.setPen(pen)
+            item.setZValue(3)
+            self.scene().addItem(item)
+            self.query_items.append(item)
 
     def show_field(self, drawn: Optional[Drawn], opacity: float = 1.0) -> None:
         self.drawn, self.opacity = drawn, opacity
@@ -140,9 +164,14 @@ class InterpretWindow(QMainWindow):
         self.field: Optional[dict] = None
         #: (stage, level) -> the merging of its vertices (``drawn.merging``)
         self._merges: dict = {}
+        #: what the canvas is picking for a query: {"kind", "points"}, or None
+        self.picking: Optional[dict] = None
+        self.query_windows: list = []
 
         self.view = ResultsView()
         self.view.cursor_moved.connect(self.show_value)
+        self.view.clicked.connect(self._clicked)
+        self.view.key_pressed.connect(self._key)
         self.banner = QLabel()
         self.banner.setWordWrap(True)
         self.banner.setStyleSheet("QLabel { background: #fff3cd; color: #5c4400; "
@@ -218,11 +247,20 @@ class InterpretWindow(QMainWindow):
         self._mk("zoom_all", "Zoom All", self.view.zoom_all, "F2")
         self._mk("show_mesh", "Mesh", self.act_show_mesh).setCheckable(True)
         self._mk("refresh", "Read the Results Again", self.open, "F5")
+        self._mk("query_line", "Line...", lambda: self.pick("line"))
+        self._mk("query_polyline", "Polyline...", lambda: self.pick("polyline"))
+        self._mk("query_boundary", "On a Boundary...", self.act_query_boundary)
+        self._mk("query_nodes", "All Nodes", self.act_query_nodes)
+        self._mk("query_history", "Through the Stages at a Point...",
+                 lambda: self.pick("history"))
+        self._mk("query_clear", "Clear the Queries Drawn", self.act_query_clear)
         self._mk("window_model", "Model", self.act_model)
         self._mk("close", "Close", self.close)
         menus = (("Results", ("contour_options", "absolute", "-", "range_" + drawing.AUTO_STAGE,
                               "range_" + drawing.AUTO_ALL, "range_" + drawing.CUSTOM, "-",
                               "refresh", "-", "close")),
+                 ("Query", ("query_line", "query_polyline", "query_boundary", "query_nodes",
+                            "-", "query_history", "-", "query_clear")),
                  ("View", ("zoom_all", "show_mesh")),
                  ("Window", ("window_model",)))
         for title, keys in menus:
@@ -443,6 +481,105 @@ class InterpretWindow(QMainWindow):
                               steps=s.intervals, decimals=s.decimals, scientific=s.scientific,
                               bands=s.band_colours() if banded else None,
                               labels=[s.format_value(v) for v in s.levels()] if banded else None)
+
+    # ------------------------------------------------------------ the queries
+    def pick(self, kind: str) -> None:
+        """Pick on the canvas the points of a query (a line, a polyline, or
+        the point of a history)."""
+        self.picking = {"kind": kind, "points": []}
+        self.statusBar().showMessage(tr(PICK_TEXT[kind]))
+
+    def _clicked(self, x: float, y: float, button) -> None:
+        p = self.picking
+        if p is None:
+            return
+        if button == Qt.MouseButton.RightButton:
+            if p["kind"] == "polyline" and len(p["points"]) >= 2:
+                self._picked()
+            return
+        p["points"].append((x, y))
+        if (p["kind"] == "line" and len(p["points"]) == 2) or p["kind"] == "history":
+            self._picked()
+
+    def _key(self, key) -> None:
+        p = self.picking
+        if p is None:
+            return
+        if key == Qt.Key.Key_Escape:
+            self.picking = None
+            self.statusBar().showMessage(tr("Query cancelled."), 5000)
+        elif key in (Qt.Key.Key_Return, Qt.Key.Key_Enter) and len(p["points"]) >= 2:
+            self._picked()
+
+    def _picked(self) -> None:
+        p, self.picking = self.picking, None
+        self.statusBar().clearMessage()
+        if p["kind"] == "history":
+            self.query_history(*p["points"][0])
+            return
+        n = self.ask_points()
+        if n is not None:
+            self.query_line(p["points"], n or None)
+
+    def ask_points(self) -> Optional[int]:
+        """How many points along the line (0: at its vertices); None: cancelled."""
+        n, ok = QInputDialog.getInt(self, tr("Query"), tr(
+            "Points along it (0: at its vertices):"), 50, 0, 100000)
+        return n if ok else None
+
+    def _query(self, kind: str, **args):
+        """``results_query`` of the quantity in the stage shown, and its
+        window; or the refusal's text."""
+        args = {"quantity": self.quantity, "kind": kind, **args}
+        if kind != "history":
+            args["stage"] = self.stage_id
+        try:
+            got = self.session.call("results_query", allow_invalid=True, **args)
+        except OgrApiError as err:
+            return self._said(err)
+        from .queries import QueryWindow
+        qw = QueryWindow(self, kind, args, got)
+        self.query_windows.append(qw)
+        qw.show()
+        return qw
+
+    def query_line(self, points, n: Optional[int] = None):
+        """Along a line or a polyline: n points, or at its vertices."""
+        out = self._query("line", points_xy=[list(map(float, p)) for p in points], n=n)
+        if not isinstance(out, str):
+            self.view.queries.append([tuple(p) for p in points])
+            self.view.show_field(self.view.drawn, self.view.opacity)
+        return out
+
+    def query_boundary(self, boundary: str, n: Optional[int] = None, distance: float = 0.0,
+                       side: Optional[str] = None):
+        out = self._query("boundary", boundary=boundary, n=n, distance=distance, side=side)
+        if not isinstance(out, str):
+            self.view.queries.append([(r["x"], r["y"]) for r in out.got["rows"]])
+            self.view.show_field(self.view.drawn, self.view.opacity)
+        return out
+
+    def query_nodes(self):
+        return self._query("nodes")
+
+    def query_history(self, x: float, y: float):
+        return self._query("history", x=float(x), y=float(y))
+
+    def boundary_dialog(self):
+        from .queries import BoundaryQueryDialog
+        return BoundaryQueryDialog(self.session.model, self)
+
+    def act_query_boundary(self) -> None:
+        dlg = self.boundary_dialog()
+        if dlg.exec():
+            self.query_boundary(**dlg.query())
+
+    def act_query_nodes(self) -> None:
+        self.query_nodes()
+
+    def act_query_clear(self) -> None:
+        self.view.queries = []
+        self.view.show_field(self.view.drawn, self.view.opacity)
 
     # ------------------------------------------------------------ the cursor
     def value_at(self, x: float, y: float) -> str:

@@ -430,12 +430,18 @@ class History:
     stages: tuple[StageValue, ...]
 
 
-def history(results: store.Results, quantity: str, x: float, y: float) -> History:
+def history(results: store.Results, quantity: str, x: float, y: float,
+            views: dict | None = None) -> History:
     """The quantity at (x, y) in every stage of ``results`` (RF-15), each
-    with whether the stage was solved."""
+    with whether the stage was solved. ``views`` (stage -> View) are the
+    views already made, used and kept (v0.0.15: each history recovered
+    every stage again)."""
     out = []
+    views = {} if views is None else views
     for k in range(results.n_stages):
-        view = View(results, k)
+        if k not in views:
+            views[k] = View(results, k)
+        view = views[k]
         rows = tuple(_rows_at(view, quantity, [(x, y)], [None]))
         out.append(StageValue(k, view.info["id"], view.info["name"], view.info["solved"], rows))
     return History(quantity, float(x), float(y), tuple(out))

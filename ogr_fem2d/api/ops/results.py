@@ -134,18 +134,20 @@ def results_open(ws, project_id: Optional[str] = None) -> dict:
     return out
 
 
-def _query(handle, view, r, quantity, kind, points_xy, n, boundary, distance, side, x, y):
+def _query(handle, view, r, quantity, kind, points_xy, n, boundary, distance, side, x, y,
+           views=None):
     """The query asked; what the query refuses (a line with two points the
     same, a distance without its side...) as an ``InvalidArgument`` that
     says it (RF-7; v0.0.15, T32: it escaped as a ValueError)."""
     try:
         return _ask(handle, view, r, quantity, kind, points_xy, n, boundary, distance, side,
-                    x, y)
+                    x, y, views)
     except ValueError as err:
         raise InvalidArgument(say("fem.query.refused", what=str(err))) from None
 
 
-def _ask(handle, view, r, quantity, kind, points_xy, n, boundary, distance, side, x, y):
+def _ask(handle, view, r, quantity, kind, points_xy, n, boundary, distance, side, x, y,
+         views=None):
     if kind == "line":
         return queries.line(view, quantity, points(points_xy, "points_xy"),
                             None if n is None else coerce_value(n, int, "n"))
@@ -164,7 +166,8 @@ def _ask(handle, view, r, quantity, kind, points_xy, n, boundary, distance, side
         if x is None or y is None:
             raise InvalidArgument(say("fem.results.at_needs_xy"))
         return queries.at(view, quantity, coerce_value(x, float, "x"), coerce_value(y, float, "y"))
-    return queries.history(r, quantity, coerce_value(x, float, "x"), coerce_value(y, float, "y"))
+    return queries.history(r, quantity, coerce_value(x, float, "x"), coerce_value(y, float, "y"),
+                           views)
 
 
 @OPERATIONS.operation("results_query", toolset="results")
@@ -183,7 +186,8 @@ def results_query(ws, quantity: str, kind: str, project_id: Optional[str] = None
         raise unknown("query kind", kind, list(QUERY_KINDS))
     handle, opened, r, views = _results_of(ws, project_id, allow_invalid)
     if kind == "history":
-        h = _query(handle, None, r, quantity, kind, points_xy, n, boundary, distance, side, x, y)
+        h = _query(handle, None, r, quantity, kind, points_xy, n, boundary, distance, side, x, y,
+                   views)
         q = qt.get(quantity)
         return {"state": opened.status, "quantity": quantity, "what": "history", "unit": q.unit,
                 "convention": q.convention, "x": h.x, "y": h.y,

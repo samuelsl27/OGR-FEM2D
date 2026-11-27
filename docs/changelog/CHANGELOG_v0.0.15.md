@@ -161,4 +161,33 @@ La propietaria dijo «arregla los errores».
   pediría ajustar los parches todos a la vez (vectorizar), y eso cambiaría los últimos bits de los
   valores recuperados: es un cambio de números de la spec 005, y queda para que lo decida la
   propietaria. Las otras dos salidas siguen ahí: recuperar al calcular y guardarlo en el `.h5`, o
-  en segundo plano. El test vigila ahora ≤ 2 s.
+  en segundo plano. El test vigila ahora ≤ 4 s: 1,3 s es lo medido con el equipo libre, y con otro
+  programa ocupándolo (un servidor de OGR Slip2D en marcha) sale cerca de 3 s.
+
+## T32 — las consultas en la interfaz (2026-11-27)
+
+`ogr_fem2d/gui/interpret/queries.py`; el menú Consulta de la ventana de interpretación (RF-19, RF-20;
+spec 005, RF-11 a RF-15).
+
+- **Las consultas de la 005, desde la ventana**: una línea (dos clics) o una polilínea (clics y clic
+  derecho o Intro), con N puntos o en sus vértices; un contorno, sobre él o a una distancia de un
+  lado (dentro o fuera de uno cerrado; izquierda o derecha, según su sentido, de uno abierto), con N
+  puntos por tramo o en sus vértices; todos los nudos; y un punto fase a fase. Esc cancela.
+- **Cada consulta es la de su operación** (`results_query`): la ventana enseña sus filas tal como
+  vienen, en las unidades del modelo, con el material y la procedencia de cada valor (recuperado por
+  SPR, el campo de su elemento, el campo de elementos finitos) o por qué no lo tiene.
+- **Lo que decidió las filas se dice con ellas** (regla 12): la fase, el método (SPR material a
+  material, o las funciones de forma) y los ajustes, también los que se quedaron por defecto (en los
+  vértices, sobre él, el lado).
+- **El gráfico es el de esas filas** (`ogr_ui.xy_chart`, en una ventana no modal): frente a la
+  distancia a lo largo de la consulta o frente a la fase, con una serie por material donde hay dos
+  (un contacto). De todos los nudos no hay gráfico, y el botón dice por qué.
+- **La tabla es la de `results_table`**, en las unidades del modelo (spec 005, D15): un test comprueba
+  que lo que escribe la ventana y lo que escribe la operación son el mismo archivo, byte a byte.
+- **Las consultas se dibujan en el lienzo** y se borran con Consulta > Borrar las consultas dibujadas.
+- Una historia (un punto fase a fase) ya no recupera todas las fases en cada llamada: usa las vistas
+  guardadas, como el campo. No cambia ningún número.
+
+Tests: `test_gui_queries_v0015.py`, 9 tests. Regla 7: los puntos de una línea, los de cada tramo de un
+contorno, la distancia y el lado, la fase y el sistema de unidades mueven el número; 13 mutaciones,
+todas cazadas.

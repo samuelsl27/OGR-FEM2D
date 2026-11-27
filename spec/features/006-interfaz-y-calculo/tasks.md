@@ -301,11 +301,12 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   (Hecho el 2026-11-27: todo, salvo el primer dibujo de una fase con el caso 005, 3,9 s frente
   a 1 s, por la recuperación: hallazgo con tres propuestas en el changelog. 15 tests; 20
   mutaciones, todas cazadas.)
-- [ ] T32. Las consultas en la interfaz (línea, polilínea, contorno con lado y distancia, todos los
+- [x] T32. Las consultas en la interfaz (línea, polilínea, contorno con lado y distancia, todos los
   nudos), con su gráfico (frente a la distancia o a la fase) y su exportación — RF-19.
 
   *Hecho cuando:* cada consulta da los números de su operación; el gráfico y la tabla, también; cada
   opción mueve el número.
+  (Hecho el 2026-11-27: 9 tests; 13 mutaciones, todas cazadas.)
 - [ ] T33. `gui/info_window.py`: el informe, guardable en HTML y en texto; lo que decidió el
   resultado, a la vista con él — RF-4, RF-20.
 
