@@ -23,19 +23,15 @@ error absolute and over the scale the case names.
 """
 from __future__ import annotations
 
-import math
 import tempfile
 
 import _cases_model as cm
+import _query_references as refs
 import _results
-import _sphere
-import _strip
 from ogr_fem2d.model import ogr_file
 from ogr_fem2d.results import queries as qy
 
-C005 = "005-kirsch-malla-general"
-C006 = "006-carga-en-faja-malla-general"
-C007 = "007-cavidad-esferica-malla-general"
+C005, C006, C007 = refs.C005, refs.C006, refs.C007
 
 
 def _rows(view, m, query, quantity):
@@ -45,19 +41,21 @@ def _rows(view, m, query, quantity):
                           query["distancia"]).rows
 
 
-def _check(name, reference, keep=lambda query, row: True):
+def _check(name, keep=lambda query, x, y: True):
     """Every query of the case within its tolerance; the worst errors."""
     c = cm.case(name)
     spec = c["comparaciones_consulta"]
     m = ogr_file.read(cm.path(name))
+    reference = refs.errors(name)
     worst = {}
     with tempfile.TemporaryDirectory() as d:
         view = qy.View(_results.calculated(m, d), spec["fase"])
         for query in spec["consultas"]:
             for mq in query["magnitudes"]:
-                rows = [r for r in _rows(view, m, query, mq["magnitud"]) if keep(query, r)]
+                rows = [r for r in _rows(view, m, query, mq["magnitud"]) if keep(query, r.x, r.y)]
                 assert rows and all(r.value is not None for r in rows), (query["tipo"], mq)
-                error = max(reference(mq["magnitud"], mq["unidad_tolerancia"], r) for r in rows)
+                error = max(reference(mq["magnitud"], mq["unidad_tolerancia"], r.x, r.y, r.value)
+                            for r in rows)
                 worst[(query["tipo"], mq["magnitud"])] = error
                 assert error <= mq["tolerancia_absoluta"], (name, query["tipo"], mq["magnitud"], error)
     return worst
@@ -65,44 +63,14 @@ def _check(name, reference, keep=lambda query, row: True):
 
 class TestCase005:
     def test_the_radius_and_the_wall(self):
-        c = cm.case(C005)["modelo"]
-        p0, a = cm.KPA * c["tension_inicial"]["p0"], c["geometria"]["a"]
-        shear = cm.KPA * c["material"]["E"] / (2.0 * (1.0 + c["material"]["nu"]))
-        exact = {"sigma_1": lambda r: p0 * (1.0 + a * a / r ** 2),
-                 "sigma_3": lambda r: p0 * (1.0 - a * a / r ** 2),
-                 "u": lambda r: p0 * a * a / (2.0 * shear * r)}
-        scale = {"p0": p0, "u_r(a)": exact["u"](a)}
-
-        def reference(quantity, unit, row):
-            return abs(row.value - exact[quantity](math.hypot(row.x, row.y))) / scale[unit]
-
-        worst = _check(C005, reference)
-        assert len(worst) == 4
+        assert len(_check(C005)) == 4
 
 
 class TestCase006:
     def test_the_axis_of_the_strip(self):
-        def reference(quantity, unit, row):
-            s1, s3, _ = _strip.closed.strip_principal(row.x, -row.y)
-            want = {"sigma_1": s1, "sigma_3": s3}[quantity]
-            return abs(row.value / cm.KPA - want) / _strip.Q
-
-        assert len(_check(C006, reference)) == 2
+        assert len(_check(C006)) == 2
 
 
 class TestCase007:
     def test_the_radius_and_the_cavity(self):
-        b = cm.case(C007)["modelo"]["geometria"]["b"]
-        closed = _sphere.closed
-
-        def reference(quantity, unit, row):
-            s_r, s_t, u = closed.sphere_fixed_outer(math.hypot(row.x, row.y), b)
-            if quantity == "u":
-                return abs(row.value - u) / closed.sphere_fixed_outer(closed.A, b)[2]
-            want = {"sigma_1": s_t, "sigma_z": s_t, "sigma_3": s_r}[quantity]
-            return abs(row.value / cm.KPA - want) / closed.P0
-
-        def on_the_arc(query, row):
-            return query["tipo"] == "linea" or abs(math.hypot(row.x, row.y) - closed.A) < 1e-9
-
-        assert len(_check(C007, reference, on_the_arc)) == 6
+        assert len(_check(C007, refs.keep_007)) == 6

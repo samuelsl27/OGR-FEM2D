@@ -255,3 +255,30 @@ servidor y `--attach`, la puerta cerrada tras una clave equivocada): todas cazad
 reforzar los tests (una pregunta durante el cálculo, la herramienta MCP de verdad en vez de su
 encaminador, el socket cerrado). El barrido encontró también que construir el servidor MCP cambia el
 `logging` del proceso: el test lo deja como estaba (`root_logging_kept`, como los de la T16).
+
+## T35 — los casos 005, 006 y 007 por la interfaz (2026-11-27)
+
+`tests/test_gui_cases_v0015.py` (RF-22): cada caso se abre en la ventana, se calcula con Análisis >
+Calcular (la ventana del cálculo, el proceso aparte), se abre en Análisis > Interpretar y se consulta
+como dice su `comparaciones_consulta`.
+
+- **Los números de la ventana son los de las operaciones**: cada consulta da, fila a fila y bit a bit, lo
+  que da `results_query` en un espacio de trabajo aparte sobre el mismo `modelo.h5`, y lo que leen las
+  consultas del `.h5` que escribió la ventana.
+- **Son los del caso**: cada fila, dentro de la tolerancia que su `esperado.json` fijó antes de medir,
+  contra su solución cerrada. Los peores errores son los de la spec 005: 005, σθ 0.0022 p0 en el radio y
+  0.0035 p0 en la pared; 006, σ3 0.0045 q en el eje; 007, σR 0.0015 P0 en el radio y σt 0.0015 P0 en el
+  arco.
+- **La gráfica es de esas filas**, contra la distancia, en las unidades que se muestran (MPa: los casos
+  están escritos en MPa).
+- **Los contornos dicen la solución cerrada**: en los centros de los triángulos de la zona donde la forma
+  cerrada es la del caso (cerca del hueco, bajo la faja, cerca de la cavidad), el color pintado es el de
+  la leyenda para el valor exacto, salvo donde está a menos de la tolerancia del caso de un límite de
+  banda: unos 500 puntos por magnitud, todos.
+- Las soluciones cerradas de las consultas pasan a `tests/_query_references.py`, que usan este test y el
+  de la spec 005 (`test_validation_queries_v0011.py`, la misma aritmética, cambiada de sitio).
+- Las fichas VER-STR-01, VER-STR-04 y VER-STR-09 tienen su «Seguimiento»: el dibujo de la línea y de los
+  contornos.
+- Barrido de mutaciones (6: el factor de unidades del dibujo y de las filas, el eje de la gráfica, los
+  puntos de la línea, la consulta dibujada en el lienzo, la fase de la consulta): 5 cazadas. La de la
+  fase es equivalente en estos casos, que tienen una sola fase; la cazan los tests de la T32.

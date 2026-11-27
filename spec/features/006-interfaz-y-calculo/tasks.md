@@ -319,8 +319,8 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   en marcha, responde `Busy`. O, si no están, está dicho en el changelog y anotado para otra spec.
   (Hecho el 2026-11-27: el protocolo del núcleo v0.2.9 bastó; la pieza de Qt es el `QTcpServer` de
   la ventana. 4 tests; 8 mutaciones, todas cazadas.)
-- [ ] T35. **Los casos por la interfaz** (RF-22): 005, 006 y 007, abiertos, calculados y consultados
-  sin pantalla, y sus contornos dibujados.
+- [x] T35. **Los casos por la interfaz** (RF-22): 005, 006 y 007, abiertos, calculados y consultados
+  sin pantalla, y sus contornos dibujados. (Hecho el 2026-11-27.)
 
   *Hecho cuando:* dan los mismos números que por las operaciones; las fichas STR-01, STR-04 y STR-09
   tienen su «Seguimiento» (el dibujo de la línea y de los contornos).
