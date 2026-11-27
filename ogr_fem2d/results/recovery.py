@@ -112,7 +112,13 @@ def fit(points, values, degree: int, centre):
 def recover(nodes, elements, element_material, active, points_xy, point_element,
             values) -> Recovered:
     """The values at the nodes of every active element, material by
-    material, of ``values`` (P, c) at the integration points."""
+    material, of ``values`` (P, c) at the integration points.
+
+    v0.0.15 (spec 006, T32): the same fits, the same sums in the same
+    order, with the bookkeeping in plain integers and the values gathered
+    at once; with the mesh of case 005 it took 1.15 s and the first drawing
+    of a stage waited for it. A test holds it to the v0.0.14 one, bit for
+    bit."""
     nodes = np.asarray(nodes, dtype=float)
     elements = np.asarray(elements, dtype=np.int64)
     material = np.asarray(element_material)
@@ -127,37 +133,39 @@ def recover(nodes, elements, element_material, active, points_xy, point_element,
     out = np.full((n_el, n_per, comps), np.nan)
     source = np.full((n_el, n_per), NONE, dtype=np.int8)
     notes = {"patches": 0, "patches_refused": 0, "nodes_by_element": 0}
+    el = elements.tolist()
+    own_points = np.arange(per)
 
     for mat in sorted(set(material[active].tolist())):
-        zone = np.flatnonzero(active & (material == mat))
+        zone = np.flatnonzero(active & (material == mat)).tolist()
         # the sides of the zone, and those with one element: the boundary
         side_count: dict = defaultdict(int)
         for e in zone:
+            ne = el[e]
             for a, b, _m in SIDES:
-                side_count[tuple(sorted((elements[e][a], elements[e][b])))] += 1
+                p, q = ne[a], ne[b]
+                side_count[(p, q) if p < q else (q, p)] += 1
         boundary = set()
         for e in zone:
+            ne = el[e]
             for a, b, m in SIDES:
-                if side_count[tuple(sorted((elements[e][a], elements[e][b])))] == 1:
-                    boundary.update((int(elements[e][a]), int(elements[e][b])))
+                p, q = ne[a], ne[b]
+                if side_count[(p, q) if p < q else (q, p)] == 1:
+                    boundary.update((p, q))
                     if n_per == 6:
-                        boundary.add(int(elements[e][m]))
+                        boundary.add(ne[m])
         around: dict = defaultdict(list)
         for e in zone:
             for a in range(3):
-                around[int(elements[e][a])].append(int(e))
+                around[el[e][a]].append(e)
         total: dict = {}
         count: dict = defaultdict(int)
-
-        def add(node, value):
-            total[node] = total[node] + value if node in total else value.copy()
-            count[node] += 1
 
         for centre_node in sorted(around):
             if centre_node in boundary:
                 continue
             patch = around[centre_node]
-            idx = np.concatenate([np.arange(e * per, (e + 1) * per) for e in patch])
+            idx = (np.asarray(patch)[:, None] * per + own_points).ravel()
             poly = fit(points_xy[idx], values[idx], degree, nodes[centre_node])
             if poly is None:
                 notes["patches_refused"] += 1
@@ -165,21 +173,26 @@ def recover(nodes, elements, element_material, active, points_xy, point_element,
             notes["patches"] += 1
             determined = {centre_node}
             for e in patch:
-                local = list(elements[e][:3]).index(centre_node)
+                ne = el[e]
+                local = ne[:3].index(centre_node)
                 if n_per == 6:
                     for a, b, m in SIDES:
                         if local in (a, b):
-                            determined.add(int(elements[e][m]))
-                determined.update(int(n) for n in elements[e] if int(n) in boundary)
+                            determined.add(ne[m])
+                determined.update(n for n in ne if n in boundary)
             ordered = sorted(determined)
             got = poly(nodes[ordered])
             for node, value in zip(ordered, got):
-                add(node, value)
+                if node in total:
+                    total[node] = total[node] + value
+                else:
+                    total[node] = value.copy()
+                count[node] += 1
 
         # the nodes no patch determined: the field of their own elements
         fallback: dict = {}
         for e in zone:
-            missing = [a for a in range(n_per) if int(elements[e][a]) not in total]
+            missing = [a for a in range(n_per) if el[e][a] not in total]
             if not missing:
                 continue
             idx = np.arange(e * per, (e + 1) * per)
@@ -187,15 +200,22 @@ def recover(nodes, elements, element_material, active, points_xy, point_element,
             if own is None:                       # degree - 1 = 0 or 1 always fits here
                 own = fit(points_xy[idx], values[idx], 0, points_xy[idx].mean(axis=0))
             for a in missing:
-                node = int(elements[e][a])
+                node = el[e][a]
                 fallback.setdefault(node, []).append(own(nodes[[node]])[0])
         for node, got in fallback.items():
             total[node], count[node] = np.mean(got, axis=0), 1
         notes["nodes_by_element"] += len(fallback)
 
-        for e in zone:
-            for a in range(n_per):
-                node = int(elements[e][a])
-                out[e, a] = total[node] / count[node]
-                source[e, a] = ELEMENT if node in fallback else SPR
+        # each node's value once (the same division), then gathered by element node
+        at_node = {node: total[node] / count[node] for node in total}
+        z = np.asarray(zone, dtype=np.int64)
+        conn = elements[z]                                            # (Z, n)
+        used = np.unique(conn)
+        index = np.full(int(used.max()) + 1, -1, dtype=np.int64)
+        index[used] = np.arange(len(used))
+        table = np.array([at_node[int(n)] for n in used])             # (U, c)
+        out[z] = table[index[conn]]
+        by_element = np.zeros(len(index), dtype=bool)
+        by_element[[n for n in fallback if n < len(index)]] = True
+        source[z] = np.where(by_element[conn], ELEMENT, SPR)
     return Recovered(out, source, notes)

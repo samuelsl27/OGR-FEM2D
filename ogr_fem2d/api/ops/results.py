@@ -135,6 +135,17 @@ def results_open(ws, project_id: Optional[str] = None) -> dict:
 
 
 def _query(handle, view, r, quantity, kind, points_xy, n, boundary, distance, side, x, y):
+    """The query asked; what the query refuses (a line with two points the
+    same, a distance without its side...) as an ``InvalidArgument`` that
+    says it (RF-7; v0.0.15, T32: it escaped as a ValueError)."""
+    try:
+        return _ask(handle, view, r, quantity, kind, points_xy, n, boundary, distance, side,
+                    x, y)
+    except ValueError as err:
+        raise InvalidArgument(say("fem.query.refused", what=str(err))) from None
+
+
+def _ask(handle, view, r, quantity, kind, points_xy, n, boundary, distance, side, x, y):
     if kind == "line":
         return queries.line(view, quantity, points(points_xy, "points_xy"),
                             None if n is None else coerce_value(n, int, "n"))

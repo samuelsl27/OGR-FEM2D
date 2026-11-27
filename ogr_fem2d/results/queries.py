@@ -101,9 +101,17 @@ class View:
         self.analysis = results.header.analysis
         self.info = results.stage_info(stage)
         self.active = results.field(stage, "active").astype(bool)
-        self.locator = locator(results)
         self.shape = solver.SHAPES[self.mesh.elements.shape[1]]
         self._cache: dict = {}
+
+    @property
+    def locator(self) -> locate.Locator:
+        """Where a point is in the mesh, made the first time a point is
+        asked (v0.0.15: 0.24 s with case 005, and drawing a field never
+        asks one)."""
+        if "locator" not in self._cache:
+            self._cache["locator"] = locator(self.results)
+        return self._cache["locator"]
 
     # ------------------------------------------------ the user's tensors
     def displacement(self) -> np.ndarray:

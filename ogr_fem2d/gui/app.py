@@ -34,6 +34,19 @@ def application():
     return app
 
 
+def warm_up() -> None:
+    """Import, off the window's thread, what the first contour needs
+    (v0.0.15, T32: matplotlib's contouring took 1 s to import, and the
+    first drawing of a field waited for it). Only modules without Qt: no
+    backend is chosen here."""
+    import threading
+
+    def load():
+        import matplotlib.figure  # noqa: F401
+        import matplotlib.tri  # noqa: F401
+    threading.Thread(target=load, daemon=True, name="warm-up").start()
+
+
 def main(argv=None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     app = application()
@@ -42,4 +55,5 @@ def main(argv=None) -> int:
     if argv:
         window.open_path(argv[0])
     window.show()
+    warm_up()
     return app.exec()

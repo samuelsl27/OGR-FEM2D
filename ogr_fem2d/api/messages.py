@@ -76,6 +76,7 @@ _ENTRIES = [
                                         "they are with allow_invalid=true: every answer then says "
                                         "their state."),
     _spec("fem.field.refused", "The field cannot be drawn so: {what}"),
+    _spec("fem.query.refused", "The query cannot be made so: {what}"),
     # -- the names of the undo steps (the Edit menu, project_history) -------
     _spec("fem.step.project_settings", "Project settings"),
     _spec("fem.step.boundary_add", "Add boundary"),

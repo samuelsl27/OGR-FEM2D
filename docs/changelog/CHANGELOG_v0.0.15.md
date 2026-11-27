@@ -137,3 +137,28 @@ cursor, el botón de ir a los resultados, la puerta de Interpretar, la huella gu
 resultados guardados, la consulta `at`): todas cazadas; cuatro después de reforzar sus tests (la unión
 probaba sitios de un solo material; el valor absoluto, una fase sin desplazamientos; el recorte no
 tenía test; el botón tenía una condición de más, quitada).
+
+## Los dos errores de la T31, arreglados (2026-11-27)
+
+La propietaria dijo «arregla los errores».
+
+- **Una consulta que no se puede hacer se rechaza diciéndolo** (RF-7): una línea con dos puntos
+  seguidos iguales, n < 2 o una distancia sobre un contorno sin su lado dejaban escapar un
+  `ValueError`; ahora son un `InvalidArgument` («La consulta no se puede hacer así: …»), también por
+  `results_table` (`test_api_queries_v0015.py`).
+- **El primer dibujo de una fase, de 3,9 s a 1,3 s** con el caso 005, sin cambiar ningún número:
+  - la recuperación hace los mismos ajustes y las mismas sumas en el mismo orden, con las cuentas en
+    enteros de Python y los valores recogidos de una vez: 1,15 s → 0,6 s. **Un test la compara bit a
+    bit con la de la v0.0.14**, guardada para eso en `tests/_recovery_v0014.py`, en mallas de tres y
+    seis nudos, con dos materiales, un material de un elemento de grueso y elementos inactivos
+    (`test_results_recovery_v0015.py`);
+  - el localizador de la malla de una vista se hace la primera vez que se pregunta un punto, no al
+    hacer la vista (0,24 s que dibujar un campo no necesita); la ventana lo prepara en cuanto ha
+    dibujado, para que el cursor no espere;
+  - el programa importa al arrancar, fuera del hilo de la ventana, lo que el contorneo necesita de
+    matplotlib (1 s la primera vez).
+- **Sigue sin llegar a 1 s** (1,3 s): lo que queda es sobre todo la recuperación. Llegar a 1 s
+  pediría ajustar los parches todos a la vez (vectorizar), y eso cambiaría los últimos bits de los
+  valores recuperados: es un cambio de números de la spec 005, y queda para que lo decida la
+  propietaria. Las otras dos salidas siguen ahí: recuperar al calcular y guardarlo en el `.h5`, o
+  en segundo plano. El test vigila ahora ≤ 2 s.

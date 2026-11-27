@@ -331,6 +331,8 @@ class TestD15:
             win = o.w.interpret_window
             win.resize(1600, 1000)
             win.show()
+            import matplotlib.figure  # noqa: F401 - the program imports it at start (warm_up)
+            import matplotlib.tri  # noqa: F401
             t = time.perf_counter()
             o.w.interpret()
             _render(win.view)
@@ -343,6 +345,7 @@ class TestD15:
             win.set_quantity("u")
             _render(win.view)
             displacement = time.perf_counter() - t
+            APP.processEvents()                  # what the window does once it has drawn
             moves = []
             for move in (lambda: win.view.zoom_by(1.5), lambda: win.view.translate_pixels(40, 0),
                          lambda: win.show_value(1.5, 1.5)):
@@ -355,7 +358,17 @@ class TestD15:
                   f"moves {[round(x, 3) for x in moves]} s")
             assert other <= 1.0 * SLOWER and displacement <= 1.0 * SLOWER, (other, displacement)
             assert max(moves) <= 0.1 * SLOWER, moves
-            # the first drawing of a stage recovers its stresses (1.4 s with this mesh) and
-            # imports matplotlib: 3.9 s measured, over D15's 1 s. A finding (changelog
-            # v0.0.15, T31), not a target loosened: held here so that it does not grow
-            assert first <= 5.0 * SLOWER, first
+            # the first drawing of a stage recovers its stresses (0.6 s with this mesh): 1.3 s
+            # measured, over D15's 1 s. A finding (changelog v0.0.15, T32), not a target
+            # loosened: held here so that it does not grow
+            assert first <= 2.0 * SLOWER, first
+
+    def test_the_start_imports_the_contouring(self):
+        import sys
+        import threading
+        from ogr_fem2d.gui import app
+        app.warm_up()
+        for th in threading.enumerate():
+            if th.name == "warm-up":
+                th.join(60)
+        assert "matplotlib.tri" in sys.modules and "matplotlib.figure" in sys.modules

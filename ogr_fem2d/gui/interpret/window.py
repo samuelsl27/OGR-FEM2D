@@ -269,7 +269,16 @@ class InterpretWindow(QMainWindow):
         self.redraw()
         if first:
             self.view.zoom_all()
+        from PySide6.QtCore import QTimer
+        QTimer.singleShot(0, self._warm_cursor)
         return None
+
+    def _warm_cursor(self) -> None:
+        """Ask one value once the field is drawn, so that the mesh's
+        locator is made before the cursor needs it (0.24 s with case 005)."""
+        m = self.session.model
+        if m is not None and m.mesh is not None and m.mesh.nodes and self.stages:
+            self.value_at(*m.mesh.nodes[0])
 
     def note_state(self) -> None:
         """The model changed: if its results changed state (stale, say),
