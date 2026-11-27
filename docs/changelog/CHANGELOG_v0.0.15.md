@@ -395,8 +395,9 @@ desde las fuentes (σR 0.0015 P0 en el radio, el peor), en 49 s; **la carpeta, 3
   | macOS | 47 s | 340 MB | 116 MB |
   | Linux | 26 s | 602 MB | 519 MB |
 
-  El de los casos, sin interfaz, ya arrastra casi todo Qt: lo que importa del árbol trae PySide6. Un
-  congelado más pequeño (sin los módulos de Qt que no se usan) es de la distribución (spec 032).
+  El de los casos, sin interfaz, pesa en la CI mucho más que su último congelado en esta máquina
+  (unos 110 MB, con NumPy y SciPy y sin Qt): no se ha mirado qué arrastra allí. Un congelado más
+  pequeño es de la distribución (spec 032).
 
 ### Para OGR-Core
 
