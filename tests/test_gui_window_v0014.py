@@ -71,7 +71,10 @@ EXCEPTIONS = {
 SAME = {"Material", "X (%s)", "Y (%s)", "General", "K", "Kz", "Material %d", "vertical",
         "horizontal",
         # the catalogue's names that are the same in Spanish (T31)
-        "Sigma xx", "Sigma r (radial)", "Sigma yy", "Sigma z (axial)", "Tau xy", "Tau rz"}
+        "Sigma xx", "Sigma r (radial)", "Sigma yy", "Sigma z (axial)", "Tau xy", "Tau rz",
+        # the report's lines that are the same in Spanish (T33)
+        "m, kN, kPa, kN/m3", "material", "no", "spec 003", "{stage}: {value}", "{state}",
+        "{state}: {message}", "{value} ({why})"}
 
 _WINDOWS = []
 

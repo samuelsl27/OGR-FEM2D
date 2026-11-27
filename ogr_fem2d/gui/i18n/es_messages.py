@@ -67,6 +67,8 @@ ES = {
         "cada respuesta dice entonces su estado.",
     "The field cannot be drawn so: {what}": "El campo no se puede dibujar así: {what}",
     "The query cannot be made so: {what}": "La consulta no se puede hacer así: {what}",
+    "The sections of the report are not written to a file: ask for text or html.":
+        "Las secciones del informe no se escriben en un archivo: pide texto o html.",
     # the lines of the report of a conversion (model/import_messages.py)
     "distributed load {name}: its ends are not on the external boundary":
         "carga repartida {name}: sus extremos no están en el contorno externo",

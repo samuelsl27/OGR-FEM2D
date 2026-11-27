@@ -148,6 +148,7 @@ class MainWindow(QMainWindow):
         self._mk("window_compute", "Calculation", self.act_compute_window, None)
         self._mk("compute", "Compute", self.act_compute, "compute", "F9")
         self._mk("interpret", "Interpret", self.act_interpret, "interpret", "F10")
+        self._mk("report", "Report...", self.act_report, None, "F11")
         self._mk("zoom_all", "Zoom All", self.view.zoom_all, "zoom_all", "F2")
         self._mk("zoom_in", "Zoom In", lambda: self.view.zoom_by(1.5), "zoom_in", "F5")
         self._mk("zoom_out", "Zoom Out", lambda: self.view.zoom_by(1 / 1.5), "zoom_out", "F4")
@@ -260,7 +261,7 @@ class MainWindow(QMainWindow):
             disabled_reasons.gate(self._actions[key], has, tr("There is no model: File > New."))
         m = self.session.model
         self.analysis_label.setText(self.analysis_text())
-        for key in ("project_settings", "stage_insert", "stage_rename", "field_stress",
+        for key in ("project_settings", "report", "stage_insert", "stage_rename", "field_stress",
                     "mesh_setup", "mesh_discretize", "mesh_generate", "define_materials",
                     "assign", "restrain_x", "restrain_y", "restrain_xy", "release",
                     "impose", "default_restraint", "delete_condition", "add_distributed",
@@ -777,6 +778,21 @@ class MainWindow(QMainWindow):
     def act_interpret(self) -> None:
         self.interpret()
 
+    @property
+    def info_window(self):
+        """The report's window, made the first time it is asked for."""
+        if getattr(self, "_info_window", None) is None:
+            from .info_window import InfoWindow
+            self._info_window = InfoWindow(self.session, self)
+        return self._info_window
+
+    def act_report(self) -> Optional[str]:
+        win = self.info_window
+        said = win.read()
+        win.show()
+        win.raise_()
+        return said
+
     def act_compute_window(self) -> None:
         win = self.compute_window
         win.show()
@@ -1083,8 +1099,9 @@ class MainWindow(QMainWindow):
         if running:
             self.compute_window.stop_all()
             self.compute_window.hide()
-        if getattr(self, "_interpret_window", None) is not None:
-            self._interpret_window.close()
+        for name in ("_interpret_window", "_info_window"):
+            if getattr(self, name, None) is not None:
+                getattr(self, name).close()
         if self._own_session:
             self.session.close()
         super().closeEvent(event)

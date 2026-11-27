@@ -22,6 +22,7 @@ from __future__ import annotations
 from ogr_core.messages import MessageSpec, as_nested, coded
 
 from ..model.import_messages import IMPORT_MESSAGES
+from ..model.report_messages import REPORT_MESSAGES
 
 
 def _spec(code: str, english: str, group_by=(), **kw) -> MessageSpec:
@@ -77,6 +78,8 @@ _ENTRIES = [
                                         "their state."),
     _spec("fem.field.refused", "The field cannot be drawn so: {what}"),
     _spec("fem.query.refused", "The query cannot be made so: {what}"),
+    _spec("fem.report.sections_no_path", "The sections of the report are not written to a file: "
+          "ask for text or html."),
     # -- the names of the undo steps (the Edit menu, project_history) -------
     _spec("fem.step.project_settings", "Project settings"),
     _spec("fem.step.boundary_add", "Add boundary"),
@@ -103,7 +106,7 @@ _ENTRIES = [
 
 #: Every message of the operations of this program, by code.
 #: with the lines of the report of a conversion (model/import_messages.py)
-FEM_MESSAGES: dict = {**{s.code: s for s in _ENTRIES}, **IMPORT_MESSAGES}
+FEM_MESSAGES: dict = {**{s.code: s for s in _ENTRIES}, **IMPORT_MESSAGES, **REPORT_MESSAGES}
 
 
 def say(code: str, **args):

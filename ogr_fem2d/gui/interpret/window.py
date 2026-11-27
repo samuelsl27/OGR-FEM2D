@@ -41,7 +41,7 @@ from typing import Optional
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QAction, QActionGroup, QColor, QPainterPath, QPen
 from PySide6.QtWidgets import (QComboBox, QDockWidget, QGraphicsPathItem, QInputDialog, QLabel,
-                               QMainWindow, QTabBar, QVBoxLayout, QWidget)
+                               QMainWindow, QTabBar, QTextBrowser, QVBoxLayout, QWidget)
 
 from ogr_core.api import OgrApiError
 from ogr_core.units import Quantity as Q
@@ -83,6 +83,9 @@ STATE_TEXT = {
                   "before it are shown.",
     "cancelled": "Cancelled results: only the stages solved before the cancel are shown.",
 }
+#: the states of the results, as the panel of what decided it says them
+STATE_WORD = {"valid": "Valid", "stale": "Stale", "incomplete": "Incomplete",
+              "cancelled": "Cancelled"}
 #: the queries drawn on the canvas
 QUERY_PEN = "#111111"
 #: what a query picks on the canvas, said on the status bar
@@ -196,6 +199,11 @@ class InterpretWindow(QMainWindow):
         sl = QVBoxLayout(side)
         sl.addWidget(self.legend_text)
         sl.addWidget(self.legend, 1)
+        sl.addWidget(QLabel(tr("What decided it")))
+        #: the values that decided what is drawn (RF-20, rule 12)
+        self.decided = QTextBrowser()
+        self.decided.setMinimumWidth(260)
+        sl.addWidget(self.decided, 1)
         dock = QDockWidget(tr("Legend"), self)
         dock.setObjectName("legend")
         dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
@@ -255,10 +263,11 @@ class InterpretWindow(QMainWindow):
                  lambda: self.pick("history"))
         self._mk("query_clear", "Clear the Queries Drawn", self.act_query_clear)
         self._mk("window_model", "Model", self.act_model)
+        self._mk("report", "Report...", lambda: self.main.act_report())
         self._mk("close", "Close", self.close)
         menus = (("Results", ("contour_options", "absolute", "-", "range_" + drawing.AUTO_STAGE,
                               "range_" + drawing.AUTO_ALL, "range_" + drawing.CUSTOM, "-",
-                              "refresh", "-", "close")),
+                              "refresh", "report", "-", "close")),
                  ("Query", ("query_line", "query_polyline", "query_boundary", "query_nodes",
                             "-", "query_history", "-", "query_clear")),
                  ("View", ("zoom_all", "show_mesh")),
@@ -281,6 +290,7 @@ class InterpretWindow(QMainWindow):
             return self._said(err)
         self.state = got["state"]
         self.stages = got["stages"]
+        self.opened_info = got
         self._merges.clear()                       # the results may be others
         if not self.stages:
             text = tr("No results to show: %s") % (got.get("message") or self.state)
@@ -455,7 +465,62 @@ class InterpretWindow(QMainWindow):
         self.view.set_model(self.session.model, k)
         self.view.show_field(drawn, s.opacity)
         self._legend(s)
+        self.decided.setHtml(self.decided_html())
         return None
+
+    def decided_parts(self) -> list[tuple[str, list[tuple[str, str]]]]:
+        """What decided what is drawn (RF-20, rule 12), by part: the
+        results (their state, who wrote them, the engine), the mesh (the
+        bound B and what the mesher noted, the nodes the engine restrained
+        on the axis), what decides the result as it was written with the
+        results, and the drawing (its subdivision, its range, its bands)."""
+        from ...report import info
+        from ..info_window import said
+        o = getattr(self, "opened_info", None) or {}
+        m = self.session.model
+        results = [(tr("State"), tr(STATE_WORD.get(self.state, self.state)))]
+        if o.get("other_version"):
+            results.append((tr("Written by"), o["other_version"]))
+        results.append((tr("Engine"), str(o.get("engine", ""))))
+        mesh_section, deciding_now = info.decided(m)
+        mesh = [(said(a), said(b)) for a, b in mesh_section.rows]
+        # the values written with the results; each said in the reader's
+        # language when it is one this model also says (always, when valid)
+        known = {str(what): what for what, _v in deciding_now.rows}
+        whys = {}
+        for _w, value in deciding_now.rows:
+            for v in (getattr(value, "args", None) or {}).values():
+                if isinstance(v, dict) and "text" in v:
+                    whys[v["text"]] = v
+        deciding = []
+        for what, value, why in o.get("deciding", []):
+            label = said(known[what]) if what in known else what
+            w = whys.get(why)
+            from ogr_core.messages import render
+            from ...api.messages import FEM_MESSAGES
+            why_text = render(FEM_MESSAGES, w["code"], w["args"], w["text"], translate=tr) \
+                if w else why
+            deciding.append((label, f"{value} ({why_text})"))
+        s = self.settings_of(self.quantity)
+        f = self.field or {}
+        drawing = [(tr("Subdivision of each element"), str(f.get("level", ""))),
+                   (tr("Range"), "%s: %s – %s %s" % (tr(dict(RANGES)[self.range_mode]),
+                                                      s.format_value(s.vmin),
+                                                      s.format_value(s.vmax), self.unit_text())),
+                   (tr("Intervals"), str(s.intervals)),
+                   (tr("Palette"), tr(s.palette))]
+        return [(tr("The results"), results), (tr("The mesh"), mesh),
+                (tr("What decides the result"), deciding), (tr("The drawing"), drawing)]
+
+    def decided_html(self) -> str:
+        import html
+        out = []
+        for title, rows in self.decided_parts():
+            out.append(f"<h4>{html.escape(title)}</h4><table>")
+            out += [f"<tr><td><b>{html.escape(str(a))}</b></td><td>{html.escape(str(b))}</td></tr>"
+                    for a, b in rows]
+            out.append("</table>")
+        return "".join(out)
 
     def legend_lines(self) -> list[str]:
         """What the legend says of what is drawn (guide §6, RF-19)."""

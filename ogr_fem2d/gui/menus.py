@@ -54,7 +54,7 @@ MENUS = {
                       "-", "default_restraint", "delete_condition"),
     "Properties": ("define_materials", "assign"),
     "Analysis": ("project_settings", "-", "stage_insert", "stage_rename", "stage_delete", "-",
-                 "compute", "interpret"),
+                 "compute", "interpret", "report"),
     "View": ("zoom_all", "zoom_in", "zoom_out", "-", "show_grid", "show_mesh"),
     "Boundaries": ("add_excavation", "add_external", "add_material", "add_stage", "add_circle",
                    "-", "draw_arc", "coords_table", "finish_boundary", "-", "move_vertex",

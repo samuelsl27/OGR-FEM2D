@@ -493,8 +493,8 @@ are (for the interface, in the same process); otherwise as lists.
 ### `results_open`
 
 The state of the results beside the model's file (valid, stale,
-incomplete, cancelled, missing, damaged), who wrote them and their
-stages.
+incomplete, cancelled, missing, damaged), who wrote them, their stages
+and what decided them (the values written with them, rule 12).
 
 | Argumento | Tipo | Por defecto |
 |---|---|---|
@@ -525,7 +525,9 @@ through the stages (history).
 ### `results_report`
 
 The report of the model and of its results (text or html), and, with
-``path``, written to that file.
+``path``, written to that file; or its sections, each with its key,
+title and rows (``sections``: the window says them in the reader's
+language, each line carries its code).
 
 | Argumento | Tipo | Por defecto |
 |---|---|---|

@@ -307,10 +307,12 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   *Hecho cuando:* cada consulta da los números de su operación; el gráfico y la tabla, también; cada
   opción mueve el número.
   (Hecho el 2026-11-27: 9 tests; 13 mutaciones, todas cazadas.)
-- [ ] T33. `gui/info_window.py`: el informe, guardable en HTML y en texto; lo que decidió el
+- [x] T33. `gui/info_window.py`: el informe, guardable en HTML y en texto; lo que decidió el
   resultado, a la vista con él — RF-4, RF-20.
 
   *Hecho cuando:* el informe es el de la T7; los valores de RF-20 se ven en la interpretación.
+  (Hecho el 2026-11-27: el informe, con cada línea codificada y en el idioma del lector; los
+  nudos del eje, añadidos al informe. 8 tests; 11 mutaciones, todas cazadas.)
 - [ ] T34. El puente entre el servidor MCP y la ventana abierta (D8), si sus piezas están etiquetadas.
 
   *Hecho cuando:* una edición por el servidor se ve en la ventana y se deshace en ella; con un cálculo

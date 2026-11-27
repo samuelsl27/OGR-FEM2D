@@ -26,8 +26,9 @@ D17), without Qt.
    (with valid results) by boundary (spec 005, D14).
 
 A section is a key, a title and its rows (a label and a value); the titles,
-the labels and the fixed words are the English text that the interface
-passes through ``tr()`` (rule 2). Values are in the units the model shows
+the labels and the fixed words are coded lines (``model/report_messages``,
+spec 006 T33): the same English text, which the window says in the
+reader's language (rule 2). Values are in the units the model shows
 (``ogr_core.units``), with their label; the model keeps m, kN and kPa, and
 the report says so. ``to_text`` and ``to_html`` say the same.
 
@@ -42,8 +43,11 @@ import numpy as np
 from ogr_core.units import Quantity as Q
 from ogr_core.units.unit_system import get_system
 
+from ogr_core.messages import as_nested
+
 from ..model import model as md
 from ..model import translate
+from ..model.report_messages import part, say, word
 
 
 #: the quantities whose extremes the report gives, stage by stage
@@ -81,39 +85,49 @@ class _Units:
         return "(" + ", ".join(_n(self.system.to_user(c, Q.LENGTH)) for c in p) + ")"
 
 
-def _stages_row(m: md.Model, values) -> str:
-    return ", ".join(f"{s.id}: {v}" for s, v in zip(m.stages, values))
+def _stages_row(m: md.Model, values) -> list:
+    """A value per stage, each ``{stage}: {value}``, joined as before."""
+    return [part("fem.report.by_stage", stage=s.id, value=v) for s, v in zip(m.stages, values)]
+
+
+def _yes(flag: bool):
+    return word("yes" if flag else "no")
 
 
 def _summary(m) -> Section:
     s = m.summary
-    return Section("summary", "Project summary",
-                   (("Title", s.title or "-"), ("Author", s.author or "-"),
-                    ("Date", s.date or "-"), ("Notes", s.notes or "-")))
+    return Section("summary", say("fem.report.title.summary"),
+                   ((say("fem.report.title_"), s.title or "-"),
+                    (say("fem.report.author"), s.author or "-"),
+                    (say("fem.report.date"), s.date or "-"),
+                    (say("fem.report.notes"), s.notes or "-")))
 
 
 def _analysis(m, u) -> Section:
-    rows = [("Analysis", m.analysis), ("Units shown", f"{m.units}"),
-            ("Units kept", "m, kN, kPa, kN/m3 (the values do not change with the units shown)"),
-            ("Stages", str(len(m.stages)))]
-    rows += [(f"Stage {k + 1}", f"{s.id}: {s.name or '-'}") for k, s in enumerate(m.stages)]
-    return Section("analysis", "Analysis", tuple(rows))
+    rows = [(say("fem.report.analysis"), say("fem.report.state.value", state=word(m.analysis))),
+            (say("fem.report.units_shown"), f"{m.units}"),
+            (say("fem.report.units_kept"), say("fem.report.units_kept.value")),
+            (say("fem.report.stages"), str(len(m.stages)))]
+    rows += [(say("fem.report.stage_n", n=k + 1), f"{s.id}: {s.name or '-'}")
+             for k, s in enumerate(m.stages)]
+    return Section("analysis", say("fem.report.title.analysis"), tuple(rows))
 
 
 def _field(m, u) -> Section:
     f = m.field
     if isinstance(f, md.ConstantField):
-        rows = [("Field stress", "constant (compression positive)"),
+        rows = [(say("fem.report.field"), say("fem.report.field.constant")),
                 ("sigma_1", u(f.sigma_1, Q.PRESSURE)), ("sigma_3", u(f.sigma_3, Q.PRESSURE)),
-                ("sigma_z", u(f.sigma_z, Q.PRESSURE)), ("Angle of sigma_1 from x", f"{_n(f.angle)} deg")]
+                ("sigma_z", u(f.sigma_z, Q.PRESSURE)),
+                (say("fem.report.angle_sigma1"), say("fem.report.degrees", value=_n(f.angle)))]
     else:
-        rows = [("Field stress", "gravitational, horizontal strata (compression positive)"),
-                ("Surface", u(f.surface, Q.LENGTH))]
+        rows = [(say("fem.report.field"), say("fem.report.field.gravity")),
+                (say("fem.report.surface"), u(f.surface, Q.LENGTH))]
         for k, s in enumerate(f.strata):
-            rows.append((f"Stratum {k + 1}",
-                         f"down to {u(s.bottom, Q.LENGTH)}, unit weight "
-                         f"{u(s.unit_weight, Q.UNIT_WEIGHT)}, K {_n(s.k)}, Kz {_n(s.kz)}"))
-    return Section("field", "Field stress", tuple(rows))
+            rows.append((say("fem.report.stratum", n=k + 1),
+                         say("fem.report.stratum.value", bottom=u(s.bottom, Q.LENGTH),
+                             gamma=u(s.unit_weight, Q.UNIT_WEIGHT), k=_n(s.k), kz=_n(s.kz))))
+    return Section("field", say("fem.report.title.field"), tuple(rows))
 
 
 def _boundaries(m, u) -> Section:
@@ -121,124 +135,174 @@ def _boundaries(m, u) -> Section:
     for b in m.boundaries:
         arcs = sum(1 for s in b.segments if s.arc is not None)
         divided = [f"{s.index}: {s.divisions}" for s in b.segments if s.divisions is not None]
-        text = (f"{b.kind}, {'closed' if b.closed else 'open'}, {len(b.vertices)} vertices, "
-                f"{arcs} arcs" + (f", divisions {'; '.join(divided)}" if divided else ""))
+        args = {"kind": word(b.kind), "closed": word("closed" if b.closed else "open"),
+                "vertices": len(b.vertices), "arcs": arcs}
+        text = (say("fem.report.boundary.divided", divisions="; ".join(divided), **args)
+                if divided else say("fem.report.boundary", **args))
         rows.append((f"{b.id}" + (f" ({b.name})" if b.name else ""), text))
-        rows.append((f"{b.id}: vertices", " ".join(u.point(v) for v in b.vertices)))
-    return Section("boundaries", "Boundaries", tuple(rows) or (("Boundaries", "none"),))
+        rows.append((say("fem.report.boundary.vertices", boundary=b.id),
+                     " ".join(u.point(v) for v in b.vertices)))
+    return Section("boundaries", say("fem.report.title.boundaries"),
+                   tuple(rows) or ((say("fem.report.title.boundaries"),
+                                    say("fem.report.state.value", state=word("none"))),))
 
 
 def _materials(m, u) -> Section:
     rows = []
     for mat in m.materials:
         rows.append((f"{mat.id}" + (f" ({mat.name})" if mat.name else ""),
-                     f"E {u(mat.E, Q.PRESSURE)}, nu {_n(mat.nu)}, unit weight "
-                     f"{u(mat.unit_weight, Q.UNIT_WEIGHT)}, initial loading {mat.initial_loading}"))
+                     say("fem.report.material.value", E=u(mat.E, Q.PRESSURE), nu=_n(mat.nu),
+                         gamma=u(mat.unit_weight, Q.UNIT_WEIGHT), loading=mat.initial_loading)))
     for a in m.assignments:
-        rows.append((f"Region at {u.point(a.point)}",
-                     f"{a.material}; excavated: {_stages_row(m, ['yes' if e else 'no' for e in a.excavated])}"))
-    return Section("materials", "Materials and assignments", tuple(rows) or (("Materials", "none"),))
+        rows.append((say("fem.report.region_at", point=u.point(a.point)),
+                     say("fem.report.region.value", material=a.material,
+                         stages=_stages_row(m, [_yes(e) for e in a.excavated]))))
+    return Section("materials", say("fem.report.title.materials"),
+                   tuple(rows) or ((say("fem.report.materials"),
+                                    say("fem.report.state.value", state=word("none"))),))
 
 
-def _where(c, u) -> str:
+def _where(c, u):
     if getattr(c, "vertex", None) is not None:
-        return f"vertex {u.point(c.vertex)}"
+        return part("fem.report.at_vertex", point=u.point(c.vertex))
     s = c.span
     if s.start is None and s.end is None:
-        return f"all of {s.boundary}"
-    return f"{s.boundary} from {u.point(s.start)} to {u.point(s.end)}"
+        return part("fem.report.all_of", boundary=s.boundary)
+    return part("fem.report.from_to", boundary=s.boundary, start=u.point(s.start),
+                end=u.point(s.end))
 
 
 def _conditions_loads(m, u) -> Section:
-    rows = [("Default of the external boundary", m.default_restraint)]
+    rows = [(say("fem.report.default_external"), m.default_restraint)]
     for k, c in enumerate(m.conditions):
-        label = f"Condition {k}" + (f" ({c.name})" if c.name else "")
+        label = (say("fem.report.condition_named", n=k, name=c.name) if c.name
+                 else say("fem.report.condition", n=k))
         if c.kind == md.DISPLACEMENT:
-            what = (f"imposed ux {u(c.ux, Q.LENGTH)}, uy {u(c.uy, Q.LENGTH)}; factors: "
-                    f"{_stages_row(m, [_n(f) for f in c.factors])}")
+            what = say("fem.report.imposed", where=_where(c, u), ux=u(c.ux, Q.LENGTH),
+                       uy=u(c.uy, Q.LENGTH), factors=_stages_row(m, [_n(f) for f in c.factors]))
         else:
-            what = f"{c.kind}; active: {_stages_row(m, ['yes' if a else 'no' for a in c.active])}"
-        rows.append((label, f"{_where(c, u)}: {what}"))
+            what = say("fem.report.restraint", where=_where(c, u), kind=c.kind,
+                       active=_stages_row(m, [_yes(a) for a in c.active]))
+        rows.append((label, what))
     for k, ld in enumerate(m.loads):
-        label = f"Load {k}" + (f" ({ld.name})" if ld.name else "")
+        label = (say("fem.report.load_named", n=k, name=ld.name) if ld.name
+                 else say("fem.report.load", n=k))
+        angled = ld.orientation == md.ANGLE_FROM_HORIZONTAL or (
+            isinstance(ld, md.DistributedLoad) and ld.orientation == md.ANGLE_TO_BOUNDARY)
+        args = {"where": _where(ld, u), "orientation": ld.orientation,
+                "factors": _stages_row(m, [_n(f) for f in ld.factors])}
+        if angled:
+            args["angle"] = _n(ld.angle)
         if isinstance(ld, md.DistributedLoad):
-            what = (f"distributed {ld.orientation}, from {u(ld.start_value, Q.PRESSURE)} to "
-                    f"{u(ld.end_value, Q.PRESSURE)}")
+            what = say("fem.report.distributed_angle" if angled else "fem.report.distributed",
+                       start=u(ld.start_value, Q.PRESSURE), end=u(ld.end_value, Q.PRESSURE),
+                       **args)
         else:
-            what = f"point {ld.orientation}, {u(ld.magnitude, Q.FORCE)} (per metre out of plane)"
-        if ld.orientation == md.ANGLE_FROM_HORIZONTAL or (
-                isinstance(ld, md.DistributedLoad) and ld.orientation == md.ANGLE_TO_BOUNDARY):
-            what += f", angle {_n(ld.angle)} deg"
-        rows.append((label, f"{_where(ld, u)}: {what}; factors: "
-                            f"{_stages_row(m, [_n(f) for f in ld.factors])}"))
-    return Section("conditions", "Conditions and loads", tuple(rows))
+            what = say("fem.report.point_load_angle" if angled else "fem.report.point_load",
+                       force=u(ld.magnitude, Q.FORCE), **args)
+        rows.append((label, what))
+    return Section("conditions", say("fem.report.title.conditions"), tuple(rows))
 
 
 def _mesh(m, u) -> Section:
     if m.mesh is None:
-        return Section("mesh", "Mesh", (("Mesh", "none: Mesh > Mesh"),))
+        return Section("mesh", say("fem.report.title.mesh"),
+                       ((say("fem.report.mesh"), say("fem.report.mesh.none")),))
     notes = m.mesh.notes
     q = notes.get("quality", {})
     rows = []
     if m.mesh.source != translate.source_of(m):
-        rows.append(("State", "of another geometry or other settings: mesh again before "
-                              "calculating"))
-    rows += [("Kind", str(notes.get("kind"))),
-             ("Nodes per element", _n(notes.get("nodes_per_element"))),
-             ("Nodes", str(len(m.mesh.nodes))), ("Elements", str(len(m.mesh.elements))),
-             ("Bound B", f"{_n(notes.get('quality_bound'))}, guarantees angles above "
-                         f"{_n(notes.get('angle_guaranteed'))} deg"),
-             ("Smallest angle", f"{_n(q.get('min_angle', {}).get('worst'))} deg"),
-             ("Largest angle", f"{_n(q.get('max_angle', {}).get('worst'))} deg"),
-             ("Nodes on the excavations (or on the external, without any)",
-              _n(notes.get("boundary_nodes")))]
+        rows.append((say("fem.report.state"), say("fem.report.mesh.stale")))
+    rows += [(say("fem.report.kind"), say("fem.report.state.value",
+                                          state=word(str(notes.get("kind"))))),
+             (say("fem.report.nodes_per_element"), _n(notes.get("nodes_per_element"))),
+             (say("fem.report.nodes"), str(len(m.mesh.nodes))),
+             (say("fem.report.elements"), str(len(m.mesh.elements))),
+             (say("fem.report.bound_b"), say("fem.report.bound_b.value",
+                                             b=_n(notes.get("quality_bound")),
+                                             angle=_n(notes.get("angle_guaranteed")))),
+             (say("fem.report.smallest_angle"),
+              say("fem.report.degrees", value=_n(q.get("min_angle", {}).get("worst")))),
+             (say("fem.report.largest_angle"),
+              say("fem.report.degrees", value=_n(q.get("max_angle", {}).get("worst")))),
+             (say("fem.report.boundary_nodes"), _n(notes.get("boundary_nodes")))]
     for added in notes.get("added_on_segments", ()):
-        rows.append((f"Added on {added['segment']}",
+        rows.append((say("fem.report.added_on", segment=added["segment"]),
                      " ".join(u.point(p) for p in added["points"])))
+    if m.analysis == md.AXISYMMETRIC:
+        # the engine restrains them itself (spec 002, D1 bis): a value that
+        # decides the result and is not drawn (rule 12; spec 006, RF-20)
+        on_axis = sum(1 for x, _y in m.mesh.nodes if x == 0.0)
+        rows.append((say("fem.report.axis_nodes"), say("fem.report.axis_nodes.value", n=on_axis)))
     if notes.get("arc_termination_proven") is False:
-        rows.append(("Arcs", str(notes.get("arc_unproven"))))
-    rows += [("Warning", w) for w in m.mesh.warnings]
-    return Section("mesh", "Mesh", tuple(rows))
+        rows.append((say("fem.report.arcs"), str(notes.get("arc_unproven"))))
+    rows += [(say("fem.report.warning"), w) for w in m.mesh.warnings]
+    return Section("mesh", say("fem.report.title.mesh"), tuple(rows))
 
 
 def _deciding(m) -> Section:
-    rows = tuple((what, f"{_n(value) if not isinstance(value, str) else value} ({why})")
+    rows = tuple((what, say("fem.report.deciding.value",
+                            value=_n(value) if not isinstance(value, str) else value,
+                            why=as_nested(why)))
                  for what, value, why in translate.deciding_values(m))
-    return Section("deciding", "What decides the result (rule 12)", rows)
+    return Section("deciding", say("fem.report.title.deciding"), rows)
+
+
+#: the messages of the results' state, said by their code
+_MESSAGES = {"no results: calculate the model": "fem.report.message.no_results",
+             "the model changed after the calculation": "fem.report.message.changed"}
+
+
+def _state(opened):
+    state = word(opened.status)
+    if not opened.message:
+        return say("fem.report.state.value", state=state)
+    code = _MESSAGES.get(opened.message)
+    return say("fem.report.state.said", state=state,
+               message=part(code) if code else opened.message)
 
 
 def _results(m, u, opened) -> Section:
+    title = say("fem.report.title.results")
     if opened is None:
-        return Section("results", "Results", (("State", "not opened"),))
-    rows = [("State", opened.status + (f": {opened.message}" if opened.message else ""))]
+        return Section("results", title, ((say("fem.report.state"),
+                                           say("fem.report.state.value",
+                                               state=word("not_opened"))),))
+    rows = [(say("fem.report.state"), _state(opened))]
     if opened.other_version:
-        rows.append(("Written by", opened.other_version))
+        rows.append((say("fem.report.written_by"), opened.other_version))
     try:
         r = opened.read_anyway()
     except Exception:                                          # missing, damaged
-        return Section("results", "Results", tuple(rows))
+        return Section("results", title, tuple(rows))
     from ..results import queries
     h = r.header
-    rows += [("Engine", h.engine_variant), ("Kept as", f"{h.units_stored}; {h.sign_convention}")]
+    rows += [(say("fem.report.engine"), h.engine_variant),
+             (say("fem.report.kept_as"), f"{h.units_stored}; {h.sign_convention}")]
     valid = opened.status == "valid"
     for k in range(r.n_stages):
         view = queries.View(r, k)
         info = view.info
-        label = f"Stage {info['id']}" + (f" ({info['name']})" if info["name"] else "")
+        label = part("fem.report.stage_named", stage=info["id"], name=info["name"]) \
+            if info["name"] else part("fem.report.stage", stage=info["id"])
         s = queries.summary(view, m if valid else None, EXTREMES)
-        rows.append((label, ("solved" if info["solved"] else "not solved (it changes nothing)")
-                     + f"; greatest displacement {u(s.max_displacement, Q.LENGTH)} at node "
-                       f"{s.max_displacement_node}"))
+        rows.append((say("fem.report.state.value", state=label),
+                     say("fem.report.stage.value",
+                         solved=word("solved" if info["solved"] else "not_solved"),
+                         u=u(s.max_displacement, Q.LENGTH), node=s.max_displacement_node)))
         for e in s.extremes:
-            rows.append((f"{label}: {e.quantity} at the {e.at}",
-                         f"max {u(e.maximum, Q.PRESSURE)} at {u.point(e.max_where)}, "
-                         f"min {u(e.minimum, Q.PRESSURE)} at {u.point(e.min_where)}"))
-        rows.append((f"{label}: reactions", f"({u(s.reactions[0], Q.FORCE)}, "
-                                            f"{u(s.reactions[1], Q.FORCE)}) per metre out of plane"))
+            rows.append((say("fem.report.extreme", stage=label, quantity=e.quantity,
+                             at=word(e.at)),
+                         say("fem.report.extreme.value", max=u(e.maximum, Q.PRESSURE),
+                             max_at=u.point(e.max_where), min=u(e.minimum, Q.PRESSURE),
+                             min_at=u.point(e.min_where))))
+        rows.append((say("fem.report.reactions", stage=label),
+                     say("fem.report.reactions.value", rx=u(s.reactions[0], Q.FORCE),
+                         ry=u(s.reactions[1], Q.FORCE))))
         for bid, rx, ry in s.reactions_by_boundary:
-            rows.append((f"{label}: reactions on {bid}",
+            rows.append((say("fem.report.reactions_on", stage=label, boundary=bid),
                          f"({u(rx, Q.FORCE)}, {u(ry, Q.FORCE)})"))
-    return Section("results", "Results", tuple(rows))
+    return Section("results", title, tuple(rows))
 
 
 def report(m: md.Model, opened=None) -> tuple[Section, ...]:
@@ -247,6 +311,12 @@ def report(m: md.Model, opened=None) -> tuple[Section, ...]:
     u = _Units(m)
     return (_summary(m), _analysis(m, u), _field(m, u), _boundaries(m, u), _materials(m, u),
             _conditions_loads(m, u), _mesh(m, u), _deciding(m), _results(m, u, opened))
+
+
+def decided(m: md.Model) -> tuple[Section, Section]:
+    """The mesh and what decides the result, without the results: what the
+    interpretation shows beside a field (spec 006, RF-20)."""
+    return _mesh(m, _Units(m)), _deciding(m)
 
 
 def to_text(sections) -> str:

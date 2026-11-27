@@ -191,3 +191,32 @@ spec 005, RF-11 a RF-15).
 Tests: `test_gui_queries_v0015.py`, 9 tests. Regla 7: los puntos de una línea, los de cada tramo de un
 contorno, la distancia y el lado, la fase y el sistema de unidades mueven el número; 13 mutaciones,
 todas cazadas.
+
+## T33 — el informe, y lo que decidió el resultado a la vista (2026-11-27)
+
+`ogr_fem2d/gui/info_window.py`; Análisis > Informe (F11), también en el menú Resultados de la
+interpretación (RF-4, RF-20; D17; regla 12).
+
+- **El informe de la ventana es el de la operación** (`results_report`, que ahora también da sus
+  secciones): en inglés, su texto y su HTML son los de la operación, carácter a carácter (un test lo
+  compara). Se guarda como HTML o como texto, tal como se ve.
+- **Cada línea del informe lleva su código** (`model/report_messages.py`), como se decidió el
+  2026-11-25 para el informe de una conversión: la ventana lo dice entero en el idioma del lector, y
+  lo que el usuario escribió, los identificadores y los números quedan como están. **El inglés no
+  cambió**: el texto y el HTML del informe de los modelos de los tests son los de antes, carácter a
+  carácter (comprobado antes del cambio y con `test_report_info_v0012.py`), y lo que el `.h5` guarda
+  de lo que decide el resultado, también (lo que decide el resultado se escribe con código, pero es
+  el mismo texto).
+- **Lo que decidió el campo, al lado del campo** (RF-20), en la interpretación: el estado de los
+  resultados, quién los escribió y con qué motor; la malla (la cota B, los ángulos, lo que anotó el
+  mallador); **lo que decide el resultado tal como se escribió con los resultados**, así que unos
+  resultados obsoletos enseñan sus valores y no los del modelo editado; y los ajustes del dibujo (la
+  subdivisión, el rango, los intervalos, la paleta), que se mueven con ellos. Para eso `results_open`
+  da también lo que decidió los resultados.
+- **Los nudos del eje que restringe el motor** (spec 002, D1 bis) están ahora en el informe, en la
+  malla, en un modelo axisimétrico: un valor que decide el resultado y no se dibuja (RF-20). Un test
+  los compara con los que el motor restringe.
+
+Tests: `test_gui_report_v0015.py`, 8 tests. Regla 7, 11 mutaciones (cada línea dicha, guardar en HTML o
+en texto, los nudos del eje, el sí y el no, lo que decidió los resultados, su traducción, el estado, los
+intervalos del dibujo y que el panel se vuelva a escribir): todas cazadas.

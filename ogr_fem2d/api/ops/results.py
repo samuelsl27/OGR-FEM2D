@@ -115,8 +115,8 @@ def _query_dict(q: queries.Query, opened) -> dict:
 @OPERATIONS.operation("results_open", toolset="results")
 def results_open(ws, project_id: Optional[str] = None) -> dict:
     """The state of the results beside the model's file (valid, stale,
-    incomplete, cancelled, missing, damaged), who wrote them and their
-    stages."""
+    incomplete, cancelled, missing, damaged), who wrote them, their stages
+    and what decided them (the values written with them, rule 12)."""
     handle = ws.get(project_id)
     if handle.path is None:
         raise InvalidArgument(say("fem.run.no_file", model=handle.id),
@@ -131,6 +131,9 @@ def results_open(ws, project_id: Optional[str] = None) -> dict:
     out["stages"] = [{k: r.stage_info(i)[k] for k in ("id", "name", "solved", "steps")}
                      for i in range(r.n_stages)]
     out["engine"] = r.header.engine_variant
+    # what decided these results, as they were written with them (rule 12;
+    # spec 006, T33: the interpretation shows it beside the field)
+    out["deciding"] = [[what, value, why] for what, value, why in r.deciding]
     return out
 
 
@@ -245,15 +248,23 @@ def results_table(ws, path: str, quantity: str, kind: str, project_id: Optional[
 def results_report(ws, project_id: Optional[str] = None, format: str = "text",
                    path: Optional[str] = None, overwrite: bool = False) -> dict:
     """The report of the model and of its results (text or html), and, with
-    ``path``, written to that file."""
-    if format not in ("text", "html"):
-        raise unknown("report format", format, ["text", "html"])
+    ``path``, written to that file; or its sections, each with its key,
+    title and rows (``sections``: the window says them in the reader's
+    language, each line carries its code)."""
+    if format not in ("text", "html", "sections"):
+        raise unknown("report format", format, ["text", "html", "sections"])
     handle = ws.get(project_id)
     with ws.reading(handle.id, "report") as held:
         opened = calc.open_results(handle.path, held.model) if handle.path else None
         sections = info.report(held.model, opened)
-    text = info.to_text(sections) if format == "text" else info.to_html(sections)
     out = {"project_id": handle.id, "format": format, "state": opened.status if opened else None}
+    if format == "sections":
+        if path is not None:
+            raise InvalidArgument(say("fem.report.sections_no_path"))
+        out["sections"] = [{"key": s.key, "title": s.title, "rows": [list(r) for r in s.rows]}
+                           for s in sections]
+        return out
+    text = info.to_text(sections) if format == "text" else info.to_html(sections)
     if path is not None:
         target = ws.resolve_path(path, for_write=True,
                                  overwrite=coerce_value(overwrite, bool, "overwrite"),

@@ -235,36 +235,42 @@ def deciding_values(m: md.Model) -> list[tuple[str, object, str]]:
     """Every value that decides the result of the model and was not drawn
     (rule 12): the defaults written in the model, the settings of the mesh,
     and the solver settings the translation takes from the engine (D9), as
-    (what, value, why). The results of spec 005 carry it."""
+    (what, value, why). The results of spec 005 carry it. ``what`` and
+    ``why`` are coded (``report_messages``, spec 006 T33): they are the same
+    English text, and the window says them in the reader's language."""
+    from .report_messages import say
     st = m.mesh_settings
     stage = em.Stage(active=())
     out = [
-        ("units", "m, kN, kPa, kN/m3", "the model stores and the engine receives kPa (D5); "
-                                       f"{m.units!r} is only what is shown"),
-        ("analysis", m.analysis, "plane strain or axisymmetry"),
-        ("default_restraint", m.default_restraint,
-         "the external boundary where no condition says otherwise (D16)"),
+        (say("fem.deciding.units"), say("fem.deciding.units.value"),
+         say("fem.deciding.units.why", units=repr(m.units))),
+        (say("fem.deciding.analysis"), m.analysis, say("fem.deciding.analysis.why")),
+        (say("fem.deciding.default_restraint"), m.default_restraint,
+         say("fem.deciding.default_restraint.why")),
     ]
     for mat in m.materials:
-        out.append((f"material {mat.id!r}: initial_loading", mat.initial_loading,
-                    "what its elements start with (D11)"))
+        out.append((say("fem.deciding.initial_loading", material=repr(mat.id)),
+                    mat.initial_loading, say("fem.deciding.initial_loading.why")))
+    spec003, graded, uniform = (say("fem.deciding.spec003"), say("fem.deciding.graded"),
+                                say("fem.deciding.uniform"))
+    default = say("fem.deciding.engine_default")
     out += [
-        ("mesh: kind", st.kind, "spec 003"),
-        ("mesh: nodes_per_element", st.nodes_per_element, "spec 003"),
-        ("mesh: quality_bound", st.quality_bound, "B; with sqrt 2 no angle below 20.7 degrees "
-                                                  "(Shewchuk 2002a)"),
-        ("mesh: boundary_nodes", st.boundary_nodes, "graded mesh (spec 003, D5)"),
-        ("mesh: max_size", st.max_size, "graded mesh"),
-        ("mesh: size", st.size, "uniform mesh"),
-        ("mesh: elements", st.elements, "uniform mesh"),
-        ("mesh: windows", len(st.windows), "size bounds (spec 003, D9)"),
-        ("solver: steps", stage.steps, "the engine's default (D9: in elasticity it does not "
-                                       "move the number)"),
-        ("solver: tolerance", stage.tolerance, "the engine's default (D9)"),
-        ("solver: max_iterations", stage.max_iterations, "the engine's default (D9)"),
-        ("solver: max_cuts", stage.max_cuts, "the engine's default (D9)"),
+        (say("fem.deciding.mesh_kind"), st.kind, spec003),
+        (say("fem.deciding.mesh_nodes_per_element"), st.nodes_per_element, spec003),
+        (say("fem.deciding.mesh_quality_bound"), st.quality_bound,
+         say("fem.deciding.quality_bound.why")),
+        (say("fem.deciding.mesh_boundary_nodes"), st.boundary_nodes,
+         say("fem.deciding.boundary_nodes.why")),
+        (say("fem.deciding.mesh_max_size"), st.max_size, graded),
+        (say("fem.deciding.mesh_size"), st.size, uniform),
+        (say("fem.deciding.mesh_elements"), st.elements, uniform),
+        (say("fem.deciding.mesh_windows"), len(st.windows), say("fem.deciding.windows.why")),
+        (say("fem.deciding.solver_steps"), stage.steps, say("fem.deciding.solver_steps.why")),
+        (say("fem.deciding.solver_tolerance"), stage.tolerance, default),
+        (say("fem.deciding.solver_max_iterations"), stage.max_iterations, default),
+        (say("fem.deciding.solver_max_cuts"), stage.max_cuts, default),
     ]
     if m.analysis == md.AXISYMMETRIC and any(isinstance(ld, md.PointLoad) for ld in m.loads):
-        out.append(("point loads", "the force of the whole ring",
-                    "the engine's convention in axisymmetry (spec 002, D2)"))
+        out.append((say("fem.deciding.point_loads"), say("fem.deciding.point_loads.value"),
+                    say("fem.deciding.point_loads.why")))
     return out

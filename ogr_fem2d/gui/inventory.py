@@ -56,6 +56,7 @@ MAPPED = {
     "segment_divisions": "boundary_edit",
     "compute": "analysis_run",
     "interpret": "results_open",
+    "report": "results_report",
 }
 
 #: action key -> why it calls no operation
