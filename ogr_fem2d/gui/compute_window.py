@@ -169,7 +169,9 @@ class ComputeWindow(QDialog):
             if jid not in self._stages or jid in self._ended:
                 continue                        # not followed here, or said already
             st = api.call(self.session.ws, "job_get", job_id=jid)
-            if st["state"] in FINAL:
+            if st["state"] in FINAL and self._answer_awaited(jid, st):
+                going = True                    # its end is said with the cancel's answer
+            elif st["state"] in FINAL:
                 self._end(jid, st)
             elif st.get("progress"):
                 self._heard(jid, st["progress"])
@@ -185,19 +187,29 @@ class ComputeWindow(QDialog):
         loop = QEventLoop()
         timer = QTimer()
 
+        def going() -> bool:
+            return bool(self.running()) or any(j not in self._ended for j in self._cancelling)
+
         def ask():
             self.poll()
-            if not self.running():
+            if not going():
                 loop.quit()
         timer.timeout.connect(ask)
         timer.start(every_ms)
         ask()
-        if self.running():
+        if going():
             loop.exec()
         timer.stop()
         # a job may end between poll() and running(): one reading more says its end
         # (the CI of 2026-11-27, macOS: the summary was still empty)
         self.poll()
+
+    def _answer_awaited(self, job: str, st: dict) -> bool:
+        """A job cancelled from here whose ``job_cancel`` has not answered
+        yet: whether its process was stopped is in that answer, and the
+        summary says it (the CI of 2026-11-27, macOS: the job ended before
+        the answer, and the summary said only "Cancelled.")."""
+        return st["state"] == "cancelled" and job in self._cancelling and job not in self._killed
 
     # ------------------------------------------------------------ cancelling
     def cancel(self) -> None:

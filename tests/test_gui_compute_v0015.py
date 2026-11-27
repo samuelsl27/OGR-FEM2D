@@ -150,6 +150,34 @@ class TestWaiting:
                 win.summary_text()
 
 
+class TestCancelAnsweredLate:
+    def test_the_summary_waits_for_the_answer(self):
+        """The CI of 2026-11-27 (macOS): the job ended cancelled before
+        ``job_cancel`` answered, and the summary said only "Cancelled."."""
+        from ogr_fem2d.gui import compute_window as cw
+        with _Open(_three()) as o:
+            o.w.compute()
+            win = o.w.compute_window
+            real = cw.api.call
+
+            def late(ws, op, **kw):
+                got = real(ws, op, **kw)
+                if op == "job_cancel":              # the answer comes after the end
+                    while real(ws, "job_get", job_id=kw["job_id"])["state"] != "cancelled":
+                        time.sleep(0.02)
+                    time.sleep(0.3)
+                return got
+            cw.api.call = late
+            try:
+                win.cancel()
+                win.wait()
+            finally:
+                cw.api.call = real
+            assert o.job().status()["state"] == "cancelled"
+            assert win.summary_text().startswith("Cancelled between two stages"), \
+                win.summary_text()
+
+
 class TestCancel:
     def test_cancel_stops_it_and_the_window_goes_on(self):
         with _Open(_three()) as o:
