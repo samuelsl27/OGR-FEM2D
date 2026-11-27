@@ -78,7 +78,17 @@ class Step:
 
 
 def document_hash(held: Held) -> str:
-    return fingerprint.document_fingerprint(held.model)
+    """The fingerprint of the model as its file would keep it, worked out
+    once per model: a model is immutable, so the same object has the same
+    fingerprint (v0.0.15: with the mesh of case 005 it took 0.1 s, and the
+    window and every question on the results asked for it)."""
+    m = held.model
+    memo = getattr(held, "_hashed", None)
+    if memo is not None and memo[0] is m:
+        return memo[1]
+    h = fingerprint.document_fingerprint(m)
+    held._hashed = (m, h)
+    return h
 
 
 NAMES = WorkspaceNames(new_op="project_new", open_op="project_open")

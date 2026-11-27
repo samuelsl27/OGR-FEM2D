@@ -38,7 +38,26 @@ from ...results import quantities as qt
 from ..messages import say
 from ..registry import OPERATIONS
 
-QUERY_KINDS = ("line", "boundary", "nodes", "points", "history")
+QUERY_KINDS = ("line", "boundary", "nodes", "points", "at", "history")
+
+
+def _entry(ws, handle) -> dict:
+    """The results of the handle's model as opened, and their views."""
+    # the results as opened, and their views (with the values they recover),
+    # are kept while neither the model nor its results file change: the
+    # state is of those two (v0.0.15: opening again for every question
+    # took 0.1 s with the mesh of case 005, the cursor asks many)
+    h5 = calc.results_path(handle.path)
+    st = h5.stat() if h5.exists() else None
+    stamp = None if st is None else (st.st_mtime_ns, st.st_size)
+    key = (str(handle.path), handle.document_hash(), stamp)
+    cache = handle.exec_ns.setdefault("_results", {})
+    if key not in cache:
+        with ws.reading(handle.id, "results") as held:
+            opened = calc.open_results(handle.path, held.model)
+        cache.clear()
+        cache[key] = {"opened": opened, "views": {}}
+    return cache[key]
 
 
 def _results_of(ws, project_id, allow_invalid: bool):
@@ -47,18 +66,7 @@ def _results_of(ws, project_id, allow_invalid: bool):
     if handle.path is None:
         raise InvalidArgument(say("fem.run.no_file", model=handle.id),
                               hint=say("fem.run.no_file.hint"))
-    with ws.reading(handle.id, "results") as held:
-        opened = calc.open_results(handle.path, held.model)
-    # the views (and the values they recover) are kept while neither the
-    # model nor its results file change
-    h5 = calc.results_path(handle.path)
-    stamp = h5.stat().st_mtime_ns if h5.exists() else None
-    key = (str(handle.path), handle.document_hash(), opened.status, stamp)
-    cache = handle.exec_ns.setdefault("_results", {})
-    if key not in cache:
-        cache.clear()
-        cache[key] = {"opened": opened, "views": {}}
-    entry = cache[key]
+    entry = _entry(ws, handle)
     opened = entry["opened"]
     if opened.status != calc.VALID and not coerce_value(allow_invalid, bool, "allow_invalid"):
         raise NotConfigured(say("fem.results.not_valid", status=opened.status,
@@ -113,8 +121,7 @@ def results_open(ws, project_id: Optional[str] = None) -> dict:
     if handle.path is None:
         raise InvalidArgument(say("fem.run.no_file", model=handle.id),
                               hint=say("fem.run.no_file.hint"))
-    with ws.reading(handle.id, "results") as held:
-        opened = calc.open_results(handle.path, held.model)
+    opened = _entry(ws, handle)["opened"]
     out = {"project_id": handle.id, "state": opened.status, "message": opened.message,
            "other_version": opened.other_version, "path": str(opened.path), "stages": []}
     try:
@@ -142,6 +149,10 @@ def _query(handle, view, r, quantity, kind, points_xy, n, boundary, distance, si
         return queries.all_nodes(view, quantity)
     if kind == "points":
         return queries.all_points(view, quantity)
+    if kind == "at":
+        if x is None or y is None:
+            raise InvalidArgument(say("fem.results.at_needs_xy"))
+        return queries.at(view, quantity, coerce_value(x, float, "x"), coerce_value(y, float, "y"))
     return queries.history(r, quantity, coerce_value(x, float, "x"), coerce_value(y, float, "y"))
 
 
@@ -154,7 +165,8 @@ def results_query(ws, quantity: str, kind: str, project_id: Optional[str] = None
                   allow_invalid: bool = False) -> dict:
     """A quantity along a line or polyline (points_xy; n points along it, or
     its vertices), on a boundary (at distance to a side), at every node, at
-    every integration point, or at (x, y) through the stages (history)."""
+    every integration point, at (x, y) in the stage (at), or at (x, y)
+    through the stages (history)."""
     quantity = _quantity(quantity)
     if kind not in QUERY_KINDS:
         raise unknown("query kind", kind, list(QUERY_KINDS))
@@ -257,7 +269,8 @@ def results_field(ws, quantity: str, project_id: Optional[str] = None,
         f = drawing.field(view, quantity, lvl, ab)
         rng = drawing.value_range(view, quantity, range_mode, lvl, ab,
                                   None if low is None else coerce_value(low, float, "low"),
-                                  None if high is None else coerce_value(high, float, "high"))
+                                  None if high is None else coerce_value(high, float, "high"),
+                                  views=views, drawn=f)
     except ValueError as err:
         raise InvalidArgument(say("fem.field.refused", what=str(err))) from None
     q = qt.get(quantity)

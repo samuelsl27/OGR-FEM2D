@@ -504,7 +504,8 @@ stages.
 
 A quantity along a line or polyline (points_xy; n points along it, or
 its vertices), on a boundary (at distance to a side), at every node, at
-every integration point, or at (x, y) through the stages (history).
+every integration point, at (x, y) in the stage (at), or at (x, y)
+through the stages (history).
 
 | Argumento | Tipo | Por defecto |
 |---|---|---|

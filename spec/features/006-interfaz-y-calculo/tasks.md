@@ -287,7 +287,7 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   (Hecho el 2026-11-27: la cola es `job_list`, sin encolar, porque el núcleo corre un trabajo
   cada vez; el plazo de Cancelar se espera fuera del hilo de la ventana. 9 tests; 17
   mutaciones, todas cazadas.)
-- [ ] T31. `gui/interpret/`: la ventana, el selector de magnitud, las pestañas de fase, el campo
+- [x] T31. `gui/interpret/`: la ventana, el selector de magnitud, las pestañas de fase, el campo
   dibujado con su leyenda y sus opciones (rango, intervalos, paleta, modo, valor absoluto) y el valor
   bajo el cursor — RF-19, RF-20.
 
@@ -298,6 +298,9 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   - cada opción mueve el dibujo;
   - unos resultados obsoletos o incompletos no se confunden con válidos;
   - los tiempos de D15, medidos.
+  (Hecho el 2026-11-27: todo, salvo el primer dibujo de una fase con el caso 005, 3,9 s frente
+  a 1 s, por la recuperación: hallazgo con tres propuestas en el changelog. 15 tests; 20
+  mutaciones, todas cazadas.)
 - [ ] T32. Las consultas en la interfaz (línea, polilínea, contorno con lado y distancia, todos los
   nudos), con su gráfico (frente a la distancia o a la fase) y su exportación — RF-19.
 

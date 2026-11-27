@@ -223,6 +223,16 @@ def line(view: View, quantity: str, vertices, n: int | None = None) -> Query:
                   ("points", "at the vertices" if n is None else n)))
 
 
+def at(view: View, quantity: str, x: float, y: float) -> Query:
+    """The quantity at (x, y) in the stage (spec 006, T31: the value under
+    the cursor, interpolated exactly as a line's, D11): a row per material
+    that meets there, or one without value saying why (outside the mesh, in
+    an excavated region)."""
+    return Query(quantity, view.stage, view.info["id"],
+                 tuple(_rows_at(view, quantity, [(float(x), float(y))], [None])), "at",
+                 method_of(quantity), (("x", float(x)), ("y", float(y))))
+
+
 # --------------------------------------------- every node and every point
 def all_nodes(view: View, quantity: str) -> Query:
     """The quantity at every node (RF-13): a displacement once per node; a

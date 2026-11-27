@@ -55,6 +55,7 @@ MAPPED = {
     "stage_factors": "load_stage",
     "segment_divisions": "boundary_edit",
     "compute": "analysis_run",
+    "interpret": "results_open",
 }
 
 #: action key -> why it calls no operation

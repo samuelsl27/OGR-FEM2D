@@ -60,6 +60,7 @@ ES = {
         "Guárdalo antes (project_save): los resultados llevan la huella del archivo, y nacerían "
         "obsoletos.",
     "The results are {status} ({message}).": "Los resultados están {status} ({message}).",
+    "A value at a point needs x and y.": "Un valor en un punto necesita x e y.",
     "Calculate the model again (analysis_run), or read them as they are with "
     "allow_invalid=true: every answer then says their state.":
         "Calcula otra vez el modelo (analysis_run), o léelos como están con allow_invalid=true: "

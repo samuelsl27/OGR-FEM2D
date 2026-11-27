@@ -59,12 +59,17 @@ EXCEPTIONS = {
         "the window's title: the model's name, its star and the kind of analysis (each through "
         "tr()) joined with the program's name, which is not translated",
     ("main_window.py", "OGR FEM2D {}\n\n"): "the program's name and its version in About",
+    ("interpret/window.py", "x = {}, y = {} {}: "):
+        "the interpretation's cursor: its coordinates in symbols, with the unit shown, before "
+        "the values (each said through tr())",
     ("main_window.py", "x, y · @dx, dy · @d<a"):
         "the placeholder of the X, Y field: the forms of a typed point, in symbols",
 }
 #: Spanish words that are the English ones
 SAME = {"Material", "X (%s)", "Y (%s)", "General", "K", "Kz", "Material %d", "vertical",
-        "horizontal"}
+        "horizontal",
+        # the catalogue's names that are the same in Spanish (T31)
+        "Sigma xx", "Sigma r (radial)", "Sigma yy", "Sigma z (axial)", "Tau xy", "Tau rz"}
 
 _WINDOWS = []
 

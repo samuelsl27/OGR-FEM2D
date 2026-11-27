@@ -147,6 +147,7 @@ class MainWindow(QMainWindow):
         self._mk("window_main", "Model", self.act_front, None)
         self._mk("window_compute", "Calculation", self.act_compute_window, None)
         self._mk("compute", "Compute", self.act_compute, "compute", "F9")
+        self._mk("interpret", "Interpret", self.act_interpret, "interpret", "F10")
         self._mk("zoom_all", "Zoom All", self.view.zoom_all, "zoom_all", "F2")
         self._mk("zoom_in", "Zoom In", lambda: self.view.zoom_by(1.5), "zoom_in", "F5")
         self._mk("zoom_out", "Zoom Out", lambda: self.view.zoom_by(1 / 1.5), "zoom_out", "F4")
@@ -278,9 +279,15 @@ class MainWindow(QMainWindow):
             "none": tr("There is no mesh: Mesh > Discretize and Mesh."),
             "stale": tr("The mesh is of another geometry: Mesh > Discretize and Mesh."),
         }.get(state, ""))
+        h5 = None if self.session.path is None else self.session.path.with_suffix(".h5")
+        disabled_reasons.gate(self._actions["interpret"], h5 is not None and h5.exists(),
+                              tr("There are no results: Analysis > Compute."))
         self.mesh_label.setText(self.mesh_text())
         self.mesh_label.setToolTip(self.mesh_notes())
         self.assign_panel.refresh(m)
+        win = getattr(self, "_interpret_window", None)
+        if win is not None and win.isVisible():
+            win.note_state()
         if "draw_arc" in self._actions:
             self.refresh_tools()
         self._fill_stage_tabs(m)
@@ -694,6 +701,7 @@ class MainWindow(QMainWindow):
             from .compute_window import ComputeWindow
             self._compute_window = ComputeWindow(self.session, self)
             self._compute_window.job_ended.connect(self.calculated)
+            self._compute_window.results_wanted.connect(self.act_interpret)
         return self._compute_window
 
     def confirm_save_to_compute(self) -> bool:
@@ -749,6 +757,26 @@ class MainWindow(QMainWindow):
     def act_compute(self) -> None:
         self.compute()
 
+    @property
+    def interpret_window(self):
+        """The interpretation's window, made the first time it is asked for."""
+        if getattr(self, "_interpret_window", None) is None:
+            from .interpret.window import InterpretWindow
+            self._interpret_window = InterpretWindow(self)
+        return self._interpret_window
+
+    def interpret(self) -> Optional[str]:
+        """The results of the model, read again and shown; the refusal's
+        text, or None."""
+        win = self.interpret_window
+        said = win.open()
+        win.show()
+        win.raise_()
+        return said
+
+    def act_interpret(self) -> None:
+        self.interpret()
+
     def act_compute_window(self) -> None:
         win = self.compute_window
         win.show()
@@ -758,6 +786,9 @@ class MainWindow(QMainWindow):
         """A calculation ended: its summary on the status bar (guide §5)."""
         self.statusBar().showMessage(self.compute_window.summary_text(job), 20000)
         self.refresh()
+        win = getattr(self, "_interpret_window", None)
+        if win is not None and win.isVisible():
+            win.open()                                   # the results just written
 
     def confirm_stop_calculation(self) -> bool:
         box = QMessageBox(QMessageBox.Icon.Warning, tr("A calculation is running"),
@@ -1052,6 +1083,8 @@ class MainWindow(QMainWindow):
         if running:
             self.compute_window.stop_all()
             self.compute_window.hide()
+        if getattr(self, "_interpret_window", None) is not None:
+            self._interpret_window.close()
         if self._own_session:
             self.session.close()
         super().closeEvent(event)

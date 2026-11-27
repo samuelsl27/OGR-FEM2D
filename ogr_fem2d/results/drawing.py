@@ -124,8 +124,13 @@ def _min_max(values) -> tuple[float, float] | None:
 
 def value_range(view: View, quantity: str, mode: str = AUTO_STAGE, level: int = DEFAULT_LEVEL,
                 absolute: bool = False, low: float | None = None,
-                high: float | None = None) -> tuple[float, float]:
-    """The (smallest, greatest) of the legend (see the module's notes)."""
+                high: float | None = None, views: dict | None = None,
+                drawn: Field | None = None) -> tuple[float, float]:
+    """The (smallest, greatest) of the legend (see the module's notes).
+    ``views`` (stage -> View) are the views already made, to be used and
+    kept, and ``drawn`` the field of ``view`` already drawn: they only save
+    the recovery and the drawing done again (v0.0.15: with case 005 the
+    range drew the field a second time)."""
     if mode not in RANGE_MODES:
         raise ValueError(f"mode {mode!r} is not one of {RANGE_MODES}")
     if mode == CUSTOM:
@@ -137,9 +142,15 @@ def value_range(view: View, quantity: str, mode: str = AUTO_STAGE, level: int = 
                          "(rule 7)")
     stages = [view.stage] if mode == AUTO_STAGE else range(view.results.n_stages)
     found = []
+    views = {} if views is None else views
     for k in stages:
-        v = view if k == view.stage else View(view.results, k)
-        got = _min_max(field(v, quantity, level, absolute).values)
+        if k == view.stage and drawn is not None and (drawn.quantity, drawn.level,
+                                                      drawn.absolute) == (quantity, level,
+                                                                          absolute):
+            got = _min_max(drawn.values)
+        else:
+            v = view if k == view.stage else views.setdefault(k, View(view.results, k))
+            got = _min_max(field(v, quantity, level, absolute).values)
         if got is not None:
             found.append(got)
     if not found:

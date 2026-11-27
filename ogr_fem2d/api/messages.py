@@ -71,6 +71,7 @@ _ENTRIES = [
     _spec("fem.run.unsaved.hint", "Save it first (project_save): the results carry the file's "
                                   "fingerprint, and would be stale at once."),
     _spec("fem.results.not_valid", "The results are {status} ({message})."),
+    _spec("fem.results.at_needs_xy", "A value at a point needs x and y."),
     _spec("fem.results.not_valid.hint", "Calculate the model again (analysis_run), or read them as "
                                         "they are with allow_invalid=true: every answer then says "
                                         "their state."),

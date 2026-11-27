@@ -67,6 +67,8 @@ class ComputeWindow(QDialog):
 
     #: (job_id, final state) when a job this window follows ends
     job_ended = Signal(str, str)
+    #: the results of the followed job asked for (guide §5: a button to go to them)
+    results_wanted = Signal()
 
     def __init__(self, session, parent=None):
         super().__init__(parent)
@@ -126,6 +128,10 @@ class ComputeWindow(QDialog):
         self.btn_close.setToolTip(tr("Closes this window; a calculation goes on: "
                                      "Window > Calculation shows it again."))
         self.btn_close.clicked.connect(self.hide)
+        self.btn_results = QPushButton(tr("Interpret"))
+        self.btn_results.setToolTip(tr("Shows the results: Analysis > Interpret."))
+        self.btn_results.clicked.connect(self.results_wanted.emit)
+        buttons.addWidget(self.btn_results)
         buttons.addWidget(self.btn_cancel)
         buttons.addWidget(self.btn_close)
         lay.addLayout(buttons)
@@ -334,6 +340,9 @@ class ComputeWindow(QDialog):
         going = job is not None and not ended
         self.btn_cancel.setEnabled(going and job not in self._cancelling)
         self.btn_cancel.setToolTip("" if going else tr("No calculation is running."))
+        st = self._ended.get(job) or {}
+        # a job done has its summary, with the stages it wrote
+        self.btn_results.setEnabled((st.get("summary") or {}).get("stages", 0) > 0)
         if job is None:
             self.stage_label.setText(tr("No calculation yet: Analysis > Compute."))
             self.bar.setRange(0, 1)

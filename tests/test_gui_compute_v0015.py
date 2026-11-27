@@ -108,6 +108,9 @@ class TestCalculating:
             assert o.w.statusBar().currentMessage() == win.summary_text()
             assert [win.queue.item(0, c).text() for c in (1, 2)] == ["Calculation", "Done"]
             assert win.bar.value() == win.bar.maximum() == 3
+            assert win.btn_results.isEnabled()               # guide §5: go to the results
+            win.btn_results.click()
+            assert not o.w.interpret_window.isHidden()
 
     def test_a_stage_heard_says_its_steps(self):
         with _Open(_three()) as o:
@@ -139,6 +142,7 @@ class TestCancel:
                 win.summary_text()
             h = calc.open_results(o.path).read_anyway().header
             assert h.status == store.CANCELLED
+            assert not win.btn_results.isEnabled()
 
 
 class TestClosing:
