@@ -396,7 +396,7 @@ desde las fuentes (σR 0.0015 P0 en el radio, el peor), en 49 s; **la carpeta, 3
   | Linux | 26 s | 602 MB | 519 MB |
 
   El de los casos, sin interfaz, pesa en la CI mucho más que su último congelado en esta máquina
-  (unos 110 MB, con NumPy y SciPy y sin Qt): no se ha mirado qué arrastra allí. Un congelado más
+  (120 MB, con NumPy y SciPy y sin Qt): no se ha mirado qué arrastra allí. Un congelado más
   pequeño es de la distribución (spec 032).
 
 ### Para OGR-Core
