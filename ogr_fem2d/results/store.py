@@ -12,7 +12,16 @@ copy of the mesh with the coordinates of the integration points; the
 fingerprint of the model, the versions, the variant of the engine and what
 decided the result (rule 12). In the ENGINE'S sign (tension positive), as
 the attribute ``sign_convention`` says (D1). Nothing that depends on a
-method (the values recovered at the nodes) or on a convention.
+convention.
+
+The values recovered at the nodes depend on a method, and D6 left them
+out; since v0.0.15 (spec 006, T36; D6 modified by the owner on 2026-11-27)
+a stage MAY carry them, in ``recovered/<kind>``, marked with the method and
+its version (``recovery.METHOD``): a reader takes them only when the mark is
+that of its own method, and recovers again otherwise, so a better method
+is still seen on old results (D6's reason). They are written when
+calculating so that the first drawing of a stage does not wait for them
+(D15). Optional: a file without them is read as before.
 
 * ``Writer``: writes to ``<path>.tmp`` and, at ``finish``, moves it over
   ``<path>`` with ``os.replace`` (D13, the pattern of OGR Slip2D's results
@@ -60,6 +69,8 @@ MESH = ("nodes", "elements", "element_region", "element_material", "points", "po
 STAGE_ATTRS = ("id", "name", "solved", "steps", "tolerance", "cuts")
 STAGE_FIELDS = ("displacement", "stress", "strain", "plastic", "active", "removed_nodes",
                 "axis_held", "reaction_nodes", "reactions", "history")
+#: the tensors whose recovered values a stage may carry (optional)
+RECOVERED = ("stress", "strain")
 
 
 class ResultsError(ValueError):
@@ -95,6 +106,34 @@ def stress_array(outcome: StageOutcome) -> np.ndarray:
     for k, s in enumerate(outcome.stresses):
         if s is not None:
             out[k] = s
+    return out
+
+
+def node_table(values, element_material, elements):
+    """``(table, at)`` of values per element node (E, n, c): one row per
+    node and material, and each element node's row (-1 where NaN, an
+    element not active). Refuses values that differ for one node and
+    material: they would not come back the same."""
+    values = np.asarray(values, dtype=float)
+    elements = np.asarray(elements, dtype=np.int64)
+    n_el, n_per, comps = values.shape
+    live = ~np.isnan(values).all(axis=2)                              # (E, n)
+    key = (np.asarray(element_material, dtype=np.int64)[:, None] * (int(elements.max()) + 1)
+           + elements)
+    keys, first, inverse = np.unique(key[live], return_index=True, return_inverse=True)
+    table = values[live][first]
+    if not np.array_equal(table[inverse], values[live], equal_nan=True):
+        raise ValueError("values that differ for one node and material")
+    at = np.full((n_el, n_per), -1, dtype=np.int64)
+    at[live] = inverse
+    return table, at
+
+
+def from_node_table(table, at) -> np.ndarray:
+    """The values per element node back: ``table[at]``, NaN where -1."""
+    out = np.full(at.shape + (table.shape[1],), np.nan)
+    live = at >= 0
+    out[live] = table[at[live]]
     return out
 
 
@@ -153,6 +192,24 @@ class Writer:
                          .reshape(len(outcome.history), 3))
         self.n += 1
         self.f.attrs["n_stages"] = self.n
+
+    def add_recovered(self, kind: str, values, source, notes: dict, method: str,
+                      element_material, elements) -> None:
+        """The recovered values of ``kind`` of the stage last added, marked
+        with the method that gave them: once per node and material (``table``,
+        K x 4) and, per element node, its row (``at``, -1 for an element not
+        active). A node has one value per material (recovery, D5), so the
+        values per element node are ``table[at]``, the same bits. Case 005,
+        measured: the file is 6.1 MB without them, 12.6 MB with them per
+        element node, 8.9 MB so."""
+        if kind not in RECOVERED:
+            raise ValueError(f"no recovered {kind!r}; a stage may have {', '.join(RECOVERED)}")
+        table, at = node_table(values, element_material, elements)
+        g = self.f["stages"][f"{self.n - 1:04d}"].require_group("recovered").create_group(kind)
+        g.attrs["method"], g.attrs["notes"] = method, json.dumps(notes)
+        _big(g, "table", table, self.level)
+        _big(g, "at", at, self.level)
+        _big(g, "source", np.asarray(source, dtype=np.int8), self.level)
 
     def finish(self, status: str = COMPLETE, stopped_at: int | None = None,
                reason: str = "") -> Path:
@@ -239,6 +296,16 @@ def _shape_problems(f, n_stages: int) -> list[str]:
                 out.append(f"stage {key}: '{name}' has shape {g[name].shape}, not {shape}")
         if g["strain"].shape[0] != n_pt or g["strain"].shape[1:] not in ((3,), (4,)):
             out.append(f"stage {key}: 'strain' has shape {g['strain'].shape}")
+        n_per = m["elements"].shape[1]
+        for kind in (g["recovered"] if "recovered" in g else ()):
+            r = g["recovered"][kind]
+            if kind not in RECOVERED or "method" not in r.attrs or "notes" not in r.attrs \
+                    or any(name not in r for name in ("table", "at", "source")):
+                out.append(f"stage {key}: 'recovered/{kind}' is not as written")
+            elif r["at"].shape != (n_el, n_per) or r["source"].shape != (n_el, n_per) \
+                    or r["table"].ndim != 2 or r["table"].shape[1] != 4:
+                out.append(f"stage {key}: 'recovered/{kind}' has shape {r['table'].shape}, "
+                           f"{r['at'].shape}")
     return out
 
 
@@ -279,6 +346,24 @@ class Results:
             raise KeyError(f"no field {name!r}; a stage has {', '.join(STAGE_FIELDS)}")
         with self._open() as f:
             return f["stages"][f"{k:04d}"][name][()]
+
+    def recovered(self, k: int, kind: str, method: str):
+        """``(values, source, notes)`` recovered when calculating, if stage
+        ``k`` has them for ``kind`` by ``method``; None otherwise."""
+        self._check_stage(k)
+        with self._open() as f:
+            g = f["stages"][f"{k:04d}"]
+            if "recovered" not in g or kind not in g["recovered"]:
+                return None
+            r = g["recovered"][kind]
+            if str(r.attrs["method"]) != method:
+                return None
+            at = r["at"][()]
+            if at.size and int(at.max()) >= r["table"].shape[0]:
+                raise ResultsError(self.path, f"stage {k:04d}: 'recovered/{kind}' points "
+                                              "past its table")
+            return (from_node_table(r["table"][()], at), r["source"][()],
+                    json.loads(r.attrs["notes"]))
 
     def outcome(self, k: int) -> StageOutcome:
         """Stage ``k`` as the engine gave it (the strains apart, ``field``)."""

@@ -59,7 +59,8 @@ from ..engine import interface
 from ..engine.reference import solver
 from ..model import fingerprint, ogr_file, translate
 from ..model import model as md
-from . import store
+from . import queries, recovery, store
+from . import quantities as qt
 from . import strains as st
 
 VALID, STALE, MISSING, DAMAGED = "valid", "stale", "missing", "damaged"
@@ -126,7 +127,11 @@ def mesh_data(m: md.Model, engine, g: st.PointGeometry) -> store.MeshData:
 def calculate(m: md.Model, model_path, variant: interface.Variant = solver.REFERENCE,
               should_stop: Callable[[], bool] | None = None,
               level: int = store.GZIP_LEVEL,
-              progress: Callable[[Progress], None] | None = None) -> Calculated:
+              progress: Callable[[Progress], None] | None = None,
+              recovered: bool = True) -> Calculated:
+    """The model calculated into its results file, stage by stage; with
+    ``recovered`` (the default), each stage with its values recovered at the
+    nodes, so that drawing it does not wait for them (spec 006, T36)."""
     engine = translate.to_engine(m)
     g = st.geometry(engine.nodes, engine.elements, engine.analysis)
     path = results_path(model_path)
@@ -139,9 +144,10 @@ def calculate(m: md.Model, model_path, variant: interface.Variant = solver.REFER
             progress(Progress(event, stage, n, m.stages[stage].id if named else "",
                               m.stages[stage].name if named else "", **more))
 
+    mesh = mesh_data(m, engine, g)
     with store.Writer(path, written_by=written_by(), core=core_version(),
                       engine_variant=variant.name, model_fingerprint=fingerprint.model_fingerprint(m),
-                      analysis=m.analysis, mesh=mesh_data(m, engine, g),
+                      analysis=m.analysis, mesh=mesh,
                       deciding=translate.deciding_values(m), level=level) as w:
         solving = analysis.stages(engine, variant)
         try:
@@ -149,8 +155,10 @@ def calculate(m: md.Model, model_path, variant: interface.Variant = solver.REFER
                 tell(STARTED, k)
                 outcome = next(solving)
                 stage = m.stages[k]
-                w.add_stage(stage.id, stage.name, outcome,
-                            st.strains(g, outcome.displacement, outcome.active))
+                strain = st.strains(g, outcome.displacement, outcome.active)
+                w.add_stage(stage.id, stage.name, outcome, strain)
+                if recovered:
+                    _recovered(w, m.analysis, mesh, outcome, strain)
                 last = max((it for step, it, _r in outcome.history if step == outcome.steps),
                            default=0)
                 tell(DONE, k, solved=outcome.solved, steps=outcome.steps, iteration=last)
@@ -166,6 +174,17 @@ def calculate(m: md.Model, model_path, variant: interface.Variant = solver.REFER
         w.finish(status, stopped, reason)
     tell(FINISHED, k, status=status, reason=reason)
     return Calculated(path, status, k, stopped, reason)
+
+
+def _recovered(w: store.Writer, analysis_kind: str, mesh: store.MeshData, outcome, strain) -> None:
+    """The recovered stress and strain of the stage just written, as a
+    reader would recover them from the file (the same arrays, bit for bit)."""
+    active = np.asarray(outcome.active, dtype=bool)
+    fields = {qt.STRESS: store.stress_array(outcome), qt.STRAIN: np.asarray(strain, dtype=float)}
+    for kind in store.RECOVERED:
+        rec = queries.recover(mesh, active, queries.tensor_of(kind, fields[kind], analysis_kind))
+        w.add_recovered(kind, rec.values, rec.source, rec.notes, recovery.METHOD,
+                        mesh.element_material, mesh.elements)
 
 
 class NotValidError(ValueError):

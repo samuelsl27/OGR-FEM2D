@@ -296,3 +296,36 @@ encontró dos fallos de los tests de la T30, no del cálculo:
 - **Windows: la ruta del `.h5` en el resumen.** La carpeta temporal del runner se llama corta
   (`RUNNER~1`) y el núcleo resuelve la ruta del proyecto a la larga, que es la que dice el resumen. El
   test compara con la ruta resuelta.
+
+## El primer dibujo de una fase, dentro de D15 (2026-11-27)
+
+La propietaria eligió guardar la recuperación al calcular. Al ir a hacerlo apareció que chocaba con
+la spec 005, D6 («No van los valores recuperados, que dependen de un método»); se le dijo antes de
+tocar nada, y modificó D6: **una fase puede llevar los valores recuperados, marcados con su método y
+su versión**, y un lector solo los usa si la marca es la de su método. Se cumple el motivo de D6 (un
+método mejor se sigue viendo en los resultados viejos).
+
+- `calculate` recupera la tensión y la deformación de cada fase al escribirla y las guarda en
+  `recovered/<tensor>`, con `recovery.METHOD` (`"spr-by-material/1"`). Son **los mismos bits** que se
+  recuperarían al leer: un test lo comprueba en todas las fases, con elementos excavados, y las
+  consultas dan las mismas filas con ellas y sin ellas.
+- **Una vez por nudo y material**: una tabla y, por nudo de elemento, su fila. Caso 005: el `.h5`
+  pasa de 6.1 MB a 8.9 MB (12.6 MB si se guardaran por nudo de elemento); calcular, de 11.2 a 13.0 s.
+  Leerlas, 0.015 s; recuperarlas, 0.86 s.
+- Con otra marca, o sin ellas (un archivo de antes), se recuperan al leer como hasta ahora. Un
+  grupo que no está como se escribió es un archivo dañado, dicho al abrir. No cambia
+  `format_version`: son opcionales.
+- **La huella del modelo**, más rápida (0.42 → 0.19 s con el caso 005, las dos huellas): su paso a
+  valores planos preguntaba a cada número de la malla si era una clase de datos. Las mismas huellas
+  de los casos 005, 006 y 007, comprobado antes y después.
+- **D15 con el caso 005**: el primer dibujo de una fase pasa de 1.3 s a 0.6 s, medido en esta
+  máquina sin carga. El test vuelve a pedir el 1 s de D15 (con el margen de la CI), en vez de los
+  4 s con los que se sostenía el hallazgo de la T32.
+
+## Un tercer rojo de la CI: la cancelación que acaba antes de su respuesta (2026-11-27)
+
+Con los dos arreglos de arriba, la CI siguiente dio verde en Linux y Windows y un rojo en macOS (3.12
+y 3.13): el resumen de una cancelación decía solo «Cancelled.». **Este sí es del programa**: el
+trabajo acababa cancelado antes de que `job_cancel` contestara si había tenido que parar el proceso,
+y la ventana lo decía sin esa respuesta. Ahora espera a la respuesta para decir el final, con el
+temporizador en marcha. Un test hace llegar la respuesta tarde y falla sin el arreglo.

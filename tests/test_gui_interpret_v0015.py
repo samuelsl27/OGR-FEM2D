@@ -353,16 +353,15 @@ class TestD15:
                 move()
                 _render(win.view)
                 moves.append(time.perf_counter() - t)
-            print(f"D15 case 005: first {first:.2f} s (the recovery of the stage), "
+            print(f"D15 case 005: first {first:.2f} s, "
                   f"another quantity {other:.2f} s, a displacement {displacement:.2f} s, "
                   f"moves {[round(x, 3) for x in moves]} s")
             assert other <= 1.0 * SLOWER and displacement <= 1.0 * SLOWER, (other, displacement)
             assert max(moves) <= 0.1 * SLOWER, moves
-            # the first drawing of a stage recovers its stresses (0.6 s with this mesh): 1.3 s
-            # measured on a quiet machine, near 3 s with another program busy, over D15's 1 s.
-            # A finding (changelog v0.0.15, T32), not a target loosened: held here so that it
-            # does not grow beyond what a busy machine gives
-            assert first <= 4.0 * SLOWER, first
+            # the first drawing of a stage: 1.3 s while it recovered the stresses (T32's
+            # finding); with them written when calculating and the model's fingerprint
+            # quicker (T36), 0.6 s measured on a quiet machine
+            assert first <= 1.0 * SLOWER, first
 
     def test_the_start_imports_the_contouring(self):
         import sys

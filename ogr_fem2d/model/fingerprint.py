@@ -34,7 +34,18 @@ import hashlib
 import json
 
 
+_ATOMS = (int, float, str, bool, type(None))
+
+
 def _plain(value):
+    # the numbers and the plain lists first: a mesh is hundreds of thousands
+    # of them, and asking each whether it is a dataclass took half of the
+    # 0.5 s of the fingerprint of case 005 (v0.0.15, T36); the same result
+    t = type(value)
+    if t in _ATOMS:
+        return value
+    if t is list or t is tuple:
+        return [v if type(v) in _ATOMS else _plain(v) for v in value]
     if dataclasses.is_dataclass(value) and not isinstance(value, type):
         return {f.name: _plain(getattr(value, f.name)) for f in dataclasses.fields(value)}
     if isinstance(value, (list, tuple)):

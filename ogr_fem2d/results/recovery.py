@@ -63,6 +63,14 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+#: The method and its version, written with the values recovered when
+#: calculating (spec 006, T36; spec 005, D6 as modified on 2026-11-27): a
+#: results file keeps them only for this method, and a reader uses them only
+#: when they are of the method it has; otherwise it recovers again. **Change
+#: the number whenever a change here moves a bit of what ``recover`` gives**
+#: (the test of v0.0.14's recovery holds it).
+METHOD = "spr-by-material/1"
+
 NONE, SPR, ELEMENT = 0, 1, 2
 SOURCES = {NONE: "none", SPR: "spr", ELEMENT: "element"}
 MAX_CONDITION = 1e10

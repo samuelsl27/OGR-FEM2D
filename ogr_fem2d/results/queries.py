@@ -92,6 +92,19 @@ def locator(results: store.Results) -> locate.Locator:
     return results._locator
 
 
+def tensor_of(kind: str, field: np.ndarray, analysis: str) -> np.ndarray:
+    """A stage's stored stress or strain as the user's (P, 4)."""
+    if kind == qt.STRESS:
+        return conventions.user_stress(field)
+    return qt.strain4(conventions.user_strain(field), analysis)
+
+
+def recover(mesh: store.MeshData, active, tensor) -> recovery.Recovered:
+    """The values at the nodes of ``tensor`` (P, 4), on a results mesh."""
+    return recovery.recover(mesh.nodes, mesh.elements, mesh.element_material, active,
+                            mesh.points, mesh.point_element, tensor)
+
+
 class View:
     """A stage of a results file, as the queries need it."""
 
@@ -123,21 +136,21 @@ class View:
     def tensor(self, kind: str) -> np.ndarray:
         """The user's stress or strain (P, 4) at the points."""
         if kind not in self._cache:
-            if kind == qt.STRESS:
-                t = conventions.user_stress(self.results.field(self.stage, "stress"))
-            else:
-                t = qt.strain4(conventions.user_strain(self.results.field(self.stage, "strain")),
-                               self.analysis)
-            self._cache[kind] = t
+            self._cache[kind] = tensor_of(kind, self.results.field(self.stage, kind),
+                                            self.analysis)
         return self._cache[kind]
 
     def recovered(self, kind: str) -> recovery.Recovered:
+        """The values at the nodes: those the calculation wrote, when they
+        are of this program's method (``recovery.METHOD``), or recovered
+        now (spec 006, T36)."""
         key = ("recovered", kind)
         if key not in self._cache:
-            m = self.mesh
-            self._cache[key] = recovery.recover(m.nodes, m.elements, m.element_material,
-                                                self.active, m.points, m.point_element,
-                                                self.tensor(kind))
+            kept = self.results.recovered(self.stage, kind, recovery.METHOD)
+            if kept is not None:
+                self._cache[key] = recovery.Recovered(*kept)
+            else:
+                self._cache[key] = recover(self.mesh, self.active, self.tensor(kind))
         return self._cache[key]
 
     # ------------------------------------------------ values at a point

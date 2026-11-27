@@ -15,8 +15,13 @@ escritura deja el `.h5` de antes (RF-2, D13).
 - **el convenio del motor**: tensión positiva en tracción, deformación positiva en alargamiento;
 - **las unidades guardadas**: m, kN, kPa.
 
-No van los valores recuperados en los nudos ni el convenio del usuario: dependen de un método o de
-una costumbre, y se calculan al leer.
+No va el convenio del usuario: es una costumbre, y se aplica al leer. Los valores recuperados en los
+nudos dependen de un método, y D6 los dejaba fuera. **Desde la v0.0.15 una fase puede llevarlos**
+(spec 006, T36; D6 modificada por la propietaria el 2026-11-27), en `recovered/<tensor>` y
+marcados con su método y su versión. Un lector solo los usa si la marca es la de su método; si no,
+los recupera otra vez, así que un método mejor se sigue viendo en los resultados viejos (el motivo
+de D6). Se escriben al calcular para que el primer dibujo de una fase no los espere (D15). Son
+opcionales: un archivo sin ellos se lee como antes, y no cambian `format_version`.
 
 ### Atributos de la raíz
 
@@ -73,6 +78,21 @@ se resolvió), `steps`, `tolerance` y `cuts` (los ajustes del motor y los cortes
 | `history` | H × 3, f8 | escalón, iteración y residuo relativo de cada iteración |
 
 Los campos grandes van con gzip y el filtro *shuffle*, los dos de cualquier HDF5.
+
+### `/stages/NNNN/recovered/<tensor>` (opcional; `stress` y `strain`)
+
+Atributos: `method` (`recovery.METHOD`, hoy `"spr-by-material/1"`; cambia cuando un cambio de la
+recuperación mueve algún bit) y `notes` (JSON: los parches ajustados, los rechazados y los nudos
+del elemento).
+
+| Campo | Forma | Qué es |
+|---|---|---|
+| `table` | K × 4, f8 | el valor recuperado de cada nudo en cada material, una vez, en el convenio del usuario (compresión positiva), como lo da `results.recovery` |
+| `at` | E × n, i8 | la fila de `table` de cada nudo de cada elemento; −1 en los elementos inactivos |
+| `source` | E × n, i1 | de dónde sale cada valor: 0 ninguno, 1 parche, 2 el propio elemento |
+
+Los valores por nudo de elemento son `table[at]`, los mismos bits que dio la recuperación. En el
+caso 005 el archivo pasa de 6.1 MB a 8.9 MB (12.6 MB si se guardaran por nudo de elemento).
 
 ## Calcular y abrir (`results.calculate`)
 
