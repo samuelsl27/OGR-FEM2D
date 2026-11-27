@@ -386,6 +386,17 @@ desde las fuentes (σR 0.0015 P0 en el radio, el peor), en 49 s; **la carpeta, 3
   cambia. Se le propone al núcleo que lo resuelva él (abajo, «Para OGR-Core»).
 - **La CI**: el trabajo `freeze` instala las bibliotecas de Qt en Linux y construye y comprueba los
   dos programas en las tres plataformas.
+  En la CI (run 46061178931, `85a428b`) los dos pasan en las tres. La autoprueba del congelado con
+  la interfaz, y el tamaño de su carpeta:
+
+  | Plataforma | Autoprueba | Carpeta de `ogr-fem2d` | La de `ogr-fem2d-casos` |
+  |---|---|---|---|
+  | Windows | 34 s | 291 MB | 249 MB |
+  | macOS | 47 s | 340 MB | 116 MB |
+  | Linux | 26 s | 602 MB | 519 MB |
+
+  El de los casos, sin interfaz, ya arrastra casi todo Qt: lo que importa del árbol trae PySide6. Un
+  congelado más pequeño (sin los módulos de Qt que no se usan) es de la distribución (spec 032).
 
 ### Para OGR-Core
 

@@ -328,7 +328,7 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   plataformas.
 
   *Hecho cuando:* la ayuda no hace llamadas de red; el congelado abre, malla, calcula y consulta un
-  caso en Windows, macOS y Linux; su tamaño está anotado.
+  caso en Windows, macOS y Linux; su tamaño está anotado. (Hecho el 2026-11-27.)
 - [ ] T37. **El cierre de la spec y de la fase 1.**
   - El barrido de las reglas 7 y 12 sobre la interfaz.
   - Los casos 001 a 007, bit a bit.
