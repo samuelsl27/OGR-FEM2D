@@ -195,6 +195,9 @@ class ComputeWindow(QDialog):
         if self.running():
             loop.exec()
         timer.stop()
+        # a job may end between poll() and running(): one reading more says its end
+        # (the CI of 2026-11-27, macOS: the summary was still empty)
+        self.poll()
 
     # ------------------------------------------------------------ cancelling
     def cancel(self) -> None:

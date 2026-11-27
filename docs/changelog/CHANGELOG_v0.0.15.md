@@ -282,3 +282,17 @@ como dice su `comparaciones_consulta`.
 - Barrido de mutaciones (6: el factor de unidades del dibujo y de las filas, el eje de la gráfica, los
   puntos de la línea, la consulta dibujada en el lienzo, la fase de la consulta): 5 cazadas. La de la
   fase es equivalente en estos casos, que tienen una sola fase; la cazan los tests de la T32.
+
+## Los dos rojos de la CI de la T34 (2026-11-27)
+
+La CI de la rama (Linux en verde; Windows en las tres versiones de Python y macOS 3.13, 828/829)
+encontró dos fallos de los tests de la T30, no del cálculo:
+
+- **macOS: el resumen vacío tras la espera.** `ComputeWindow.wait()` (la usan los tests) leía los
+  trabajos (`poll`) y después preguntaba si quedaba alguno (`running`): si el trabajo acababa entre las
+  dos, la espera salía sin haber dicho su final. Ahora lee una vez más al salir. En el programa no
+  pasaba: el temporizador vuelve a leer. Un test reproduce el hueco (el trabajo acaba justo después de
+  una lectura) y falla sin el arreglo.
+- **Windows: la ruta del `.h5` en el resumen.** La carpeta temporal del runner se llama corta
+  (`RUNNER~1`) y el núcleo resuelve la ruta del proyecto a la larga, que es la que dice el resumen. El
+  test compara con la ruta resuelta.

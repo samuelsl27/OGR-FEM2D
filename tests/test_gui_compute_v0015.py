@@ -104,7 +104,10 @@ class TestCalculating:
                 assert sum(line.startswith(f"Stage {said}") and "solv" in line
                            and "solving" not in line for line in log.splitlines()) == 1, log
             assert win.summary_text().startswith("Complete: the 3 stages are solved")
-            assert str(o.path.with_suffix(".h5")) in win.summary_text()
+            # the path as the job resolved it: on Windows a temporary folder may be named
+            # short (RUNNER~1) and the job says it long (the CI of 2026-11-27)
+            assert str(o.path.with_suffix(".h5").resolve()) in win.summary_text(), \
+                win.summary_text()
             assert o.w.statusBar().currentMessage() == win.summary_text()
             assert [win.queue.item(0, c).text() for c in (1, 2)] == ["Calculation", "Done"]
             assert win.bar.value() == win.bar.maximum() == 3
@@ -124,6 +127,27 @@ class TestCalculating:
                 "Stage 1 (Stage 1) of 3: solving...", "Stage 1 (Stage 1) solved.",
                 "Stage 2 (Stage 2) solved: 4 steps, last iteration 7.",
                 "Stage 3 (Stage 3): nothing changes in it, nothing to solve."]
+
+
+class TestWaiting:
+    def test_an_end_between_two_readings_is_said(self):
+        """The CI of 2026-11-27 (macOS): the job ended after ``poll`` read it
+        running and before ``running`` asked; the wait ended with no summary."""
+        with _Open(_three()) as o:
+            o.w.compute()
+            win = o.w.compute_window
+            real, first = win.poll, []
+
+            def poll():
+                real()
+                if not first:                      # the end falls just after this reading
+                    first.append(True)
+                    while o.job().status()["state"] not in ("done", "failed", "cancelled"):
+                        time.sleep(0.02)
+            win.poll = poll
+            win.wait()
+            assert win.summary_text().startswith("Complete: the 3 stages are solved"), \
+                win.summary_text()
 
 
 class TestCancel:
