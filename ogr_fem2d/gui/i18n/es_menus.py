@@ -75,7 +75,6 @@ ES = {
     # the names of the undo steps (api/messages.py, fem.step.*)
     "Project settings": "Ajustes del proyecto",
     "Add boundary": "Añadir contorno",
-    "Edit boundary ({op})": "Editar contorno ({op})",
     "Material": "Material",
     "Delete material": "Borrar material",
     "Assign material": "Asignar material",

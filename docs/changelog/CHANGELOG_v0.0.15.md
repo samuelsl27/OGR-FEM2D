@@ -329,3 +329,29 @@ y 3.13): el resumen de una cancelación decía solo «Cancelled.». **Este sí e
 trabajo acababa cancelado antes de que `job_cancel` contestara si había tenido que parar el proceso,
 y la ventana lo decía sin esa respuesta. Ahora espera a la respuesta para decir el final, con el
 temporizador en marcha. Un test hace llegar la respuesta tarde y falla sin el arreglo.
+
+## ogr-gui de v0.1.0 a v0.1.3 (2026-11-27)
+
+OGR GUI publicó lo que este programa le pidió el 24 y el 25 (v0.1.1, v0.1.2 y v0.1.3). La propietaria
+decidió subir la fijación, en un commit propio (`41a6c5d`): con solo eso, la suite entera da
+840/840. Después, lo que cada changelog pide a un programa:
+
+- **El percentil (0.1.1)**: el campo del diálogo de contornos declara `fit_percentile=1`, el rango
+  entero, y «Fit to results» vuelve a estar (la T19 lo había escondido, porque su percentil 98
+  habría escondido el pico de una tensión). El dibujo no ajusta con `fit_to`: su rango es el entero
+  de `value_range`; un test comprueba que el ajuste del diálogo da exactamente ese rango, en las
+  unidades que se muestran y también con el valor absoluto.
+- **El español del núcleo (0.1.2)**: `say()` busca el código en todos los catálogos del núcleo que
+  un mensaje dicho aquí puede traer (las operaciones, el mallador, los archivos, la geometría, el DXF,
+  los pasos de la historia) además de los de este programa; antes, un mensaje del mallador salía en
+  inglés. Las plantillas del español de `ogr_ui` son las del núcleo v0.2.12, y este programa fija la
+  v0.2.9: **un test comprueba que cada plantilla con palabras de esos catálogos, en la v0.2.9, tiene
+  su español** (todas lo tienen). La entrada «Edit boundary ({op})» se quita de este diccionario: la
+  de `ogr_ui` es la misma.
+- **La entrada X,Y (0.1.3)**: se quita el rodeo de la ventana (`_typed_points` y `_typed`, que quitaban
+  el validador y ponían su propia lectura) y la lectura de este programa (`canvas/tools.parse_point`):
+  la del campo es ahora la de `ogr_ui.point_entry.read_point`, hecha a partir de ella. Las
+  herramientas le dan el punto de referencia (el último vértice, o el centro del círculo) en las
+  unidades que se muestran, cada vez que puede cambiar, y reciben el punto absoluto. Los tests de la
+  lectura quedan como contrato de lo que este programa usa (D10, D12), y uno nuevo comprueba que la
+  referencia sigue al dibujo. La tabla de coordenadas tiene su propia lectura, que no cambia.

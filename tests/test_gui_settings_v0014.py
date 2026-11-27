@@ -169,7 +169,7 @@ class TestUnits:
             w.tools.start(tc.DRAW, md.MATERIAL)
             for text in ("0, 4", "@10, 0"):
                 w.statusBar().coord_input.setText(text)
-                w._typed()
+                w.statusBar().coord_input.returnPressed.emit()
             w.tools.key(Qt.Key.Key_Return)
             got = w.session.model.boundary("mat1").vertices
             assert all(abs(a - b) < 1e-12 for p, q in zip(got, ((0.0, 4 * FT), (10 * FT, 4 * FT)))

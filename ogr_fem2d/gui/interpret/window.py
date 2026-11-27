@@ -18,10 +18,10 @@ session, and are read only through the operations (``results_open``,
   the values come from (recovered at the nodes, or the finite-element
   field), and paints with the settings' colours, the canvas's (guide §6);
 * **its options**: the range (this stage, all stages, or the user's), the
-  intervals, the palette and the mode (OGR-GUI's Contour Options, without
-  «Fit to results»: no values are handed to it, so its percentile, which
-  would hide the peak of a stress, is never used, T19), and the absolute
-  value;
+  intervals, the palette and the mode (OGR-GUI's Contour Options), and the
+  absolute value. «Fit to results» fits to the whole range of the values
+  drawn (``fit_percentile=1``, OGR GUI 0.1.1): a percentile would hide the
+  peak of a stress (T19), and the range is the one the drawing takes;
 * **the value under the cursor** is the query's (``results_query``, kind
   ``at``), interpolated exactly, not read off the colours (D11);
 * **results that are not valid are said**, above the canvas and in the
@@ -37,6 +37,8 @@ Author: Samuel Sáez López (UPCT)
 from __future__ import annotations
 
 from typing import Optional
+
+import numpy as np
 
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QAction, QActionGroup, QColor, QPainterPath, QPen
@@ -400,8 +402,13 @@ class InterpretWindow(QMainWindow):
         s.auto_range = self.range_mode != drawing.CUSTOM
         m = self.session.model
         name = qt.get(self.quantity).name(m.analysis)
-        dlg = ContourOptionsDialog(s, fields=[ContourField(self.quantity, name, s)], parent=self)
-        dlg.btn_fit.hide()                  # its percentile would hide a peak (T19)
+        # the whole range (OGR GUI 0.1.1): the fit is then that of the drawing, this stage's
+        # least and greatest value drawn, in the units shown; with the percentile at 1 the
+        # fit takes only the two ends, and they are what is handed to it
+        field = ContourField(self.quantity, name, s, fit_percentile=1.0)
+        shown = [] if self.field is None else self.field["values"] * self.factor()
+        ends = [] if not len(shown) else [float(np.nanmin(shown)), float(np.nanmax(shown))]
+        dlg = ContourOptionsDialog(s, fields=[field], values=ends, parent=self)
         dlg.chk_auto.setToolTip(tr("Left on, the range is the one chosen in the window: "
                                    "this stage or all stages, from the least to the "
                                    "greatest value."))

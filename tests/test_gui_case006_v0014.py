@@ -44,7 +44,7 @@ _KEEP = []
 def _typed(w, *texts):
     for text in texts:
         w.statusBar().coord_input.setText(text)
-        w._typed()
+        w.statusBar().coord_input.returnPressed.emit()
 
 
 def _draw_case_006(w):

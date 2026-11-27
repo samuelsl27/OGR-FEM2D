@@ -259,6 +259,33 @@ class TestEachOptionMovesTheDrawing:
             assert win.absolute and win.field["range"][0] >= 0.0
             assert "Absolute value" in win.legend_lines()
 
+    def test_fit_to_results_is_the_drawings_range(self):
+        """OGR GUI 0.1.1: «Fit to results» with the whole range
+        (``fit_percentile=1``) gives the range the drawing takes, in the
+        units shown, the peak included; with the absolute value too."""
+        with _Open(_three()) as o:
+            o.w.interpret()
+            win = o.win
+            for absolute in (False, True):
+                if absolute:
+                    win._actions["absolute"].trigger()
+                win.set_range("auto_stage")
+                drawn = tuple(v * win.factor() for v in win.field["range"])
+                dlg = win.contour_dialog()
+                assert not dlg.btn_fit.isHidden() and dlg.btn_fit.isEnabled()
+                assert dlg._fit_percentile() == 1.0
+                probe = dlg._collect()
+                probe.fit_to(dlg._values, percentile=dlg._fit_percentile())
+                assert (probe.vmin, probe.vmax) == drawn, ((probe.vmin, probe.vmax), drawn)
+                dlg.btn_fit.click()                       # what the button puts in the boxes
+                step = 10.0 ** -dlg.sp_min.decimals()
+                assert abs(dlg.sp_min.value() - drawn[0]) <= step
+                assert abs(dlg.sp_max.value() - drawn[1]) <= step
+                assert not dlg.chk_auto.isChecked()
+                win.apply_contour_settings(dlg._collect())
+                assert win.range_mode == "custom"
+                dlg.deleteLater()
+
     def test_a_narrow_range_still_paints_the_whole_model(self):
         with _Open(_three()) as o:
             o.w.interpret()

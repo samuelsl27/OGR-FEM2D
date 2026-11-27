@@ -44,10 +44,6 @@ ES = {
     "Typed points are for drawing: Boundaries > Add.":
         "Los puntos escritos son para dibujar: Contornos > Añadir.",
     "Draw a boundary first: Boundaries > Add.": "Dibuja antes un contorno: Contornos > Añadir.",
-    "While drawing: x, y (or x; y with decimal commas), @dx, dy relative to the last vertex, or "
-    "@distance<angle in degrees; then Enter.":
-        "Al dibujar: x, y (o x; y con coma decimal), @dx, dy respecto al último vértice, o "
-        "@distancia<ángulo en grados; después Intro.",
     # the table of coordinates
     "The vertices in order; an empty row is skipped.":
         "Los vértices en orden; una fila vacía no cuenta.",
@@ -56,13 +52,7 @@ ES = {
     "Add Row": "Añadir fila",
     "Add the vertices": "Añadir los vértices",
     "Row %d: X and Y must be numbers.": "Fila %d: X e Y tienen que ser números.",
-    # the errors of a typed point and of drawing (canvas/tools.py)
-    "Write x, y (or x; y with decimal commas), @dx, dy or @distance<angle.":
-        "Escribe x, y (o x; y con coma decimal), @dx, dy o @distancia<ángulo.",
-    "A relative point needs a first vertex: give it as x, y.":
-        "Un punto relativo necesita un primer vértice: dalo como x, y.",
-    "Write a polar point as @distance<angle, the angle in degrees.":
-        "Escribe un punto polar como @distancia<ángulo, el ángulo en grados.",
+    # the errors of drawing (canvas/tools.py)
     "An arc starts at a vertex: give the first vertex before it.":
         "Un arco empieza en un vértice: da antes el primer vértice.",
     "The boundary is closed: finish it, or undo the last step.":

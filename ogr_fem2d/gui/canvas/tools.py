@@ -5,13 +5,12 @@ Entering geometry, without Qt (spec 006, T22; D10, D12; guide §8): what a
 typed point means, a boundary being drawn, and finding the vertex or the
 segment under the cursor.
 
-**A typed point** (``parse_point``) is absolute (``x, y`` or ``x y``),
-relative to the last vertex (``@dx, dy``) or polar from it (``@d<angle``,
-degrees anticlockwise from +x), as the reference program's prompt line.
-The decimal mark may be the point or the comma (D12); a comma between the
-two numbers needs a space after it when the numbers have decimal commas
-(``1,5; 2,5`` or ``1,5 2,5``). What is ambiguous is refused, saying how to
-write it; nothing is guessed (guide §8).
+**A typed point** is read by the status bar's X, Y field
+(``ogr_ui.point_entry.read_point``, OGR GUI 0.1.3, which took this
+program's reading of D10 and D12): absolute (``x, y`` or ``x y``),
+relative to the reference the tools give (``@dx, dy``) or polar from it
+(``@d<angle``, degrees anticlockwise from +x), the decimal mark the point
+or the comma. Until v0.0.15 the reading was here (``parse_point``).
 
 **A boundary being drawn** (``BoundaryDrawing``) collects vertices by clicks
 or typed points, and arcs by three points (the last vertex, one through
@@ -29,7 +28,6 @@ Author: Samuel Sáez López (UPCT)
 from __future__ import annotations
 
 import math
-import re
 from dataclasses import dataclass, field
 
 from ...model import model as md
@@ -40,58 +38,10 @@ Point = tuple[float, float]
 #: how far from a vertex or a segment a click still picks it, in pixels
 PICK_PX = 8.0
 
-_NUMBER = r"[-+]?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:[eE][-+]?\d+)?"
-
 
 class EntryError(ValueError):
-    """A typed point that cannot be read; ``message`` is English for
+    """A step of drawing that cannot be taken; ``message`` is English for
     ``tr()``."""
-
-
-def _number(text: str) -> float:
-    return float(text.replace(",", "."))
-
-
-def _pair(body: str) -> tuple[float, float]:
-    """Two numbers, by these rules (D12): separated by ``;``, or by spaces
-    (a comma just before the space is part of the separator, ``1.5, 2.5``),
-    each with a point or a comma as its decimal mark; or ``x,y`` with no
-    space, both with points. Anything else is ambiguous, and refused."""
-    body = body.strip()
-    if ";" in body:
-        parts = [p.strip() for p in body.split(";")]
-    else:
-        parts = body.split()
-        if len(parts) == 2 and parts[0].endswith(","):
-            parts[0] = parts[0][:-1]                  # "1.5, 2.5"
-        elif len(parts) == 1 and body.count(",") == 1:
-            parts = body.split(",")                   # "1.5,2.5": points as decimal marks
-    if len(parts) == 2 and all(re.fullmatch(_NUMBER, p) for p in parts):     # one mark each
-        return _number(parts[0]), _number(parts[1])
-    raise EntryError("Write x, y (or x; y with decimal commas), @dx, dy or @distance<angle.")
-
-
-def parse_point(text: str, last: Point | None) -> Point:
-    """The point ``text`` means, relative to ``last`` when it starts with
-    @ (see the module's notes)."""
-    t = text.strip()
-    if not t:
-        raise EntryError("Write x, y (or x; y with decimal commas), @dx, dy or @distance<angle.")
-    if t.startswith("@"):
-        if last is None:
-            raise EntryError("A relative point needs a first vertex: give it as x, y.")
-        body = t[1:].strip()
-        if "<" in body:
-            d, a = body.split("<", 1)
-            if not (re.fullmatch(_NUMBER, d.strip()) and re.fullmatch(_NUMBER, a.strip())):
-                raise EntryError("Write a polar point as @distance<angle, the angle in degrees.")
-            r, ang = _number(d.strip()), math.radians(_number(a.strip()))
-            c, s = math.cos(ang), math.sin(ang)
-            c, s = (0.0 if abs(c) < 1e-15 else c), (0.0 if abs(s) < 1e-15 else s)
-            return last[0] + r * c, last[1] + r * s
-        dx, dy = _pair(body)
-        return last[0] + dx, last[1] + dy
-    return _pair(t)
 
 
 @dataclass

@@ -176,19 +176,25 @@ class ToolController:
         else:
             self._edit_at((x, y))
 
-    def typed(self, text: str) -> None:
-        """A point typed in the status bar's field."""
+    def reference(self):
+        """The point a typed ``@...`` is measured from: the last vertex of
+        the boundary being drawn, or the centre of the circle; None."""
+        return self.drawing.last if self.drawing is not None else self.circle_centre
+
+    def _give_reference(self) -> None:
+        """The status bar's X, Y field told the reference, in the units
+        shown (ogr_ui 0.1.3), each time it may have changed."""
+        last, m = self.reference(), self.w.session.model
+        self.w.statusBar().set_point_reference(
+            None if last is None or m is None else units.to_user(m, last))
+
+    def typed_point(self, x: float, y: float) -> None:
+        """A point typed in the status bar's field, read there (absolute,
+        relative or polar, from the reference given) in the units shown."""
         if self.mode not in (DRAW, CIRCLE, MOVE):
             self.say(tr("Typed points are for drawing: Boundaries > Add."))
             return
-        last = self.drawing.last if self.drawing is not None else self.circle_centre
-        m = self.w.session.model
-        try:                    # read in the units shown, kept in metres (gui.units)
-            p = units.from_user(m, tools.parse_point(
-                text, None if last is None else units.to_user(m, last)))
-        except tools.EntryError as err:
-            self.say(tr(str(err)))
-            return
+        p = units.from_user(self.w.session.model, (x, y))     # kept in metres (gui.units)
         if self.mode == MOVE:
             self._edit_at(p, typed=True)
         else:
@@ -329,6 +335,7 @@ class ToolController:
         return self._preview
 
     def _show_preview(self) -> None:
+        self._give_reference()
         self._preview_item()
         path = QPainterPath()
         pts = []

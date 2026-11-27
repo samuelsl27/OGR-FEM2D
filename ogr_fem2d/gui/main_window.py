@@ -106,7 +106,9 @@ class MainWindow(QMainWindow):
         self.view.clicked.connect(self.tools.clicked)
         self.view.cursor_moved.connect(self.tools.moved)
         self.view.key_pressed.connect(self.tools.key)
-        self._typed_points()
+        # the X, Y field reads absolute, relative and polar points itself (ogr_ui 0.1.3),
+        # from the reference the tools give it; the point comes absolute, in the units shown
+        self.statusBar().manual_coords_submitted.connect(self.tools.typed_point)
         self._build_actions()
         self._build_menus()
         disabled_reasons.install(self)
@@ -415,24 +417,6 @@ class MainWindow(QMainWindow):
     _do = do
 
     # ------------------------------------------------------------ tools
-    def _typed_points(self) -> None:
-        """The status bar's X, Y field, with this program's reading of a
-        point (absolute, relative, polar, a decimal comma: D10, D12). The
-        field's own reading (absolute, points only) is left out."""
-        field = self.statusBar().coord_input
-        field.setValidator(None)
-        field.returnPressed.disconnect()
-        field.setPlaceholderText("x, y · @dx, dy · @d<a")
-        field.setToolTip(tr("While drawing: x, y (or x; y with decimal commas), @dx, dy relative "
-                            "to the last vertex, or @distance<angle in degrees; then Enter."))
-        field.returnPressed.connect(self._typed)
-
-    def _typed(self) -> None:
-        field = self.statusBar().coord_input
-        text = field.text()
-        field.clear()
-        self.tools.typed(text)
-
     def act_coords_table(self) -> None:
         from .dialogs.coordinates import CoordinatesDialog
         dlg = CoordinatesDialog(self, length=units.length_label(self.session.model))

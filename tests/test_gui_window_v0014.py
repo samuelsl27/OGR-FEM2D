@@ -64,8 +64,6 @@ EXCEPTIONS = {
     ("interpret/window.py", "x = {}, y = {} {}: "):
         "the interpretation's cursor: its coordinates in symbols, with the unit shown, before "
         "the values (each said through tr())",
-    ("main_window.py", "x, y · @dx, dy · @d<a"):
-        "the placeholder of the X, Y field: the forms of a typed point, in symbols",
 }
 #: Spanish words that are the English ones
 SAME = {"Material", "X (%s)", "Y (%s)", "General", "K", "Kz", "Material %d", "vertical",
@@ -147,6 +145,14 @@ class TestRule2:
             # every message of the operations, both forms of one with a count
             english += [s.english for s in FEM_MESSAGES.values()]
             english += [s.one for s in FEM_MESSAGES.values() if s.one]
+            # every template of the core PINNED (v0.2.9) that say() renders: ogr_ui's Spanish
+            # is written for the core v0.2.12 (OGR GUI 0.1.2), and a template that changed
+            # between them would have none; one of words and fields only is the same in
+            # every language (OGR GUI 0.1.2)
+            import re
+            worded = lambda t: re.search(r"[A-Za-z]{2,}", re.sub(r"\{[^}]*\}", "", t))
+            english += [t for s in fem_i18n.catalogues().values() for t in (s.english, s.one)
+                        if t and worded(t)]
             # the errors of a typed point and of drawing, said through tr()
             import ast
             tree = ast.parse((GUI / "canvas" / "tools.py").read_text(encoding="utf-8"))
@@ -172,6 +178,15 @@ class TestRule2:
             one = api.messages.say("fem.model.invalid", count=1, first="x")
             assert (fem_i18n.say(two), fem_i18n.say(one)) == (
                 "El modelo lo rechaza (2 problemas): x", "El modelo lo rechaza: x")
+            # a message of the mesher (the core's REFINE_MESSAGES), in Spanish (OGR GUI 0.1.2)
+            import string
+            from ogr_core.fem.messages import REFINE_MESSAGES
+            from ogr_core.messages import coded
+            spec = next(iter(REFINE_MESSAGES.values()))
+            fields = {f for _l, f, _s, _c in string.Formatter().parse(spec.english) if f}
+            line = coded(REFINE_MESSAGES, spec.code, **{f: 7 for f in fields})
+            spanish = ui_i18n.package_translations("es")[spec.english]
+            assert fem_i18n.say(line) == spanish.format(**{f: 7 for f in fields}),                 (fem_i18n.say(line), spanish)
         finally:
             ui_i18n.set_language("en")
             _close(w)

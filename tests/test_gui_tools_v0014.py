@@ -57,10 +57,14 @@ def _refused(fn, *words):
 
 
 class TestTypedPoints:
+    """The reading of D10 and D12 is ogr_ui's since 0.1.3 (``read_point``, taken
+    from this program's ``parse_point``): held here as what this program
+    relies on, as the window uses it."""
+
     def test_what_each_form_means(self):
-        p = lambda s: tools.parse_point(s, (10.0, 20.0))
-        for text in ("1.5, 2.5", "1.5 2.5", "1,5 2,5", "1,5; 2,5", "1.5,2.5", " 1.5 ,2.5 "[1:].strip()
-                     .replace(" ,", ", ")):
+        from ogr_ui.point_entry import read_point
+        p = lambda s: read_point(s, (10.0, 20.0))
+        for text in ("1.5, 2.5", "1.5 2.5", "1,5 2,5", "1,5; 2,5", "1.5,2.5"):
             assert p(text) == (1.5, 2.5), text
         assert p("@1, -2") == (11.0, 18.0)
         assert p("@1,5; -2") == (11.5, 18.0)
@@ -69,9 +73,32 @@ class TestTypedPoints:
         assert abs(x - (10 + math.sqrt(3))) < 1e-12 and abs(y - 21.0) < 1e-12
 
     def test_what_is_refused(self):
-        for text in ("1,5,2,5", "1 2 3", "x, y", "", "@2<a"):
-            _refused(lambda: tools.parse_point(text, (0.0, 0.0)))
-        _refused(lambda: tools.parse_point("@1, 1", None), "first vertex")
+        from ogr_ui.point_entry import PointEntryError, read_point
+        for text, ref in (("1,5,2,5", (0.0, 0.0)), ("1 2 3", (0.0, 0.0)), ("x, y", (0.0, 0.0)),
+                          ("@2<a", (0.0, 0.0)), ("@1, 1", None)):
+            try:
+                read_point(text, ref)
+            except PointEntryError:
+                continue
+            raise AssertionError(f"{text!r} accepted")
+
+    def test_the_reference_follows_the_drawing(self):
+        """The field is told the last vertex, or the circle's centre, in the
+        units shown; None when nothing is being drawn."""
+        w = _window()
+        try:
+            bar = w.statusBar()
+            w.tools.start(tc.DRAW, md.EXTERNAL)
+            assert bar.coord_input.reference() is None
+            w.tools.clicked(2.0, 3.0, LEFT)
+            assert bar.coord_input.reference() == w.tools.drawing.last
+            w.tools.cancel()
+            assert bar.coord_input.reference() is None
+            w.tools.start(tc.CIRCLE, md.EXCAVATION)
+            w.tools.clicked(10.0, 10.0, LEFT)
+            assert bar.coord_input.reference() == w.tools.circle_centre
+        finally:
+            _close(w)
 
 
 class TestDrawing:
@@ -184,16 +211,16 @@ class TestTheWindowsTools:
             w.tools.start(tc.DRAW, md.EXTERNAL)
             for text in ("0, 0", "@20, 0", "@20<90", "0; 20"):
                 w.statusBar().coord_input.setText(text)
-                w._typed()
+                w.statusBar().coord_input.returnPressed.emit()
             w.tools.key(Qt.Key.Key_Return)
             assert w.session.model.boundary("ext1").vertices == ((0.0, 0.0), (20.0, 0.0),
                                                                  (20.0, 20.0), (0.0, 20.0))
             w.statusBar().coord_input.setText("1,5,2")
-            w._typed()                                        # said, not taken
+            w.statusBar().coord_input.returnPressed.emit()                                        # said, not taken
             w.tools.start(tc.CIRCLE, md.EXCAVATION)
             w.tools.clicked(10.0, 10.0, LEFT)
             w.statusBar().coord_input.setText("@2<0")
-            w._typed()
+            w.statusBar().coord_input.returnPressed.emit()
             hole = w.session.model.boundary("exc1")
             assert len(hole.segments) == 4 and hole.vertices[0] == (12.0, 10.0)
             w.tools.start(tc.DRAW, md.STAGE)
