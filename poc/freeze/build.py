@@ -4,8 +4,20 @@
 Freeze poc/freeze/casos.py with PyInstaller and check the executable
 (spec 001, RF-10, task T15; ADR-0001, criterion 3, second part).
 
-    .venv/Scripts/python poc/freeze/build.py           # build and check
-    .venv/Scripts/python poc/freeze/build.py --check   # check the last build
+    .venv/Scripts/python poc/freeze/build.py               # build and check both
+    .venv/Scripts/python poc/freeze/build.py --check       # check the last builds
+    .venv/Scripts/python poc/freeze/build.py --only gui    # one of them (casos, gui)
+
+Two programs (spec 006, T36, adds the second):
+
+* ``ogr-fem2d-casos`` (spec 001): the validation cases solved by the engine,
+  in a console;
+* ``ogr-fem2d`` (spec 006): the program with its interface, windowed, with
+  the validation cases inside (the help's, ``validacion/casos``) and the
+  closed forms its self-test compares against. Its check runs
+  ``--self-test REPORT`` without a screen (``QT_QPA_PLATFORM=offscreen``):
+  case 007 opened, meshed, calculated and queried through the window
+  (poc/freeze/gui.py), and reads the report.
 
 The build needs the compiled engine (ogr_fem2d._engine: maturin develop, or
 the wheel installed) and PyInstaller, which is only a tool of the project's
@@ -43,9 +55,60 @@ CASES = ("001-kirsch-hueco-elastico", "002-salencon-hueco-mohr-coulomb",
 CLOSED_FORMS = ROOT / "spec" / "features" / "002-motor-elastico" / "comprobaciones"
 
 
-def executable() -> Path:
+GUI_NAME = "ogr-fem2d"
+
+
+def executable(name: str = NAME) -> Path:
     suffix = ".exe" if sys.platform == "win32" else ""
-    return WORK / "dist" / NAME / f"{NAME}{suffix}"
+    return WORK / "dist" / name / f"{name}{suffix}"
+
+
+def build_gui() -> int:
+    sep = os.pathsep
+    data = ["--add-data", f"{ROOT / 'validacion' / 'casos'}{sep}validacion/casos",
+            "--add-data", f"{CLOSED_FORMS / 'soluciones_cerradas.py'}{sep}comprobaciones_002"]
+    command = [sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean",
+               "--name", GUI_NAME, "--windowed",
+               "--paths", str(ROOT),
+               # the calculation's and the mesher's child find their targets by name
+               "--hidden-import", "ogr_fem2d.api.worker",
+               "--collect-submodules", "ogr_fem2d",
+               "--collect-submodules", "ogr_core",
+               "--collect-data", "ogr_ui", "--collect-data", "qtawesome",
+               "--distpath", str(WORK / "dist"), "--workpath", str(WORK / "work"),
+               "--specpath", str(WORK),
+               *data, str(ROOT / "poc" / "freeze" / "gui.py")]
+    print(" ".join(command))
+    t = time.perf_counter()
+    done = subprocess.run(command)
+    print(f"PyInstaller finished with {done.returncode} in {time.perf_counter() - t:.0f} s")
+    return done.returncode
+
+
+def check_gui() -> int:
+    program = executable(GUI_NAME)
+    if not program.exists():
+        print(f"no executable at {program}: build it first")
+        return 1
+    env = {k: v for k, v in os.environ.items() if k not in ("PYTHONPATH", "PYTHONHOME")}
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    with tempfile.TemporaryDirectory() as outside:
+        report = Path(outside) / "self-test.txt"
+        t = time.perf_counter()
+        done = subprocess.run([str(program), "--self-test", str(report)], cwd=outside, env=env,
+                              capture_output=True, text=True, timeout=900)
+        elapsed = time.perf_counter() - t
+        said = report.read_text(encoding="utf-8") if report.exists() else "(no report)\n"
+    print(said, end="")
+    if done.stdout or done.stderr:
+        print((done.stdout or "") + (done.stderr or ""), end="", file=sys.stderr)
+    lines = said.splitlines()
+    ok = (done.returncode == 0 and bool(lines) and lines[-1] == "SELF-TEST PASSES"
+          and ", frozen" in lines[0])
+    size = sum(f.stat().st_size for f in program.parent.rglob("*") if f.is_file())
+    print(f"executable {program.name}: exit {done.returncode} in {elapsed:.1f} s, "
+          f"folder {size / 2 ** 20:.0f} MB -> {'FROZEN PROGRAM OK' if ok else 'FAILS'}")
+    return 0 if ok else 1
 
 
 def build() -> int:
@@ -98,12 +161,17 @@ def check() -> int:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--check", action="store_true", help="only check the last build")
+    parser.add_argument("--only", choices=("casos", "gui"), default=None,
+                        help="one of the two programs")
     args = parser.parse_args(argv)
-    if not args.check:
-        code = build()
-        if code:
-            return code
-    return check()
+    programs = [("casos", build, check), ("gui", build_gui, check_gui)]
+    failed = 0
+    for name, make, test in programs:
+        if args.only not in (None, name):
+            continue
+        code = 0 if args.check else make()
+        failed |= code or test()
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

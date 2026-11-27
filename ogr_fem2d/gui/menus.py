@@ -67,6 +67,6 @@ MENUS = {
                    "insert_vertex", "delete_vertex", "delete_boundary"),
     "Window": ("window_main", "window_compute", "interpret"),
     "Tools": ("agent_bridge", "-", "soon_tools"),
-    "Help": ("about",),
+    "Help": ("help", "-", "about"),
     **{menu: (key,) for menu, (key, _t, _w) in FUTURE.items()},
 }

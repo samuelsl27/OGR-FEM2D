@@ -324,7 +324,7 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
 
   *Hecho cuando:* dan los mismos números que por las operaciones; las fichas STR-01, STR-04 y STR-09
   tienen su «Seguimiento» (el dibujo de la línea y de los contornos).
-- [ ] T36. La ayuda adaptada, con los casos (RF-21); el congelado con la interfaz; la CI en las tres
+- [x] T36. La ayuda adaptada, con los casos (RF-21); el congelado con la interfaz; la CI en las tres
   plataformas.
 
   *Hecho cuando:* la ayuda no hace llamadas de red; el congelado abre, malla, calcula y consulta un

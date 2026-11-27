@@ -65,6 +65,7 @@ UI_ONLY = {
     "exit": "closes the window",
     "clear_recent": "empties the list of recent models kept on this machine",
     "about": "shows who made the program and its licences",
+    "help": "shows the help, written in the program, with the validation cases (RF-21)",
     "window_main": "brings this window to the front",
     "agent_bridge": "serves this window's model to the MCP server, whose calls are the "
                     "operations themselves (D8)",

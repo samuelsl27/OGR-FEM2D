@@ -158,6 +158,7 @@ class MainWindow(QMainWindow):
         self._mk("show_mesh", "Mesh", self.act_show_mesh, None).setCheckable(True)
         self._actions["show_grid"].setChecked(self.view.show_grid)
         self._actions["show_mesh"].setChecked(self.view.show_mesh)
+        self._mk("help", "Help Topics", self.act_help, "help", "F1")
         self._mk("about", "About OGR FEM2D...", self.act_about, "about")
         self._mk("project_settings", "Project Settings...", self.act_project_settings,
                  "project_settings")
@@ -768,6 +769,19 @@ class MainWindow(QMainWindow):
         self.interpret()
 
     @property
+    def help_window(self):
+        """The help's window (spec 006, T36), made the first time it is asked for."""
+        if getattr(self, "_help_window", None) is None:
+            from .help import HelpWindow
+            self._help_window = HelpWindow(self)
+        return self._help_window
+
+    def act_help(self) -> None:
+        w = self.help_window
+        w.show()
+        w.raise_()
+
+    @property
     def info_window(self):
         """The report's window, made the first time it is asked for."""
         if getattr(self, "_info_window", None) is None:
@@ -1119,7 +1133,7 @@ class MainWindow(QMainWindow):
             self.compute_window.hide()
         if getattr(self, "_agent_bridge", None) is not None:
             self._agent_bridge.stop()
-        for name in ("_interpret_window", "_info_window"):
+        for name in ("_interpret_window", "_info_window", "_help_window"):
             if getattr(self, name, None) is not None:
                 getattr(self, name).close()
         if self._own_session:

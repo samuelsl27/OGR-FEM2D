@@ -9,19 +9,18 @@ Author: Samuel Sáez López (UPCT)
 """
 from __future__ import annotations
 
-import functools
-
 from ogr_ui.i18n import add_translations
 
 from .es_menus import ES as _MENUS
 from .es_canvas import ES as _CANVAS
 from .es_dialogs import ES as _DIALOGS
+from .es_help import ES as _HELP
 from .es_messages import ES as _MESSAGES
 from .es_report import ES as _REPORT
 
 #: every Spanish text of this program, by area
 AREAS = {"menus": _MENUS, "canvas": _CANVAS, "dialogs": _DIALOGS, "messages": _MESSAGES,
-         "report": _REPORT}
+         "report": _REPORT, "help": _HELP}
 
 
 def spanish() -> dict[str, str]:
@@ -37,7 +36,6 @@ def install() -> list[str]:
     return add_translations("es", spanish())
 
 
-@functools.lru_cache(maxsize=1)
 def catalogues() -> dict:
     """Every coded catalogue a message said here can come from: the core's
     (the operations', the mesher's, the files', the geometry's, the DXF's,

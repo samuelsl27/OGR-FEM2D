@@ -355,3 +355,41 @@ decidió subir la fijación, en un commit propio (`41a6c5d`): con solo eso, la s
   unidades que se muestran, cada vez que puede cambiar, y reciben el punto absoluto. Los tests de la
   lectura quedan como contrato de lo que este programa usa (D10, D12), y uno nuevo comprueba que la
   referencia sigue al dibujo. La tabla de coordenadas tiene su propia lectura, que no cambia.
+
+## T36 — la ayuda, el congelado con la interfaz y la CI (2026-11-27)
+
+**La ayuda** (`gui/help/`, RF-21): Ayuda > Temas de ayuda (F1) abre una ventana con ocho páginas
+escritas en el programa, en inglés y en español (`i18n/es_help.py`): el trabajo en orden, dibujar,
+mallar, calcular, interpretar, los convenios y lo que decidió un resultado (reglas 10 y 12), el
+puente y los casos. Cada frase se comprobó contra el programa (los menús, sus teclas, lo que hace
+cada diálogo), y los nombres en español son los de los menús.
+
+- **Sin red**: los enlaces solo van a otra página, a un caso o a la ficha de un caso; el navegador de
+  la ventana no carga ningún recurso que no se le dé, y un enlace de otra clase se dice y no se
+  sigue. Un test muestra todas las páginas y sigue todos los enlaces sin que se abra ningún socket.
+- **Los casos** se leen de `validacion/casos` (en el árbol, o dentro del programa congelado): cada uno
+  con su ficha, su fuente y su tolerancia como las dice su `esperado.json`. Los que tienen modelo
+  (005, 006 y 007) se abren **como copia**, en la carpeta que se elige: el archivo del caso no se toca
+  nunca. Sin la carpeta (una rueda instalada), la página dice dónde están.
+
+**El congelado con la interfaz** (`poc/freeze/gui.py`, `build.py`): un segundo ejecutable,
+`ogr-fem2d`, con ventana, los casos dentro y las soluciones cerradas de su autoprueba. Su
+comprobación lo corre fuera del árbol y sin pantalla con `--self-test`: abre una copia del caso 007,
+**lo malla otra vez** con Malla > Discretizar y mallar (la misma malla que la del caso, bit a bit),
+lo calcula con Análisis > Calcular y lo consulta en la interpretación como dice su
+`comparaciones_consulta`, contra la esfera hueca de Lamé. En Windows, en esta máquina: lo mismo que
+desde las fuentes (σR 0.0015 P0 en el radio, el peor), en 49 s; **la carpeta, 315 MB**.
+
+- **Lo que hizo falta**: los trabajos del núcleo lanzan su hijo como `sys.executable -m
+  ogr_core.api.jobs.worker CARPETA`, y un programa congelado no entiende `-m`. El ejecutable toma
+  esa orden al empezar y llama al trabajador del núcleo tal cual; nada del núcleo se copia ni se
+  cambia. Se le propone al núcleo que lo resuelva él (abajo, «Para OGR-Core»).
+- **La CI**: el trabajo `freeze` instala las bibliotecas de Qt en Linux y construye y comprueba los
+  dos programas en las tres plataformas.
+
+### Para OGR-Core
+
+Un programa congelado no puede ser el hijo de un trabajo: `_spawn` lanza `sys.executable -m
+ogr_core.api.jobs.worker`. Una función del núcleo que un programa llame al empezar (como
+`multiprocessing.freeze_support`), o que el núcleo lance el hijo de otra manera cuando
+`sys.frozen`, evitaría que cada programa lo resuelva en su punto de entrada.

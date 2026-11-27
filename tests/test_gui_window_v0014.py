@@ -55,6 +55,7 @@ GUI = Path(__file__).resolve().parents[1] / "ogr_fem2d" / "gui"
 
 #: the texts on screen outside tr(), each a decision
 EXCEPTIONS = {
+    ("help/__init__.py", "caso-{}.ogrfem2d"): "the name of the copy of a case's model: a file",
     ("main_window.py", "{}{} — {} — OGR FEM2D"):
         "the window's title: the model's name, its star and the kind of analysis (each through "
         "tr()) joined with the program's name, which is not translated",
