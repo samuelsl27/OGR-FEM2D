@@ -175,6 +175,10 @@ def run(name, steps, cuts, detail, material=MATERIAL):
               f"tras {local['cuts']} particiones ({time.perf_counter() - t0:.1f} s)")
         return
     seconds = time.perf_counter() - t0
+    # (start, end, text): since v0.0.16 (T3) the increments are solver.Increment
+    increments = [inc if len(inc) == 3 else
+                  (inc.start, inc.end, inc.status + (f": {inc.reason}" if inc.reason else ""))
+                  for inc in increments]
     n_cuts = sum(1 for inc in increments if inc[2].startswith("cut"))
     status = "converge" if error is None else "FALLA"
     print(f"  {steps:3d} escalones, {cuts:2d} particiones: {status}; particiones usadas {n_cuts}; "

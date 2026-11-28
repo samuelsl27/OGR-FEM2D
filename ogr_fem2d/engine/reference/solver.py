@@ -42,15 +42,31 @@ correction assembles and factorises K_T anew; with non-associated flow it is
 not symmetric, and SuperLU solves it as it is.
 
 Automatic increment cutting (§5.4.3, pp. 123-124, and Fig. 5.2): when an
-increment does not converge in the iterations allowed, or a point cannot be
+increment does not converge in the iterations allowed, a point cannot be
 updated (an iterate far from equilibrium can send a point to the apex, which
-psi = 0 refuses), the increment is split into two equal halves and restarted
+psi = 0 refuses), or the tangent is singular (a zero pivot, also in Fig.
+5.2; spec 007, T2: with psi > 0 the points at the apex have no stiffness,
+Remark 8.3), the increment is split into two equal halves and restarted
 from the last converged state. It stops, and the error is raised, after
 ``max_cuts`` cuts in the stage. (Counting successive cuts only, as the text
 of §5.4.3 does, never ends when the failure is tied to a load level and not
 to the size of the increment: each converged half resets the count and the
 last piece is halved again and again.) A cut changes the path, not the
-equilibrium sought; the result says how many there were (rule 12).
+equilibrium sought; the result says how many there were (rule 12), and
+every increment tried, with how it ended (``Increment``).
+
+The collapse load (spec 007, D2): de Souza Neto et al. (2008), §7.5.3, p.
+251, define it as "the load above which equilibrium iterations can no
+longer converge for a sufficiently small load increment". A stage whose
+increment still fails once the cuts are used up has, here, no equilibrium
+at the load it was asked for: the error carries ``reached``, the load factor
+converged so far (from 0 to 1), which bounds the collapse load from below,
+and ``smallest``, the smallest increment tried, the "sufficiently small" of
+the definition.
+
+Progress and cancelling (spec 007, D10): ``progress`` hears every iteration
+and ``should_stop`` is asked before every correction. Neither changes a
+number.
 
 Loads in totals (spec 001, D2): the stage receives the TOTAL external force at
 its end. The engine takes the internal force of the starting stresses as the
@@ -102,7 +118,9 @@ Author: Samuel Sáez López (UPCT)
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import NamedTuple
 
 import numpy as np
 from scipy.sparse import coo_matrix
@@ -123,6 +141,9 @@ Stress = tuple[float, float, float, float]      # sigma_xx, yy, zz, tau_xy
 
 class StateUpdateError(mc.ReturnMappingError):
     """The stress update failed at one integration point (spec 001, RF-4)."""
+    #: set when it leaves solve_stage (INCREMENT_FAILURES)
+    reached: float | None = None
+    smallest: float | None = None
 
     def __init__(self, element: int, point: int, step: int | None,
                  iteration: int | None, reason: str):
@@ -150,6 +171,9 @@ NO_LOAD = 1e-12
 class NotConvergedError(RuntimeError):
     """An increment did not reach the tolerance in the iterations allowed
     (spec 001, RF-6). No result is given; the history is."""
+    #: set when it leaves solve_stage (INCREMENT_FAILURES)
+    reached: float | None = None
+    smallest: float | None = None
 
     def __init__(self, step: int, history: list[tuple[int, int, float]]):
         self.step, self.history = step, history
@@ -157,6 +181,65 @@ class NotConvergedError(RuntimeError):
         super().__init__(f"step {step} did not converge: relative residual "
                          f"{last:.3e} after {history[-1][1] if history else 0} "
                          "iterations")
+
+
+class SingularTangentError(RuntimeError):
+    """The tangent stiffness of an iteration could not be factorised: it is
+    singular (spec 007, T2: with psi > 0 the points at the apex have no
+    stiffness, de Souza Neto et al. 2008, Remark 8.3). A zero pivot is one
+    of the failures that cut the increment (their Fig. 5.2)."""
+    #: set when it leaves solve_stage (INCREMENT_FAILURES)
+    reached: float | None = None
+    smallest: float | None = None
+
+    def __init__(self, step: int, iteration: int, reason: str):
+        self.step, self.iteration, self.reason = step, iteration, reason
+        super().__init__(f"step {step}, iteration {iteration}: the tangent "
+                         f"stiffness is singular ({reason})")
+
+
+class Cancelled(Exception):
+    """``should_stop`` said so between two iterations (spec 007, D10): the
+    stage is not finished and no result is given."""
+
+
+#: The failures of an increment that cut it (§5.4.3 and Fig. 5.2): no
+#: convergence in the iterations allowed, a point that cannot be updated, a
+#: singular tangent. Once the cuts allowed are used up, the last one leaves
+#: solve_stage with ``reached`` (the load factor of the stage converged so
+#: far, from 0 to 1) and ``smallest`` (the smallest increment tried) set on it
+#: (spec 007, D2).
+INCREMENT_FAILURES = (NotConvergedError, StateUpdateError, SingularTangentError)
+
+#: Status of an increment (spec 007, D2 and D12): converged within the
+#: tolerance, converged at the rounding floor (NO_LOAD) and not within the
+#: tolerance, or cut.
+CONVERGED, FLOOR, CUT = "converged", "floor", "cut"
+
+
+class Increment(NamedTuple):
+    """One increment tried in a stage: its load factors, how it ended (one
+    of CONVERGED, FLOOR, CUT), why it was cut, and the iterations it took
+    (the corrections solved)."""
+    start: float
+    end: float
+    status: str
+    reason: str = ""
+    iterations: int = 0
+
+
+@dataclass(frozen=True)
+class Iteration:
+    """What ``progress`` hears after every iteration of a stage (spec 007,
+    D10): the increment (its number in the stage, counting the cuts, and its
+    load factors), the iteration (0 is the increment's start), the relative
+    residual, and the cuts made so far in the stage."""
+    increment: int
+    start: float
+    end: float
+    iteration: int
+    residual: float
+    cuts: int
 
 
 #: The shape of each element, by its number of nodes (spec 002, T4).
@@ -233,8 +316,8 @@ class StageResult:
     #: (increment, iteration, relative residual), every iteration tried,
     #: those of the increments that were cut included
     history: list[tuple[int, int, float]] = field(default_factory=list)
-    #: (load factor at the start, at the end, "converged" or why it was cut)
-    increments: list[tuple[float, float, str]] = field(default_factory=list)
+    #: every increment tried, the cut ones included (spec 007, D2)
+    increments: list[Increment] = field(default_factory=list)
     #: The settings that change the result, and the cuts made (rule 12).
     steps: int = 0
     tolerance: float = 0.0
@@ -525,7 +608,9 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
                 external_load: list[float], steps: int, tolerance: float,
                 max_iterations: int, max_cuts: int = 0,
                 variant: interface.Variant = REFERENCE,
-                imposed: dict[int, float] | None = None) -> StageResult:
+                imposed: dict[int, float] | None = None,
+                progress: Callable[[Iteration], None] | None = None,
+                should_stop: Callable[[], bool] | None = None) -> StageResult:
     """Solve one stage from ``initial_stresses`` (one per integration point,
     in integration_points() order; the displacements start at zero) to the
     TOTAL ``external_load`` (one value per dof; on the restrained and imposed
@@ -535,10 +620,17 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
     increment in two in the whole stage, the work per integration point done
     by ``variant`` (interface.py).
 
-    Raises NoLoadError when the stage changes nothing, NotConvergedError when
-    an increment does not reach ``tolerance`` in ``max_iterations`` solves,
-    and StateUpdateError when a point cannot be updated, once the cuts
-    allowed are used up: in none of these cases is a result given.
+    ``progress``, if given, hears every iteration (an ``Iteration``); it
+    decides nothing, and the numbers are the same with it and without it.
+    ``should_stop``, if given, is asked before every correction: when it says
+    so the stage stops with ``Cancelled`` (spec 007, D10).
+
+    Raises NoLoadError when the stage changes nothing; once the cuts allowed
+    are used up, NotConvergedError when an increment does not reach
+    ``tolerance`` in ``max_iterations`` solves, StateUpdateError when a point
+    cannot be updated and SingularTangentError when the tangent cannot be
+    factorised, each with ``reached`` and ``smallest`` (INCREMENT_FAILURES);
+    and Cancelled. In none of these cases is a result given.
     """
     if (steps < 1 or max_iterations < 1 or tolerance <= 0.0
             or max_cuts < 0):
@@ -564,6 +656,15 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
     def factorise(matrix: coo_matrix):
         return splu(matrix.tocsr()[free][:, free].tocsc())
 
+    def factorise_tangent(matrix: coo_matrix, number: int, iteration: int):
+        """The tangent of an iteration; singular, the increment fails (T2)."""
+        try:
+            return factorise(matrix)
+        except RuntimeError as err:
+            if "singular" not in str(err):
+                raise
+            raise SingularTangentError(number, iteration, str(err)) from None
+
     k_elastic = stiffness(model)
     elastic = factorise(k_elastic)
 
@@ -582,11 +683,13 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
         raise NoLoadError("the stage has no load: nothing to solve")
 
     history: list[tuple[int, int, float]] = []
+    cuts = 0
 
     def increment(number: int, start: np.ndarray, before: float, factor: float):
         """One increment from the converged ``start``, at load factor
         ``before``, to the load factor ``factor`` (Box 4.2). Returns (du,
-        stresses, plastic)."""
+        stresses, plastic, iterations, whether it converged by the rounding
+        floor only)."""
         target = f_start + factor * load
         du = np.zeros(n_dofs)
         # Iteration 0 is the increment's start: its residual is the load added.
@@ -605,19 +708,24 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
             stresses, f_int, plastic = (result.stresses,
                                         result.internal_forces, result.plastic)
             if plastic.any():
-                solver = factorise(coo_matrix(
+                solver = factorise_tangent(coo_matrix(
                     (result.stiffness.ravel(), (rows, cols)),
-                    shape=(n_dofs, n_dofs)))
+                    shape=(n_dofs, n_dofs)), number, 0)
         for iteration in range(0, max_iterations + 1):
             # r = f_ext - f_int with the sign of the right-hand side of (4.71)
             r = target - f_int
             relative = _norm(r, free) / scale
             history.append((number, iteration, relative))
+            if progress is not None:
+                progress(Iteration(number, before, factor, iteration, relative, cuts))
             if iteration > 0 and (relative <= tolerance
                                   or _norm(r, free) <= NO_LOAD * level):
-                return du, stresses, plastic
+                return du, stresses, plastic, iteration, relative > tolerance
             if iteration == max_iterations:
                 raise NotConvergedError(number, history)
+            if should_stop is not None and should_stop():
+                raise Cancelled(f"stopped in increment {number} ({before:.6g} to "
+                                f"{factor:.6g} of the stage's load), iteration {iteration}")
             du[free] += solver.solve(r[free])
             try:
                 result = prepared.update(start, du)
@@ -627,9 +735,9 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
             stresses, f_int, plastic = (result.stresses,
                                         result.internal_forces, result.plastic)
             if plastic.any():
-                solver = factorise(coo_matrix(
+                solver = factorise_tangent(coo_matrix(
                     (result.stiffness.ravel(), (rows, cols)),
-                    shape=(n_dofs, n_dofs)))
+                    shape=(n_dofs, n_dofs)), number, iteration + 1)
             else:
                 solver = elastic
         raise AssertionError("unreachable")
@@ -637,24 +745,29 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
     displacement = np.zeros(n_dofs)
     converged = start0
     plastic = np.zeros(len(points), dtype=bool)
-    increments: list[tuple[float, float, str]] = []
+    increments: list[Increment] = []
     # Load factors still to reach, in order (Box 4.1); a cut inserts the
     # midpoint of the failed increment in front (§5.4.3).
     pending = [i / steps for i in range(1, steps + 1)]
-    factor, number, cuts = 0.0, 0, 0
+    factor, number = 0.0, 0
     while pending:
         number += 1
         try:
-            du, stresses, step_plastic = increment(number, converged, factor,
-                                                   pending[0])
-        except (NotConvergedError, StateUpdateError) as err:
+            du, stresses, step_plastic, its, floor = increment(number, converged, factor,
+                                                               pending[0])
+        except INCREMENT_FAILURES as err:
+            tried = sum(1 for n, it, _r in history if n == number and it > 0)
             if cuts == max_cuts:
+                err.reached = factor
+                err.smallest = min([pending[0] - factor]
+                                   + [inc.end - inc.start for inc in increments])
                 raise
-            increments.append((factor, pending[0], f"cut: {err}"))
+            increments.append(Increment(factor, pending[0], CUT, str(err), tried))
             pending.insert(0, 0.5 * (factor + pending[0]))
             cuts += 1
             continue
-        increments.append((factor, pending[0], "converged"))
+        increments.append(Increment(factor, pending[0], FLOOR if floor else CONVERGED,
+                                    "", its))
         factor = pending.pop(0)
         converged, plastic = stresses, step_plastic
         displacement = displacement + du

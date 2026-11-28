@@ -68,6 +68,7 @@ INCOMPLETE, CANCELLED = store.INCOMPLETE, store.CANCELLED
 
 #: the engine's errors that stop a stage, and leave the stages before it
 STAGE_FAILURES = (solver.NotConvergedError, solver.StateUpdateError,
+                  solver.SingularTangentError,
                   analysis.InsufficientRestraintError, analysis.LoadError)
 
 

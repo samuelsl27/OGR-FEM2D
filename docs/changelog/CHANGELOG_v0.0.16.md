@@ -137,3 +137,54 @@ no hay vértice (T1).
 - Crisfield, §9.5.4, respalda D1: el criterio de desplazamiento no basta solo, y los de energía
   «should be used with great caution». Su §2.4 da β típica entre 0.001 y 0.01 para estructuras; aquí
   el valor sigue saliendo del estudio.
+
+## T3 — El bucle de la fase: progreso, parada, incrementos, colapso y tangente singular (2026-11-28)
+
+`engine/reference/solver.py`, `engine/analysis.py`, `results/calculate.py`; `tests/test_stage_loop_v0016.py`
+(RF-3, RF-4, RF-7, RF-10; D2, D10, D12). Ningún número cambia: el caso 002 (ψ = 0° con 8 × 32 y
+ψ = 30° con 16 × 64), el anillo grueso con particiones (referencia y Rust) y el de 16 × 48 dan lo
+mismo, bit a bit, con el `solver.py` de `bee6617` y con el nuevo (comprobado con una copia temporal
+del anterior, ya borrada).
+
+- **El progreso por iteración** (D10): `solve_stage(…, progress=, should_stop=)`. `progress` oye
+  cada iteración (`Iteration`: el incremento con sus factores, la iteración, el residuo relativo y las
+  particiones hechas), en el orden de la historia. `should_stop` se pregunta antes de cada
+  corrección y para la fase con `Cancelled`. `analysis.stages` y `analysis.run` los pasan, con el
+  índice de la fase.
+- **Los incrementos** (D2): cada uno probado es un `Increment` (factores, estado `converged`,
+  `floor` o `cut`, motivo de la partición, correcciones hechas). Hasta ahora eran (inicio, fin,
+  texto). `StageOutcome.increments` los lleva, **fuera de la comparación** de `StageOutcome` hasta
+  que el `.h5` los guarde (T13): siete tests comparan una fase leída del archivo con la del motor, y
+  fallaron en la primera vuelta de la suite por eso. `test_solver_v001` se adaptó al formato nuevo, con
+  las mismas comprobaciones.
+- **El factor alcanzado** (D2, de Souza Neto et al. 2008, §7.5.3): agotadas las particiones, el error
+  que sale de la fase lleva `reached` (el factor convergido hasta entonces) y `smallest` (el
+  incremento más pequeño probado). En el anillo de 16 × 48 con ψ = 0°, 5 escalones y 4 particiones:
+  0.95 y 0.2/2⁴, lo que dio el diagnóstico de la T2.
+- **El suelo de redondeo, marcado** (D12): el incremento que converge por `NO_LOAD` y no por la
+  tolerancia queda `floor`. Con la carga de 1e-9 de las fuerzas en juego de la v0.0.2 es `floor`, y
+  con una carga normal, `converged`.
+- **La tangente singular** (la anomalía de la T2, corregida con el OK de la propietaria): un `splu`
+  singular en una corrección es ahora `SingularTangentError`. Se parte el incremento como los demás
+  fallos (`INCREMENT_FAILURES`; de Souza Neto et al., fig. 5.2) y `calculate` lo escribe como una
+  fase que falla (`incomplete`), no como un error del programa. El caso 002 con 16 × 64 y ψ = 1°:
+  sin particiones falla en 0.8 con su motivo; con 4, llega a 0.9 y vuelve a dar con una tangente
+  singular. La factorización elástica del principio no cambia: una matriz elástica singular es un
+  mecanismo del modelo, que `analysis` busca antes de resolver.
+
+Mutaciones (`tests/test_stage_loop_v0016.py`), 13 de 13 cazadas:
+
+| Etiqueta | Cambio |
+|---|---|
+| `progress_skipped` | sin avisar la iteración 0 |
+| `progress_cuts` | las particiones siempre 0 en el aviso |
+| `stop_late` | no preguntar antes de la primera corrección |
+| `stop_ignored_stage` | `analysis` no pasa `should_stop` |
+| `reached_wrong` | `reached` es el factor buscado, no el alcanzado |
+| `smallest_wrong` | `smallest` es el mayor |
+| `floor_never`, `floor_always` | la marca del suelo, nunca o siempre |
+| `singular_not_caught` | cualquier `RuntimeError` del factorizador es una tangente singular |
+| `singular_not_cut` | la tangente singular no parte el incremento |
+| `calculate_not_stage` | `calculate` no la trata como fase que falla |
+| `iterations_count` | una corrección de más en el incremento |
+| `increments_lost` | `StageOutcome` sin los incrementos |

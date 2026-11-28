@@ -39,7 +39,7 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   Es de ψ = 0: con ψ = 5° los dos convergen sin particiones. **Anomalía**: una tangente singular
   (ψ = 1°) se escapa como `RuntimeError`, sin partir; corrección propuesta para la T3. RF-8,
   propuesto como hallazgo hasta tener Crisfield (1991).)
-- [ ] T3. `solver.py` y `analysis.py`: el progreso y la cancelación por iteración (D10); los
+- [x] T3. `solver.py` y `analysis.py`: el progreso y la cancelación por iteración (D10); los
   incrementos con su estado y el factor alcanzado (D2); la marca del suelo de redondeo (D12); **una
   tangente singular cuenta como incremento que falla** (la anomalía de la T2, con el OK de la
   propietaria del 2026-11-28).
@@ -49,6 +49,9 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   un incremento que converge por el suelo queda marcado (con el caso de la v0.0.2); la tangente
   singular del 002 con ψ = 1° se parte y, agotadas las particiones, es una no convergencia con su
   motivo, y `calculate` la trata como una fase que falla.
+  (Hecho el 2026-11-28: bit a bit con el `solver.py` anterior en el 002 y en los anillos; los
+  incrementos son `Increment`, y `test_solver_v001` se adaptó al formato. 9 tests; 13 mutaciones,
+  13 cazadas.)
 - [ ] T4. La lista de factores de carga (RF-6) y **el tamaño automático de Crisfield (1991), ec.
   (9.40)** (D3 modificada) en `Stage` y en `solve_stage`.
 
@@ -109,7 +112,8 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
 
   *Hecho cuando:* los incrementos del `.h5` son los del motor; un `.h5` de la v0.0.15 se sigue
   leyendo; cancelar dentro de una fase deja `cancelled` con las fases anteriores; el informe dice los
-  ajustes, las particiones y el factor alcanzado de una fase no convergida.
+  ajustes, las particiones y el factor alcanzado de una fase no convergida; `StageOutcome.increments`
+  vuelve a entrar en la comparación (`compare=True`, lo dejó fuera la T3).
 - [ ] T14. La interfaz: Análisis → Ajustes del cálculo; la ventana de cálculo con escalón, iteración
   y residuo, el registro por iteración y Cancelar dentro de la fase.
 

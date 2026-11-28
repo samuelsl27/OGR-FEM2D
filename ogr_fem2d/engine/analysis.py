@@ -41,13 +41,18 @@ the next:
   result lists them (``removed_nodes``); the stresses of inactive elements
   are None. An element that becomes active again is refused: the state it
   would come back with (construction, backfill) is not defined by any spec
-  yet.
+  yet;
+* progress and cancelling (spec 007, D10): ``progress(stage, iteration)``
+  hears every iteration of every stage (the stage's index and the solver's
+  ``Iteration``), and ``should_stop()`` is asked before every correction; a
+  stop leaves the generator with solver.Cancelled, the stages before it
+  given. Neither changes a number.
 
 Author: Samuel Sáez López (UPCT)
 """
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -98,6 +103,11 @@ class StageOutcome:
     #: the elements of the stage, and the nodes left without any (T9)
     active: tuple[bool, ...] = ()
     removed_nodes: tuple[int, ...] = ()
+    #: every increment tried, the cut ones included (spec 007, D2). Out of
+    #: the comparison until the .h5 keeps them (spec 007, T13: then
+    #: compare=True again), so that a stage read back from the file still
+    #: equals the engine's
+    increments: tuple[solver.Increment, ...] = field(default=(), compare=False)
 
 
 def _not_yet(m: EngineModel) -> None:
@@ -212,15 +222,18 @@ def _reactions(result_reactions: dict[int, float], used: list[int]
     return {n: (r[0], r[1]) for n, r in sorted(out.items())}
 
 
-def run(m: EngineModel, variant: interface.Variant = solver.REFERENCE) -> list[StageOutcome]:
+def run(m: EngineModel, variant: interface.Variant = solver.REFERENCE,
+        progress: Callable[[int, solver.Iteration], None] | None = None,
+        should_stop: Callable[[], bool] | None = None) -> list[StageOutcome]:
     """Every stage of ``m``, in order. The input is validated first
     (model.InputError with every problem); then each stage is solved, on its
     active elements, from the end of the previous one."""
-    return list(stages(m, variant))
+    return list(stages(m, variant, progress, should_stop))
 
 
-def stages(m: EngineModel, variant: interface.Variant = solver.REFERENCE
-           ) -> Iterator[StageOutcome]:
+def stages(m: EngineModel, variant: interface.Variant = solver.REFERENCE,
+           progress: Callable[[int, solver.Iteration], None] | None = None,
+           should_stop: Callable[[], bool] | None = None) -> Iterator[StageOutcome]:
     """The stages of ``run``, one at a time, as each is solved (spec 005,
     D7): the caller keeps the stages already solved when a later one fails
     (its error comes out of the generator after them) or when it stops
@@ -261,10 +274,12 @@ def stages(m: EngineModel, variant: interface.Variant = solver.REFERENCE
         start = [stresses[g] for g in points]
         increments = {local_dof[d]: value - displacement[d] for d, value in imposed_total.items()}
         removed = tuple(n for n in range(len(m.nodes)) if n not in local)
+        heard = None if progress is None else (lambda it, i=i: progress(i, it))
         try:
             result = solver.solve_stage(engine_model, start, list(load), stage.steps,
                                         stage.tolerance, stage.max_iterations,
-                                        stage.max_cuts, variant, increments)
+                                        stage.max_cuts, variant, increments,
+                                        heard, should_stop)
         except solver.NoLoadError:
             # nothing changes: the state stays; its reactions are recomputed
             f_int = solver.internal_forces(solver.integration_points(engine_model), start,
@@ -289,5 +304,5 @@ def stages(m: EngineModel, variant: interface.Variant = solver.REFERENCE
             [float(u) for u in displacement], list(stresses),
             _reactions(result.reactions, used), plastic, tuple(sorted(axis & set(used))),
             True, result.history, result.steps, result.tolerance, result.cuts,
-            tuple(stage.active), removed)
+            tuple(stage.active), removed, tuple(result.increments))
         yield outcome

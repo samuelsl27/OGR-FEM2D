@@ -206,14 +206,15 @@ class TestIncrementCutting:
             raise AssertionError("expected no convergence in 4 iterations")
         _mesh, cut = _hole.excavate(*COARSE, MC0, 1, 1e-10, 4, max_cuts=6)
         assert cut.cuts >= 1
-        reasons = [why for _a, _b, why in cut.increments]
-        assert sum(why.startswith("cut:") for why in reasons) == cut.cuts
+        statuses = [inc.status for inc in cut.increments]
+        assert statuses.count(solver.CUT) == cut.cuts
         # every cut halves its increment, and is retried from its start
-        for (a, b, why), (a2, b2, _) in zip(cut.increments, cut.increments[1:]):
-            if why.startswith("cut:"):
-                assert (a2, b2) == (a, 0.5 * (a + b)), (a, b, a2, b2)
+        for inc, after in zip(cut.increments, cut.increments[1:]):
+            if inc.status == solver.CUT:
+                assert (after.start, after.end) == (inc.start, 0.5 * (inc.start + inc.end)), \
+                    (inc, after)
         # the converged increments tile [0, 1] with no gap
-        done = [(a, b) for a, b, why in cut.increments if why == "converged"]
+        done = [(inc.start, inc.end) for inc in cut.increments if inc.status == solver.CONVERGED]
         assert done[0][0] == 0.0 and done[-1][1] == 1.0
         assert all(b1 == a2 for (_, b1), (a2, _) in zip(done, done[1:]))
         # and the last iteration of the stage is within tolerance
