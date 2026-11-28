@@ -343,3 +343,48 @@ singularidad**: factoriza, la corrección es basura (residuo 2.4e51) y el increm
 fase falla igual, pero con otro error. El test exige ahora lo que vale en todas las plataformas
 (un fallo del incremento, sin crash). Cuál de ellos sale depende de la plataforma: una matriz
 singular puede no verse como tal, y es la no convergencia la que la para.
+
+## T9 (adelantada) — La búsqueda lineal de Crisfield (2026-11-28)
+
+`engine/reference/solver.py` (`LineSearch`, `search`, `LineSearchError`), `engine/model.py`,
+`engine/analysis.py`; `tests/test_line_search_v0016.py` (RF-7, RF-8, D5). Crisfield (1991), §9.2,
+págs. 254–265: la búsqueda «slack» sobre la dirección de Newton completo. Leídos el texto, la fig. 9.5
+(el bucle LSLOOP, sobre la página), la subrutina SEARCH (págs. 259–261) y la LSLOOP de la pág. 293.
+
+- **Lo que hace**: con s(η) = δp · g(η) y g = −r, si s₀ ≥ 0 la dirección va cuesta arriba y se
+  abandona la búsqueda (η = 1). Si no, se acepta η cuando |s(η)/s₀| < β_ls. Si no se acepta, SEARCH
+  interpola entre el η negativo más cercano al origen y el positivo anterior (al menos un 20 % del
+  camino, no menos que η_min) o, sin negativos, extrapola (como mucho amp por el mayor η y nunca más
+  de η_max). La búsqueda falla, «line-search trouble», si se agotan las búsquedas o se llega dos
+  veces seguidas a la cota del paso. Entonces el incremento se parte, como en el libro con
+  incrementos automáticos. Un punto que no se puede actualizar en un η de prueba hace fallar el
+  incremento, como en η = 1: el libro no dice qué hacer ahí y no se inventa.
+- **Los valores**, los de los ejemplos del libro (§9.9, págs. 316 y 322): β_ls = 0.8 («of the order
+  of 0.8», pág. 256), amp = 5, η_max = 25, η_min = 0.01, 6 búsquedas (LSLOOP admite 8).
+- **Una guarda propia**, anotada: con dos razones iguales no hay recta que extrapolar (el Fortran
+  divide por cero) y se toma la cota.
+- **Sin búsqueda, nada cambia**: el 002, los anillos y el anillo de 16 × 48 con particiones, bit a
+  bit con el `solver.py` anterior. Con búsqueda, una fase elástica no busca nunca (la razón en η = 1
+  es ~0).
+
+**Lo que consigue**, con los valores del libro:
+
+| Caso | Sin búsqueda | Con búsqueda |
+|---|---|---|
+| Anillo de 21 m, 16 × 48, ψ = 0° (T2) | no converge con ninguna de 32 combinaciones | **converge sin particiones** (10 búsquedas); u_r(a) a un **0.117 %** de la solución exacta del anillo finito, siguiendo la familia anidada (1.13 % con 24 × 8; spec 001: 70.7, 11.0) |
+| Zapata del caso 008, malla gruesa, 5 escalones por fase y 8 particiones | no pasa de la primera fase | **las ocho fases hasta 4 δ_e** (355 iteraciones, 103 búsquedas, 6 s); 20 escalones sin particiones, también |
+| Caso 002, 16 × 64, ψ = 0° (T2) | 0.86–0.90 | **sigue sin converger**: llega a 0.9 y la búsqueda alcanza dos veces la cota del paso |
+
+El 002 de 16 × 64 queda como hallazgo de RF-8 (la T9 «en su sitio» lo cierra). El caso 002 sigue con
+su malla de 8 × 32 para ψ = 0, que es la del caso.
+
+Mutaciones, 13. En la primera pasada sobrevivieron 2: nadie probaba una dirección cuesta arriba (un
+test nuevo, con una variante cuya tangente es la elástica cambiada de signo) y el motivo de la cota
+alcanzada dos veces no se miraba. Para cazar la primera, las búsquedas se cuentan ahora también en los
+incrementos partidos (regla 12). Las 13, cazadas: la prueba de aceptación sin valor absoluto, buscar
+cuesta arriba, sin el 20 %, el negativo más lejano, sin amp, ignorar la cota dos veces, no contar
+las búsquedas, no aplicar η, la búsqueda fallida sin partir, `analysis` y el modelo sin ella, y los
+dos de la cuesta arriba y el recuento.
+
+**La tercera vuelta de la CI de la rama** (run 46160455081, sobre `67081e4` con la T5b): **en verde en
+Linux, Windows y macOS**, construcción, congelado y los nueve trabajos de test.

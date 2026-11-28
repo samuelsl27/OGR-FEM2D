@@ -86,6 +86,29 @@ In the three, a failed increment is cut as above, and the stage goes on
 from the cut ones to the target it had; only when no target is left does
 the automatic size propose the next one.
 
+The line search (spec 007, T9; D5): Crisfield, M. A. (1991), vol. 1, §9.2,
+pp. 254-265, a "slack" line search on the full Newton direction. With the
+correction dp = K_T^-1 r of an iteration, the out-of-balance force g = f_int
+- f_ext = -r and the slope s(eta) = dp . g(eta) along p_0 + eta dp (Eqs. 9.6,
+9.8-9.9): if s_0 = s(0) >= 0 the direction is uphill and the search is
+abandoned (eta = 1, Fig. 9.5); otherwise eta = 1 is accepted when the ratio
+r(eta) = s(eta) / s_0 satisfies |r| < beta_ls (Eq. 9.11; "a suitable value
+for beta_ls is of the order of 0.8"), and if not, subroutine SEARCH (pp.
+259-261, Fig. 9.3) gives the next eta: linear interpolation between the
+smallest eta with a negative ratio and the nearest smaller one with a
+positive ratio, at least 0.2 of the way between them, bounded below by
+eta_min; with no negative ratio yet, extrapolation between the last two,
+bounded by amp times the largest eta so far and by eta_max. The search
+fails (Fig. 9.5, ILFAIL = 2: "line-search trouble") when the searches
+allowed are used up or the bound is reached twice running; with automatic
+increments the book then cuts the increment (LSLOOP, p. 294), and so does
+this solver (LineSearchError is one of INCREMENT_FAILURES). The values of
+the book's examples (§9.9, pp. 316 and 322): beta_ls = 0.8, amp = 5,
+eta_max = 25, eta_min = 0.01, 4 to 6 searches (LSLOOP allows 8). A point
+that cannot be updated at a trial eta fails the increment, as at eta = 1:
+the book does not say what to do then, and nothing is invented here. Every
+extra evaluation of the residual is counted in the increment.
+
 Progress and cancelling (spec 007, D10): ``progress`` hears every iteration
 and ``should_stop`` is asked before every correction. Neither changes a
 number.
@@ -220,6 +243,19 @@ class SingularTangentError(RuntimeError):
                          f"stiffness is singular ({reason})")
 
 
+class LineSearchError(RuntimeError):
+    """The line search of an iteration failed (Crisfield 1991, Fig. 9.5,
+    ILFAIL = 2): the searches allowed were used up, or the smallest or the
+    largest step length was reached twice running."""
+    #: set when it leaves solve_stage (INCREMENT_FAILURES)
+    reached: float | None = None
+    smallest: float | None = None
+
+    def __init__(self, step: int, iteration: int, reason: str):
+        self.step, self.iteration, self.reason = step, iteration, reason
+        super().__init__(f"step {step}, iteration {iteration}: line search: {reason}")
+
+
 class Cancelled(Exception):
     """``should_stop`` said so between two iterations (spec 007, D10): the
     stage is not finished and no result is given."""
@@ -231,7 +267,8 @@ class Cancelled(Exception):
 #: solve_stage with ``reached`` (the load factor of the stage converged so
 #: far, from 0 to 1) and ``smallest`` (the smallest increment tried) set on it
 #: (spec 007, D2).
-INCREMENT_FAILURES = (NotConvergedError, StateUpdateError, SingularTangentError)
+INCREMENT_FAILURES = (NotConvergedError, StateUpdateError, SingularTangentError,
+                      LineSearchError)
 
 #: Status of an increment (spec 007, D2 and D12): converged within the
 #: tolerance, converged at the rounding floor (NO_LOAD) and not within the
@@ -248,6 +285,74 @@ class Increment(NamedTuple):
     status: str
     reason: str = ""
     iterations: int = 0
+    #: extra evaluations of the residual made by the line search (T9)
+    searches: int = 0
+
+
+@dataclass(frozen=True)
+class LineSearch:
+    """Crisfield's (1991) line search, §9.2: the tolerance beta_ls on the
+    ratio of slopes (Eq. 9.11), the largest amplification of a step length,
+    the largest and the smallest step length, and the searches allowed in
+    one iteration. The defaults are the values of the book's examples (§9.9,
+    pp. 316 and 322)."""
+    tolerance: float = 0.8
+    amplification: float = 5.0
+    largest: float = 25.0
+    smallest: float = 0.01
+    searches: int = 6
+
+    def problems(self) -> list[str]:
+        out = []
+        if not (0.0 < self.tolerance < 1.0):
+            out.append("the line search tolerance must be in (0, 1)")
+        if not (0.0 < self.smallest < 1.0 < self.largest and self.amplification > 1.0):
+            out.append("needs 0 < smallest < 1 < largest and amplification > 1")
+        if not (isinstance(self.searches, int) and 1 <= self.searches <= 8):
+            out.append("searches must be an integer from 1 to 8 (LSLOOP allows 8)")
+        return out
+
+
+def search(etas: list[float], ratios: list[float], ls: LineSearch,
+           bound: int) -> tuple[float, int]:
+    """Subroutine SEARCH (Crisfield 1991, pp. 259-261): the next step length
+    from those tried (``etas``, starting with 0 and 1) and their ratios
+    (``ratios``, starting with 1), and the counter ICO of the bounds (0;
+    1 once the smallest or the largest is used; 2 when used twice running).
+    Returns (eta, bound)."""
+    negative = [i for i, r in enumerate(ratios) if r < 0.0]
+    largest_so_far = max(etas)
+    if negative:
+        # the negative ratio nearest the origin, and the positive one
+        # closest to it with a smaller step length
+        ineg = min(negative, key=lambda i: etas[i])
+        ipos = 0
+        for i, (eta, ratio) in enumerate(zip(etas, ratios)):
+            if ratio < 0.0 or eta > etas[ineg] or eta < etas[ipos]:
+                continue
+            ipos = i
+        eta = ((ratios[ineg] * etas[ipos] - ratios[ipos] * etas[ineg])
+               / (ratios[ineg] - ratios[ipos]))
+        # "ensuring a reasonable change"
+        eta = max(eta, etas[ipos] + 0.2 * (etas[ineg] - etas[ipos]))
+        if eta < ls.smallest:
+            eta = ls.smallest
+            bound = 2 if bound == 1 else 1 if bound == 0 else bound
+        return eta, bound
+    # no negative ratio: extrapolate between the last two, within bounds
+    cap = min(ls.amplification * largest_so_far, ls.largest)
+    slope = ratios[-1] - ratios[-2]
+    # equal ratios give no line to extrapolate (the Fortran divides by
+    # zero there); take the bound
+    eta = ((ratios[-1] * etas[-2] - ratios[-2] * etas[-1]) / slope
+           if slope != 0.0 else math.inf)
+    if not math.isfinite(eta) or eta <= 0.0 or eta > cap:
+        eta = cap
+    if eta == ls.largest and bound == 1:
+        return eta, 2
+    if eta == ls.largest:
+        bound = 1
+    return eta, bound
 
 
 @dataclass(frozen=True)
@@ -677,7 +782,8 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
                 progress: Callable[[Iteration], None] | None = None,
                 should_stop: Callable[[], bool] | None = None,
                 factors: list[float] | None = None,
-                automatic: Automatic | None = None) -> StageResult:
+                automatic: Automatic | None = None,
+                line_search: LineSearch | None = None) -> StageResult:
     """Solve one stage from ``initial_stresses`` (one per integration point,
     in integration_points() order; the displacements start at zero) to the
     TOTAL ``external_load`` (one value per dof; on the restrained and imposed
@@ -711,6 +817,8 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
         raise ValueError("give the load factors or the automatic size, not both")
     wrong = (factor_problems(factors) if factors is not None
              else automatic.problems() if automatic is not None else [])
+    if line_search is not None:
+        wrong += line_search.problems()
     if wrong:
         raise ValueError("; ".join(wrong))
     points = integration_points(model)
@@ -773,12 +881,14 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
 
     history: list[tuple[int, int, float]] = []
     cuts = 0
+    searched = [0]                  # line-search evaluations, all the stage's
 
     def increment(number: int, start: np.ndarray, before: float, factor: float):
         """One increment from the converged ``start``, at load factor
         ``before``, to the load factor ``factor`` (Box 4.2). Returns (du,
         stresses, plastic, iterations, whether it converged by the rounding
-        floor only)."""
+        floor only, extra residuals of the line search)."""
+        searches_before = searched[0]
         target = f_start + factor * load
         du = np.zeros(n_dofs)
         # Iteration 0 is the increment's start: its residual is the load added.
@@ -809,18 +919,45 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
                 progress(Iteration(number, before, factor, iteration, relative, cuts))
             if iteration > 0 and (relative <= tolerance
                                   or _norm(r, free) <= NO_LOAD * level):
-                return du, stresses, plastic, iteration, relative > tolerance
+                return (du, stresses, plastic, iteration, relative > tolerance,
+                        searched[0] - searches_before)
             if iteration == max_iterations:
                 raise NotConvergedError(number, history)
             if should_stop is not None and should_stop():
                 raise Cancelled(f"stopped in increment {number} ({before:.6g} to "
                                 f"{factor:.6g} of the stage's load), iteration {iteration}")
-            du[free] += solver.solve(r[free])
-            try:
-                result = prepared.update(start, du)
-            except StateUpdateError as err:
-                raise StateUpdateError(err.element, err.point, number,
-                                       iteration + 1, err.reason) from None
+            step = np.zeros(n_dofs)
+            step[free] = solver.solve(r[free])
+            base = du.copy()
+
+            def trial(eta: float):
+                try:
+                    return prepared.update(start, base + eta * step)
+                except StateUpdateError as err:
+                    raise StateUpdateError(err.element, err.point, number,
+                                           iteration + 1, err.reason) from None
+            result, eta = trial(1.0), 1.0
+            if line_search is not None:
+                # s(eta) = dp . g(eta), g = -(target - f_int), on the free dofs
+                s0 = -float(step[free] @ r[free])
+                if s0 < 0.0:                 # downhill: search (Fig. 9.5)
+                    etas, ratios, bound = [0.0, 1.0], [1.0], 0
+                    for _ in range(line_search.searches):
+                        ratio = -float(step[free] @ (target - result.internal_forces)[free]) / s0
+                        ratios.append(ratio)
+                        if abs(ratio) < line_search.tolerance:
+                            break
+                        eta, bound = search(etas, ratios, line_search, bound)
+                        if bound == 2:
+                            raise LineSearchError(number, iteration + 1,
+                                                  "the bound of the step length reached twice")
+                        etas.append(eta)
+                        result = trial(eta)
+                        searched[0] += 1
+                    else:
+                        raise LineSearchError(number, iteration + 1,
+                                              f"{line_search.searches} searches used up")
+            du = base + eta * step
             stresses, f_int, plastic = (result.stresses,
                                         result.internal_forces, result.plastic)
             if plastic.any():
@@ -846,9 +983,10 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
     factor, number = 0.0, 0
     while pending:
         number += 1
+        searched_before = searched[0]
         try:
-            du, stresses, step_plastic, its, floor = increment(number, converged, factor,
-                                                               pending[0])
+            du, stresses, step_plastic, its, floor, extra = increment(
+                number, converged, factor, pending[0])
         except INCREMENT_FAILURES as err:
             tried = sum(1 for n, it, _r in history if n == number and it > 0)
             if cuts == max_cuts:
@@ -856,12 +994,13 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
                 err.smallest = min([pending[0] - factor]
                                    + [inc.end - inc.start for inc in increments])
                 raise
-            increments.append(Increment(factor, pending[0], CUT, str(err), tried))
+            increments.append(Increment(factor, pending[0], CUT, str(err), tried,
+                                        searched[0] - searched_before))
             pending.insert(0, 0.5 * (factor + pending[0]))
             cuts += 1
             continue
         increments.append(Increment(factor, pending[0], FLOOR if floor else CONVERGED,
-                                    "", its))
+                                    "", its, extra))
         size = pending[0] - factor
         factor = pending.pop(0)
         if automatic is not None and not pending and factor < 1.0:

@@ -38,7 +38,7 @@ from dataclasses import dataclass
 
 from .reference.elastic import Elastic
 from .reference.mohr_coulomb import MohrCoulomb
-from .reference.solver import Automatic, factor_problems
+from .reference.solver import Automatic, LineSearch, factor_problems
 from .reference.quadrature import AXISYMMETRIC, PLANE_STRAIN, rule_for
 
 ANALYSES = (PLANE_STRAIN, AXISYMMETRIC)
@@ -140,6 +140,8 @@ class Stage:
     #: automatic size (spec 007, D3; solver.solve_stage)
     factors: tuple[float, ...] | None = None
     automatic: Automatic | None = None
+    #: Crisfield's line search (spec 007, T9), or none
+    line_search: LineSearch | None = None
 
 
 @dataclass(frozen=True)
@@ -307,6 +309,9 @@ def _stage_problems(m: EngineModel, i: int, s: Stage) -> list[Problem]:
     elif s.automatic is not None:
         for why in s.automatic.problems():
             add("stage_settings", "automatic", why)
+    if s.line_search is not None:
+        for why in s.line_search.problems():
+            add("stage_settings", "line_search", why)
     if len(s.active) != n_elements:
         add("active", "elements", f"{len(s.active)} active flags for {n_elements} elements")
         return out

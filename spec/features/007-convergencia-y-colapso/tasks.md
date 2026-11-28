@@ -82,8 +82,11 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   con incrementos grandes el residuo oscila en 2e-3 o la tangente sale singular. La CI de la rama
   sacó además dos fallos de la T3 con la tangente singular, corregidos: SuperLU revienta en macOS
   con filas sin rigidez, que ahora se detectan antes.)
-- [ ] T9 (adelantada por la propietaria el 2026-11-28, antes de la T6): la búsqueda lineal de
-  Crisfield (1991), §9.2; abajo, en su sitio de antes.
+- [x] T9 (adelantada por la propietaria el 2026-11-28, antes de la T6): la búsqueda lineal de
+  Crisfield (1991), §9.2; abajo, en su sitio de antes, queda el cierre de RF-8.
+  (Hecho el 2026-11-28: con los valores del libro, el anillo de 16 × 48 con ψ = 0 converge sin
+  particiones (0.117 % frente a la solución exacta) y la zapata gruesa hasta 4 δ_e; el 002 de
+  16 × 64 sigue sin converger. Sin búsqueda, bit a bit. 10 tests; 13 mutaciones, 13 cazadas.)
 - [ ] T6. **Los estudios de dominio y de malla** de la variante (a) (D7).
 
   *Hecho cuando:* la curva carga–asiento de tres mallas anidadas y de dos dominios está en el
@@ -104,7 +107,8 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   elástico, independencia de escalones en elástico, descarga en una iteración, equilibrio de
   reacciones) en verde.
 - [ ] T9. **La robustez** (RF-8, D5), con lo que dijo la T2: la búsqueda lineal de Crisfield (1991),
-  §9.2, medida A/B.
+  §9.2, medida A/B. (La búsqueda ya está, arriba; aquí, el cierre de RF-8 con los valores por
+  defecto de la T7 y el coste A/B.)
 
   *Hecho cuando:* el caso 002 con 16 × 64 y el anillo con 16 × 48, ψ = 0°, convergen con los valores
   por defecto y cumplen su tolerancia; o el hallazgo está en el changelog con el diagnóstico, y la
