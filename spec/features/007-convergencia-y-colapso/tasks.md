@@ -20,12 +20,14 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
 
 ## Parte A — v0.0.16: el motor y STR-05
 
-- [ ] T1. **v0.0.16**, Tresca en un punto de Gauss (RF-12, D14). Empieza `CHANGELOG_v0.0.16.md`.
+- [x] T1. **v0.0.16**, Tresca en un punto de Gauss (RF-12, D14). Empieza `CHANGELOG_v0.0.16.md`.
   Las boxes del retorno de Tresca de dSN §8.1, leídas y anotadas en el plan («Formulación»).
 
   *Hecho cuando:* Mohr-Coulomb con φ = ψ = 0 coincide con el retorno de Tresca escrito en el test a
   1e-12 en el plano y en las dos aristas; el corte simple en deformación plana llega a τ = c y se
   queda; ningún estado aleatorio pide el vértice; Rust da lo mismo que Python.
+  (Hecho el 2026-11-28: a la primera, sin cambiar el motor; también la tangente frente a la derivada
+  numérica. 5 tests; 10 mutaciones, 9 cazadas y 1 equivalente con φ = 0.)
 - [ ] T2. **El diagnóstico de la robustez** (D5, 1; regla 6), en
   `comprobaciones/diagnostico_robustez.py`: el caso 002 con 16 × 64 y el anillo con 16 × 48, ψ = 0°.
 

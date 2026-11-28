@@ -119,7 +119,7 @@ referencia–Rust se comprueba en STR-05 con una malla gruesa.
 | Carga de colapso con carga impuesta | dSN, §7.5.3 (y §7.5.1, §7.5.2, §8.4.2) | pág. 251 (PDF 276) | **Leído**; «suficientemente pequeño» sin definir (D2) |
 | Carga de Prandtl, (2 + π) c | Prandtl (1921) y Hill (1950), en dSN ec. (7.178), §7.5.4 | págs. 252–255 (PDF 277–280) | **Leído** en dSN; el original, por conseguir |
 | La zapata de Tresca rígida y lisa con el asiento impuesto | dSN, §8.4.3 | págs. 346–349 (PDF 371–374) | **Leído**: el montaje, no su número (5.19 es su malla) |
-| Retorno de Tresca; Mohr-Coulomb con φ = ψ = 0 | dSN, §8.1 (boxes del retorno) y Remark 8.2 | Remark 8.2, pág. 300 (PDF 325) | Remark **leída**; las boxes de §8.1, **al programar la T2** |
+| Retorno de Tresca; Mohr-Coulomb con φ = ψ = 0 | dSN, §8.1.1, ecs. (8.12)–(8.32), boxes 8.1–8.3, y Remark 8.2 | págs. 268–278 (PDF 293–303); Remark 8.2, pág. 300 (PDF 325) | **Leído** (T1) |
 | Más escalones con ψ = 0 y mallas densas | Clausen (2007), apéndice B, §6.1 | págs. 150–151 (PDF 164–165) | **Leído** |
 | Búsqueda lineal | Crisfield (1991) | — | **No está**: no entra sin ella (D5) |
 
