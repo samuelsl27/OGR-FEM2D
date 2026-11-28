@@ -125,3 +125,15 @@ que corrige una corrección desmesurada es acotarla, que es lo que hace una bús
 fuente (Crisfield 1991) no está. Se propone a la propietaria dejar RF-8 como hallazgo con este
 diagnóstico, y la búsqueda lineal para cuando esté la fuente (D5, 3). No afecta a STR-05: con φ = 0
 no hay vértice (T1).
+
+**Decisiones de la propietaria al cerrar la T2** (2026-11-28):
+
+- La anomalía de la tangente singular se corrige en la T3: cuenta como incremento que falla.
+- **Crisfield (1991) conseguido**. Con él, la búsqueda lineal de su §9.2 entra en la T9, medida A/B.
+- **D3 modificada**: Crisfield, ec. (9.40), da una regla con fuente para el tamaño automático del
+  incremento con carga impuesta, Δλ_n = Δλ_o (I_d / I_o)^(1/2). La premisa de D3 («no hay regla con
+  fuente») era falsa. Se programan los dos modos, iguales y automáticos (T4), y el estudio de la T7
+  elige cuál va por defecto.
+- Crisfield, §9.5.4, respalda D1: el criterio de desplazamiento no basta solo, y los de energía
+  «should be used with great caution». Su §2.4 da β típica entre 0.001 y 0.01 para estructuras; aquí
+  el valor sigue saliendo del estudio.

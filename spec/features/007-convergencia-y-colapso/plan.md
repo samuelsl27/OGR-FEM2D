@@ -121,7 +121,11 @@ referencia–Rust se comprueba en STR-05 con una malla gruesa.
 | La zapata de Tresca rígida y lisa con el asiento impuesto | dSN, §8.4.3 | págs. 346–349 (PDF 371–374) | **Leído**: el montaje, no su número (5.19 es su malla) |
 | Retorno de Tresca; Mohr-Coulomb con φ = ψ = 0 | dSN, §8.1.1, ecs. (8.12)–(8.32), boxes 8.1–8.3, y Remark 8.2 | págs. 268–278 (PDF 293–303); Remark 8.2, pág. 300 (PDF 325) | **Leído** (T1) |
 | Más escalones con ψ = 0 y mallas densas | Clausen (2007), apéndice B, §6.1 | págs. 150–151 (PDF 164–165) | **Leído** |
-| Búsqueda lineal | Crisfield (1991) | — | **No está**: no entra sin ella (D5) |
+| Criterio en fuerza; β típica 0.001–0.01 | Crisfield (1991), §2.4, ec. (2.30) | pág. 39 (PDF 54) | **Leído** |
+| Búsqueda lineal «slack» por la razón r = s(η)/s₀, con β_ls ≈ 0.8, interpolación y extrapolación acotadas | Crisfield (1991), §9.2, ecs. (9.5)–(9.14), fig. 9.3–9.5, subrutinas SEARCH y LSLOOP | págs. 254–265 (PDF 269–280) | **Leído** (texto); las ecuaciones, sobre la página al programar la T9 |
+| Tamaño automático del incremento, Δλ_n = Δλ_o (I_d / I_o)^(1/2) | Crisfield (1991), §9.5, ec. (9.40) | págs. 286–287 (PDF 301–302) | **Leído**; la ecuación, sobre la página al programar la T4 |
+| Partición por el factor de convergencia, entre 0.1 y 0.5 | Crisfield (1991), §9.5.1, ec. (9.42) | pág. 288 (PDF 303) | **Leído**; no se usa (la partición en dos de dSN §5.4.3 sigue) |
+| Criterios de desplazamiento y de energía, desaconsejados | Crisfield (1991), §9.5.4, ecs. (9.49)–(9.52) | págs. 289–290 (PDF 304–305) | **Leído** (D1) |
 
 **Convenio**: el del motor, tracción positiva; la presión de la zapata y el asiento se dan positivos
 hacia abajo solo en el caso y en el changelog, convertidos en un único sitio (`tests/_footing.py`).

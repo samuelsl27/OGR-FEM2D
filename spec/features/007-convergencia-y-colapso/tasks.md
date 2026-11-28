@@ -40,15 +40,22 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   (ψ = 1°) se escapa como `RuntimeError`, sin partir; corrección propuesta para la T3. RF-8,
   propuesto como hallazgo hasta tener Crisfield (1991).)
 - [ ] T3. `solver.py` y `analysis.py`: el progreso y la cancelación por iteración (D10); los
-  incrementos con su estado y el factor alcanzado (D2); la marca del suelo de redondeo (D12).
+  incrementos con su estado y el factor alcanzado (D2); la marca del suelo de redondeo (D12); **una
+  tangente singular cuenta como incremento que falla** (la anomalía de la T2, con el OK de la
+  propietaria del 2026-11-28).
 
   *Hecho cuando:* bit a bit con y sin `progress` en los casos 001 a 007; `should_stop` para entre
   dos iteraciones y no deja fase a medias; una fase que no converge dice `reached` y `smallest`;
-  un incremento que converge por el suelo queda marcado (con el caso de la v0.0.2).
-- [ ] T4. La lista de factores de carga (RF-6) en `Stage` y en `solve_stage`.
+  un incremento que converge por el suelo queda marcado (con el caso de la v0.0.2); la tangente
+  singular del 002 con ψ = 1° se parte y, agotadas las particiones, es una no convergencia con su
+  motivo, y `calculate` la trata como una fase que falla.
+- [ ] T4. La lista de factores de carga (RF-6) y **el tamaño automático de Crisfield (1991), ec.
+  (9.40)** (D3 modificada) en `Stage` y en `solve_stage`.
 
   *Hecho cuando:* en elástico, la misma solución que los escalones iguales; en Mohr-Coulomb mueve el
-  número (regla 7); una lista que no crece, que no termina en 1 o vacía se rechaza con su motivo.
+  número (regla 7); una lista que no crece, que no termina en 1 o vacía se rechaza con su motivo; el
+  tamaño automático sigue (9.40) con sus límites (un test con las iteraciones conocidas de cada
+  incremento) y cada parámetro mueve el número.
 - [ ] T5. **El caso 008 escrito antes de medir** (D6, D7), en un commit propio: `caso.md`,
   `esperado.json` con la tolerancia del 2 % y los protocolos de los estudios de dominio, de malla y
   de los valores por defecto (D1, D3); `tests/_footing.py` con las dos variantes.
@@ -74,7 +81,8 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   la de 1.05 no, y dice hasta qué factor llegó; las identidades de la tabla (una iteración en
   elástico, independencia de escalones en elástico, descarga en una iteración, equilibrio de
   reacciones) en verde.
-- [ ] T9. **La robustez** (RF-8, D5, 2), con lo que dijo la T2.
+- [ ] T9. **La robustez** (RF-8, D5), con lo que dijo la T2: la búsqueda lineal de Crisfield (1991),
+  §9.2, medida A/B.
 
   *Hecho cuando:* el caso 002 con 16 × 64 y el anillo con 16 × 48, ψ = 0°, convergen con los valores
   por defecto y cumplen su tolerancia; o el hallazgo está en el changelog con el diagnóstico, y la
