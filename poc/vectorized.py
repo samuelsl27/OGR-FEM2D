@@ -38,9 +38,9 @@ from ogr_fem2d.engine.reference.solver import StateUpdateError
 TOLERANCE = mc.TOLERANCE
 
 
-def _in_order(s: np.ndarray) -> np.ndarray:
+def _in_order(s: np.ndarray, scale: np.ndarray) -> np.ndarray:
     """s[:, 0] >= s[:, 1] >= s[:, 2] within the tolerance (mc._in_order)."""
-    delta = TOLERANCE * np.maximum(1.0, np.abs(s).max(axis=1))
+    delta = TOLERANCE * np.maximum(scale, np.abs(s).max(axis=1))
     return (s[:, 0] + delta >= s[:, 1]) & (s[:, 1] + delta >= s[:, 2])
 
 
@@ -149,7 +149,7 @@ class _Prepared:
         a = ga(d1)
         dg = phi_trial / a
         plane = trial - dg[:, None] * d1
-        on_plane = _in_order(plane)
+        on_plane = _in_order(plane, scale)
 
         # (iv.c) edges, both computed, the SUMC criterion chooses
         right = (1.0 - sp) * s1 - 2.0 * s2 + (1.0 + sp) * s3 >= 0.0
@@ -165,7 +165,7 @@ class _Prepared:
             dga = (phi_trial * r22 - r12 * phi_b) / det
             dgb = (r11 * phi_b - r21 * phi_trial) / det
         edge = trial - dga[:, None] * d1 - dgb[:, None] * db
-        on_edge = _in_order(edge)
+        on_edge = _in_order(edge, scale)
 
         # the region each point takes, in the reference's order
         mohr = self.mohr

@@ -231,3 +231,55 @@ lista con dos factores iguales y que `analysis` pase la lista (se miran los incr
 | `check_increasing`, `check_last` | factores iguales admitidos; el último puede no ser 1 |
 | `analysis_drops_factors` | `analysis` no pasa la lista |
 | `validate_skips` | el modelo no valida la lista |
+
+## T5 — El caso 008 escrito antes de medir, y dos hallazgos al resolverlo (2026-11-28)
+
+El caso (`caso.md`, `esperado.json`) va en su commit, `c35a218`, antes de ninguna medida, con el
+dominio y la malla a `null` y los protocolos de los estudios. `tests/_footing.py` construye las dos
+variantes. En la primera resolución (el test de identidad referencia–Rust, con la malla más gruesa
+del estudio: W = D = 30 m, h0 = 0.5 m) salieron dos cosas, que se reportan antes de tocar nada
+(regla 6):
+
+- **Anomalía del Mohr-Coulomb, en Python y en Rust: un retorno a la arista válido se rechaza por
+  redondeo.** Una iteración lejos del equilibrio da en un punto una tensión de prueba de 1.9e4 MPa
+  (σ₁ = 19 491, σ₃ = −19 486). El retorno a la arista derecha es válido: σ = (2.159, 1.959, 1.959).
+  Pero sale con σ₂ − σ₃ = −3.3e-12 por la cancelación, y `_in_order` mide la tolerancia
+  (`TOLERANCE` = 1e-12) contra las tensiones **devueltas**, del orden de 2 MPa, no contra las de
+  prueba. Lo rechaza, pasa al vértice, y con φ = 0 (o ψ = 0) el vértice se rechaza. Con 1e-10 el
+  mismo retorno se acepta. **Esto corrige lo que dijo la T1** («con φ = 0 el vértice no se pide
+  nunca»): no se pide en estados razonables, pero sí en estados de prueba diez mil veces mayores que
+  c, que la nube de la T1 no tenía. **Puede explicar parte del diagnóstico de la T2**: allí los puntos
+  rechazados tenían tensiones de prueba de 10³ a 10⁴ MPa. La comprobación de fluencia del mismo
+  retorno sí escala con la tensión de prueba (`scale` en `return_principal`).
+- **Newton se rompe en la primera fase de la zapata rígida**, con los ajustes de los estudios (5
+  escalones, tolerancia 1e-10, 8 particiones): no pasa del 9.4 % del asiento elástico δ_e, y la
+  corrección de desplazamiento llega a 43 m. Es la misma firma que en la T2: una tangente casi
+  singular que produce correcciones desmesuradas. Hipótesis, sin comprobar: en Tresca perfecto, un
+  punto que retorna a una arista no tiene rigidez desviadora en el plano, y los elementos con todos
+  sus puntos así dejan modos sin rigidez.
+
+**Decisiones de la propietaria** (2026-11-28): corregir la anomalía en Python y en Rust, en una rama
+corta (`dev/mc-tolerancia-orden`, porque toca `rust/`); después, extender el diagnóstico a STR-05 y
+adelantar la búsqueda lineal (T9) antes de los estudios T6–T8.
+
+### La corrección de la tolerancia del orden (rama `dev/mc-tolerancia-orden`)
+
+`_in_order` (`mohr_coulomb.py`), `in_order` (`rust/src/mohr_coulomb.rs`) y el de la variante NumPy
+(`poc/vectorized.py`) miden ahora la tolerancia contra la escala de la tensión de prueba (la misma
+`scale` de la comprobación de fluencia), o contra la devuelta si es mayor. Lo que se comprobó:
+
+- el estado de 1.9e4 MPa del caso 008 va a la arista derecha, con σ₂ = σ₃, σ₁ − σ₃ = 2c y la presión
+  media de la prueba; una nube de 20 000 estados con incrementos de deformación de hasta 100
+  (desviadores de hasta 1e4 MPa frente a c = 0.1 MPa) no pide nunca el vértice, y Rust da lo mismo
+  que la referencia. Con el `mohr_coulomb.py` anterior, los dos tests fallan;
+- **ningún número de los casos cambia**: el 002 con ψ = 0° y 8 × 32 y los anillos de 12 × 4 (ψ = 30°)
+  y de 24 × 8 (ψ = 0°), bit a bit con la comprobación anterior puesta en su sitio por un momento;
+- **el diagnóstico de la T2 no cambia**: en el 002 y en el anillo con ψ = 0 el vértice se pide de
+  verdad (con φ = 30° existe y está en tracción). La corrección no los arregla;
+- **en STR-05 el fallo cambia de forma**: el punto ya no se rechaza. Newton sigue hasta la iteración
+  13 del mismo incremento (factor 0.094 del asiento elástico) y allí encuentra una **tangente
+  singular**, que se parte como cualquier fallo (T3). Apoya la hipótesis de arriba: puntos en arista
+  sin rigidez desviadora.
+
+Las mutaciones de `rust/` no se hacen (piden recompilar); la identidad con la referencia en la nube
+de estados enormes las cubre.

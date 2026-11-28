@@ -136,8 +136,15 @@ def _flows(m: MohrCoulomb) -> dict[str, tuple[float, float, float]]:
             "N2": (0.0, 1.0 + sp, -(1.0 - sp))}
 
 
-def _in_order(s: tuple[float, float, float]) -> bool:
-    delta = TOLERANCE * max(1.0, *(abs(x) for x in s))
+def _in_order(s: tuple[float, float, float], scale: float) -> bool:
+    """s1 >= s2 >= s3 within the tolerance, measured against ``scale``, the
+    scale of the trial stresses (or of ``s`` if larger). Spec 007, T5: the
+    tolerance was measured against ``s`` alone, and a return from a trial
+    stress 1e4 times larger than ``s`` (an iterate far from equilibrium)
+    leaves a rounding of the order of 1e-16 of the trial in ``s``, above
+    1e-12 of ``s``: a valid edge return was refused and went on to the
+    apex."""
+    delta = TOLERANCE * max(scale, *(abs(x) for x in s))
     return s[0] + delta >= s[1] and s[1] + delta >= s[2]
 
 
@@ -162,7 +169,7 @@ def return_principal(m: MohrCoulomb, trial: tuple[float, float, float]
     a = (d1[0] - d1[2]) + (d1[0] + d1[2]) * sf      # = Eq. (8.72)
     dg = phi_trial / a
     plane = tuple(t - dg * d for t, d in zip(trial, d1))
-    if _in_order(plane):
+    if _in_order(plane, scale):
         return plane, "plane", (dg, 0.0)
 
     # (iv.c) edge: SUMC, p. 311, line 97
@@ -189,7 +196,7 @@ def return_principal(m: MohrCoulomb, trial: tuple[float, float, float]
     dga = (phi_trial * row_b[1] - row_a[1] * phi_b) / det
     dgb = (row_a[0] * phi_b - row_b[0] * phi_trial) / det
     edge = tuple(t - dga * x - dgb * y for t, x, y in zip(trial, d1, db))
-    if _in_order(edge):
+    if _in_order(edge, scale):
         return edge, ("right edge" if right else "left edge"), (dga, dgb)
 
     # (iv.e) apex

@@ -67,6 +67,17 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
 
   *Hecho cuando:* el commit está hecho antes de la primera medida, y el modelo de la malla más
   gruesa se resuelve en sus dos variantes con la referencia y con Rust, iguales a 1e-12.
+- [x] T5a. **La tolerancia del orden del Mohr-Coulomb** (hallazgo de la T5; Python, Rust y la
+  variante NumPy), en la rama corta `dev/mc-tolerancia-orden` elegida por la propietaria.
+
+  *Hecho cuando:* el estado de la T5 va a su arista; una nube de estados enormes no pide el vértice
+  con φ = 0; Rust igual a la referencia; los casos, bit a bit; la CI en verde en las tres plataformas
+  antes de fusionar en `main`.
+- [ ] T5b. **El diagnóstico de STR-05** (como la T2): en qué incremento y por qué se rompe Newton en
+  la zapata rígida con la malla gruesa (puntos en arista, tangente singular, tamaño de las
+  correcciones), reportado antes de seguir.
+- [ ] T9 (adelantada por la propietaria el 2026-11-28, antes de la T6): la búsqueda lineal de
+  Crisfield (1991), §9.2; abajo, en su sitio de antes.
 - [ ] T6. **Los estudios de dominio y de malla** de la variante (a) (D7).
 
   *Hecho cuando:* la curva carga–asiento de tres mallas anidadas y de dos dominios está en el

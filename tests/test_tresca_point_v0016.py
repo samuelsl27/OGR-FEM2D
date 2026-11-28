@@ -194,3 +194,40 @@ class TestRust:
         assert np.abs(got.stresses - np.array([r.stress for r in ref])).max() <= 1e-10 * SCALE
         assert np.array_equal(got.plastic, np.array([r.region != "elastic" for r in ref]))
         assert np.abs(got.tangents - np.array([r.tangent for r in ref])).max() <= 1e-10 * E
+
+
+class TestHugeTrialStresses:
+    """Spec 007, T5: a trial stress 1e4 times c, from an iterate far from
+    equilibrium. The edge return is valid, but its sigma_2 = sigma_3 comes
+    with a rounding of the order of 1e-16 of the trial; the order check
+    measured its tolerance against the returned stress alone and refused
+    it, then refused the apex (phi = 0). The state is the one found in case
+    008 (changelog v0.0.16, T5)."""
+    TRIAL = (19491.297628738663, 1.0127285971657638, -19486.233985752835)
+
+    def test_the_state_of_case_008_goes_to_the_right_edge(self):
+        stress, region, (dga, dgb) = mc.return_principal(TRESCA, self.TRIAL)
+        assert region == "right edge" and dga >= 0.0 and dgb >= 0.0
+        assert abs(stress[0] - stress[2] - 2.0 * C) <= 1e-12 * max(self.TRIAL)
+        assert abs(stress[1] - stress[2]) <= 1e-12 * max(self.TRIAL)
+        p = sum(self.TRIAL) / 3.0
+        assert abs(sum(stress) / 3.0 - p) <= 1e-12 * max(self.TRIAL)    # Tresca keeps p
+
+    def test_a_cloud_of_huge_deviators_never_asks_for_the_apex(self):
+        # strain increments of up to 100: deviatoric trial stresses up to
+        # 1e4 MPa, against c = 0.1 MPa; the reference and Rust alike
+        from ogr_fem2d.engine.compiled import RUST
+        rng = np.random.default_rng(31)
+        n = 20000
+        start, _ = _cloud(n=n, seed=32)
+        strains = rng.uniform(-100.0, 100.0, (n, 3))
+        ref = [mc.update(TRESCA, tuple(s0), tuple(inc)) for s0, inc in zip(start, strains)]
+        regions = {r.region for r in ref}       # mc.update raises at the apex
+        assert {"right edge", "left edge"} <= regions <= {"right edge", "left edge", "plane"}, regions
+        rows = np.tile(interface.material_row(TRESCA), (n, 1))
+        g = interface.Geometry(0, np.zeros((n, 6), np.int64), np.zeros((n, 6)),
+                               np.zeros((n, 6)), np.zeros(n), np.arange(n),
+                               np.zeros(n, np.int64), np.zeros((n, 2)), rows)
+        got = RUST.prepare(g).integrate(start, strains)
+        want = np.array([r.stress for r in ref])
+        assert np.abs(got.stresses - want).max() <= 1e-10 * np.abs(want).max()

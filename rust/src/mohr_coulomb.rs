@@ -107,9 +107,12 @@ fn flows(m: &MohrCoulomb) -> ([f64; 3], [f64; 3], [f64; 3]) {
     )
 }
 
-fn in_order(s: [f64; 3]) -> bool {
+/// s1 >= s2 >= s3 within the tolerance, measured against `scale`, the
+/// scale of the trial stresses (or of `s` if larger): the reference's
+/// `_in_order` (spec 007, T5).
+fn in_order(s: [f64; 3], scale: f64) -> bool {
     let largest = s[0].abs().max(s[1].abs()).max(s[2].abs());
-    let delta = TOLERANCE * largest.max(1.0);
+    let delta = TOLERANCE * largest.max(scale);
     s[0] + delta >= s[1] && s[1] + delta >= s[2]
 }
 
@@ -140,7 +143,7 @@ pub fn return_principal(
     let a = (d1[0] - d1[2]) + (d1[0] + d1[2]) * sf;
     let dg = phi_trial / a;
     let plane = [trial[0] - dg * d1[0], trial[1] - dg * d1[1], trial[2] - dg * d1[2]];
-    if in_order(plane) {
+    if in_order(plane, scale) {
         return Ok((plane, Region::Plane));
     }
 
@@ -169,7 +172,7 @@ pub fn return_principal(
     for j in 0..3 {
         edge[j] = trial[j] - dga * d1[j] - dgb * db[j];
     }
-    if in_order(edge) {
+    if in_order(edge, scale) {
         return Ok((edge, if right { Region::RightEdge } else { Region::LeftEdge }));
     }
 
