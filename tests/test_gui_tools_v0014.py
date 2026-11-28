@@ -57,17 +57,20 @@ def _refused(fn, *words):
 
 
 class TestTypedPoints:
-    """The reading of D10 and D12 is ogr_ui's since 0.1.3 (``read_point``, taken
-    from this program's ``parse_point``): held here as what this program
-    relies on, as the window uses it."""
+    """The reading of D10 and D12 is ogr_ui's (``read_point``, taken from this
+    program's ``parse_point`` in 0.1.3): held here as what this program
+    relies on, as the window uses it. Since ogr-gui 0.2.0 (the owner's
+    criterion of 2026-11-28): the comma parts x from y, and the point is the
+    decimal mark (``x.x,x.x``)."""
 
     def test_what_each_form_means(self):
         from ogr_ui.point_entry import read_point
         p = lambda s: read_point(s, (10.0, 20.0))
-        for text in ("1.5, 2.5", "1.5 2.5", "1,5 2,5", "1,5; 2,5", "1.5,2.5"):
+        for text in ("1.5, 2.5", "1.5,2.5", "1.5 , 2.5"):
             assert p(text) == (1.5, 2.5), text
+        assert p("3,4") == (3.0, 4.0)
         assert p("@1, -2") == (11.0, 18.0)
-        assert p("@1,5; -2") == (11.5, 18.0)
+        assert p("@1.5, -2") == (11.5, 18.0)
         assert p("@2<90") == (10.0, 22.0) and p("@2<180") == (8.0, 20.0)
         x, y = p("@2<30")
         assert abs(x - (10 + math.sqrt(3))) < 1e-12 and abs(y - 21.0) < 1e-12
@@ -75,7 +78,11 @@ class TestTypedPoints:
     def test_what_is_refused(self):
         from ogr_ui.point_entry import PointEntryError, read_point
         for text, ref in (("1,5,2,5", (0.0, 0.0)), ("1 2 3", (0.0, 0.0)), ("x, y", (0.0, 0.0)),
-                          ("@2<a", (0.0, 0.0)), ("@1, 1", None)):
+                          ("@2<a", (0.0, 0.0)), ("@1, 1", None),
+                          # a decimal comma, a space or a semicolon between the two (0.2.0)
+                          ("1,5; 2,5", (0.0, 0.0)), ("1,5 2,5", (0.0, 0.0)),
+                          ("1.5 2.5", (0.0, 0.0)), ("1.5;2.5", (0.0, 0.0)),
+                          ("@1,5<30", (0.0, 0.0))):
             try:
                 read_point(text, ref)
             except PointEntryError:
@@ -209,7 +216,7 @@ class TestTheWindowsTools:
         w = _window()
         try:
             w.tools.start(tc.DRAW, md.EXTERNAL)
-            for text in ("0, 0", "@20, 0", "@20<90", "0; 20"):
+            for text in ("0, 0", "@20, 0", "@20<90", "0, 20"):
                 w.statusBar().coord_input.setText(text)
                 w.statusBar().coord_input.returnPressed.emit()
             w.tools.key(Qt.Key.Key_Return)

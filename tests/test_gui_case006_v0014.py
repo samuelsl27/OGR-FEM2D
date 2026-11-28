@@ -57,7 +57,7 @@ def _draw_case_006(w):
     w.actions_by_key["stage_rename"].trigger()
     # the external, typed
     w.actions_by_key["add_external"].trigger()
-    _typed(w, "0, -200", "@200, 0", "@200<90", "1; 0", "0, 0")
+    _typed(w, "0, -200", "@200, 0", "@200<90", "1, 0", "0, 0")
     w.tools.key(Qt.Key.Key_Return)
     w.view.resize(800, 600)
     w.view.show_extent(-3.0, -3.0, 4.0, 3.0)     # the strip, 1 m, many pixels long

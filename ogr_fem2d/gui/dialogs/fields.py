@@ -11,66 +11,20 @@ Author: Samuel Sáez López (UPCT)
 """
 from __future__ import annotations
 
-import re
 from typing import Optional
 
-from PySide6.QtCore import QLocale
-from PySide6.QtGui import QValidator
-from PySide6.QtWidgets import QDoubleSpinBox
-
 from ogr_core.units import Quantity as Q
+from ogr_ui.widgets import NumberBox
 
 from ...model import model as md
 from .. import units
 
 
-#: what a box takes while it is being written: a sign, figures, one decimal point and an
-#: exponent; never a comma (D12, modified by the owner on 2026-11-28)
-_WRITING = re.compile(r"[-+]?\d*(?:\.\d*)?(?:[eE][-+]?\d*)?")
-
-
-class DecimalBox(QDoubleSpinBox):
-    """A number box whose decimal mark is always a point, in every language
-    and whatever the machine's locale, with no thousands separator; a comma
-    is refused as it is typed (D12, modified by the owner on 2026-11-28: a
-    comma lends itself to confusion and to errors). Qt's own box follows the
-    machine's locale: with Spain's it showed a comma and took «2.5» as 25
-    (T37's finding)."""
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setLocale(QLocale.c())                  # a point, and no thousands separator
-
-    def _body(self, text: str) -> str:
-        t = text
-        if self.prefix() and t.startswith(self.prefix()):
-            t = t[len(self.prefix()):]
-        if self.suffix() and t.endswith(self.suffix()):
-            t = t[:-len(self.suffix())]
-        return t.strip()
-
-    def valueFromText(self, text: str) -> float:  # noqa: N802 - Qt's name
-        body = self._body(text)
-        if self.specialValueText() and text == self.specialValueText():
-            return self.minimum()
-        try:
-            return float(body)
-        except ValueError:
-            return self.value()
-
-    def validate(self, text: str, pos: int):
-        if self.specialValueText() and text == self.specialValueText():
-            return QValidator.State.Acceptable, text, pos
-        body = self._body(text)
-        if not _WRITING.fullmatch(body):
-            return QValidator.State.Invalid, text, pos
-        try:
-            v = float(body)
-        except ValueError:
-            return QValidator.State.Intermediate, text, pos
-        if self.minimum() <= v <= self.maximum():
-            return QValidator.State.Acceptable, text, pos
-        return QValidator.State.Intermediate, text, pos
+#: the number box of the dialogs: a decimal point, and only a point, whatever the language and
+#: the machine's locale, a comma refused as it is typed (D12, modified by the owner on
+#: 2026-11-28); OGR GUI's since 0.2.0 (this program's own until then: Qt's box follows the
+#: machine's locale, and with Spain's took «2.5» as 25)
+DecimalBox = NumberBox
 
 
 class Number:
@@ -80,7 +34,7 @@ class Number:
         self.box = DecimalBox()
         self.box.setRange(lo, hi)
         self.box.setDecimals(decimals)
-        self.box.setStepType(QDoubleSpinBox.StepType.AdaptiveDecimalStepType)
+        self.box.setStepType(NumberBox.StepType.AdaptiveDecimalStepType)
         if none_text:
             self.box.setSpecialValueText(none_text)
         label = units.label(m, q)

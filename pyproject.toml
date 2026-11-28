@@ -38,7 +38,7 @@ dependencies = [
     "h5py>=3.10",
     # The interface pieces of the suite (ADR-0005), pinned to a tag, a pin
     # of its own: ogr-gui does not depend on ogr-core. Imported as ogr_ui.
-    "ogr-gui @ git+https://github.com/samuelsl27/OGR-GUI@v0.1.3",
+    "ogr-gui @ git+https://github.com/samuelsl27/OGR-GUI@v0.2.0",
     # What this program's interface imports itself (spec 006, D14), as
     # ogr-gui and OGR Slip2D ask for them. PySide6: LGPL-3.0 (6.12.0 on
     # Python 3.11 aborts on Linux, Slip2D D395). qtawesome: MIT, with the

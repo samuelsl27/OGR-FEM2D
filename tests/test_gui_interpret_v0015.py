@@ -244,9 +244,10 @@ class TestTheDefaultPalette:
                 assert all(b >= a for a, b in zip(light, light[1:])), (q.id, light)
                 assert len(set(light)) >= s.intervals, (q.id, light)
             assert dict(win.decided_parts()[3][1])["Palette"] == "Viridis"
-            # the diverging one it replaced is not: light in the middle
+            # the diverging one it replaced is not: light in the middle (by its name: OGR GUI's
+            # automatic settings start with Viridis too since 0.2.0)
             from ogr_ui.contours import ContourSettings
-            other = ContourSettings.automatic("sigma_1")
+            other = replace(ContourSettings.automatic("sigma_1"), palette="Hot to cold")
             light = [_lightness(other.colour_for(v))
                      for v in np.linspace(other.vmin, other.vmax, 41)]
             assert max(light) > max(light[0], light[-1])

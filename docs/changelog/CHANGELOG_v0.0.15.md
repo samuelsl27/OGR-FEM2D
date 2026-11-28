@@ -591,3 +591,27 @@ usaba si se pedía, como en los tests.
   el 007, 16.2 s → 5.0 s. El resto se va en lo que sigue en Python (ensamblar, factorizar, recuperar,
   escribir). Que eso pase a Rust es P4: queda en la fase 2, con la spec 011 y su medida A/B,
   confirmado por la propietaria y anotado allí y en el plan.
+
+## La fijación de `ogr-gui` sube de v0.1.3 a v0.2.0 (2026-11-28)
+
+La 0.2.0 trae dos cosas, la spec 005 de OGR GUI (la 0.1.4) y su spec 006, y se ha saltado directamente
+de la 0.1.3, como decía su aviso (`GUI/notas/2026_11_28_aviso_a_fem2d_coma_separa_coordenadas.md`):
+
+- **El punto decimal en todas sus piezas**: la leyenda, la barra de estado, el diálogo de contornos,
+  el de enganche y los ejes del gráfico. Sus casillas no dejan escribir una coma. `DecimalBox` pasa a
+  ser su `NumberBox`, que hace lo mismo. El nombre se queda en `gui/dialogs/fields.py` y apunta a
+  ella.
+- **La entrada X,Y lee `x.x,x.x`**: la coma separa x de y, y el punto es el decimal (criterio de la
+  propietaria). Se rechazan, con su motivo, `1,5; 2,5`, `1,5 2,5`, `1.5 2.5`, `1.5;2.5` y `@1,5<30`.
+  Con esto ya no queda ningún sitio del programa donde una coma sea un decimal. Los tests de la
+  entrada (`TestTypedPoints`) siguen el criterio nuevo, y los puntos escritos de dos tests pasan de
+  `"1; 0"` y `"0; 20"` a `"1, 0"` y `"0, 20"`.
+- **`ContourSettings.automatic` empieza con Viridis**, como este programa desde `eaecf12`. El test de
+  la luminosidad comparaba con la paleta automática como ejemplo de divergente, y ahora nombra «Hot to
+  cold» directamente.
+
+Antes de la etiqueta, la suite entera contra su árbol dio 856 de 857. El único fallo era
+`test_the_installed_one`, y tenía que fallar contra un `0.2.0.dev0`. Con la etiqueta instalada
+(`--no-deps`), la suite entera da 857 de 857. Su `docs/consumidores.md` ya dice v0.1.3; la sesión de
+OGR GUI lo pasará a v0.2.0.
+

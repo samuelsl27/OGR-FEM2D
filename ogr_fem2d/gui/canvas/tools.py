@@ -7,10 +7,12 @@ segment under the cursor.
 
 **A typed point** is read by the status bar's X, Y field
 (``ogr_ui.point_entry.read_point``, OGR GUI 0.1.3, which took this
-program's reading of D10 and D12): absolute (``x, y`` or ``x y``),
-relative to the reference the tools give (``@dx, dy``) or polar from it
-(``@d<angle``, degrees anticlockwise from +x), the decimal mark the point
-or the comma. Until v0.0.15 the reading was here (``parse_point``).
+program's reading of D10 and D12): absolute (``x, y``), relative to the
+reference the tools give (``@dx, dy``) or polar from it (``@d<angle``,
+degrees anticlockwise from +x). Since OGR GUI 0.2.0 the comma parts x from
+y and the point is the decimal mark, nothing else (D12 as the owner
+modified it on 2026-11-28). Until v0.0.15 the reading was here
+(``parse_point``).
 
 **A boundary being drawn** (``BoundaryDrawing``) collects vertices by clicks
 or typed points, and arcs by three points (the last vertex, one through
