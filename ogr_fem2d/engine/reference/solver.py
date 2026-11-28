@@ -734,12 +734,24 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
         return splu(matrix.tocsr()[free][:, free].tocsc())
 
     def factorise_tangent(matrix: coo_matrix, number: int, iteration: int):
-        """The tangent of an iteration; singular, the increment fails (T2)."""
+        """The tangent of an iteration; singular, the increment fails (T2).
+
+        Degrees of freedom with no stiffness at all (a node whose points are
+        all at the apex, where D^ep = 0, Remark 8.3) are found here and never
+        reach SuperLU: with such a matrix it stops in an internal abort
+        ("failed to factorize matrix at line ... in dpanel_bmod.c") that on
+        the CI's macOS is a segmentation fault (spec 007, T5a). Any other
+        failure of the factorisation is a zero pivot too, in the words of the
+        platform ("Factor is exactly singular" here), kept in the reason."""
+        free_matrix = matrix.tocsr()[free][:, free]
+        stiffness_of_row = abs(free_matrix).max(axis=1).toarray().ravel()
+        empty = int((stiffness_of_row == 0.0).sum())
+        if empty:
+            raise SingularTangentError(number, iteration,
+                                       f"{empty} degrees of freedom with no stiffness")
         try:
-            return factorise(matrix)
+            return splu(free_matrix.tocsc())
         except RuntimeError as err:
-            if "singular" not in str(err):
-                raise
             raise SingularTangentError(number, iteration, str(err)) from None
 
     k_elastic = stiffness(model)

@@ -30,8 +30,11 @@ Invariants protected:
 * **a singular tangent** is cut like the other failures and, once the cuts
   are used up, leaves the stage as SingularTangentError with its factor
   reached; calculate writes it as a stage that failed (incomplete), not as
-  a program error. The case of T2: case 002 on 16 x 64 with psi = 1 degree,
-  where SuperLU found the tangent exactly singular.
+  a program error. Two kinds (T5a): degrees of freedom with no stiffness at
+  all (case 002 on 16 x 64 with psi = 1 degree: nodes whose points are all
+  at the apex), found before SuperLU, which on macOS crashes on them; and a
+  mechanism with every row stiff (the footing of case 008), which SuperLU
+  reports.
 """
 from __future__ import annotations
 
@@ -198,7 +201,9 @@ class TestSingularTangent:
         try:
             _mesh, result = _excavate(ring, material, 5, 1e-10, 25, 0, RUST)
         except solver.SingularTangentError as err:
-            assert err.reached == 0.8 and "singular" in err.reason
+            # nodes with every point at the apex: found before SuperLU, which
+            # on macOS crashes on such a matrix (solver.factorise_tangent)
+            assert err.reached == 0.8 and "no stiffness" in err.reason, err.reason
         else:
             raise AssertionError("case 002 with psi = 1 no longer meets a singular tangent")
         # with cuts it is one more failure of an increment: cut, and retried
@@ -209,6 +214,20 @@ class TestSingularTangent:
         else:
             assert any(inc.status == solver.CUT and "singular" in inc.reason
                        for inc in result.increments)
+
+    def test_with_no_empty_row_superlu_says_it(self):
+        """The footing of case 008 on its coarsest mesh, 5 steps to a quarter
+        of the elastic settlement and no cut: the tangent is singular with
+        every degree of freedom stiff (a mechanism, not an empty row), and
+        SuperLU says so through its ordinary return. On every platform of the
+        CI, a stage that failed, not a crash (T5a)."""
+        import _footing as ft
+        from ogr_fem2d.engine.compiled import RUST
+        mesh = ft.mesh_for(30.0, 30.0, 0.5, 1.5 ** 0.5)
+        delta_e = ft.elastic_settlement(mesh, RUST)
+        out, err = ft.stages(ft.rigid(mesh, [0.25 * delta_e], dict(ft.STUDY, max_cuts=0)), RUST)
+        assert out == [] and isinstance(err, solver.SingularTangentError), err
+        assert "no stiffness" not in err.reason, err.reason
 
     def test_calculate_writes_it_as_a_stage_that_failed(self):
         class Singular:

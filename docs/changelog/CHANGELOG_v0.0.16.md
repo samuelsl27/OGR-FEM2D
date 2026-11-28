@@ -283,3 +283,28 @@ adelantar la búsqueda lineal (T9) antes de los estudios T6–T8.
 
 Las mutaciones de `rust/` no se hacen (piden recompilar); la identidad con la referencia en la nube
 de estados enormes las cubre.
+
+### La CI de la rama (run 46155954731): dos fallos de la T3, corregidos
+
+Lanzada a mano sobre `dev/mc-tolerancia-orden` (`workflow_dispatch`). Los trabajos de construcción y
+de congelado, en verde. Fallaron 5 de 9 de test, todos en `test_stage_loop_v0016` (T3), el caso 002
+con 16 × 64 y ψ = 1°:
+
+- **Linux 3.13 y Windows 3.11**: SuperLU no dijo «Factor is exactly singular» (lo de este equipo),
+  sino «failed to factorize matrix at line 406/413 in dpanel_bmod.c». `factorise_tangent` solo
+  reconocía el primer texto. Con la misma matriz, la referencia y Rust (que difieren en 1e-14) dan
+  aquí un texto o el otro.
+- **macOS, las tres versiones: segfault** dentro de `splu` (lo dijo `PYTHONFAULTHANDLER`; lo de la
+  posición 677 era la salida retenida en el buffer). La matriz no tiene NaN ni infinitos, pero sí
+  **819 filas exactamente nulas**: nudos cuyos puntos están todos en el vértice, con D^ep = 0
+  (Remark 8.3). Con ellas SuperLU entra en su «abort» interno de `dpanel_bmod`, que en macOS revienta
+  el proceso.
+
+**Corrección** (`solver.factorise_tangent`): los grados de libertad sin ninguna rigidez se buscan
+antes de factorizar, y la tangente no llega a SuperLU (`SingularTangentError`, «N degrees of freedom
+with no stiffness»). Cualquier otro fallo de la factorización es un pivote nulo, con el texto de la
+plataforma. La otra singularidad, la de la zapata (un mecanismo, sin filas nulas), la devuelve
+SuperLU por su retorno normal. Un test nuevo la provoca, para que la CI diga si en macOS también es
+segura. La mutación `singular_not_caught` de la T3 ya no aplica (no se mira el texto). Dos nuevas,
+cazadas: `empty_rows_not_checked` (sobrevivía en este equipo, donde SuperLU también lanza; el test
+exige ahora que el corte venga de la comprobación) y `superlu_error_escapes`.
