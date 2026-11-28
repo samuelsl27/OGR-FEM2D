@@ -215,19 +215,23 @@ class TestSingularTangent:
             assert any(inc.status == solver.CUT and "singular" in inc.reason
                        for inc in result.increments)
 
-    def test_with_no_empty_row_superlu_says_it(self):
+    def test_with_no_empty_row_the_stage_fails(self):
         """The footing of case 008 on its coarsest mesh, 5 steps to a quarter
         of the elastic settlement and no cut: the tangent is singular with
-        every degree of freedom stiff (a mechanism, not an empty row), and
-        SuperLU says so through its ordinary return. On every platform of the
-        CI, a stage that failed, not a crash (T5a)."""
+        every degree of freedom stiff (a mechanism, not an empty row). On
+        every platform of the CI, a stage that failed, not a crash (T5a).
+        Which failure depends on the platform: here and on Linux and Windows
+        SuperLU says it is singular; on the CI's macOS it factorises it, the
+        correction is garbage and the increment does not converge (a
+        residual of 2e51)."""
         import _footing as ft
         from ogr_fem2d.engine.compiled import RUST
         mesh = ft.mesh_for(30.0, 30.0, 0.5, 1.5 ** 0.5)
         delta_e = ft.elastic_settlement(mesh, RUST)
         out, err = ft.stages(ft.rigid(mesh, [0.25 * delta_e], dict(ft.STUDY, max_cuts=0)), RUST)
-        assert out == [] and isinstance(err, solver.SingularTangentError), err
-        assert "no stiffness" not in err.reason, err.reason
+        assert out == [] and isinstance(err, solver.INCREMENT_FAILURES), err
+        if isinstance(err, solver.SingularTangentError):
+            assert "no stiffness" not in err.reason, err.reason    # SuperLU said it
 
     def test_calculate_writes_it_as_a_stage_that_failed(self):
         class Singular:

@@ -308,3 +308,38 @@ SuperLU por su retorno normal. Un test nuevo la provoca, para que la CI diga si 
 segura. La mutación `singular_not_caught` de la T3 ya no aplica (no se mira el texto). Dos nuevas,
 cazadas: `empty_rows_not_checked` (sobrevivía en este equipo, donde SuperLU también lanza; el test
 exige ahora que el corte venga de la comprobación) y `superlu_error_escapes`.
+
+## T5b — Por qué no converge la zapata (2026-11-28)
+
+Malla gruesa del estudio (W = D = 30 m, h0 = 0.5 m, 532 T6), variante (a), asientos de 0.25 a 4 δ_e
+(δ_e = 19.1 mm), tolerancia 1e-10, Rust.
+
+- **Aquí sí es el tamaño del incremento**, al revés que en la T2. Con 80 escalones iguales por fase,
+  las ocho fases convergen, con 5 a 8 iteraciones por incremento y P/((2 + π) c) = 0.250, 0.488,
+  0.660, 0.740, 0.841, 0.906, 0.989 y 1.026 (en 4 δ_e; la meseta y el error de la malla son de la
+  T6, no de aquí). Con 20 escalones, la fase de 3 δ_e no converge sin particiones. La primera fase
+  (δ_e), con 5 escalones y 8 particiones, no pasaba del 9 % y con 50 y 16 converge.
+- **Cómo falla un incremento grande**: el residuo baja a 2e-3 en dos iteraciones y se queda ahí
+  oscilando (entre 1.5e-3 y 2.5e-3 hasta la iteración 25). Es la firma de puntos que cambian de
+  región en cada iteración, la de la T8 de la spec 001. A veces, con particiones, el incremento
+  acaba en una tangente exactamente singular: la de plasticidad perfecta tiene en una arista un
+  valor propio nulo en el plano (medido en un punto: |λ|/E ≈ 1e-17 en las dos aristas de Tresca y
+  en el plano y las aristas de Mohr-Coulomb con ψ = 0), y una zona plástica entera puede dejar la
+  matriz global sin rigidez en algún modo.
+- **Qué se sigue de esto**: la búsqueda lineal (T9) va contra la oscilación; el tamaño automático
+  de Crisfield (T4) o más escalones, contra los incrementos grandes. Los dos entran en el estudio de
+  valores por defecto de la T7. El primer intento del modo automático en la curva entera, (3, 0.05,
+  0.25) con 16 particiones, pasó de 10 minutos y se paró (competía con la suite). Se mide de nuevo
+  en la T7.
+- El test de identidad del caso (`test_case008_prandtl_v0016`) usa fases pequeñas que convergen:
+  dos rígidas hasta 0.2 δ_e (más allá de la primera plastificación, en el borde de la zapata) y una
+  flexible a 0.7 (2 + π) c. Mutaciones del modelo, 7: zapata rugosa, borde derecho libre, carga más
+  ancha que la faja, φ ≠ 0 y los signos de la presión y del asiento. Las 7, cazadas; los signos tras
+  reforzar el test con δ_e > 0 y un asiento positivo.
+
+**La segunda vuelta de la CI de la rama** (run 46158984216): Linux y Windows, en verde en el test
+de la tangente sin filas nulas. En macOS ya no hay segfault, pero **SuperLU no detecta esa
+singularidad**: factoriza, la corrección es basura (residuo 2.4e51) y el incremento no converge. La
+fase falla igual, pero con otro error. El test exige ahora lo que vale en todas las plataformas
+(un fallo del incremento, sin crash). Cuál de ellos sale depende de la plataforma: una matriz
+singular puede no verse como tal, y es la no convergencia la que la para.

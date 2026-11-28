@@ -61,21 +61,27 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   incremento) y cada parámetro mueve el número.
   (Hecho el 2026-11-28: la ec. (9.40) leída sobre la página («I_d ≃ 3»); el mínimo acota la regla,
   no las particiones. 7 tests; 15 mutaciones, 15 cazadas tras reforzar 3 que sobrevivían.)
-- [ ] T5. **El caso 008 escrito antes de medir** (D6, D7), en un commit propio: `caso.md`,
+- [x] T5. **El caso 008 escrito antes de medir** (D6, D7), en un commit propio: `caso.md`,
   `esperado.json` con la tolerancia del 2 % y los protocolos de los estudios de dominio, de malla y
   de los valores por defecto (D1, D3); `tests/_footing.py` con las dos variantes.
 
   *Hecho cuando:* el commit está hecho antes de la primera medida, y el modelo de la malla más
   gruesa se resuelve en sus dos variantes con la referencia y con Rust, iguales a 1e-12.
+  (Hecho el 2026-11-28: el caso en `c35a218`; la identidad, con fases pequeñas que convergen (T5b).
+  3 tests; 7 mutaciones, 7 cazadas.)
 - [x] T5a. **La tolerancia del orden del Mohr-Coulomb** (hallazgo de la T5; Python, Rust y la
   variante NumPy), en la rama corta `dev/mc-tolerancia-orden` elegida por la propietaria.
 
   *Hecho cuando:* el estado de la T5 va a su arista; una nube de estados enormes no pide el vértice
   con φ = 0; Rust igual a la referencia; los casos, bit a bit; la CI en verde en las tres plataformas
   antes de fusionar en `main`.
-- [ ] T5b. **El diagnóstico de STR-05** (como la T2): en qué incremento y por qué se rompe Newton en
+- [x] T5b. **El diagnóstico de STR-05** (como la T2): en qué incremento y por qué se rompe Newton en
   la zapata rígida con la malla gruesa (puntos en arista, tangente singular, tamaño de las
   correcciones), reportado antes de seguir.
+  (Hecho el 2026-11-28: es el tamaño del incremento. Con 80 escalones por fase converge hasta 4 δ_e;
+  con incrementos grandes el residuo oscila en 2e-3 o la tangente sale singular. La CI de la rama
+  sacó además dos fallos de la T3 con la tangente singular, corregidos: SuperLU revienta en macOS
+  con filas sin rigidez, que ahora se detectan antes.)
 - [ ] T9 (adelantada por la propietaria el 2026-11-28, antes de la T6): la búsqueda lineal de
   Crisfield (1991), §9.2; abajo, en su sitio de antes.
 - [ ] T6. **Los estudios de dominio y de malla** de la variante (a) (D7).
