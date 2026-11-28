@@ -30,7 +30,7 @@ classifiers = [
 dependencies = [
     # The core, pinned to a tag (ADR-0002). The test runner refuses to run
     # against any other version of it.
-    "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.2.9",
+    "ogr-core @ git+https://github.com/samuelsl27/OGR-Core@v0.2.13",
     "numpy>=1.26",
     "scipy>=1.14",
     # The results file, modelo.h5 (ADR-0003; spec 005, D8). BSD-3-Clause,

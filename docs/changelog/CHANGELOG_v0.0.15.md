@@ -418,3 +418,12 @@ ogr_core.api.jobs.worker`. Una función del núcleo que un programa llame al emp
   corrida, y con `--dev-core` esa carpeta es un árbol de OGR-Core, sin `ogr_ui`, que el runner
   necesita. Ahora se le da también la carpeta de `ogr_ui`, detrás de la del núcleo; pasa con el núcleo
   fijado y con el árbol de OGR-Core (`0.2.13.dev0`).
+
+## La fijación sube a OGR-Core v0.2.13 (2026-11-28)
+
+Decidido por la propietaria al empezar la T37. Los changelogs del núcleo de la 0.2.10 a la 0.2.13 dicen
+de este programa «nada»: los lectores y el informe que cambian no se usan aquí. Cambian el
+`pyproject.toml`, el entorno (instalado desde la etiqueta con `--no-deps`), `AGENTS.md` y las listas de
+versiones de `test_project_setup_v001`, que se escriben para la fijación. La suite entera, con el núcleo
+nuevo: 850 de 850 (`shared: ogr_core 0.2.13 … (installed, no git tree)`). La fila de este programa en
+`docs/consumidores.md` de OGR-Core la corrige su sesión.

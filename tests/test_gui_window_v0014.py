@@ -146,7 +146,7 @@ class TestRule2:
             # every message of the operations, both forms of one with a count
             english += [s.english for s in FEM_MESSAGES.values()]
             english += [s.one for s in FEM_MESSAGES.values() if s.one]
-            # every template of the core PINNED (v0.2.9) that say() renders: ogr_ui's Spanish
+            # every template of the core PINNED (v0.2.13) that say() renders: ogr_ui's Spanish
             # is written for the core v0.2.12 (OGR GUI 0.1.2), and a template that changed
             # between them would have none; one of words and fields only is the same in
             # every language (OGR GUI 0.1.2)
