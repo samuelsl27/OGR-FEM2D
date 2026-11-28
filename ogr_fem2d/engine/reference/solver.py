@@ -64,6 +64,28 @@ converged so far (from 0 to 1), which bounds the collapse load from below,
 and ``smallest``, the smallest increment tried, the "sufficiently small" of
 the definition.
 
+The steps of a stage (spec 007, D3, modified on 2026-11-28): three ways,
+one at a time.
+
+* ``steps`` equal increments (Box 4.1);
+* ``factors``, the load factors at the end of each increment, given (de
+  Souza Neto et al. 2008, §5.4.1, p. 120: the load factors of the steps
+  are input data): increasing, in (0, 1], the last one 1;
+* ``automatic``, the increment size of Crisfield, M. A. (1991).
+  *Non-linear Finite Element Analysis of Solids and Structures*, vol. 1,
+  Wiley, §9.5, Eq. (9.40), p. 287: after an increment of size dl_o that
+  took I_o iterations, the next one is dl_n = dl_o (I_d / I_o)^n, with I_d
+  the desired number of iterations ("I_d ~ 3") and n = 1/2 ("Ramm suggested
+  that n should be set to 1/2 and this approach has since been adopted by
+  the author"); "the user should provide a maximum and, possibly, a minimum
+  increment size", and the first one. The minimum bounds what the rule
+  proposes, never a cut ("too high a minimum increment size can interfere
+  with the increment-cutting procedure"). The last increment ends at 1.
+
+In the three, a failed increment is cut as above, and the stage goes on
+from the cut ones to the target it had; only when no target is left does
+the automatic size propose the next one.
+
 Progress and cancelling (spec 007, D10): ``progress`` hears every iteration
 and ``should_stop`` is asked before every correction. Neither changes a
 number.
@@ -226,6 +248,49 @@ class Increment(NamedTuple):
     status: str
     reason: str = ""
     iterations: int = 0
+
+
+@dataclass(frozen=True)
+class Automatic:
+    """The automatic increment size of Crisfield (1991), Eq. (9.40), with
+    n = 1/2: the desired iterations I_d, and the first, the largest and the
+    smallest increment, as fractions of the stage's load."""
+    desired_iterations: float
+    first: float
+    largest: float
+    smallest: float = 0.0
+
+    def problems(self) -> list[str]:
+        out = []
+        if not (math.isfinite(self.desired_iterations) and self.desired_iterations >= 1.0):
+            out.append("desired_iterations must be >= 1")
+        if not (0.0 <= self.smallest <= self.largest <= 1.0 and 0.0 < self.first <= self.largest
+                and math.isfinite(self.smallest)):
+            out.append("needs 0 <= smallest <= largest <= 1 and 0 < first <= largest")
+        return out
+
+    def next_size(self, size: float, iterations: int) -> float:
+        """Eq. (9.40), n = 1/2, within [smallest, largest]."""
+        proposed = size * math.sqrt(self.desired_iterations / iterations)
+        return min(self.largest, max(self.smallest, proposed))
+
+
+def factor_problems(factors) -> list[str]:
+    """Why a list of load factors is not one (§5.4.1): empty, not
+    increasing, out of (0, 1], or not ending at 1."""
+    f = list(factors)
+    if not f:
+        return ["the list of load factors is empty"]
+    out = []
+    if not all(isinstance(x, (int, float)) and math.isfinite(x) for x in f):
+        return ["every load factor must be a finite number"]
+    if any(b <= a for a, b in zip(f, f[1:])):
+        out.append("the load factors must increase")
+    if f[0] <= 0.0 or f[-1] > 1.0:
+        out.append("the load factors must be in (0, 1]")
+    if f[-1] != 1.0:
+        out.append("the last load factor must be 1")
+    return out
 
 
 @dataclass(frozen=True)
@@ -610,7 +675,9 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
                 variant: interface.Variant = REFERENCE,
                 imposed: dict[int, float] | None = None,
                 progress: Callable[[Iteration], None] | None = None,
-                should_stop: Callable[[], bool] | None = None) -> StageResult:
+                should_stop: Callable[[], bool] | None = None,
+                factors: list[float] | None = None,
+                automatic: Automatic | None = None) -> StageResult:
     """Solve one stage from ``initial_stresses`` (one per integration point,
     in integration_points() order; the displacements start at zero) to the
     TOTAL ``external_load`` (one value per dof; on the restrained and imposed
@@ -619,6 +686,10 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
     applied in the same proportion, with at most ``max_cuts`` cuts of an
     increment in two in the whole stage, the work per integration point done
     by ``variant`` (interface.py).
+
+    ``factors`` or ``automatic``, if one is given, replaces the ``steps``
+    equal increments (D3; see the module's notes); the result's ``steps`` is
+    then the number of increments that converged.
 
     ``progress``, if given, hears every iteration (an ``Iteration``); it
     decides nothing, and the numbers are the same with it and without it.
@@ -636,6 +707,12 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
             or max_cuts < 0):
         raise ValueError("need steps >= 1, max_iterations >= 1, "
                          "tolerance > 0 and max_cuts >= 0")
+    if factors is not None and automatic is not None:
+        raise ValueError("give the load factors or the automatic size, not both")
+    wrong = (factor_problems(factors) if factors is not None
+             else automatic.problems() if automatic is not None else [])
+    if wrong:
+        raise ValueError("; ".join(wrong))
     points = integration_points(model)
     if len(initial_stresses) != len(points):
         raise ValueError("one initial stress per integration point")
@@ -748,7 +825,12 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
     increments: list[Increment] = []
     # Load factors still to reach, in order (Box 4.1); a cut inserts the
     # midpoint of the failed increment in front (§5.4.3).
-    pending = [i / steps for i in range(1, steps + 1)]
+    if factors is not None:
+        pending = [float(x) for x in factors]
+    elif automatic is not None:
+        pending = [min(automatic.first, 1.0)]
+    else:
+        pending = [i / steps for i in range(1, steps + 1)]
     factor, number = 0.0, 0
     while pending:
         number += 1
@@ -768,7 +850,11 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
             continue
         increments.append(Increment(factor, pending[0], FLOOR if floor else CONVERGED,
                                     "", its))
+        size = pending[0] - factor
         factor = pending.pop(0)
+        if automatic is not None and not pending and factor < 1.0:
+            # Eq. (9.40) from the increment just converged
+            pending.append(min(1.0, factor + automatic.next_size(size, its)))
         converged, plastic = stresses, step_plastic
         displacement = displacement + du
 
@@ -777,4 +863,7 @@ def solve_stage(model: Model, initial_stresses: list[Stress],
     return StageResult([float(u) for u in displacement],
                        [tuple(float(x) for x in s) for s in converged],
                        [bool(x) for x in plastic], points, history,
-                       increments, steps, tolerance, cuts, reactions)
+                       increments,
+                       steps if factors is None and automatic is None
+                       else sum(1 for inc in increments if inc.status != CUT),
+                       tolerance, cuts, reactions)

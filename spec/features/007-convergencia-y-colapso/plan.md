@@ -123,7 +123,7 @@ referencia–Rust se comprueba en STR-05 con una malla gruesa.
 | Más escalones con ψ = 0 y mallas densas | Clausen (2007), apéndice B, §6.1 | págs. 150–151 (PDF 164–165) | **Leído** |
 | Criterio en fuerza; β típica 0.001–0.01 | Crisfield (1991), §2.4, ec. (2.30) | pág. 39 (PDF 54) | **Leído** |
 | Búsqueda lineal «slack» por la razón r = s(η)/s₀, con β_ls ≈ 0.8, interpolación y extrapolación acotadas | Crisfield (1991), §9.2, ecs. (9.5)–(9.14), fig. 9.3–9.5, subrutinas SEARCH y LSLOOP | págs. 254–265 (PDF 269–280) | **Leído** (texto); las ecuaciones, sobre la página al programar la T9 |
-| Tamaño automático del incremento, Δλ_n = Δλ_o (I_d / I_o)^(1/2) | Crisfield (1991), §9.5, ec. (9.40) | págs. 286–287 (PDF 301–302) | **Leído**; la ecuación, sobre la página al programar la T4 |
+| Tamaño automático del incremento, Δλ_n = Δλ_o (I_d / I_o)^(1/2) | Crisfield (1991), §9.5, ec. (9.40) | págs. 286–287 (PDF 301–302) | **Leído sobre la página** (T4): Δλ_o es el incremento anterior, que tomó I_o iteraciones; I_d las deseadas, «I_d ≃ 3»; n = 1/2 (Ramm); el usuario da el incremento inicial, un máximo y, si quiere, un mínimo («too high a minimum… can interfere with the increment-cutting») |
 | Partición por el factor de convergencia, entre 0.1 y 0.5 | Crisfield (1991), §9.5.1, ec. (9.42) | pág. 288 (PDF 303) | **Leído**; no se usa (la partición en dos de dSN §5.4.3 sigue) |
 | Criterios de desplazamiento y de energía, desaconsejados | Crisfield (1991), §9.5.4, ecs. (9.49)–(9.52) | págs. 289–290 (PDF 304–305) | **Leído** (D1) |
 

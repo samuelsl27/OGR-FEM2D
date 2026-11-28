@@ -38,6 +38,7 @@ from dataclasses import dataclass
 
 from .reference.elastic import Elastic
 from .reference.mohr_coulomb import MohrCoulomb
+from .reference.solver import Automatic, factor_problems
 from .reference.quadrature import AXISYMMETRIC, PLANE_STRAIN, rule_for
 
 ANALYSES = (PLANE_STRAIN, AXISYMMETRIC)
@@ -135,6 +136,10 @@ class Stage:
     tolerance: float = 1e-8
     max_iterations: int = 25
     max_cuts: int = 0
+    #: instead of ``steps`` equal increments, the load factors given, or the
+    #: automatic size (spec 007, D3; solver.solve_stage)
+    factors: tuple[float, ...] | None = None
+    automatic: Automatic | None = None
 
 
 @dataclass(frozen=True)
@@ -294,6 +299,14 @@ def _stage_problems(m: EngineModel, i: int, s: Stage) -> list[Problem]:
             and _finite(s.tolerance) and s.tolerance > 0.0):
         add("stage_settings", "settings",
             "needs steps >= 1, max_iterations >= 1, max_cuts >= 0 and tolerance > 0")
+    if s.factors is not None and s.automatic is not None:
+        add("stage_settings", "steps", "the load factors or the automatic size, not both")
+    elif s.factors is not None:
+        for why in factor_problems(s.factors):
+            add("stage_settings", "factors", why)
+    elif s.automatic is not None:
+        for why in s.automatic.problems():
+            add("stage_settings", "automatic", why)
     if len(s.active) != n_elements:
         add("active", "elements", f"{len(s.active)} active flags for {n_elements} elements")
         return out

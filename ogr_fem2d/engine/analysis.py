@@ -279,7 +279,9 @@ def stages(m: EngineModel, variant: interface.Variant = solver.REFERENCE,
             result = solver.solve_stage(engine_model, start, list(load), stage.steps,
                                         stage.tolerance, stage.max_iterations,
                                         stage.max_cuts, variant, increments,
-                                        heard, should_stop)
+                                        heard, should_stop,
+                                        None if stage.factors is None else list(stage.factors),
+                                        stage.automatic)
         except solver.NoLoadError:
             # nothing changes: the state stays; its reactions are recomputed
             f_int = solver.internal_forces(solver.integration_points(engine_model), start,

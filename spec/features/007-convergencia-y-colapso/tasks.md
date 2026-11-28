@@ -52,13 +52,15 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   (Hecho el 2026-11-28: bit a bit con el `solver.py` anterior en el 002 y en los anillos; los
   incrementos son `Increment`, y `test_solver_v001` se adaptó al formato. 9 tests; 13 mutaciones,
   13 cazadas.)
-- [ ] T4. La lista de factores de carga (RF-6) y **el tamaño automático de Crisfield (1991), ec.
+- [x] T4. La lista de factores de carga (RF-6) y **el tamaño automático de Crisfield (1991), ec.
   (9.40)** (D3 modificada) en `Stage` y en `solve_stage`.
 
   *Hecho cuando:* en elástico, la misma solución que los escalones iguales; en Mohr-Coulomb mueve el
   número (regla 7); una lista que no crece, que no termina en 1 o vacía se rechaza con su motivo; el
   tamaño automático sigue (9.40) con sus límites (un test con las iteraciones conocidas de cada
   incremento) y cada parámetro mueve el número.
+  (Hecho el 2026-11-28: la ec. (9.40) leída sobre la página («I_d ≃ 3»); el mínimo acota la regla,
+  no las particiones. 7 tests; 15 mutaciones, 15 cazadas tras reforzar 3 que sobrevivían.)
 - [ ] T5. **El caso 008 escrito antes de medir** (D6, D7), en un commit propio: `caso.md`,
   `esperado.json` con la tolerancia del 2 % y los protocolos de los estudios de dominio, de malla y
   de los valores por defecto (D1, D3); `tests/_footing.py` con las dos variantes.

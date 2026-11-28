@@ -188,3 +188,46 @@ Mutaciones (`tests/test_stage_loop_v0016.py`), 13 de 13 cazadas:
 | `calculate_not_stage` | `calculate` no la trata como fase que falla |
 | `iterations_count` | una corrección de más en el incremento |
 | `increments_lost` | `StageOutcome` sin los incrementos |
+
+## T4 — Los tres modos de los escalones (2026-11-28)
+
+`engine/reference/solver.py`, `engine/model.py`, `engine/analysis.py`; `tests/test_steps_v0016.py`
+(RF-5, RF-6; D3 modificada). Además de `steps` escalones iguales, una fase admite:
+
+- **`factors`**, la lista de factores de carga del final de cada incremento: creciente, en (0, 1] y
+  terminada en 1 (de Souza Neto et al. 2008, §5.4.1: los factores son un dato);
+- **`automatic`**, el tamaño automático de **Crisfield (1991), §9.5, ec. (9.40)**, leída sobre la
+  página (pág. 287): Δλ_n = Δλ_o (I_d / I_o)^n, con Δλ_o el incremento anterior, I_o sus
+  iteraciones, I_d las deseadas («I_d ≃ 3», no «≥ 3», como se había escrito en la spec y se corrigió)
+  y n = 1/2 (Ramm, adoptado por el autor). El usuario da el primer incremento, un máximo y, si
+  quiere, un mínimo. El mínimo acota lo que propone la regla, nunca una partición («too high a
+  minimum increment size can interfere with the increment-cutting procedure»). El último incremento
+  acaba en 1.
+
+En los tres, un incremento que falla se parte como antes, y la fase sigue hasta el objetivo que
+tenía. Solo cuando no queda objetivo propone el tamaño automático el siguiente. Con `factors` o
+`automatic`, el `steps` del resultado es el número de incrementos que convergieron (regla 12). El
+modelo del motor valida los dos y dice por qué rechaza uno.
+
+En la excavación del anillo con Mohr-Coulomb (12 × 4), cada ajuste mueve el desplazamiento entre
+1e-5 y 4e-4 m (u_r(a) ≈ 8 mm). La lista de factores y el automático por defecto de los tests dan lo
+mismo a 1e-15 en ese caso, porque los dos acaban con un solo incremento plástico desde un estado
+elástico: por eso la lista se compara con cuatro escalones iguales.
+
+Mutaciones (`tests/test_steps_v0016.py`), 15. En la primera pasada sobrevivieron 3 y los tests se
+reforzaron: los escalones contados sin las particiones (hacía falta un caso con particiones), una
+lista con dos factores iguales y que `analysis` pase la lista (se miran los incrementos). Ahora las
+15, cazadas:
+
+| Etiqueta | Cambio |
+|---|---|
+| `exponent_one` | n = 1 en lugar de 1/2 |
+| `no_largest`, `no_smallest` | sin el máximo o sin el mínimo |
+| `auto_size_from_cut` | el tamaño anterior mal tomado tras el primero |
+| `auto_not_to_one` | el último incremento puede pasar de 1 |
+| `first_ignored` | el primero es el máximo |
+| `factors_ignored` | la lista se convierte en escalones iguales |
+| `steps_reported` | los escalones cuentan también las particiones |
+| `check_increasing`, `check_last` | factores iguales admitidos; el último puede no ser 1 |
+| `analysis_drops_factors` | `analysis` no pasa la lista |
+| `validate_skips` | el modelo no valida la lista |
