@@ -329,7 +329,7 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
 
   *Hecho cuando:* la ayuda no hace llamadas de red; el congelado abre, malla, calcula y consulta un
   caso en Windows, macOS y Linux; su tamaño está anotado. (Hecho el 2026-11-27.)
-- [ ] T37. **El cierre de la spec y de la fase 1.**
+- [x] T37. **El cierre de la spec y de la fase 1.**
   - El barrido de las reglas 7 y 12 sobre la interfaz.
   - Los casos 001 a 007, bit a bit.
   - `CHANGELOG_v0.0.15.md` completo.
@@ -337,4 +337,4 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   - Las propuestas a Slip2D (D5, D10), entregadas a la propietaria.
 
   *Hecho cuando:* todos los criterios de finalización de `spec.md` están marcados.
-  (2026-11-28: marcados todos salvo la CI de estos commits, que corre cuando se suban.)
+  (Hecho el 2026-11-28: la CI de `3ec4fc8`, run 46127528558, en verde en las tres plataformas.)

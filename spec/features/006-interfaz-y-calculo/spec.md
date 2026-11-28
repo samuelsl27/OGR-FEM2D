@@ -250,7 +250,8 @@ defecto que lo cambia se ve con el resultado (regla 12).
 - [x] Las identidades de la tabla, en verde y con dientes
 - [x] Los objetivos de D15 medidos; la lista de la guía de interfaz pasada en cada componente (la
       coma en las piezas de `ogr-gui`, pedida: `CHANGELOG_v0.0.15.md`, T37)
-- [ ] La CI en verde en las tres plataformas, con la interfaz y el congelado
+- [x] La CI en verde en las tres plataformas, con la interfaz y el congelado (run 46127528558,
+      `3ec4fc8`, 2026-11-28)
 - [x] Un changelog por parte con lo encontrado; fichas con su «Seguimiento»; la fase 1 cerrada en la
       hoja de ruta
 

@@ -567,3 +567,7 @@ los valores por defecto incluidos.
   `docs/consumidores.md`, que pasa a v0.1.3.
 - **OGR-Core**: la fila de este programa en su `docs/consumidores.md`, que pasa a v0.2.13, y la
   propuesta del congelado (T36).
+
+**La CI** de `3ec4fc8` (run 46127528558), en verde: las ruedas, el congelado con la interfaz y la
+suite con Python 3.11, 3.12 y 3.13 en Windows, macOS y Linux. La spec 006 y la fase 1 quedan
+cerradas.
