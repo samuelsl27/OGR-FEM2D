@@ -237,6 +237,36 @@ class TestEachOptionMovesTheDrawing:
                                                mode=ContourMode.SMOOTH))
             assert len(win.view.drawn.bands) > 40
 
+    def test_reverse_decimals_scientific_opacity_and_the_mesh(self):
+        """The rest of the Contour Options and View > Mesh (T37, the sweep of
+        rule 7): each moves what is drawn or said."""
+        with _Open(_three()) as o:
+            o.w.interpret()
+            win = o.win
+            s = win.settings_of(win.quantity)
+            bands = [c for c, _r in win.view.drawn.bands]
+            win.apply_contour_settings(replace(s, reverse=not s.reverse))
+            s = win.settings_of(win.quantity)
+            assert s.colour_for(s.vmin) != replace(s, reverse=not s.reverse).colour_for(s.vmin)
+            assert [c for c, _r in win.view.drawn.bands] != bands
+            labels = list(win.legend._labels)
+            win.apply_contour_settings(replace(s, decimals=s.decimals + 3))
+            assert win.legend._labels != labels and win.legend._decimals == s.decimals + 3
+            assert len(win.legend._labels[0].split(".")[-1]) >= s.decimals + 3
+            win.apply_contour_settings(replace(win.settings_of(win.quantity), scientific=True))
+            assert "e" in win.legend._labels[0].lower() and win.legend._scientific
+            s = win.settings_of(win.quantity)
+            said = dict(win.decided_parts()[3][1])["Range"]
+            assert f": {s.format_value(s.vmin)} – {s.format_value(s.vmax)} " in said, said
+            assert "e+" in said or "e-" in said, said
+            win.apply_contour_settings(replace(win.settings_of(win.quantity), opacity=0.4))
+            assert win.view.result_item.opacity() == 0.4
+            assert win.view.mesh_item is None
+            win._actions["show_mesh"].trigger()
+            assert win.view.mesh_item is not None and win.view.result_item is not None
+            win._actions["show_mesh"].trigger()
+            assert win.view.mesh_item is None
+
     def test_the_range_and_the_absolute_value(self):
         with _Open(_three()) as o:
             o.w.interpret()
@@ -354,16 +384,34 @@ class TestD15:
     def test_case_005(self):
         from ogr_fem2d.engine.compiled import RUST
         m = ogr_file.read(_cases_model.path("005-kirsch-malla-general"))
-        with _Open(m, RUST) as o:
-            win = o.w.interpret_window
+        import matplotlib.figure  # noqa: F401 - the program imports it at start (warm_up)
+        import matplotlib.tri  # noqa: F401
+
+        def first_drawing(w):
+            win = w.interpret_window
             win.resize(1600, 1000)
             win.show()
-            import matplotlib.figure  # noqa: F401 - the program imports it at start (warm_up)
-            import matplotlib.tri  # noqa: F401
             t = time.perf_counter()
-            o.w.interpret()
+            w.interpret()
             _render(win.view)
-            first = time.perf_counter() - t
+            return time.perf_counter() - t
+
+        with _Open(m, RUST) as o:
+            # the first drawing, the best of three windows opened on the same results (the
+            # owner's decision of 2026-11-27): one opening measured while another program
+            # loaded the machine took 1.1 to 1.3 s, and 0.6 s on a quiet one
+            firsts = [first_drawing(o.w)]
+            for _k in range(2):
+                with recent_kept():
+                    other_w = MainWindow()
+                    try:
+                        other_w.open_path(str(o.path))
+                        firsts.append(first_drawing(other_w))
+                    finally:
+                        other_w.confirm_discard = lambda: True
+                        other_w.close()
+            first = min(firsts)
+            win = o.w.interpret_window
             t = time.perf_counter()
             win.set_quantity("sigma_3")
             _render(win.view)
@@ -380,7 +428,7 @@ class TestD15:
                 move()
                 _render(win.view)
                 moves.append(time.perf_counter() - t)
-            print(f"D15 case 005: first {first:.2f} s, "
+            print(f"D15 case 005: first {[round(x, 2) for x in firsts]} s, "
                   f"another quantity {other:.2f} s, a displacement {displacement:.2f} s, "
                   f"moves {[round(x, 3) for x in moves]} s")
             assert other <= 1.0 * SLOWER and displacement <= 1.0 * SLOWER, (other, displacement)
