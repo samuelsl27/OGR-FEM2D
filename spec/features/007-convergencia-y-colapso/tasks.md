@@ -28,12 +28,17 @@ con la lista por componente de `spec/constitution/guia-de-interfaz.md`.
   queda; ningún estado aleatorio pide el vértice; Rust da lo mismo que Python.
   (Hecho el 2026-11-28: a la primera, sin cambiar el motor; también la tangente frente a la derivada
   numérica. 5 tests; 10 mutaciones, 9 cazadas y 1 equivalente con φ = 0.)
-- [ ] T2. **El diagnóstico de la robustez** (D5, 1; regla 6), en
+- [x] T2. **El diagnóstico de la robustez** (D5, 1; regla 6), en
   `comprobaciones/diagnostico_robustez.py`: el caso 002 con 16 × 64 y el anillo con 16 × 48, ψ = 0°.
 
   *Hecho cuando:* el changelog dice, para cada uno, en qué incremento falla, por qué (puntos que
   piden el vértice, regiones que oscilan, con cuántos puntos), y qué pasa con 10, 20 y 40 escalones
   y con 4, 8 y 16 particiones; y la propietaria lo sabe antes de la T9. No cambia ningún código.
+  (Hecho el 2026-11-28: ninguna de las 32 combinaciones converge; es una barrera de nivel de carga
+  (0.86–0.90 en el 002, 0.96 en el anillo), con Newton que oscila y correcciones de hasta 0.65 m.
+  Es de ψ = 0: con ψ = 5° los dos convergen sin particiones. **Anomalía**: una tangente singular
+  (ψ = 1°) se escapa como `RuntimeError`, sin partir; corrección propuesta para la T3. RF-8,
+  propuesto como hallazgo hasta tener Crisfield (1991).)
 - [ ] T3. `solver.py` y `analysis.py`: el progreso y la cancelación por iteración (D10); los
   incrementos con su estado y el factor alcanzado (D2); la marca del suelo de redondeo (D12).
 

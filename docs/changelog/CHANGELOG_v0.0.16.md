@@ -71,3 +71,57 @@ D9 (spec 006) y se mató. Solos, y en la vuelta siguiente de la suite entera (86
 un test que depende del tiempo con el equipo cargado; nada de esta tarea toca ese camino. Queda
 anotado por si vuelve; la cancelación entre iteraciones de la T3 (D10) le quita la dependencia del
 plazo.
+
+## T2 — El diagnóstico de la robustez (2026-11-28)
+
+`spec/features/007-convergencia-y-colapso/comprobaciones/diagnostico_robustez.py` (D5, 1; regla 6).
+Mira el motor desde fuera, sin cambiar código: una variante que envuelve la de Rust y anota cada
+actualización (las regiones de los puntos, el tamaño de la corrección, el punto que se rechaza y
+su tensión de prueba). Los incrementos y la historia de una fase que falla se leen de las variables
+de `solve_stage` en la traza. Los dos problemas que la spec 001 dejó sin converger, con ψ = 0°,
+tolerancia 1e-10 y 25 iteraciones: el caso 002 con 16 × 64 (b = 100 m) y el anillo de 21 m con
+16 × 48.
+
+**Factor de carga alcanzado** (la excavación va de 0 a 1), con 5, 10, 20 y 40 escalones y 0, 4, 8 y
+16 particiones. **Ninguna de las 32 combinaciones converge**:
+
+| | 0 part. | 4 | 8 | 16 |
+|---|---|---|---|---|
+| 002, 5 escalones | 0.800 | 0.850 | 0.860 | 0.894 |
+| 002, 10 | 0.800 | 0.856 | 0.860 | 0.895 |
+| 002, 20 | 0.850 | 0.859 | 0.875 | 0.895 |
+| 002, 40 | 0.850 | 0.859 | 0.860 | 0.891 |
+| anillo, 5 | 0.800 | 0.950 | 0.959 | 0.961 |
+| anillo, 10 | 0.900 | 0.956 | 0.960 | 0.961 |
+| anillo, 20 | 0.950 | 0.959 | 0.960 | 0.960 |
+| anillo, 40 | 0.950 | 0.959 | 0.961 | 0.961 |
+
+Lo encontrado:
+
+- **Es una barrera de nivel de carga, no de tamaño de incremento.** El 002 se para hacia 0.86–0.90 y
+  el anillo hacia 0.96, sea cual sea el reparto. Con 40 escalones y 16 particiones, el último
+  incremento del anillo que falla va de 0.961249 a 0.961255: 6e-6 de la fase. **La partición (D5, 2)
+  no basta**, y tampoco más escalones (lo que dice Clausen 2007, apéndice B).
+- **El mecanismo**: Newton no reduce el residuo, lo hace oscilar. En cada iteración, entre 30 y 170
+  puntos cambian de región (plano, arista, elástico). Con una corrección a veces enorme: el residuo
+  baja a 1e-3 o 1e-5 y en la iteración siguiente la corrección de desplazamiento llega a 0.02–0.65 m,
+  frente a los 8 mm de la pared en la solución. Es la firma de una tangente casi singular. Un punto
+  de la pared del hueco, siempre en los primeros elementos junto al eje x (a 0°–14°), recibe entonces
+  una tensión de prueba de 10³ a 10⁴ MPa y pide el vértice, que con ψ = 0 no existe. Así terminan la
+  mayoría de los incrementos que fallan. Los demás agotan las 25 iteraciones oscilando.
+- **Es de ψ = 0.** Con ψ = 5° los dos convergen con 5 escalones y sin ninguna partición. Con ψ = 1° el
+  anillo converge y el 002 da con una **tangente exactamente singular**: los puntos que llegan al
+  vértice tienen D^ep = 0 (de Souza Neto et al., Remark 8.3; Clausen 2007, cap. 8, págs. 94–96: «a
+  breakdown due to a singular global stiffness matrix»).
+- **Anomalía del motor, sin corregir** (regla 6): esa factorización singular **se escapa** de
+  `solve_stage` como el `RuntimeError` de SuperLU («Factor is exactly singular»). No se parte el
+  incremento, y `calculate` no lo trata como una fase que falla sino como un error del programa (no
+  está en `STAGE_FAILURES`). De Souza Neto et al. (2008), fig. 5.2, cuentan el pivote nulo entre los
+  fallos que llevan a partir el incremento. Se propone tratarlo así en la T3: partir el incremento y,
+  agotadas las particiones, una no convergencia con su motivo. Pendiente del OK de la propietaria.
+
+**Consecuencia para la T9 (RF-8)**: con la estrategia de D5 (2), los dos casos no van a converger. Lo
+que corrige una corrección desmesurada es acotarla, que es lo que hace una búsqueda lineal, y su
+fuente (Crisfield 1991) no está. Se propone a la propietaria dejar RF-8 como hallazgo con este
+diagnóstico, y la búsqueda lineal para cuando esté la fuente (D5, 3). No afecta a STR-05: con φ = 0
+no hay vértice (T1).
