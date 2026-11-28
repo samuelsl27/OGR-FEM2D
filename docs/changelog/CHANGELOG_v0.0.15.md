@@ -571,3 +571,23 @@ los valores por defecto incluidos.
 **La CI** de `3ec4fc8` (run 46127528558), en verde: las ruedas, el congelado con la interfaz y la
 suite con Python 3.11, 3.12 y 3.13 en Windows, macOS y Linux. La spec 006 y la fase 1 quedan
 cerradas.
+
+## El motor de Rust, por defecto (2026-11-28)
+
+La propietaria preguntó por qué casi todo el código es Python si el motor iba en Rust. **Hallazgo**:
+`analysis_run` tenía `variant="reference"` por defecto, y la ventana no le pasaba otro. La ventana,
+la línea de órdenes y un agente calculaban con el motor de referencia en Python. El de Rust solo se
+usaba si se pedía, como en los tests.
+
+- Ahora el motor por defecto es Rust (`api/ops/analysis.py`, `DEFAULT_VARIANT`), también en el
+  proceso hijo y en la línea de órdenes. El de referencia sigue a mano (`variant="reference"`,
+  `--variant reference`) para comprobarlo. Los resultados dicen qué motor los escribió, en el `.h5`,
+  en `results_open` y en el panel «Lo que lo decidió».
+- Se comprueba que el cálculo de la ventana, el de la línea de órdenes y el de la operación sin
+  argumentos los escribe Rust. Con la referencia pedida, los números son los mismos hasta el redondeo.
+- Los casos 005 a 007 dan por las operaciones lo mismo, bit a bit, que `calculate` con el mismo
+  motor. El test lo comparaba con el de referencia, y el 007 lo vio.
+- Lo que tarda un cálculo entero con su `.h5`: el caso 005, 17.8 s → 13.2 s; el 006, 11.4 s → 8.3 s;
+  el 007, 16.2 s → 5.0 s. El resto se va en lo que sigue en Python (ensamblar, factorizar, recuperar,
+  escribir). Que eso pase a Rust es P4: queda en la fase 2, con la spec 011 y su medida A/B,
+  confirmado por la propietaria y anotado allí y en el plan.

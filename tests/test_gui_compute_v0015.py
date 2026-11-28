@@ -96,6 +96,7 @@ class TestCalculating:
             opened = calc.open_results(o.path, o.m)
             assert opened.status == calc.VALID
             r = opened.results
+            assert r.header.engine_variant == "rust"         # the compiled engine, by default
             assert [r.outcome(k) for k in range(r.n_stages)] == \
                 analysis.run(translate.to_engine(o.m))
             log = win.log_text()

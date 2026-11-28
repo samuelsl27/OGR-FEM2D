@@ -28,14 +28,20 @@ from ..registry import OPERATIONS
 from ..workspace import model_errors
 
 VARIANTS = ("reference", "rust")
+#: the engine a calculation runs on unless asked otherwise (the owner's decision of 2026-11-28,
+#: ADR-0001): the compiled one; the reference in Python stays at hand to check it, and the
+#: results say which one wrote them
+DEFAULT_VARIANT = "rust"
 
 
 @OPERATIONS.operation("analysis_run", toolset="analysis")
-def analysis_run(ws, project_id: Optional[str] = None, variant: str = "reference",
+def analysis_run(ws, project_id: Optional[str] = None, variant: str = DEFAULT_VARIANT,
                  wait: float = 0.0) -> dict:
     """Calculate the model in a child process that can be cancelled; it
-    writes <model>.h5 beside the model's file. Returns the job_id (and, with
-    ``wait`` seconds, the job's state when it ends or the wait does)."""
+    writes <model>.h5 beside the model's file. ``variant``: the engine,
+    "rust" (the compiled one) or "reference" (the one in Python, to check
+    it); the results say which. Returns the job_id (and, with ``wait``
+    seconds, the job's state when it ends or the wait does)."""
     if variant not in VARIANTS:
         raise unknown("engine variant", variant, list(VARIANTS))
     wait = coerce_value(wait, float, "wait")

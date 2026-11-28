@@ -175,7 +175,10 @@ def _case_by_the_operations(name: str):
             run = api.call(ws, "analysis_run", project_id=pid, wait=900)
             assert run["summary"]["status"] == "complete", run
             m = ogr_file.read(own_dir / "modelo.ogrfem2d")
-            calc.calculate(m, own_dir / "modelo.ogrfem2d")
+            # the same engine as the operation's, its default (the compiled one since 2026-11-28)
+            from ogr_fem2d.api import worker
+            from ogr_fem2d.api.ops.analysis import DEFAULT_VARIANT
+            calc.calculate(m, own_dir / "modelo.ogrfem2d", worker.variant(DEFAULT_VARIANT))
             assert _outcomes(ops_dir / "modelo.ogrfem2d") == _outcomes(own_dir / "modelo.ogrfem2d")
             view = qy.View(calc.open_results(own_dir / "modelo.ogrfem2d").results, spec["fase"])
             stage = api.call(ws, "results_open", project_id=pid)["stages"][spec["fase"]]["id"]

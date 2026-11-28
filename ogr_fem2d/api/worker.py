@@ -57,7 +57,8 @@ def run_calculation(ctx):
         ctx.progress(done, p.stages, event=p.event, stage=p.stage_id, stage_name=p.stage_name,
                      solved=p.solved, step=p.steps, iteration=p.iteration, status=p.status)
 
-    done = calc.calculate(m, path, variant(ctx.params.get("variant", "reference")),
+    from .ops.analysis import DEFAULT_VARIANT
+    done = calc.calculate(m, path, variant(ctx.params.get("variant", DEFAULT_VARIANT)),
                           should_stop=ctx.should_stop, progress=progress)
     if done.status == store.CANCELLED:
         raise JobCancelled(done.reason)

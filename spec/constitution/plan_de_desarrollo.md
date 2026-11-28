@@ -253,6 +253,8 @@ colapso).
   T13), paralelismo de la integración (`rayon`) si se mide que compensa.
 - Bucle de escalones e iteraciones en Rust si la medida lo pide; la referencia en Python sigue siendo
   el oráculo.
+- *Confirmado por la propietaria el 2026-11-28*: va en la fase 2. Desde ese día, el motor por defecto
+  del programa es el de Rust (los tiempos de los casos, en la spec 011).
 
 ---
 

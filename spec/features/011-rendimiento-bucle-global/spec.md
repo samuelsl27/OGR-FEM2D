@@ -44,6 +44,20 @@ la malla del caso 002 la factorización en Python (75–94 ms) ya pesa más que 
 (5–9 ms). El SSR multiplica ese coste por el número de pruebas (P05: ocho pruebas de diez escalones,
 cada una con sus iteraciones), y la fase 6 lo multiplicará otra vez.
 
+**Confirmado por la propietaria el 2026-11-28**, al cerrar la fase 1: el ensamblaje, la factorización
+y el bucle pasan a Rust en la fase 2, con esta spec, después de la medida A/B. Ese día el motor por
+defecto del programa pasó a ser el de Rust (v0.0.15). Un cálculo entero con su `.h5`, medido en el
+equipo de desarrollo, tardaba así con el motor de referencia y con el de Rust:
+
+| Caso | Referencia | Rust |
+|---|---|---|
+| 005 | 17.8 s | 13.2 s |
+| 006 | 11.4 s | 8.3 s |
+| 007 | 16.2 s | 5.0 s |
+
+En elástico el tiempo se va en lo que sigue en Python: ensamblar, factorizar, recuperar y escribir.
+Es el dato de P4 con las mallas de la fase 1, y el punto de partida de la medida.
+
 El objetivo es decidir con medidas, no con supuestos: comparar SuperLU con `faer` en el mismo proceso
 y con el método de la spec 001, mirar si el paralelismo de la integración compensa, y llevar a Rust
 el bucle de escalones e iteraciones solo si la medida lo pide. Ningún cambio de esta spec puede

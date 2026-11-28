@@ -86,6 +86,7 @@ class TestTheCommands:
             assert out.returncode == 0, out.stderr
             assert json.loads(out.stdout)["summary"]["status"] == "complete"
             assert calc.open_results(path).status == calc.VALID
+            assert calc.open_results(path).results.header.engine_variant == "rust"   # by default
             out = _cli("info", "modelo.ogrfem2d", cwd=d)
             ws = api.workspace(workdir=d)
             try:

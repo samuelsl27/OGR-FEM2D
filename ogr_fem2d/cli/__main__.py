@@ -142,7 +142,10 @@ def parser() -> argparse.ArgumentParser:
     i.set_defaults(fn=cmd_info)
     k = sub.add_parser("calculate", help="calculate a model and wait")
     k.add_argument("file")
-    k.add_argument("--variant", default="reference", choices=("reference", "rust"))
+    from ..api.ops.analysis import DEFAULT_VARIANT, VARIANTS
+    k.add_argument("--variant", default=DEFAULT_VARIANT, choices=VARIANTS,
+                   help="the engine: rust, the compiled one (by default), or reference, the one "
+                        "in Python, to check it")
     k.add_argument("--timeout", default="3600", help="seconds to wait")
     k.set_defaults(fn=cmd_calculate)
     return p

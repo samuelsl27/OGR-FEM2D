@@ -66,11 +66,13 @@ class TestRule7:
             assert got == rules, (cut, got)
 
     def test_variant(self):
+        """The compiled engine by default (the owner's decision of
+        2026-11-28), the reference when asked; the same numbers to rounding."""
         with _Saved(_results.loaded_layers()) as c:
-            c.call("analysis_run", wait=120)
+            c.call("analysis_run", variant="reference", wait=120)
             ref = calc.open_results(c.path).results
             ref_u = ref.field(0, "displacement").copy()
-            c.call("analysis_run", variant="rust", wait=120)
+            c.call("analysis_run", wait=120)
             rust = calc.open_results(c.path).results
             assert (ref.header.engine_variant, rust.header.engine_variant) == ("reference", "rust")
             u = rust.field(0, "displacement")

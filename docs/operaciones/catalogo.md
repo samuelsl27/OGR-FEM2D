@@ -15,13 +15,15 @@ deshacer (`project_history`).
 ### `analysis_run`
 
 Calculate the model in a child process that can be cancelled; it
-writes <model>.h5 beside the model's file. Returns the job_id (and, with
-``wait`` seconds, the job's state when it ends or the wait does).
+writes <model>.h5 beside the model's file. ``variant``: the engine,
+"rust" (the compiled one) or "reference" (the one in Python, to check
+it); the results say which. Returns the job_id (and, with ``wait``
+seconds, the job's state when it ends or the wait does).
 
 | Argumento | Tipo | Por defecto |
 |---|---|---|
 | `project_id` | `str o None` | `None` |
-| `variant` | `str` | `'reference'` |
+| `variant` | `str` | `'rust'` |
 | `wait` | `float` | `0.0` |
 
 ### `job_cancel`
