@@ -161,8 +161,8 @@ class QueryWindow(QDialog):
                 lines.append(f"{tr(SETTING_TEXT.get(key, key))}: {self._setting(key, value)}")
         else:
             x, y = units.to_user(self.m, (g["x"], g["y"]))
-            lines.append(tr("At %s (%s)") % (units.pair(f"x = {units.number(x)}",
-                                                         f"y = {units.number(y)}"), self.length))
+            lines.append(tr("At x = %s, y = %s (%s)") % (units.number(x), units.number(y),
+                                                          self.length))
         if g["state"] != "valid":
             lines.insert(0, tr("NOT VALID: %s") % tr(g["state"].capitalize()))
         return lines
@@ -171,8 +171,8 @@ class QueryWindow(QDialog):
         if key == "distance":
             return f"{units.number(float(value) * self.lf)} {self.length}"
         if key == "vertices":
-            return " ".join("(%s)" % units.pair(*(units.number(c * self.lf) for c in p))
-                            for p in value)
+            return "; ".join("(%s, %s)" % tuple(units.number(c * self.lf) for c in p)
+                             for p in value)
         if key in ("x", "y"):
             return f"{units.number(float(value) * self.lf)} {self.length}"
         if isinstance(value, str):

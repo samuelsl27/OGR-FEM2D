@@ -465,16 +465,25 @@ La propietaria vio los cuatro hallazgos antes de que se tocara nada, y dijo que 
 3. **Los números en pantalla no seguían D12.** La interpretación escribía siempre con punto: el valor
    bajo el cursor, las cifras de la leyenda, el rango y las consultas. Las casillas numéricas seguían
    la configuración regional de la máquina, no el idioma del programa, también en los diálogos de la
-   parte C. Con la de España, una casilla de Qt tomaba «2.5» como 25. Ahora:
-   - `gui/units.py` es el único sitio donde se escribe un número de pantalla (`number`, `shown`).
-     Con coma, dos coordenadas se separan con punto y coma (`pair`), como un punto escrito.
-   - `DecimalBox` muestra el separador del idioma y acepta el punto y la coma, sin separador de
-     miles: «1.000» es 1.
-   - La tabla CSV sigue con punto, bit a bit la misma en los dos idiomas.
+   parte C. Con la de España, una casilla de Qt mostraba coma y tomaba «2.5» como 25.
 
-   Lo que escribe `ogr_ui` sigue con punto: la leyenda continua, las coordenadas de la barra de
-   estado, las casillas del diálogo de contornos y los ejes del gráfico. Se pide a OGR GUI
-   (`../Promts_desarrollo/2026_11_28_peticion_ogr_gui_coma_decimal.md`).
+   Se puso primero la coma en español (`ad5aa34`), como pedía D12. **La propietaria modificó D12 el
+   mismo día**: el separador decimal es siempre el punto, en inglés y en español, en pantalla y al
+   escribir, porque la coma se presta a confusión y a errores. Una coma en un número se rechaza.
+   Así queda:
+   - `gui/units.py`, `number`, es el único sitio donde se escribe un número de pantalla, siempre
+     con punto.
+   - `DecimalBox` tiene el locale C y no tiene separador de miles («1.000» es 1). Muestra el punto
+     en cualquier idioma y en cualquier máquina, y una coma no se deja escribir.
+   - Las tablas de números (coordenadas, estratos, ventanas de la malla y factores por fase)
+     rechazan una coma, diciendo la fila.
+   - En español se ven las mismas cifras que en inglés, y la tabla CSV es la misma en los dos.
+
+   En `ogr_ui` quedan dos cosas, que la propietaria corrige allí
+   (`../Promts_desarrollo/2026_11_28_peticion_ogr_gui_coma_decimal.md`): el punto escrito de la
+   barra de estado acepta la coma decimal, y las casillas del diálogo de contornos siguen la
+   configuración de la máquina. Los tests de `read_point` de este programa son el contrato de la
+   v0.1.3 y aceptan la coma. Cambiarán cuando suba la fijación.
 4. **Las cifras de la tabla de una consulta iban a la izquierda**: ahora van a la derecha, y el
    texto a la izquierda.
 
@@ -499,11 +508,12 @@ esas corridas era la de su sesión con la de este programa a la vez.
 | Informe | HTML, texto, leer otra vez | `test_gui_report_v0015` |
 | Ayuda | página, caso (copiado y abierto), ficha | `test_gui_help_v0015` |
 | Puente | token, apagarlo, Busy con un cálculo | `test_gui_bridge_v0015` |
-| Idioma (D12) | la coma en pantalla, las casillas, la tabla con punto | `test_gui_decimal_v0015` |
+| Idioma (D12, modificada) | el punto en pantalla en los dos idiomas, las casillas y las tablas rechazan la coma | `test_gui_decimal_v0015`; `test_gui_field_v0014` (un estrato con coma) |
 
 Mutaciones en la T37: 14, todas cazadas. Fueron 6 en las opciones de contorno, con la del rango
 dicho; 2 en «todos los nudos» (el orden, y la forma anterior, que cae por tiempo); la paleta
-anterior; y 5 en D12. Al principio escapó el mutante del rango: el test buscaba una «e» y la
+anterior; y 5 en D12, ya con el punto. Una sexta, quitar el separador de miles, era equivalente
+con el locale C, y esa línea se quitó. Al principio escapó el mutante del rango: el test buscaba una «e» y la
 encontraba en «stage». Ahora compara la cifra.
 
 **Regla 12**: junto a lo dibujado van el estado de los resultados, quién los escribió y el motor;
@@ -530,7 +540,8 @@ los valores por defecto incluidos.
   exportan como la operación.
 - **Mensajes**: los rechazos de las operaciones, con su código y en el idioma del lector. Un estado
   vacío dice qué hacer: «Sin resultados que mostrar…», «Analysis > Compute».
-- *Pendiente, pedido a OGR GUI*: la coma en lo que escribe `ogr_ui` (arriba).
+- *Pendiente, en `ogr_ui`*: el punto escrito y las casillas del diálogo de contornos, que aún
+  aceptan la coma (arriba).
 
 ### Lo que se encontró en la parte D, en resumen
 
@@ -545,7 +556,8 @@ los valores por defecto incluidos.
    del programa: la cancelación que acaba antes de su respuesta (tras la T34).
 6. El congelado no podía ser el hijo de un trabajo: lo resuelve su punto de entrada, y hay una
    propuesta a OGR-Core (T36).
-7. En la T37: «todos los nudos», cuadrático; la paleta de D5; la coma de D12; las cifras alineadas.
+7. En la T37: «todos los nudos», cuadrático; la paleta de D5; los números de D12, siempre con
+   punto; las cifras alineadas.
 
 ### Para otras sesiones, por la propietaria
 

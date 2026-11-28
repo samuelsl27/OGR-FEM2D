@@ -24,21 +24,22 @@ from ...model import model as md
 from .. import units
 
 
-#: what a box takes while it is being written: a sign, figures, one decimal point or comma, and
-#: an exponent
-_WRITING = re.compile(r"[-+]?\d*(?:[.,]\d*)?(?:[eE][-+]?\d*)?")
+#: what a box takes while it is being written: a sign, figures, one decimal point and an
+#: exponent; never a comma (D12, modified by the owner on 2026-11-28)
+_WRITING = re.compile(r"[-+]?\d*(?:\.\d*)?(?:[eE][-+]?\d*)?")
 
 
 class DecimalBox(QDoubleSpinBox):
-    """A number box that shows the language's decimal separator (D12: a
-    comma in Spanish) and takes a point or a comma whatever the language,
-    with no thousands separator: Qt's own box follows the machine's locale,
-    and in Spanish would take «2.5» as 25 (T37's finding)."""
+    """A number box whose decimal mark is always a point, in every language
+    and whatever the machine's locale, with no thousands separator; a comma
+    is refused as it is typed (D12, modified by the owner on 2026-11-28: a
+    comma lends itself to confusion and to errors). Qt's own box follows the
+    machine's locale: with Spain's it showed a comma and took «2.5» as 25
+    (T37's finding)."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setLocale(QLocale.c())
-        self.setGroupSeparatorShown(False)
+        self.setLocale(QLocale.c())                  # a point, and no thousands separator
 
     def _body(self, text: str) -> str:
         t = text
@@ -48,15 +49,12 @@ class DecimalBox(QDoubleSpinBox):
             t = t[:-len(self.suffix())]
         return t.strip()
 
-    def textFromValue(self, value: float) -> str:  # noqa: N802 - Qt's name
-        return units.shown(super().textFromValue(value))
-
-    def valueFromText(self, text: str) -> float:  # noqa: N802
+    def valueFromText(self, text: str) -> float:  # noqa: N802 - Qt's name
         body = self._body(text)
         if self.specialValueText() and text == self.specialValueText():
             return self.minimum()
         try:
-            return float(body.replace(",", "."))
+            return float(body)
         except ValueError:
             return self.value()
 
@@ -67,7 +65,7 @@ class DecimalBox(QDoubleSpinBox):
         if not _WRITING.fullmatch(body):
             return QValidator.State.Invalid, text, pos
         try:
-            v = float(body.replace(",", "."))
+            v = float(body)
         except ValueError:
             return QValidator.State.Intermediate, text, pos
         if self.minimum() <= v <= self.maximum():

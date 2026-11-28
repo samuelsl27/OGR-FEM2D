@@ -5,9 +5,9 @@ The table of coordinates (spec 006, T22; D10): the vertices of a boundary
 typed as rows of X and Y, which the reference program's prompt opened with
 ``t`` and which its users found more reliable than typing fast (P05).
 
-A cell takes a number with a point or a comma as its decimal mark (D12); an
-empty row is skipped; a cell that is not a number is said, naming its row,
-and no point is taken.
+A cell takes a number with a point as its decimal mark, never a comma (D12,
+modified by the owner on 2026-11-28); an empty row is skipped; a cell that
+is not a number is said, naming its row, and no point is taken.
 
 Author: Samuel Sáez López (UPCT)
 """
@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QHeaderView, QLabel, Q
 
 from ogr_ui.i18n import tr
 
-_NUMBER = re.compile(r"[-+]?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:[eE][-+]?\d+)?")
+_NUMBER = re.compile(r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?")
 
 
 class TableError(ValueError):
@@ -28,12 +28,12 @@ class TableError(ValueError):
 
 
 def read_number(text: str) -> float:
-    """A number with a point or a comma as its decimal mark (D12);
-    TableError if it is not one."""
+    """A number with a point as its decimal mark (D12); TableError if it is
+    not one, a comma included."""
     text = (text or "").strip()
     if not _NUMBER.fullmatch(text):
         raise TableError(text)
-    return float(text.replace(",", "."))
+    return float(text)
 
 
 def read_rows(rows) -> list[tuple[float, float]]:
@@ -45,7 +45,7 @@ def read_rows(rows) -> list[tuple[float, float]]:
             continue
         if not (_NUMBER.fullmatch(x) and _NUMBER.fullmatch(y)):
             raise TableError(tr("Row %d: X and Y must be numbers.") % (k + 1))
-        out.append((float(x.replace(",", ".")), float(y.replace(",", "."))))
+        out.append((float(x), float(y)))
     return out
 
 

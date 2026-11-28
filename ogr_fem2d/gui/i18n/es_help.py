@@ -34,12 +34,12 @@ ES = {
         "unidades que se muestran solo cambian cómo se escribe.",
     "Boundaries > Add External, Add Excavation, Add Material Boundary, Add Stage Boundary and "
     "Add Circular Excavation draw by clicks or by typed points. In the X, Y field of the status "
-    "bar: x, y (or x; y with decimal commas), @dx, dy from the last point, or @distance<angle "
+    "bar: x, y (decimals with a point), @dx, dy from the last point, or @distance<angle "
     "in degrees, then Enter. A (Arc) draws an arc through a point; T (Enter Coordinates) takes "
     "a table; Enter finishes, Esc cancels, Backspace undoes the last vertex.":
         "Contornos > Añadir externo, Añadir excavación, Añadir contorno de material, Añadir "
         "contorno de fase y Añadir excavación circular dibujan con clics o con puntos "
-        "escritos. En el campo X, Y de la barra de estado: x, y (o x; y con coma decimal), "
+        "escritos. En el campo X, Y de la barra de estado: x, y (los decimales con punto), "
         "@dx, dy desde el último punto, o @distancia<ángulo en grados, y después Intro. A "
         "(Arco) dibuja un arco por un punto; T (Introducir coordenadas) toma una tabla; Intro "
         "termina, Esc cancela y Retroceso deshace el último vértice.",

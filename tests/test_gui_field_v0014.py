@@ -107,7 +107,11 @@ class TestTheDialog:
             assert dlg.strata.rowCount() == 1
             assert dlg.strata.item(0, 0).text() == "-20"          # the bottom of the model
             assert dlg.surface.box.value() == 0.0                 # its top
-            for c, text in ((1, "20"), (2, "0,5"), (3, "0.6")):
+            _set_cell(dlg, 0, 2, "0,5")              # a decimal comma is refused (D12, 2026-11-28)
+            dlg._accept()
+            assert "Stratum 1" in dlg.error.text(), dlg.error.text()
+            assert not isinstance(w.session.model.field, md.GravityField)
+            for c, text in ((1, "20"), (2, "0.5"), (3, "0.6")):
                 _set_cell(dlg, 0, c, text)
             dlg._accept()
             f = w.session.model.field

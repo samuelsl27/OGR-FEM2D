@@ -62,11 +62,9 @@ EXCEPTIONS = {
     ("main_window.py", "OGR FEM2D {}\n\n"): "the program's name and its version in About",
     ("interpret/queries.py", "x ({})"): "a column of a query: the coordinate's symbol and its unit",
     ("interpret/queries.py", "y ({})"): "a column of a query: the coordinate's symbol and its unit",
-    ("interpret/window.py", "x = {}"): "the interpretation's cursor: a coordinate in symbols "
-                                        "(D12: the two parted as the language writes them)",
-    ("interpret/window.py", "y = {}"): "the interpretation's cursor: a coordinate in symbols",
-    ("interpret/queries.py", "x = {}"): "a history's point: a coordinate in symbols",
-    ("interpret/queries.py", "y = {}"): "a history's point: a coordinate in symbols",
+    ("interpret/window.py", "x = {}, y = {} {}: "):
+        "the interpretation's cursor: its coordinates in symbols, with the unit shown, before "
+        "the values (each said through tr())",
 }
 #: Spanish words that are the English ones
 SAME = {"Material", "X (%s)", "Y (%s)", "General", "K", "Kz", "Material %d", "vertical",

@@ -127,7 +127,7 @@ def _model() -> str:
             + f"<h2>{tr('Boundaries')}</h2>"
             + _p(tr("Boundaries > Add External, Add Excavation, Add Material Boundary, Add Stage "
                     "Boundary and Add Circular Excavation draw by clicks or by typed points. In "
-                    "the X, Y field of the status bar: x, y (or x; y with decimal commas), @dx, dy "
+                    "the X, Y field of the status bar: x, y (decimals with a point), @dx, dy "
                     "from the last point, or @distance<angle in degrees, then Enter. A (Arc) "
                     "draws an arc through a point; T (Enter Coordinates) takes a table; Enter "
                     "finishes, Esc cancels, Backspace undoes the last vertex."),

@@ -259,7 +259,7 @@ class TestTheWindowsTools:
 
 class TestTheTable:
     def test_rows(self):
-        assert read_rows([("1,5", "2"), ("", ""), ("3", "-4.25")]) == [(1.5, 2.0), (3.0, -4.25)]
+        assert read_rows([("1.5", "2"), ("", ""), ("3", "-4.25")]) == [(1.5, 2.0), (3.0, -4.25)]
         try:
             read_rows([("1", "x")])
         except TableError as err:
@@ -267,7 +267,7 @@ class TestTheTable:
         else:
             raise AssertionError("a cell that is not a number was taken")
         dlg = CoordinatesDialog()
-        dlg.set_rows([("0", "0"), ("2,5", "0")])
+        dlg.set_rows([("0", "0"), ("2.5", "0")])
         dlg._accept()
         assert dlg.result_points == [(0.0, 0.0), (2.5, 0.0)]
         dlg.set_rows([("0", "y")])

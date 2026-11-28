@@ -97,7 +97,7 @@ class TestTheDialog:
                 ("max_size", lambda d: d.max_size.setValue(0.5)),
                 ("window", lambda d: (d.window_add.click(),
                                       [d.windows.item(0, c).setText(t) for c, t in
-                                       enumerate(("0", "0", "3", "3", "0,2"))])),
+                                       enumerate(("0", "0", "3", "3", "0.2"))])),
                 ("uniform size", lambda d: (d.kind.setCurrentIndex(d.kind.findData(g.UNIFORM)),
                                             d.by_size.setChecked(True), d.size.setValue(1.0))),
                 ("uniform count", lambda d: (d.kind.setCurrentIndex(d.kind.findData(g.UNIFORM)),
