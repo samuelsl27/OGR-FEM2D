@@ -337,3 +337,4 @@ Empieza cuando `ogr-gui` v0.1.0 está etiquetado.
   - Las propuestas a Slip2D (D5, D10), entregadas a la propietaria.
 
   *Hecho cuando:* todos los criterios de finalización de `spec.md` están marcados.
+  (2026-11-28: marcados todos salvo la CI de estos commits, que corre cuando se suban.)

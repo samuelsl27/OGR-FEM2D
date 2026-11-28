@@ -241,15 +241,17 @@ defecto que lo cambia se ve con el resultado (regla 12).
 ## Criterios de finalización
 
 - [x] D1–D18 aprobadas por la propietaria; ADR-0005 escrito (2026-11-24)
-- [ ] Lo genérico, en las versiones etiquetadas que fija D1, fijadas aquí
-- [ ] Todos los RF con su test en verde; todo texto nuevo traducido; toda acción en un menú y con su
+- [x] Lo genérico, en las versiones etiquetadas que fija D1, fijadas aquí (OGR-Core `v0.2.13`,
+      `ogr-gui` `v0.1.3`; 2026-11-28)
+- [x] Todos los RF con su test en verde; todo texto nuevo traducido; toda acción en un menú y con su
       operación (o su motivo para no tenerla)
-- [ ] Los casos de la fase, por las operaciones y por la interfaz, idénticos a la 005 y dentro de su
+- [x] Los casos de la fase, por las operaciones y por la interfaz, idénticos a la 005 y dentro de su
       tolerancia
-- [ ] Las identidades de la tabla, en verde y con dientes
-- [ ] Los objetivos de D15 medidos; la lista de la guía de interfaz pasada en cada componente
+- [x] Las identidades de la tabla, en verde y con dientes
+- [x] Los objetivos de D15 medidos; la lista de la guía de interfaz pasada en cada componente (la
+      coma en las piezas de `ogr-gui`, pedida: `CHANGELOG_v0.0.15.md`, T37)
 - [ ] La CI en verde en las tres plataformas, con la interfaz y el congelado
-- [ ] Un changelog por parte con lo encontrado; fichas con su «Seguimiento»; la fase 1 cerrada en la
+- [x] Un changelog por parte con lo encontrado; fichas con su «Seguimiento»; la fase 1 cerrada en la
       hoja de ruta
 
 ## Decisiones (2026-11-24)

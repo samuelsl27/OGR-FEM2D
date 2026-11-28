@@ -427,3 +427,131 @@ de este programa «nada»: los lectores y el informe que cambian no se usan aqu�
 versiones de `test_project_setup_v001`, que se escriben para la fijación. La suite entera, con el núcleo
 nuevo: 850 de 850 (`shared: ogr_core 0.2.13 … (installed, no git tree)`). La fila de este programa en
 `docs/consumidores.md` de OGR-Core la corrige su sesión.
+
+## T37 — el cierre de la spec 006 y de la fase 1 (2026-11-28)
+
+### Los casos 001 a 007, bit a bit
+
+Desde el cierre de la spec 005 (`9c366ff`) no ha cambiado nada en `ogr_fem2d/engine/` ni en `rust/`.
+Sí han cambiado el camino del cálculo y el de la lectura: la recuperación guardada al calcular, la
+recuperación más rápida y la huella. Así que se compararon los números, no el código. Un guion
+calculó los siete casos en `9c366ff` (un worktree, con el mismo `.venv` y el mismo motor compilado)
+y en este árbol, e hizo la huella SHA-256 de todo lo que sale:
+
+- 001 a 004: los resultados del motor, tal como los usan sus tests;
+- 005 a 007, con el motor de referencia y con el de Rust: los conjuntos de datos del `.h5` (sin el
+  grupo `recovered`, que antes no existía), los valores recuperados en los nudos y su procedencia,
+  cada magnitud del catálogo en los nudos y en los puntos de integración, y el valor en tres puntos
+  por fase.
+
+**Las diez huellas son iguales**. Los valores recuperados que ahora se leen del `.h5` son los que la
+v0.0.11 recuperaba al leer. Los casos siguen dentro de su tolerancia en sus tests (spec 005, partes
+B y D).
+
+### Lo que se encontró en el barrido (regla 6), y lo decidido
+
+La propietaria vio los cuatro hallazgos antes de que se tocara nada, y dijo que sí a los cuatro.
+
+1. **«Todos los nudos» de una tensión era cuadrático** (spec 005, `queries.all_nodes`): buscaba los
+   materiales de cada nudo entre todas las claves. Tardaba 23 s con el caso 006 y 56 s con el 005,
+   con la ventana quieta todo ese tiempo, igual que la línea de órdenes y MCP. Ahora se agrupan una
+   vez, y el 006 tarda 0,10 s. Las filas son las mismas, bit a bit y en el mismo orden, que las de
+   la forma anterior, escrita en el test como oráculo (`test_results_all_nodes_v0015.py`). Los tests
+   de la interfaz usaban el túnel pequeño y no lo vieron.
+2. **La paleta por defecto no era la de D5**: `ContourSettings.automatic` de OGR GUI da «Hot to
+   cold», que es divergente y clara en el centro. Ahora todo contorno empieza con Viridis. Un test
+   mide L\* (CIELAB, CIE 15:2004) y comprueba que crece con el valor en cada magnitud del catálogo, y
+   que en la paleta que sustituye no crece. El panel «Lo que lo decidió» dice la paleta.
+3. **Los números en pantalla no seguían D12.** La interpretación escribía siempre con punto: el valor
+   bajo el cursor, las cifras de la leyenda, el rango y las consultas. Las casillas numéricas seguían
+   la configuración regional de la máquina, no el idioma del programa, también en los diálogos de la
+   parte C. Con la de España, una casilla de Qt tomaba «2.5» como 25. Ahora:
+   - `gui/units.py` es el único sitio donde se escribe un número de pantalla (`number`, `shown`).
+     Con coma, dos coordenadas se separan con punto y coma (`pair`), como un punto escrito.
+   - `DecimalBox` muestra el separador del idioma y acepta el punto y la coma, sin separador de
+     miles: «1.000» es 1.
+   - La tabla CSV sigue con punto, bit a bit la misma en los dos idiomas.
+
+   Lo que escribe `ogr_ui` sigue con punto: la leyenda continua, las coordenadas de la barra de
+   estado, las casillas del diálogo de contornos y los ejes del gráfico. Se pide a OGR GUI
+   (`../Promts_desarrollo/2026_11_28_peticion_ogr_gui_coma_decimal.md`).
+4. **Las cifras de la tabla de una consulta iban a la izquierda**: ahora van a la derecha, y el
+   texto a la izquierda.
+
+Lo decidido de D15: el primer dibujo se mide en tres ventanas abiertas sobre los mismos resultados, y
+vale el menor. El límite sigue en 1 s. Medido en esta máquina: [0,52; 0,50; 0,49] s, otra magnitud
+0,33 s, un desplazamiento 0,33 s y moverse por debajo de 0,01 s. Una sola apertura llegaba a 1,1 a
+1,3 s cuando otro programa cargaba la máquina; el changelog 0.2.13 de OGR-Core cuenta que una de
+esas corridas era la de su sesión con la de este programa a la vez.
+
+### La regla 7, opción a opción (parte D)
+
+| Ventana o diálogo | Opciones | Test |
+|---|---|---|
+| Cálculo | calcular, cancelar (entre fases y matando el proceso), cerrar con un cálculo en marcha (no / sí), guardar antes, ir a los resultados | `test_gui_compute_v0015` |
+| Interpretación: magnitud y fase | el selector del catálogo, las pestañas | `test_gui_interpret_v0015`, `test_the_catalogue_and_the_tabs`; `test_gui_cases_v0015` |
+| Rango | esta fase, todas las fases, a mano; ajustar a los resultados | `test_the_range_and_the_absolute_value`, `test_fit_to_results_is_the_drawings_range` |
+| Opciones de contorno | intervalos, paleta, modo (bandas, líneas, apagado, continuo) | `test_the_options` |
+| Opciones de contorno (T37) | invertir, decimales, científico, opacidad | `test_reverse_decimals_scientific_opacity_and_the_mesh` |
+| Valor absoluto, Vista > Malla | el campo y la leyenda; la malla encima | los dos de arriba |
+| Unidades mostradas | el rango, la leyenda, las filas | `test_the_units_shown` (interpretación y consultas) |
+| Consultas | línea y polilínea (n o sus vértices), contorno (n, distancia, lado), todos los nudos, por fases en un punto, gráfico, tabla, borrar las dibujadas | `test_gui_queries_v0015` |
+| Informe | HTML, texto, leer otra vez | `test_gui_report_v0015` |
+| Ayuda | página, caso (copiado y abierto), ficha | `test_gui_help_v0015` |
+| Puente | token, apagarlo, Busy con un cálculo | `test_gui_bridge_v0015` |
+| Idioma (D12) | la coma en pantalla, las casillas, la tabla con punto | `test_gui_decimal_v0015` |
+
+Mutaciones en la T37: 14, todas cazadas. Fueron 6 en las opciones de contorno, con la del rango
+dicho; 2 en «todos los nudos» (el orden, y la forma anterior, que cae por tiempo); la paleta
+anterior; y 5 en D12. Al principio escapó el mutante del rango: el test buscaba una «e» y la
+encontraba en «stage». Ahora compara la cifra.
+
+**Regla 12**: junto a lo dibujado van el estado de los resultados, quién los escribió y el motor;
+también la cota B y las notas del mallador, lo que decide el resultado tal como se escribió y la
+subdivisión, el rango, los intervalos y la paleta. Una consulta lleva su método y sus ajustes, con
+los valores por defecto incluidos.
+
+### La lista de la guía, componente a componente (parte D)
+
+- **Acciones**: todas en un menú, con `tr()` y su español (los censos de las reglas 2 y 3 sobre
+  las tres ventanas). Calcular e Interpretar se deshabilitan con su porqué: sin malla, malla de
+  otra geometría, sin resultados.
+- **Diálogos** (opciones de contorno, consulta en un contorno, número de puntos): el título dice qué
+  se pide, la distancia va con su unidad, y el lado solo está habilitado con una distancia y dice
+  por qué. Se prueban sin `exec()`.
+- **Lienzo de resultados**: con el caso 005, el cursor y el zum por debajo de 0,01 s. El color de un
+  punto es el de la leyenda, y las consultas se dibujan encima.
+- **Proceso largo** (calcular): fase, escalón e iteración; Cancelar en dos tiempos (D9); la ventana
+  nunca se queda quieta más de 0,25 s; un final con su resumen (en singular con una fase); un fallo
+  que nombra la fase o el objeto del modelo.
+- **Resultado**: la leyenda dice magnitud, unidad, convenio, fase, procedencia y rango, con Viridis
+  por defecto. Lo que lo decidió va a la vista. Lo obsoleto, incompleto o cancelado se dice arriba,
+  en la leyenda y en el título. Las tablas llevan cabecera, unidades y cifras a la derecha, y se
+  exportan como la operación.
+- **Mensajes**: los rechazos de las operaciones, con su código y en el idioma del lector. Un estado
+  vacío dice qué hacer: «Sin resultados que mostrar…», «Analysis > Compute».
+- *Pendiente, pedido a OGR GUI*: la coma en lo que escribe `ogr_ui` (arriba).
+
+### Lo que se encontró en la parte D, en resumen
+
+1. El progreso se lee, no se escucha: una fase que empieza y acaba entre dos lecturas se cuenta igual
+   (T30).
+2. El primer dibujo de una fase pasó de 3,9 s a 0,5 s sin cambiar ningún número. Fue en tres pasos:
+   la recuperación más rápida (T31), la recuperación guardada al calcular, con la D6 de la 005
+   modificada por la propietaria, y la huella más rápida (T36).
+3. Una consulta que no se puede hacer se rechaza diciéndolo (T31, RF-7).
+4. matplotlib dejaba sin pintar el máximo de un campo con el rango automático (T31).
+5. Tres rojos de la CI que eran carreras entre leer el trabajo y su final, dos de los tests y uno
+   del programa: la cancelación que acaba antes de su respuesta (tras la T34).
+6. El congelado no podía ser el hijo de un trabajo: lo resuelve su punto de entrada, y hay una
+   propuesta a OGR-Core (T36).
+7. En la T37: «todos los nudos», cuadrático; la paleta de D5; la coma de D12; las cifras alineadas.
+
+### Para otras sesiones, por la propietaria
+
+- **OGR Slip2D**: dos propuestas, la paleta por defecto (D5) y los puntos relativos, polares y con
+  coma (D10), en `../Promts_desarrollo/2026_11_28_propuestas_slip2d_paleta_y_puntos.md`.
+- **OGR GUI**: la coma decimal en sus piezas (arriba). También la fila de este programa en su
+  `docs/consumidores.md`, que pasa a v0.1.3.
+- **OGR-Core**: la fila de este programa en su `docs/consumidores.md`, que pasa a v0.2.13, y la
+  propuesta del congelado (T36).

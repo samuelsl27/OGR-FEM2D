@@ -18,7 +18,11 @@
   plataformas. ADR-0001 aceptada: el motor va en Rust.
 - **Fase 0b cerrada**: `ogr-core` v0.1.0 con geometría, malla (Delaunay de SciPy, triángulos de 3
   nudos), filtración, materiales, cargas, proyecto `.ogr`, DXF, estadística e informes.
-- **Lo que no hay todavía**: modelo de proyecto FEM, mallado general, interfaz gráfica, `ogr_api`,
+- **Fase 1 cerrada** (specs 002 a 006, 2026-11-28): motor elástico general en deformación plana y
+  axisimetría, malla de calidad, modelo `.ogrfem2d` con fases, resultados en `.h5` con su huella,
+  operaciones, línea de órdenes, servidor MCP, modelador, cálculo e interpretación en la interfaz.
+  STR-01, STR-04 y STR-09, con su `modelo.ogrfem2d`, por las operaciones y por la interfaz.
+- **Lo que no había al empezar la fase 1**: modelo de proyecto FEM, mallado general, interfaz gráfica, `ogr_api`,
   línea de órdenes, servidor MCP, resultados en `.h5`, casos con `modelo.ogrfem2d`. El motor solo resuelve
   el cuarto de corona de la spec 001.
 
