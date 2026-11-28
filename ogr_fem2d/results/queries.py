@@ -276,13 +276,17 @@ def all_nodes(view: View, quantity: str) -> Query:
             key = (int(node), mat)
             if key not in first:
                 first[key] = (float(value[e, a]), int(e), recovery.SOURCES[int(rec.source[e, a])])
-    with_value = {node for node, _ in first}
+    # the materials of each node, gathered once (v0.0.15, T37: looking for them among every
+    # key at each node took 56 s with case 005)
+    materials: dict = {}
+    for node, mat in first:
+        materials.setdefault(node, []).append(mat)
     for i, (x, y) in enumerate(m.nodes):
-        if i not in with_value:
+        if i not in materials:
             rows.append(Row(i, float(x), float(y), None, None, reason="removed"))
             continue
-        for (node, mat) in sorted(k for k in first if k[0] == i):
-            v, e, source = first[(node, mat)]
+        for mat in sorted(materials[i]):
+            v, e, source = first[(i, mat)]
             rows.append(Row(i, float(x), float(y), None, v, e, mat, source))
     return Query(quantity, view.stage, view.info["id"], tuple(rows), "nodes", method_of(quantity))
 
