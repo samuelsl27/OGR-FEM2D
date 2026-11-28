@@ -1,0 +1,63 @@
+{
+  "id": "008-prandtl-zapata-tresca",
+  "ficha": "VER-STR-05",
+  "fuente": "Prandtl (1921), ZAMM 1(1), 15-20, y Hill (1950), The Mathematical Theory of Plasticity, a traves de de Souza Neto, Peric y Owen (2008), Computational Methods for Plasticity, §7.5.4, ec. (7.178), pags. 252-255, y §8.4.3, pags. 346-349",
+  "tipo_referencia": "analitica",
+  "tolerancia_relativa": 0.02,
+  "valor_esperado": {"magnitud": "P_lim", "expresion": "(2 + pi) c", "valor": 0.5141592653589793, "unidad": "MPa"},
+  "variantes": [
+    {"nombre": "a",
+     "descripcion": "zapata rigida y lisa: v impuesto en los nudos de la superficie con 0 <= x <= b, u libre; una fase por asiento, en totales",
+     "presion": "P = -(suma de las reacciones verticales de esos nudos) / b, positiva hacia abajo",
+     "asientos": {"como": "delta_k = f_k * delta_e, con delta_e el asiento elastico bajo la zapata rigida cargada con P = (2 + pi) c (una fase elastica con la misma malla, lineal en la carga)",
+                  "f": [0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 12.0, 16.0, 24.0, 32.0]},
+     "comparaciones": [
+       {"magnitud": "P_lim", "como": "la presion media de la ultima fase (32 delta_e)", "tolerancia_relativa": 0.02},
+       {"magnitud": "meseta", "como": "|P(32 delta_e) - P(24 delta_e)| / P(32 delta_e) <= 0.005: la curva ha dejado de subir", "tolerancia_relativa": 0.005}
+     ]},
+    {"nombre": "b",
+     "descripcion": "zapata flexible: presion uniforme q sobre 0 <= x <= b (carga repartida normal), una fase por nivel, en totales",
+     "fases": {"q_sobre_P": [0.4, 0.8, 0.9, 0.95, 1.05]},
+     "comparaciones": [
+       {"magnitud": "convergencia", "como": "con los valores por defecto del programa (los del estudio de abajo), las cuatro primeras fases convergen y la de 1.05 (2 + pi) c no: el calculo para con su factor alcanzado (spec 007, RF-2, D2)"}
+     ],
+     "por_que_la_banda": "que la carga uniforme tenga la misma carga limite que la zapata rigida esta por comprobar en Hill (1950) o Prandtl (1921) (caso.md); 0.95 y 1.05 dejan +-5 %, mas que el 2 % de la variante (a)"}
+  ],
+  "modelo": {
+    "analisis": "deformacion_plana",
+    "geometria": {"b": 3.0, "unidad": "m",
+                  "seccion": "medio dominio por simetria, 0 <= x <= W, -D <= y <= 0 (y hacia arriba, superficie en y = 0)",
+                  "W": null, "D": null},
+    "material": {"ley": "mohr_coulomb", "E": 250.0, "nu": 0.2, "c": 0.1, "phi": 0.0, "psi": 0.0, "unidad": "MPa y grados"},
+    "peso_y_tension_inicial": "ninguno",
+    "contorno": "x = 0: u = 0 (simetria); x = W: u = 0; y = -D: u = v = 0",
+    "malla": {"generador": "tests/_footing.py (sobre ogr_fem2d.engine.mesh_structured.rectangle, diagonales alternas, como el caso 004)",
+              "elemento": "T6",
+              "lineas": "x: celdas de h0 en 0 <= x <= b y geometricas de razon g desde b hasta W; y: geometricas de razon g desde h0 en la superficie hasta D",
+              "h0": null, "crecimiento": null},
+    "fases_de_los_estudios": {"tolerancia": 1e-10, "iteraciones_max": 25, "escalones": 5, "particiones_max": 8,
+                              "por_que": "ajustes estrictos, para que los estudios de dominio y de malla no midan el solver; los del programa los fija el estudio de valores por defecto"}
+  },
+  "estudios": {
+    "dominio": {
+      "que": "variante (a) con la malla de h0 = 0.25 m y g = 1.5^(1/4): W = D = 30 m (5 B, la proporcion de de Souza Neto et al., §7.5.4) y W = D = 60 m",
+      "criterio": "si P_lim cambia menos de 0.005 (1/4 de la tolerancia), el caso usa 30 m; si no, 60 m y se prueba 120 m con el mismo criterio. Si 120 m no basta, es un hallazgo"},
+    "malla": {
+      "que": "variante (a), con el dominio elegido, familia anidada h0 = 0.5, 0.25, 0.125 m con g = 1.5^(1/2), 1.5^(1/4), 1.5^(1/8)",
+      "criterio": "el error de P_lim frente a (2 + pi) c tiene que bajar al refinar; la malla del caso es la primera que cumple el 2 % y la meseta. Si ninguna cumple, o el error no baja, o no hay meseta, es un hallazgo (spec 007, plan, «Anomalias»: el bloqueo del T6 con flujo incompresible) y no se afloja la tolerancia"},
+    "valores_por_defecto": {
+      "tolerancia": {
+        "barrido": [1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10],
+        "criterio": "la mayor tolerancia que cumple (i) variante (b): las fases de 0.4 a 0.95 convergen y la de 1.05 no, y (ii) P_lim de la variante (a) y u_r(a) del caso 002 (psi = 0 con 8 x 32 y psi = 30 con 16 x 64, sus mallas) se apartan de los de 1e-10 menos de 1/10 de la tolerancia de su caso (0.002 en los dos); el resto de ajustes, los de los estudios. El valor por defecto es esa tolerancia dividida por 100 (spec 007, D1)"},
+      "escalones": {
+        "candidatos": ["iguales: 5, 10 y 20", "automaticos de Crisfield (1991), ec. (9.40): (I_d, primero, maximo) = (3, 0.1, 0.5) y (3, 0.05, 0.25), sin minimo"],
+        "criterio": "con la tolerancia elegida, los candidatos que convergen en la variante (a), en las cuatro primeras fases de la (b) y en las dos variantes del caso 002, y cuyo P_lim y u_r(a) se apartan de los de 40 escalones iguales menos de 1/4 de la tolerancia de su caso (0.005). De ellos, el de menos iteraciones en total en los tres; un empate, el de escalones iguales (spec 007, D3 modificada)"},
+      "iteraciones_max": {
+        "criterio": "25 (el de ahora) si todos los calculos del estudio de escalones que convergen lo hacen con 25 o menos por incremento; si no, es un hallazgo y se reporta antes de elegir"},
+      "particiones_max": {
+        "barrido": [4, 8, 16],
+        "criterio": "la menor con la que los calculos elegidos convergen por debajo de la carga limite (variante a, fases 1 a 4 de la b, caso 002)"}
+    }
+  },
+  "notas": "Escrito antes de la primera medida (spec 007, T5): el dominio, la malla y los valores por defecto estan a null o como protocolo, y los rellenan los estudios de las T6 y T7 sin cambiar los criterios. La tolerancia del 2 % es la de D6 (la del caso 002); de Souza Neto et al. dan menos del 1 % con 135 Q8. Las cargas y asientos de la reproduccion P13 no son valor esperado."
+}
