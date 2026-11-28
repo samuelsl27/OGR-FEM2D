@@ -496,7 +496,7 @@ ES = {
     "Point": "Punto",
     "From": "Procedencia",
     "Distance (%s)": "Distancia (%s)",
-    "At x = %s, y = %s (%s)": "En x = %s, y = %s (%s)",
+    "At %s (%s)": "En %s (%s)",
     "Chart...": "Gráfico...",
     "Export Table...": "Exportar la tabla...",
     "Export Table": "Exportar la tabla",

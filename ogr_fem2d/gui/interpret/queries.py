@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from typing import Optional
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout,
                                QHBoxLayout, QHeaderView, QLabel, QPushButton, QSpinBox,
                                QTableWidget, QTableWidgetItem, QVBoxLayout)
@@ -160,18 +161,20 @@ class QueryWindow(QDialog):
                 lines.append(f"{tr(SETTING_TEXT.get(key, key))}: {self._setting(key, value)}")
         else:
             x, y = units.to_user(self.m, (g["x"], g["y"]))
-            lines.append(tr("At x = %s, y = %s (%s)") % (f"{x:.4g}", f"{y:.4g}", self.length))
+            lines.append(tr("At %s (%s)") % (units.pair(f"x = {units.number(x)}",
+                                                         f"y = {units.number(y)}"), self.length))
         if g["state"] != "valid":
             lines.insert(0, tr("NOT VALID: %s") % tr(g["state"].capitalize()))
         return lines
 
     def _setting(self, key: str, value) -> str:
         if key == "distance":
-            return f"{float(value) * self.lf:.4g} {self.length}"
+            return f"{units.number(float(value) * self.lf)} {self.length}"
         if key == "vertices":
-            return "; ".join("(%s, %s)" % tuple(f"{c * self.lf:.4g}" for c in p) for p in value)
+            return " ".join("(%s)" % units.pair(*(units.number(c * self.lf) for c in p))
+                            for p in value)
         if key in ("x", "y"):
-            return f"{float(value) * self.lf:.4g} {self.length}"
+            return f"{units.number(float(value) * self.lf)} {self.length}"
         if isinstance(value, str):
             if value.endswith(" per segment"):
                 return tr("%s per segment") % value.split()[0]
@@ -219,8 +222,14 @@ class QueryWindow(QDialog):
         for i, r in enumerate(rows):
             for j, (key, _t) in enumerate(cols):
                 v = r[key]
-                text = "" if v is None else (f"{v:.6g}" if isinstance(v, float) else str(v))
-                self.table.setItem(i, j, QTableWidgetItem(text))
+                text = "" if v is None else (units.number(v, ".6g") if isinstance(v, float)
+                                             else str(v))
+                item = QTableWidgetItem(text)
+                if isinstance(v, (int, float)) and not isinstance(v, bool):
+                    # the figures aligned (the guide, «Resultado»: T37's finding)
+                    item.setTextAlignment(Qt.AlignmentFlag.AlignRight
+                                          | Qt.AlignmentFlag.AlignVCenter)
+                self.table.setItem(i, j, item)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
     # ------------------------------------------------------------ the chart

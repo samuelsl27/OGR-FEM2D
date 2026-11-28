@@ -36,6 +36,8 @@ from PySide6.QtWidgets import (QDialog, QFileDialog, QHBoxLayout, QListWidget, Q
                                QTextBrowser)
 from ogr_ui.i18n import tr
 
+from .. import units
+
 #: the program's name, which is not translated
 NAME = "OGR FEM2D"
 #: the schemes of the help's links: a page, a case's model, a case's sheet
@@ -81,9 +83,10 @@ def cases(folder: Optional[Path] = None) -> list[Case]:
         e = json.loads(expected.read_text(encoding="utf-8"))
         first = sheet.read_text(encoding="utf-8").splitlines()[0]
         if e.get("tolerancia_relativa") is not None:
-            tol = tr("%s %% relative") % f"{100 * float(e['tolerancia_relativa']):g}"
+            tol = tr("%s %% relative") % units.number(100 * float(e['tolerancia_relativa']), "g")
         else:
-            tol = tr("%s absolute (over the case's scale)") % f"{float(e['tolerancia_absoluta']):g}"
+            tol = tr("%s absolute (over the case's scale)") % units.number(
+                float(e['tolerancia_absoluta']), "g")
         out.append(Case(d.name, first.lstrip("# ").strip(), str(e.get("ficha", "")),
                         str(e.get("fuente", "")), str(e.get("tipo_referencia", "")), tol, d))
     return out

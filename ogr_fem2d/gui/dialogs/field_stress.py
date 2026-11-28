@@ -150,7 +150,8 @@ class FieldStressDialog(QDialog):
         return page
 
     def _shown(self, value, q: Q) -> str:
-        return "" if value is None else f"{units.to_user_value(self.model, value, q):.6g}"
+        return "" if value is None else units.number(units.to_user_value(self.model, value, q),
+                                                       ".6g")
 
     def _add_row(self, values) -> None:
         r = self.strata.rowCount()

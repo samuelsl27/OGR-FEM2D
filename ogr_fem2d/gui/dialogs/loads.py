@@ -31,6 +31,7 @@ from ogr_ui.dialog_size import open_at_content_size
 from ogr_ui.i18n import tr
 
 from ...model import model as md
+from .. import units
 from .coordinates import TableError, read_number
 from .fields import Number
 
@@ -172,11 +173,11 @@ class StageFactorsDialog(QDialog):
     def _cell(self, kind: str, k: int, s: int) -> QTableWidgetItem:
         if kind == "load":
             f = self.model.loads[k].factors
-            return QTableWidgetItem(f"{f[s] if s < len(f) else 1.0:g}")
+            return QTableWidgetItem(units.number(f[s] if s < len(f) else 1.0, "g"))
         c = self.model.conditions[k]
         if c.kind == md.DISPLACEMENT:
             f = c.factors[s] if s < len(c.factors) else 1.0
-            return QTableWidgetItem("" if f is None else f"{f:g}")
+            return QTableWidgetItem("" if f is None else units.number(f, "g"))
         item = QTableWidgetItem("")
         item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
         active = c.active[s] if s < len(c.active) else True

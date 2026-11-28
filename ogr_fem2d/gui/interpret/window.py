@@ -518,8 +518,9 @@ class InterpretWindow(QMainWindow):
         f = self.field or {}
         drawing = [(tr("Subdivision of each element"), str(f.get("level", ""))),
                    (tr("Range"), "%s: %s – %s %s" % (tr(dict(RANGES)[self.range_mode]),
-                                                      s.format_value(s.vmin),
-                                                      s.format_value(s.vmax), self.unit_text())),
+                                                      units.shown(s.format_value(s.vmin)),
+                                                      units.shown(s.format_value(s.vmax)),
+                                                      self.unit_text())),
                    (tr("Intervals"), str(s.intervals)),
                    (tr("Palette"), tr(s.palette))]
         return [(tr("The results"), results), (tr("The mesh"), mesh),
@@ -558,7 +559,8 @@ class InterpretWindow(QMainWindow):
         self.legend.configure(s.vmin, s.vmax, s.colour_for, title="",
                               steps=s.intervals, decimals=s.decimals, scientific=s.scientific,
                               bands=s.band_colours() if banded else None,
-                              labels=[s.format_value(v) for v in s.levels()] if banded else None)
+                              labels=[units.shown(s.format_value(v)) for v in s.levels()]
+                              if banded else None)
 
     # ------------------------------------------------------------ the queries
     def pick(self, kind: str) -> None:
@@ -680,13 +682,14 @@ class InterpretWindow(QMainWindow):
                 out.append(f"{name}: " + tr(REASON_TEXT.get(row["reason"], row["reason"])))
                 continue
             v = abs(row["value"]) if self.absolute else row["value"]
-            text = f"{name} = {v * f:.4g} {self.unit_text()}"
+            text = f"{name} = {units.number(v * f)} {self.unit_text()}"
             if row["material"] is not None and q.kind != qt.DISPLACEMENT:
                 mat = m.materials[row["material"]]
                 text += " (" + tr("material %s") % (mat.name or mat.id) + ")"
             out.append(text)
         ux, uy = units.to_user(m, (x, y))
-        return f"x = {ux:.4g}, y = {uy:.4g} {units.length_label(m)}: " + "; ".join(out)
+        return (units.pair(f"x = {units.number(ux)}", f"y = {units.number(uy)}")
+                + f" {units.length_label(m)}: " + "; ".join(out))
 
     def show_value(self, x: float, y: float) -> None:
         self.value_label.setText(self.value_at(x, y))

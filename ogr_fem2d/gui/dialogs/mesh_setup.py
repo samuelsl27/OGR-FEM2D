@@ -44,6 +44,7 @@ from ...mesh import geometry as g
 from ...model import model as md
 from .. import units
 from .coordinates import TableError, read_number
+from .fields import DecimalBox
 
 
 def guaranteed_angle(b: float) -> float:
@@ -88,7 +89,7 @@ class MeshSetupDialog(QDialog):
         self.element.addItem(tr("6-noded triangles"), 6)
         self.element.setCurrentIndex(max(self.element.findData(st.nodes_per_element), 0))
         form.addRow(tr("Element type"), self.element)
-        self.bound = QDoubleSpinBox()
+        self.bound = DecimalBox()
         self.bound.setDecimals(4)
         self.bound.setRange(g.DEFAULT_QUALITY_BOUND, 100.0)
         self.bound.setSingleStep(0.1)
@@ -176,7 +177,7 @@ class MeshSetupDialog(QDialog):
 
     # ------------------------------------------------------------ pieces
     def _length(self, value: Optional[float], none_text: str) -> QDoubleSpinBox:
-        box = QDoubleSpinBox()
+        box = DecimalBox()
         box.setDecimals(3)
         box.setRange(0.0, 1e9)
         box.setSpecialValueText(none_text)
@@ -203,7 +204,7 @@ class MeshSetupDialog(QDialog):
         self.mesh_button.setEnabled(False)               # to discretize again first
 
     def _shown(self, v: float) -> str:
-        return f"{units.to_user_value(self.model, v, Q.LENGTH):.6g}"
+        return units.number(units.to_user_value(self.model, v, Q.LENGTH), ".6g")
 
     def _add_window(self, w: Optional[g.Window]) -> None:
         r = self.windows.rowCount()
