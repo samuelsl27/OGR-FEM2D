@@ -215,6 +215,43 @@ class TestTheMerging:
         assert np.array_equal(vmat[first][on], vmat[tris])  # and of its material
 
 
+def _lightness(colour) -> float:
+    """CIE L* of an sRGB colour (CIE 15:2004; the sRGB transfer of IEC
+    61966-2-1, D65 white)."""
+    from PySide6.QtGui import QColor
+    c = QColor(colour)
+    lin = [(v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4)
+           for v in (c.redF(), c.greenF(), c.blueF())]
+    y = 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+    return 116.0 * y ** (1.0 / 3.0) - 16.0 if y > (6 / 29) ** 3 else y * (29 / 3) ** 3
+
+
+class TestTheDefaultPalette:
+    def test_its_lightness_grows_with_the_value(self):
+        """D5 and the guide, §12 (T37's finding: OGR GUI's automatic settings
+        start with «Hot to cold», light in the middle): every quantity
+        starts with a palette whose lightness grows with the value, and the
+        panel of what decided it says which."""
+        with _Open(_three()) as o:
+            o.w.interpret()
+            win = o.win
+            for q in qt.CATALOGUE:
+                s = win.settings_of(q.id)
+                assert s.palette == "Viridis", (q.id, s.palette)
+                values = np.linspace(s.vmin, s.vmax, 41)
+                light = [_lightness(s.colour_for(v)) for v in values]
+                # banded: the same within a band, lighter from one band to the next
+                assert all(b >= a for a, b in zip(light, light[1:])), (q.id, light)
+                assert len(set(light)) >= s.intervals, (q.id, light)
+            assert dict(win.decided_parts()[3][1])["Palette"] == "Viridis"
+            # the diverging one it replaced is not: light in the middle
+            from ogr_ui.contours import ContourSettings
+            other = ContourSettings.automatic("sigma_1")
+            light = [_lightness(other.colour_for(v))
+                     for v in np.linspace(other.vmin, other.vmax, 41)]
+            assert max(light) > max(light[0], light[-1])
+
+
 class TestEachOptionMovesTheDrawing:
     def test_the_options(self):
         with _Open(_three()) as o:

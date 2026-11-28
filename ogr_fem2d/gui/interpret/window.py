@@ -36,6 +36,7 @@ Author: Samuel Sáez López (UPCT)
 """
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Optional
 
 import numpy as np
@@ -62,6 +63,10 @@ from .field_item import FieldItem
 
 #: the quantity shown first
 FIRST = "sigma_1"
+#: the palette a field starts with (D5; the guide, §12): its lightness grows with the value,
+#: so the order of the values reads in grey and to those who do not tell red from green
+#: (OGR GUI's automatic settings start with a diverging one, light in the middle)
+DEFAULT_PALETTE = "Viridis"
 #: the core's quantity of each unit of the catalogue (None: shown as it is)
 UNIT_Q = {qt.PRESSURE: Q.PRESSURE, qt.LENGTH: Q.LENGTH, qt.DIMENSIONLESS: None,
           qt.ANGLE: None}
@@ -392,7 +397,8 @@ class InterpretWindow(QMainWindow):
 
     def settings_of(self, quantity: str) -> ContourSettings:
         if quantity not in self.settings:
-            self.settings[quantity] = ContourSettings.automatic(quantity)
+            self.settings[quantity] = replace(ContourSettings.automatic(quantity),
+                                              palette=DEFAULT_PALETTE)
         return self.settings[quantity]
 
     def contour_dialog(self):
